@@ -741,9 +741,11 @@ class Sheet extends SaturneObject
                     $out .= '          <span class="label">' . $questionOrGroup->label . '</span>';
                     $out .= '      </div>';
                     $out .= '    </a>';
-                    $out .= '    <a href="'. $questionCardUrl . '?action=create&sheet_id='. $this->id .'&question_group_id='. $questionOrGroup->id .'" class="add-question-btn" title="Ajouter une question">';
-                    $out .= '      <span class="fas fa-plus-circle"></span>';
-                    $out .= '    </a>';
+                    if ($questionOrGroup->status < QuestionGroup::STATUS_LOCKED) {
+                        $out .= '    <a href="' . $questionCardUrl . '?action=create&sheet_id=' . $this->id . '&question_group_id=' . $questionOrGroup->id . '" class="add-question-btn" title="Ajouter une question">';
+                        $out .= '      <span class="fas fa-plus-circle"></span>';
+                        $out .= '    </a>';
+                    }
                     $out .= '  </li>';
 
                     if ($groupHasQuestions) {
