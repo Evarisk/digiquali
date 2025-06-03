@@ -22,12 +22,9 @@
  */
 
 // Load DigiQuali environment
-if (file_exists('digiquali.main.inc.php')) {
-    require_once __DIR__ . '/digiquali.main.inc.php';
-} elseif (file_exists('../digiquali.main.inc.php')) {
-    require_once __DIR__ . '/../digiquali.main.inc.php';
-} else {
+if (!file_exists('digiquali.inc.php')) {
     die('Include of digiquali main fails');
 }
+require_once __DIR__ . '/digiquali.inc.php';
 
 require_once __DIR__ . '/../saturne/core/tpl/index/index_view.tpl.php';

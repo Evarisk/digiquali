@@ -175,6 +175,23 @@ class ActionsDigiquali
     }
 
     /**
+     * Overloading the printMainArea function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printMainArea(array $parameters): int
+    {
+        if (preg_match('/digiqualistandardcard/', $parameters['context'])) {
+            ob_start();
+            saturne_more_left_menu('digiquali', 'digiqualielement');
+            $this->resprints = ob_get_clean();
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
      * Overloading the formObjectOptions function : replacing the parent's function with the one below
      *
      * @param  array       $parameters Hook metadata (context, etc...)

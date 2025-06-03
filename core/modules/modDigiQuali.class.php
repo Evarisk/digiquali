@@ -679,6 +679,22 @@ class modDigiQuali extends DolibarrModules
             'user'     => 0,
         ];
 
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=digiquali',
+            'type'     => 'left',
+            'titre'    => $langs->trans('TEST'),
+            'prefix'   => '<i class="fas fa-exclamation-triangle pictofixedwidth"></i>',
+            'mainmenu' => 'digiquali',
+            'leftmenu' => 'digiqualistandard',
+            'url'      => '/digiquali/view/digiqualistandard/digiqualistandard_card.php?module_name=digiquali',
+            'langs'    => 'digiquali@digiquali',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled("digiquali")',
+            'perms'    => 1, //'$user->hasRight("digiquali", "digiqualistandard", "read")',
+            'target'   => '',
+            'user'     => 0
+        ];
+
 		$this->menu[$r++] = [
 			'fk_menu'  => 'fk_mainmenu=digiquali',
 			'type'     => 'left',
@@ -783,6 +799,18 @@ class modDigiQuali extends DolibarrModules
 		if ($result < 0) {
 			return -1;
 		} // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
+
+        if (getDolGlobalInt('DIGIQUALI_ACTIVE_STANDARD') == 0) {
+            require_once __DIR__ . '/../../class/digiqualistandard.class.php';
+
+            $digiqualiStandard              = new DigiqualiStandard($this->db);
+            $digiqualiStandard->ref         = 'ISO9001';
+            $digiqualiStandard->description = 'ISO9001Description';
+
+            $digiqualiStandardId = $digiqualiStandard->create($user);
+
+            dolibarr_set_const($this->db, 'DIGIQUALI_ACTIVE_STANDARD', $digiqualiStandardId, 'integer', 0, '', $conf->entity);
+        }
 
     if (getDolGlobalInt('DIGIQUALI_CONTROL_BACKWARD_COMPATIBILITY') == 0) {
         require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
