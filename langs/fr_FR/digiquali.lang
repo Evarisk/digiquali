@@ -476,6 +476,16 @@ surveydocument_photo.odt = Fiche du Questionnaire avec photos
 
 
 #
+# DigiQualiElement - Élément DigiQuali
+#
+
+# Data - Donnée
+Process    = Processus
+SubProcess = Sous-processus
+
+
+ss
+#
 # Tools - Outils
 #
 

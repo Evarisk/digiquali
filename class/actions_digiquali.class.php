@@ -184,7 +184,7 @@ class ActionsDigiquali
     {
         if (preg_match('/digiqualistandardcard/', $parameters['context'])) {
             ob_start();
-            saturne_more_left_menu('digiquali', 'digiqualielement');
+            saturne_more_left_menu('digiquali', 'DigiQualiElement');
             $this->resprints = ob_get_clean();
         }
 
