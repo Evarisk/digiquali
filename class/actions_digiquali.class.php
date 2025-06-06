@@ -182,7 +182,7 @@ class ActionsDigiquali
      */
     public function printMainArea(array $parameters): int
     {
-        if (preg_match('/digiqualistandardcard/', $parameters['context'])) {
+        if (preg_match('/digiqualiview/', $parameters['context'])) {
             ob_start();
             saturne_more_left_menu('digiquali', 'DigiQualiElement');
             $this->resprints = ob_get_clean();

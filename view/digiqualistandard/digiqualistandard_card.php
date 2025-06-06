@@ -53,7 +53,7 @@ $subaction = GETPOST('subaction', 'alpha');
 $object    = new DigiQualiStandard($db);
 $dashboard = new SaturneDashboard($db, $object->module);
 
-$hookmanager->initHooks([$object->element . 'card', $object->element . 'view', 'globalcard']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks([$object->element . 'card', $object->module . 'view', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Load object
 require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php';

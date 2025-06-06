@@ -63,7 +63,7 @@ $form = new Form($db);
 // Fetch optionals attributes and labels
 $extrafields->fetch_name_optionals_label($object->table_element);
 
-$hookmanager->initHooks([$object->element . 'card', $object->element . 'view', 'globalcard']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks([$object->element . 'card', $object->module . 'view', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Load object
 require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php';
@@ -266,133 +266,126 @@ if ( ! $object->id) {
 
 // Part to show record
 if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
-	$formconfirm = '';
-	// Confirmation to delete
-	if ($action == 'delete') {
-		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('DeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
-	}
+    saturne_get_fiche_head($object, 'card', $title);
+    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true, []);
 
+    $formConfirm = '';
+    // Confirmation to delete
+    if ($action == 'delete') {
+        $formConfirm = $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->transnoentities('DeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->transnoentities('ConfirmDeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), 'confirm_delete', '', 'yes', 'actionButtonDelete');
+    }
 
-	print $formconfirm;
-	$res = $object->fetch_optionals();
+    // Call Hook formConfirm
+    $parameters = ['formConfirm' => $formConfirm];
+    $resHook    = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
+    if (empty($resHook)) {
+        $formConfirm .= $hookmanager->resPrint;
+    } elseif ($resHook > 0) {
+        $formConfirm = $hookmanager->resPrint;
+    }
 
-	saturne_get_fiche_head($object, 'card', $title);
+    // Print form confirm
+    print $formConfirm;
 
-	$trashList = $object->fetchDigiriskElementFlat($conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH);
+    print '<div class="fichecenter">';
+    print '<div class="fichehalfleft">';
+    print '<table class="border centpercent tableforfield">';
 
-	if ($trashList < 0 || empty($trashList)) {
-		$trashList = [];
-	}
+    print '<tr><td class="titlefield">';
+    print $langs->trans("ShowInSelectOnPublicTicketInterface");
+    print '</td>';
+    print '<td>';
+    print '<input type="checkbox" id="show_in_selectorshow_in_selector" name="show_in_selectorshow_in_selector"' . (($object->show_in_selector == 0) ?  '' : ' checked=""') . '" disabled> ';
+    print '</td></tr>';
 
-	// Object card
-	// ------------------------------------------------------------
-    list($morehtmlref, $moreParams) = $object->getBannerTabContent();
-
-	saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', $morehtmlref, true, $moreParams);
-
-	print '<div class="fichecenter">';
-	print '<div class="fichehalfleft">';
-	print '<table class="border centpercent tableforfield">';
-
-	print '<tr><td class="titlefield">';
-	print $langs->trans("ShowInSelectOnPublicTicketInterface");
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="show_in_selectorshow_in_selector" name="show_in_selectorshow_in_selector"' . (($object->show_in_selector == 0) ?  '' : ' checked=""') . '" disabled> ';
-	print '</td></tr>';
-
-	print '<tr class="linked-medias digirisk-element-photo-'. $object->id .'"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list" style="display: flex; gap: 10px; height: auto;">';
-	print '<span class="add-medias" '. (($object->status != $object::STATUS_VALIDATED) ? "" : "style='display:none'") . '>';
-	print '<input hidden multiple class="fast-upload" id="fast-upload-photo-default" type="file" name="userfile[]" capture="environment" accept="image/*">';
-	print '<label for="fast-upload-photo-default">';
-	print '<div title="'. $langs->trans('AddPhotoFromComputer') .'" class="wpeo-button button-square-50">';
-	print '<i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>';
-	print '</div>';
-	print '</label>';
-	print '&nbsp';
-	print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="<?php echo $object->photo ?>"/>';
-	print '<div title="'. $langs->trans('AddPhotoFromMediaGallery') .'" class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="0">';
-	print '<input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="'. $object->id .'" data-from-type="'. $object->element_type .'" data-from-subtype="photo" data-from-subdir="" data-photo-class="digirisk-element-photo-'. $object->id .'"/>';
-	print '<i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>';
-	print '</div>';
-	print '</span>';
-	print '&nbsp';
+    print '<tr class="linked-medias digirisk-element-photo-'. $object->id .'"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list" style="display: flex; gap: 10px; height: auto;">';
+    print '<span class="add-medias" '. (($object->status != $object::STATUS_VALIDATED) ? "" : "style='display:none'") . '>';
+    print '<input hidden multiple class="fast-upload" id="fast-upload-photo-default" type="file" name="userfile[]" capture="environment" accept="image/*">';
+    print '<label for="fast-upload-photo-default">';
+    print '<div title="'. $langs->trans('AddPhotoFromComputer') .'" class="wpeo-button button-square-50">';
+    print '<i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>';
+    print '</div>';
+    print '</label>';
+    print '&nbsp';
+    print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="<?php echo $object->photo ?>"/>';
+    print '<div title="'. $langs->trans('AddPhotoFromMediaGallery') .'" class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="0">';
+    print '<input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="'. $object->id .'" data-from-type="'. $object->element_type .'" data-from-subtype="photo" data-from-subdir="" data-photo-class="digirisk-element-photo-'. $object->id .'"/>';
+    print '<i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>';
+    print '</div>';
+    print '</span>';
+    print '&nbsp';
     print saturne_show_medias_linked('digiriskdolibarr', $conf->digiriskdolibarr->multidir_output[$conf->entity] . '/' . $object->element_type . '/' . $object->ref, 'small', 5, 0, 0, 0, 50, 50, 0, 0, 0, $object->element_type . '/'. $object->ref . '/', $object, 'photo', $object->status != $object::STATUS_VALIDATED, $permissiontodelete && $object->status != $object::STATUS_VALIDATED);
-	print '</td></tr>';
+    print '</td></tr>';
 
-	// Other attributes. Fields from hook formObjectOptions and Extrafields.
-	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
+    // Other attributes. Fields from hook formObjectOptions and Extrafields
+    require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
 
-	print '</table>';
-	print '</div>';
+    print '</table>';
+    print '</div>';
+    print '</div>';
 
-	print '<div class="clearboth"></div>';
+    print '<div class="clearboth"></div>';
 
-	print dol_get_fiche_end();
+    print dol_get_fiche_end();
 
-	if ($object->id > 0) {
-		// Buttons for actions
-		print '<div class="tabsAction" >' . "\n";
-		$parameters = [];
-		$reshook    = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-		if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+    // Buttons for actions
+    if ($action != 'presend') {
+        print '<div class="tabsAction">';
+        $parameters = [];
+        $resHook    = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
+        if ($resHook < 0) {
+            setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+        }
 
-		if (empty($reshook)) {
-			// Modify
-			if ($permissiontoadd) {
-				print '<a class="butAction" id="actionButtonEdit" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=edit">' . $langs->trans("Modify") . '</a>' . "\n";
-			} else {
-				print '<a class="butActionRefused classfortooltip" href="#" title="' . dol_escape_htmltag($langs->trans("NotEnoughPermissions")) . '">' . $langs->trans('Modify') . '</a>' . "\n";
-			}
+        if (empty($resHook)) {
+            // Modify
+            $displayButton = $conf->browser->layout != 'classic' ? '<i class="fas fa-edit fa-2x"></i>' : '<i class="fas fa-edit"></i>' . ' ' . $langs->transnoentities('Modify');
+            if ($permissiontoadd) {
+                print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=edit' . '">' . $displayButton . '</a>';
+            } else {
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->transnoentities('NotEnoughPermissions')) . '">' . $displayButton . '</span>';
+            }
 
-			if ($permissiontodelete && ! array_key_exists($object->id, $trashList) && $object->id != $conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH) {
-				print '<a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=delete&token='.newToken().'">' . $langs->trans("Delete") . '</a>';
-			} else {
-				print '<a class="butActionRefused classfortooltip" href="#" title="' . $langs->trans("CanNotDoThis") . '">' . $langs->trans('Delete') . '</a>';
-			}
-		}
-		print '</div>' . "\n";
+            // Delete
+            $displayButton = $conf->browser->layout != 'classic' ? '<i class="fas fa-trash fa-2x"></i>' : '<i class="fas fa-trash"></i>' . ' ' . $langs->transnoentities('Delete');
+            if ($permissiontodelete && $object->status != SaturneElement::STATUS_TRASHED) {
+                print '<span class="butAction butActionDelete" id="actionButtonDelete">' . $displayButton . '</span>';
+            }
+        }
+        print '</div>';
+    }
 
-		// Document Generation -- Génération des documents
-		print '<div class="fichecenter"><div class="fichehalfleft elementDocument">';
+    if ($action != 'presend') {
+        print '<div class="fichecenter"><div class="fichehalfleft">';
 
-		$objref    = dol_sanitizeFileName($object->ref);
-		$dirFiles  = $document->element . '/' . $objref;
-		$filedir   = $upload_dir . '/' . $dirFiles;
-		$urlsource = $_SERVER["PHP_SELF"] . '?id=' . $id;
+        $objRef    = dol_sanitizeFileName($object->ref);
+        $dirFiles  = $document->element . '/' . $objRef;
+        $fileDir   = $upload_dir . '/' . $dirFiles;
+        $urlSource = $_SERVER['PHP_SELF'] . '?id=' . $id;
 
-		if ($document->element == 'groupmentdocument') {
-			$modulepart   = 'digiriskdolibarr:GroupmentDocument';
-			$defaultmodel = $conf->global->DIGIRISKDOLIBARR_GROUPMENTDOCUMENT_DEFAULT_MODEL;
-			$title        = $langs->trans('GroupmentDocument');
-		} elseif ($document->element == 'workunitdocument') {
-			$modulepart   = 'digiriskdolibarr:WorkUnitDocument';
-			$defaultmodel = $conf->global->DIGIRISKDOLIBARR_WORKUNITDOCUMENT_DEFAULT_MODEL;
-			$title        = $langs->trans('WorkUnitDocument');
-		}
+        if ($document->element == 'groupmentdocument') {
+            $modulePart   = 'GroupmentDocument';
+            $defaultmodel = $conf->global->DIGIRISKDOLIBARR_GROUPMENTDOCUMENT_DEFAULT_MODEL;
+            $title        = $langs->trans('GroupmentDocument');
+        } elseif ($document->element == 'workunitdocument') {
+            $modulePart   = 'WorkUnitDocument';
+            $defaultmodel = $conf->global->DIGIRISKDOLIBARR_WORKUNITDOCUMENT_DEFAULT_MODEL;
+            $title        = $langs->trans('WorkUnitDocument');
+        }
 
-		if ($permissiontoadd || $permissiontoread) {
-			$genallowed = 1;
-		}
+        print saturne_show_documents($object->module . ':' . $modulePart, $dirFiles, $fileDir, $urlSource, $permissiontoadd,$permissiontodelete, getDolGlobalString(dol_strtoupper($object->module) . '_' . dol_strtoupper($document->element) . '_DEFAULT_MODEL'), 1, 0, 0, 0, '', '', '', $langs->defaultlang, '', $object);
 
-		print saturne_show_documents($modulepart, $dirFiles, $filedir, $urlsource, 1,1, '', 1, 0, 0, 0, 0, '', 0, '', empty($soc->default_lang) ? '' : $soc->default_lang, $object);
+        print '</div><div class="fichehalfright">';
 
+        $moreHtmlCenter = dolGetButtonTitle($langs->trans('SeeAll'), '', 'fa fa-bars imgforviewmode', dol_buildpath('saturne/view/saturne_agenda.php', 1) . '?id=' . $object->id . '&module_name=' . $object->module . '&object_type=' . $object->element);
 
-		print '</div><div class="fichehalfright">';
+        // List of actions on element
+        require_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
+        $formActions = new FormActions($db);
+        $formActions->showactions($object, $object->element . '@' . $object->module, 0, 1, '', 10, '', $moreHtmlCenter);
 
-		$MAXEVENT = 10;
-
-		$morehtmlright  = '<a href="' . dol_buildpath('/digiriskdolibarr/view/digiriskelement/digiriskelement_agenda.php', 1) . '?id=' . $object->id . '">';
-		$morehtmlright .= $langs->trans("SeeAll");
-		$morehtmlright .= '</a>';
-
-		// List of actions on element
-		include_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
-		$formactions    = new FormActions($db);
-		$somethingshown = $formactions->showactions($object, 'digiriskelement@digiriskdolibarr', (is_object($object->thirdparty) ? $object->thirdparty->id : 0), 1, '', $MAXEVENT, '', $morehtmlright);
-
-		print '</div></div></div>';
-	}
+        print '</div></div>';
+    }
 }
 
 // End of page

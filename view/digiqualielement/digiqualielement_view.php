@@ -16,9 +16,9 @@
  */
 
 /**
- * \file    view/digiqualielement/digiqualielement_card.php
+ * \file    view/digiqualielement/digiqualielement_view.php
  * \ingroup digiquali
- * \brief   Page to create/edit/view digiquali element
+ * \brief   Page to view digiquali element
  */
 
 // Load DigiQuali environment
@@ -30,6 +30,7 @@ require_once __DIR__ . '/../../digiquali.inc.php';
 // Load DigiQuali libraries
 require_once __DIR__ . '/../../class/digiqualielement.class.php';
 require_once __DIR__ . '/../../class/digiqualistandard.class.php';
+require_once __DIR__ . '/../../class/activity.class.php';
 require_once __DIR__ . '/../../lib/digiquali_digiqualielement.lib.php';
 
 // Global variables definitions
@@ -55,6 +56,7 @@ $fkStandard          = GETPOSTISSET('fk_standard') ? GETPOSTINT('fk_standard') :
 // Initialize technical objects
 $object            = new DigiQualiElement($db);
 $digiQualiStandard = new DigiQualiStandard($db);
+$activity          = new Activity($db);
 $extrafields       = new ExtraFields($db);
 
 // Initialize view objects
@@ -63,7 +65,7 @@ $form = new Form($db);
 // Fetch optionals attributes and labels
 $extrafields->fetch_name_optionals_label($object->table_element);
 
-$hookmanager->initHooks([$object->element . 'card', $object->element . 'view', 'globalcard']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks([$object->element . 'card', $object->module. 'view', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Load object
 require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php';
@@ -121,12 +123,6 @@ if (empty($reshook)) {
 //	}
 
 //    $object->element = $object->element_type;
-//
-//	// Actions builddoc, forcebuilddoc, remove_file
-//	require_once __DIR__ . '/../../../saturne/core/tpl/documents/documents_action.tpl.php';
-//
-//	// Action to generate pdf from odt file
-//    require_once __DIR__ . '/../../../saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php';
 }
 
 /*
@@ -154,109 +150,6 @@ $helpUrl = 'FR:Module_DigiQuali';
 
 saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
 
-// Part to create
-if ($action == 'create') {
-    if (empty($permissiontoadd)) {
-        accessforbidden($langs->trans('NotEnoughPermissions'), 0);
-    }
-
-    print load_fiche_titre($langs->trans('NewObject', dol_strtolower($langs->transnoentities(dol_ucfirst($object->element)))), '', $object->picto);
-
-    print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
-    print '<input type="hidden" name="token" value="' . newToken() . '">';
-    print '<input type="hidden" name="action" value="add">';
-    print '<input type="hidden" name="fk_standard" value="' . $fkStandard . '">';
-    print '<input type="hidden" name="fk_parent" value="' . $fkParent . '">';
-    print '<input type="hidden" name="element_type" value="' . $elementType . '">';
-    print '<input type="hidden" name="action" value="add">';
-    if ($backtopage) {
-        print '<input type="hidden" name="backtopage" value="' . $backtopage . '">';
-    }
-    if ($backtopageforcancel) {
-        print '<input type="hidden" name="backtopageforcancel" value="' . $backtopageforcancel . '">';
-    }
-
-    print dol_get_fiche_head();
-
-    print '<table class="border centpercent tableforfieldcreate">';
-
-    if (!GETPOSTISSET('fk_parent') || $fkParent == $fkStandard) {
-        $object->fields['fk_parent']['type'] = 'integer:SaturneStandard:saturne/class/saturnestandard.class.php';
-        $_POST['fk_parent']                  = $fkStandard;
-    } else {
-        $object->fields['fk_parent']['type'] = 'integer:SaturneElement:saturne/class/saturneelement.class.php';
-    }
-    $_POST['fk_standard'] = $fkStandard;
-
-    // Common attributes
-    require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
-
-    // Other attributes
-    require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_add.tpl.php';
-
-    print '</table>';
-
-    print dol_get_fiche_end();
-
-    print $form->buttonsSaveCancel('Create');
-
-    print '</form>';
-}
-
-// Part to edit record
-if (($id || $ref) && $action == 'edit') {
-    print load_fiche_titre($titleEdit, '', $object->picto);
-
-    print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
-    print '<input type="hidden" name="token" value="' . newToken() . '">';
-    print '<input type="hidden" name="action" value="update">';
-    print '<input type="hidden" name="id" value="' . $object->id . '">';
-    if ($backtopage) {
-        print '<input type="hidden" name="backtopage" value="' . $backtopage . '">';
-    }
-    if ($backtopageforcancel) {
-        print '<input type="hidden" name="backtopageforcancel" value="' . $backtopageforcancel . '">';
-    }
-
-    print dol_get_fiche_head();
-
-    print '<table class="border centpercent tableforfieldedit">';
-
-    // Common attributes
-    require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
-
-	print '<tr><td>';
-	print $langs->trans("ShowInSelectOnPublicTicketInterface");
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="show_in_selector" name="show_in_selector"' . (($object->show_in_selector == 0) ?  '' : ' checked=""') . '"> ';
-	print '</td></tr>';
-
-    if ($id != $conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH) {
-        $children         = $object->fetchDigiriskElementFlat($id);
-        $childrenElements = [];
-        if (is_array($children) && !empty($children)) {
-            foreach ($children as $key => $value) {
-                $childrenElements[$key] .= $key;
-            }
-        }
-        print '<tr><td>' . $langs->trans("ParentElement") . '</td><td>';
-        print $object->selectDigiriskElementList($object->fk_parent, 'fk_parent', ['customsql' => 'element_type="groupment" AND t.rowid NOT IN (' . rtrim(implode(',', $deletedElements) . ',' . implode(',', $childrenElements), ',') . ')'], 0, 0, [], 0, 0, 'minwidth100 maxwidth300', GETPOST('id'));
-        print '</td></tr>';
-    }
-
-    // Other attributes
-    require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_edit.tpl.php';
-
-    print '</table>';
-
-    print dol_get_fiche_end();
-
-    print $form->buttonsSaveCancel();
-
-    print '</form>';
-}
-
 if ( ! $object->id) {
 	$object->ref    = $conf->global->MAIN_INFO_SOCIETE_NOM;
 	$object->label  = $langs->trans('Society');
@@ -266,133 +159,113 @@ if ( ! $object->id) {
 
 // Part to show record
 if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
-	$formconfirm = '';
-	// Confirmation to delete
-	if ($action == 'delete') {
-		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('DeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmDeleteObject'), 'confirm_delete', '', 0, 1);
-	}
+    saturne_get_fiche_head($object, 'card', $title);
+    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true, []);
 
+    print '<div class="fichecenter">';
+    print '<div class="fichehalfleft">';
+    print '<table class="border centpercent tableforfield">';
 
-	print $formconfirm;
-	$res = $object->fetch_optionals();
+    print '</table>';
+    print '</div>';
 
-	saturne_get_fiche_head($object, 'card', $title);
+    print '<div class="clearboth"></div>';
 
-	$trashList = $object->fetchDigiriskElementFlat($conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH);
+    print dol_get_fiche_end();
 
-	if ($trashList < 0 || empty($trashList)) {
-		$trashList = [];
-	}
+    $activity->source       = 'Processus direction';
+    $activity->source_from  = 'La direction';
+    $activity->input_data   = 'Besoin de lentreprise en terme de fonction.<br>Système de management SST';
+    $activity->output_data  = 'Rôles et responsabilités distribués<br>Constitution de la CSSCT';
+    $activity->score        = 50;
+    $activity->target_score = 70;
 
-	// Object card
-	// ------------------------------------------------------------
-    list($morehtmlref, $moreParams) = $object->getBannerTabContent();
+    print '<div class="wpeo-gridlayout grid-2">';
 
-	saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', $morehtmlref, true, $moreParams);
+//    saturne_get_badge_component_html($langs->trans('Source'), $activity->source);
+//    saturne_get_badge_component_html($langs->trans('SourceFrom'), $activity->source_from);
+//    saturne_get_badge_component_html($langs->trans('InputData'), $activity->input_data);
+//    saturne_get_badge_component_html($langs->trans('OutputData'), $activity->output_data);
+//    saturne_get_badge_component_html($langs->trans('WeakSignals'), 'test');
+//    saturne_get_badge_component_html($langs->trans('OutputData'), $activity->score);
+//    saturne_get_badge_component_html($langs->trans('OutputData'), $activity->target_score);
 
-	print '<div class="fichecenter">';
-	print '<div class="fichehalfleft">';
-	print '<table class="border centpercent tableforfield">';
+    // Example 1: Supplier Badge
+    echo saturne_get_badge_component_html(array(
+        'title'     => 'Supplier Corp.',
+        'details'   => array('Non renseigné', 'ID: SP12345'),
+        'actions'   => array(
+            array(
+                'iconClass' => 'fas fa-plus', // Font Awesome class for add
+                'label'     => 'Add Supplier',
+                'className' => 'add-button', // For specific styling if needed
+                'onClick'   => "alert('Ajouter un fournisseur!');"
+            ),
+            array(
+                'iconClass' => 'fas fa-pen-to-square', // Font Awesome class for edit
+                'label'     => 'Edit Supplier',
+                'href'      => '#edit-supplier-1'
+            ),
+            array(
+                'iconClass' => 'fas fa-trash-can', // Font Awesome class for delete
+                'label'     => 'Delete Supplier',
+                'onClick'   => "confirm('Voulez-vous supprimer ce fournisseur?');"
+            ),
+        ),
+    ));
 
-	print '<tr><td class="titlefield">';
-	print $langs->trans("ShowInSelectOnPublicTicketInterface");
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="show_in_selectorshow_in_selector" name="show_in_selectorshow_in_selector"' . (($object->show_in_selector == 0) ?  '' : ' checked=""') . '" disabled> ';
-	print '</td></tr>';
+    // Example 2: Customer Badge
+    echo saturne_get_badge_component_html(array(
+        'className' => 'customer-badge',
+        'iconClass' => 'fas fa-user-group', // Font Awesome class for a group of users
+        'title'     => 'Client Alpha',
+        'details'   => array('Actif depuis 2023', 'Email: client.alpha@example.com'),
+        'actions'   => array(
+            array(
+                'iconClass' => 'fas fa-edit', // Another edit icon
+                'label'     => 'Modifier Client',
+                'href'      => '#edit-client-alpha'
+            ),
+            array(
+                'iconClass' => 'fas fa-eye', // Font Awesome class for view
+                'label'     => 'Voir Profil',
+                'href'      => '#view-client-profile'
+            ),
+        ),
+    ));
 
-	print '<tr class="linked-medias digirisk-element-photo-'. $object->id .'"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list" style="display: flex; gap: 10px; height: auto;">';
-	print '<span class="add-medias" '. (($object->status != $object::STATUS_VALIDATED) ? "" : "style='display:none'") . '>';
-	print '<input hidden multiple class="fast-upload" id="fast-upload-photo-default" type="file" name="userfile[]" capture="environment" accept="image/*">';
-	print '<label for="fast-upload-photo-default">';
-	print '<div title="'. $langs->trans('AddPhotoFromComputer') .'" class="wpeo-button button-square-50">';
-	print '<i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>';
-	print '</div>';
-	print '</label>';
-	print '&nbsp';
-	print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="<?php echo $object->photo ?>"/>';
-	print '<div title="'. $langs->trans('AddPhotoFromMediaGallery') .'" class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="0">';
-	print '<input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="'. $object->id .'" data-from-type="'. $object->element_type .'" data-from-subtype="photo" data-from-subdir="" data-photo-class="digirisk-element-photo-'. $object->id .'"/>';
-	print '<i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>';
-	print '</div>';
-	print '</span>';
-	print '&nbsp';
-    print saturne_show_medias_linked('digiriskdolibarr', $conf->digiriskdolibarr->multidir_output[$conf->entity] . '/' . $object->element_type . '/' . $object->ref, 'small', 5, 0, 0, 0, 50, 50, 0, 0, 0, $object->element_type . '/'. $object->ref . '/', $object, 'photo', $object->status != $object::STATUS_VALIDATED, $permissiontodelete && $object->status != $object::STATUS_VALIDATED);
-	print '</td></tr>';
+    // Example 3: Product Badge (no actions)
+    echo saturne_get_badge_component_html(array(
+        'iconClass' => 'fas fa-box', // Font Awesome class for a box/product
+        'title'     => 'Produit Xyz',
+        'details'   => array('Référence: P001', 'Catégorie: Électronique', 'Prix: 199.99 €'),
+        'actions'   => array(),
+    ));
 
-	// Other attributes. Fields from hook formObjectOptions and Extrafields.
-	include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
+    // Example 4: Simple User Badge
+    echo saturne_get_badge_component_html(array(
+        'title'     => 'John Doe',
+        'details'   => array('Admin', 'Dernière connexion: Hier'),
+        // No iconClass provided, will use default 'fas fa-user'
+        // No actions provided, will render no actions
+    ));
 
-	print '</table>';
-	print '</div>';
+    // Example 5: Badge with custom ID and another icon
+    echo saturne_get_badge_component_html(array(
+        'id'        => 'special-badge-123',
+        'iconClass' => 'fas fa-tag', // Font Awesome for a tag
+        'title'     => 'Item Spécial',
+        'details'   => array('Status: En stock', 'Priorité: Haute'),
+        'actions'   => array(
+            array(
+                'iconClass' => 'fas fa-cart-shopping', // Font Awesome for shopping cart
+                'label'     => 'Ajouter au panier',
+                'onClick'   => "console.log('Added to cart!');"
+            )
+        )
+    ));
 
-	print '<div class="clearboth"></div>';
-
-	print dol_get_fiche_end();
-
-	if ($object->id > 0) {
-		// Buttons for actions
-		print '<div class="tabsAction" >' . "\n";
-		$parameters = [];
-		$reshook    = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-		if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
-
-		if (empty($reshook)) {
-			// Modify
-			if ($permissiontoadd) {
-				print '<a class="butAction" id="actionButtonEdit" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=edit">' . $langs->trans("Modify") . '</a>' . "\n";
-			} else {
-				print '<a class="butActionRefused classfortooltip" href="#" title="' . dol_escape_htmltag($langs->trans("NotEnoughPermissions")) . '">' . $langs->trans('Modify') . '</a>' . "\n";
-			}
-
-			if ($permissiontodelete && ! array_key_exists($object->id, $trashList) && $object->id != $conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH) {
-				print '<a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&action=delete&token='.newToken().'">' . $langs->trans("Delete") . '</a>';
-			} else {
-				print '<a class="butActionRefused classfortooltip" href="#" title="' . $langs->trans("CanNotDoThis") . '">' . $langs->trans('Delete') . '</a>';
-			}
-		}
-		print '</div>' . "\n";
-
-		// Document Generation -- Génération des documents
-		print '<div class="fichecenter"><div class="fichehalfleft elementDocument">';
-
-		$objref    = dol_sanitizeFileName($object->ref);
-		$dirFiles  = $document->element . '/' . $objref;
-		$filedir   = $upload_dir . '/' . $dirFiles;
-		$urlsource = $_SERVER["PHP_SELF"] . '?id=' . $id;
-
-		if ($document->element == 'groupmentdocument') {
-			$modulepart   = 'digiriskdolibarr:GroupmentDocument';
-			$defaultmodel = $conf->global->DIGIRISKDOLIBARR_GROUPMENTDOCUMENT_DEFAULT_MODEL;
-			$title        = $langs->trans('GroupmentDocument');
-		} elseif ($document->element == 'workunitdocument') {
-			$modulepart   = 'digiriskdolibarr:WorkUnitDocument';
-			$defaultmodel = $conf->global->DIGIRISKDOLIBARR_WORKUNITDOCUMENT_DEFAULT_MODEL;
-			$title        = $langs->trans('WorkUnitDocument');
-		}
-
-		if ($permissiontoadd || $permissiontoread) {
-			$genallowed = 1;
-		}
-
-		print saturne_show_documents($modulepart, $dirFiles, $filedir, $urlsource, 1,1, '', 1, 0, 0, 0, 0, '', 0, '', empty($soc->default_lang) ? '' : $soc->default_lang, $object);
-
-
-		print '</div><div class="fichehalfright">';
-
-		$MAXEVENT = 10;
-
-		$morehtmlright  = '<a href="' . dol_buildpath('/digiriskdolibarr/view/digiriskelement/digiriskelement_agenda.php', 1) . '?id=' . $object->id . '">';
-		$morehtmlright .= $langs->trans("SeeAll");
-		$morehtmlright .= '</a>';
-
-		// List of actions on element
-		include_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
-		$formactions    = new FormActions($db);
-		$somethingshown = $formactions->showactions($object, 'digiriskelement@digiriskdolibarr', (is_object($object->thirdparty) ? $object->thirdparty->id : 0), 1, '', $MAXEVENT, '', $morehtmlright);
-
-		print '</div></div></div>';
-	}
+    print '</div>';
 }
 
 // End of page
