@@ -21,6 +21,10 @@
  * \brief   Page to view digiquali element
  */
 
+if (!defined('NOSCANPOSTFORINJECTION')) {
+    define('NOSCANPOSTFORINJECTION', '1'); // Do not check anti CSRF attack test
+}
+
 // Load DigiQuali environment
 if (!file_exists('../../digiquali.inc.php')) {
     die('Include of digiquali main fails');
@@ -123,6 +127,8 @@ if (empty($reshook)) {
 //	}
 
 //    $object->element = $object->element_type;
+
+    require_once __DIR__ . '/../../../saturne/core/tpl/actions/component_actions.tpl.php';
 }
 
 /*
@@ -173,98 +179,50 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
 
     print dol_get_fiche_end();
 
-    $activity->source       = 'Processus direction';
-    $activity->source_from  = 'La direction';
-    $activity->input_data   = 'Besoin de lentreprise en terme de fonction.<br>Système de management SST';
-    $activity->output_data  = 'Rôles et responsabilités distribués<br>Constitution de la CSSCT';
-    $activity->score        = 50;
-    $activity->target_score = 70;
+    $activity->fetch(2);
+
+    //$activity->source       = 'Processus direction';
+    //$activity->source_from  = 'La direction';
+//    $activity->input_data   = 'Besoin de lentreprise en terme de fonction.<br>Système de management SST';
+//    $activity->output_data  = 'Rôles et responsabilités distribués<br>Constitution de la CSSCT';
+//    $activity->score        = 50;
+//    $activity->target_score = 70;
+
+    require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
 
     print '<div class="wpeo-gridlayout grid-2">';
 
-//    saturne_get_badge_component_html($langs->trans('Source'), $activity->source);
-//    saturne_get_badge_component_html($langs->trans('SourceFrom'), $activity->source_from);
-//    saturne_get_badge_component_html($langs->trans('InputData'), $activity->input_data);
-//    saturne_get_badge_component_html($langs->trans('OutputData'), $activity->output_data);
-//    saturne_get_badge_component_html($langs->trans('WeakSignals'), 'test');
-//    saturne_get_badge_component_html($langs->trans('OutputData'), $activity->score);
-//    saturne_get_badge_component_html($langs->trans('OutputData'), $activity->target_score);
+    echo saturne_get_badge_component_html();
 
-    // Example 1: Supplier Badge
-    echo saturne_get_badge_component_html(array(
-        'title'     => 'Supplier Corp.',
-        'details'   => array('Non renseigné', 'ID: SP12345'),
-        'actions'   => array(
-            array(
-                'iconClass' => 'fas fa-plus', // Font Awesome class for add
-                'label'     => 'Add Supplier',
-                'className' => 'add-button', // For specific styling if needed
-                'onClick'   => "alert('Ajouter un fournisseur!');"
-            ),
-            array(
-                'iconClass' => 'fas fa-pen-to-square', // Font Awesome class for edit
-                'label'     => 'Edit Supplier',
-                'href'      => '#edit-supplier-1'
-            ),
-            array(
-                'iconClass' => 'fas fa-trash-can', // Font Awesome class for delete
-                'label'     => 'Delete Supplier',
-                'onClick'   => "confirm('Voulez-vous supprimer ce fournisseur?');"
-            ),
-        ),
-    ));
-
-    // Example 2: Customer Badge
-    echo saturne_get_badge_component_html(array(
-        'className' => 'customer-badge',
-        'iconClass' => 'fas fa-user-group', // Font Awesome class for a group of users
-        'title'     => 'Client Alpha',
-        'details'   => array('Actif depuis 2023', 'Email: client.alpha@example.com'),
-        'actions'   => array(
-            array(
-                'iconClass' => 'fas fa-edit', // Another edit icon
-                'label'     => 'Modifier Client',
-                'href'      => '#edit-client-alpha'
-            ),
-            array(
-                'iconClass' => 'fas fa-eye', // Font Awesome class for view
-                'label'     => 'Voir Profil',
-                'href'      => '#view-client-profile'
-            ),
-        ),
-    ));
-
-    // Example 3: Product Badge (no actions)
-    echo saturne_get_badge_component_html(array(
-        'iconClass' => 'fas fa-box', // Font Awesome class for a box/product
-        'title'     => 'Produit Xyz',
-        'details'   => array('Référence: P001', 'Catégorie: Électronique', 'Prix: 199.99 €'),
-        'actions'   => array(),
-    ));
-
-    // Example 4: Simple User Badge
-    echo saturne_get_badge_component_html(array(
-        'title'     => 'John Doe',
-        'details'   => array('Admin', 'Dernière connexion: Hier'),
-        // No iconClass provided, will use default 'fas fa-user'
-        // No actions provided, will render no actions
-    ));
-
-    // Example 5: Badge with custom ID and another icon
-    echo saturne_get_badge_component_html(array(
-        'id'        => 'special-badge-123',
-        'iconClass' => 'fas fa-tag', // Font Awesome for a tag
-        'title'     => 'Item Spécial',
-        'details'   => array('Status: En stock', 'Priorité: Haute'),
-        'actions'   => array(
-            array(
-                'iconClass' => 'fas fa-cart-shopping', // Font Awesome for shopping cart
-                'label'     => 'Ajouter au panier',
-                'onClick'   => "console.log('Added to cart!');"
-            )
-        )
-    ));
-
+    foreach ($activity->fields as $key => $val) {
+        if (!isset($val['viewmode']) && $val['viewmode'] != 'badge') {
+            continue;
+        }
+        echo saturne_get_badge_component_html([
+            'id'        => 'badge_component_' . $key . '_' . $activity->id,
+            'iconClass' => 'fas fa-user',
+            'title'     => $val['label'],
+            'details'   => [$activity->{$key} ?? $langs->transnoentities('NotKnown')],
+            'actions'   => [
+                [
+                    'iconClass' => 'fas fa-pen',
+                    'label'     => 'Edit',
+                    'className' => 'modal-open',
+                    'hiddenInputs' => [
+                        [
+                            'class' => 'modal-options',
+                            'data'  => [
+                                'modal-to-open' => 'badge_component',
+                                'from-id'       => $activity->id,
+                                'from-type'     => $activity->element,
+                                'from-field'    => $key
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+        ]);
+    }
     print '</div>';
 }
 

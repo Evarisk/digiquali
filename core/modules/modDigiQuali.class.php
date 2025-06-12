@@ -261,6 +261,12 @@ class modDigiQuali extends DolibarrModules
             $i++ => ['DIGIQUALI_SURVEYDET_ADDON', 'chaine', 'mod_surveydet_standard', '', 0, 'current'],
             $i++ => ['DIGIQUALI_SURVEYDET_AUTO_SAVE_ACTION', 'integer', 1, '', 0, 'current'],
 
+            // CONST PROCESS
+            $i++ => ['DIGIQUALI_PROCESS_ADDON', 'chaine', 'mod_process_standard', '', 0, 'current'],
+
+            // CONST SUBPROCESS
+            $i++ => ['DIGIQUALI_SUBPROCESS_ADDON', 'chaine', 'mod_subprocess_standard', '', 0, 'current'],
+
 			// CONST MODULE
 			$i++ => ['DIGIQUALI_VERSION','chaine', $this->version, '', 0, 'current'],
 			$i++ => ['DIGIQUALI_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
@@ -494,17 +500,17 @@ class modDigiQuali extends DolibarrModules
 
         /* DIGIQUALI ELEMENT PERMISSSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Surveys')));
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Test')));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'read';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Surveys')));
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Test')));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'write';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Surveys')));
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Test')));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'delete';
         $r++;

@@ -39,8 +39,8 @@ class DigiQualiElement extends SaturneElement
      */
     public $element = 'digiqualielement';
 
-    public const ELEMENT_TYPE_PROCESS    = 0;
-    public const ELEMENT_TYPE_SUBPROCESS = 1;
+    public const ELEMENT_TYPE_0 = 'process';
+    public const ELEMENT_TYPE_1 = 'subprocess';
 
     /**
      * Constructor
@@ -51,6 +51,6 @@ class DigiQualiElement extends SaturneElement
     {
         parent::__construct($db, $this->module, $this->element);
 
-        $this->fields['element_type']['arrayofkeyval'] = [self::ELEMENT_TYPE_PROCESS => 'Process', self::ELEMENT_TYPE_SUBPROCESS => 'SubProcess'];
+        $this->fields['element_type']['arrayofkeyval'] = [0 => 'Process', 1 => 'SubProcess'];
     }
 }

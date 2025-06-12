@@ -473,6 +473,12 @@ surveydocument.odt       = Fiche du Questionnaire
 surveydocument_photo     = fiche du questionnaire avec photos
 surveydocument_photo.odt = Fiche du Questionnaire avec photos
 
+#
+# DigiQualiStandard - Standard DigiQuali
+#
+# Data - Donnée
+Mapping = Cartographie
+
 
 
 #
@@ -480,11 +486,23 @@ surveydocument_photo.odt = Fiche du Questionnaire avec photos
 #
 
 # Data - Donnée
-Process    = Processus
-SubProcess = Sous-processus
+Process       = Processus
+SubProcess    = Sous-processus
+NewProcess    = Nouveau processus
+NewSubprocess = Nouveau sous-processus
 
 
-ss
+
+#
+# Activity - Activité
+#
+
+# Data - Donnée
+InputData  = Données d'entrées
+OutputData = Données de sorties
+
+
+
 #
 # Tools - Outils
 #
