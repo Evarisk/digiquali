@@ -119,6 +119,7 @@ class Activity extends SaturneObject
         'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => -2],
         'import_key'    => ['type' => 'varchar(14)',  'label' => 'ImportId',         'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => -2, 'index' => 0],
         'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 1, 'index' => 1, 'searchmulti' => 1, 'default' => 1, 'arrayofkeyval' => [1 => 'InProgress', 2 => 'Locked', 3 => 'Archived'], 'css' => 'minwidth200'],
+        'label'         => ['type' => 'varchar(255)', 'label' => 'Label',            'enabled' => 1, 'position' => 80,  'notnull' => 0, 'visible' => 1, 'searchall' => 1],
         'source'        => ['type' => 'html',         'label' => 'Source',           'enabled' => 1, 'position' => 15,  'notnull' => 0, 'visible' => 1, 'searchall' => 1, 'css' => 'minwidth200', 'viewmode' => 'badge'],
         'source_from'   => ['type' => 'html',         'label' => 'SourceFrom',       'enabled' => 1, 'position' => 15,  'notnull' => 0, 'visible' => 1, 'searchall' => 1, 'css' => 'minwidth200', 'viewmode' => 'badge'],
         'input_data'    => ['type' => 'html',         'label' => 'InputData',        'enabled' => 1, 'position' => 15,  'notnull' => 0, 'visible' => 1, 'searchall' => 1, 'css' => 'minwidth200', 'viewmode' => 'badge'],
@@ -126,7 +127,8 @@ class Activity extends SaturneObject
         'score'         => ['type' => 'real',         'label' => 'ActualScore',      'enabled' => 1, 'position' => 35,  'notnull' => 0, 'visible' => 2, 'help' => 'PercentageValue', 'viewmode' => 'badge'],
         'target_score'  => ['type' => 'real',         'label' => 'TargetScore',      'enabled' => 1, 'position' => 35,  'notnull' => 0, 'visible' => 2, 'help' => 'PercentageValue', 'viewmode' => 'badge'],
         'fk_user_creat' => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserAuthor', 'picto' => 'user', 'enabled' => 1, 'position' => 110, 'notnull' => 1, 'visible' => -2, 'foreignkey' => 'user.rowid'],
-        'fk_user_modif' => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserModif',  'picto' => 'user', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid']
+        'fk_user_modif' => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserModif',  'picto' => 'user', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid'],
+        'fk_element'    => ['type' => 'integer',                                'label' => 'ParentElement',                 'enabled' => 1, 'position' => 9,   'notnull' => 1, 'visible' => 1],
     ];
 
     /**
@@ -172,22 +174,22 @@ class Activity extends SaturneObject
     /**
      * @var string|null Source
      */
-    public ?string $source;
+    public ?string $source = null;
 
     /**
      * @var string|null Source from
      */
-    public ?string $source_from;
+    public ?string $source_from = null;
 
     /**
      * @var string|null Input data
      */
-    public ?string $input_data;
+    public ?string $input_data = null;
 
     /**
      * @var string|null Output data
      */
-    public ?string $output_data;
+    public ?string $output_data = null;
 
     /**
      * @var float|null Score
@@ -208,6 +210,11 @@ class Activity extends SaturneObject
      * @var int|null User ID
      */
     public $fk_user_modif;
+
+    /**
+     * @var int|string Element ID
+     */
+    public $fk_element;
 
     /**
      * Constructor
@@ -246,23 +253,16 @@ class Activity extends SaturneObject
     {
         if (empty($this->labelStatus) || empty($this->labelStatusShort)) {
             global $langs;
-            $this->labelStatus[self::STATUS_DRAFT]     = $langs->transnoentitiesnoconv('StatusDraft');
             $this->labelStatus[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('InProgress');
-            $this->labelStatus[self::STATUS_LOCKED]    = $langs->transnoentitiesnoconv('Locked');
             $this->labelStatus[self::STATUS_ARCHIVED]  = $langs->transnoentitiesnoconv('Archived');
             $this->labelStatus[self::STATUS_DELETED]   = $langs->transnoentitiesnoconv('Deleted');
 
-            $this->labelStatusShort[self::STATUS_DRAFT]     = $langs->transnoentitiesnoconv('StatusDraft');
             $this->labelStatusShort[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('InProgress');
-            $this->labelStatusShort[self::STATUS_LOCKED]    = $langs->transnoentitiesnoconv('Locked');
             $this->labelStatusShort[self::STATUS_ARCHIVED]  = $langs->transnoentitiesnoconv('Archived');
             $this->labelStatusShort[self::STATUS_DELETED]   = $langs->transnoentitiesnoconv('Deleted');
         }
 
         $statusType = 'status' . $status;
-        if ($status == self::STATUS_LOCKED) {
-            $statusType = 'status4';
-        }
         if ($status == self::STATUS_ARCHIVED) {
             $statusType = 'status8';
         }
@@ -355,27 +355,6 @@ class Activity extends SaturneObject
         }
     }
 
-	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
-	/**
-	 *  Return if a sheet can be deleted
-	 *
-	 *  @return    int         <=0 if no, >0 if yes
-	 */
-	public function is_erasable() {
-		require_once __DIR__ .'/control.class.php';
-
-		$control = new Control($this->db);
-
-		$controls = $control->fetchAll( '', '', 0, 0, ['customsql' => 't.fk_sheet= ' . $this->id . ' AND t.status >= 0']);
-		if (is_array($controls) && !empty($controls)) {
-			$result = -1;
-		} else {
-			$result = 1;
-		}
-
-		return $result;
-	}
-
 	/**
 	 * Write information of trigger description
 	 *
@@ -404,5 +383,10 @@ class Activity extends SaturneObject
 
 		return $ret;
 	}
+
+    public static function getActivityInfos(Activity $activity)
+    {
+
+    }
 }
 

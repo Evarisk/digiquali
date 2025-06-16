@@ -267,7 +267,7 @@ if ( ! $object->id) {
 // Part to show record
 if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     saturne_get_fiche_head($object, 'card', $title);
-    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true, []);
+    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true);
 
     $formConfirm = '';
     // Confirmation to delete
@@ -290,13 +290,6 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     print '<div class="fichecenter">';
     print '<div class="fichehalfleft">';
     print '<table class="border centpercent tableforfield">';
-
-    print '<tr><td class="titlefield">';
-    print $langs->trans("ShowInSelectOnPublicTicketInterface");
-    print '</td>';
-    print '<td>';
-    print '<input type="checkbox" id="show_in_selectorshow_in_selector" name="show_in_selectorshow_in_selector"' . (($object->show_in_selector == 0) ?  '' : ' checked=""') . '" disabled> ';
-    print '</td></tr>';
 
     print '<tr class="linked-medias digirisk-element-photo-'. $object->id .'"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list" style="display: flex; gap: 10px; height: auto;">';
     print '<span class="add-medias" '. (($object->status != $object::STATUS_VALIDATED) ? "" : "style='display:none'") . '>';

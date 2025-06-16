@@ -117,6 +117,9 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
   if (modalToOpen.match(/timespent_edit/)) {
     action = 'fetch_task_timespent';
   }
+  if (modalToOpen === 'activity_edit') {
+    action = 'fetch_activity';
+  }
 
   $.ajax({
     url: `${document.URL}&action=${action}&token=${token}`,
@@ -165,7 +168,8 @@ window.digiquali.task.createTask = function() {
       date_start:         startDate,
       date_end:           endDate,
       budget_amount:      budget,
-      fk_project:         projectId
+      fk_project:         projectId,
+      token: token
     }),
     success: function(resp) {
       $modal.replaceWith($(resp).find('#answer_task_add'));

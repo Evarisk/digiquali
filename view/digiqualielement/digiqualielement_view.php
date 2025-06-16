@@ -78,9 +78,11 @@ require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php';
 //$permissiontoread   = $user->hasRight($object->module, $object->element, 'read');
 //$permissiontoadd    = $user->hasRight($object->module, $object->element, 'write');
 //$permissiontodelete = $user->hasRight($object->module, $object->element, 'delete');
-$permissiontoread   = 1;
-$permissiontoadd    = 1;
-$permissiontodelete = 1;
+$permissiontoread           = 1;
+$permissiontoadd            = 1;
+$permissionToAddActivity    = 1;
+$permissionToDeleteActivity = 1;
+$permissiontodelete         = 1;
 
 // Security check
 saturne_check_access($permissiontoread, $object);
@@ -129,6 +131,7 @@ if (empty($reshook)) {
 //    $object->element = $object->element_type;
 
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/component_actions.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/digiquali_activity_action.tpl.php';
 }
 
 /*
@@ -166,7 +169,7 @@ if ( ! $object->id) {
 // Part to show record
 if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     saturne_get_fiche_head($object, 'card', $title);
-    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true, []);
+    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true);
 
     print '<div class="fichecenter">';
     print '<div class="fichehalfleft">';
@@ -179,49 +182,75 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
 
     print dol_get_fiche_end();
 
-    $activity->fetch(2);
-
-    //$activity->source       = 'Processus direction';
-    //$activity->source_from  = 'La direction';
-//    $activity->input_data   = 'Besoin de lentreprise en terme de fonction.<br>Système de management SST';
-//    $activity->output_data  = 'Rôles et responsabilités distribués<br>Constitution de la CSSCT';
-//    $activity->score        = 50;
-//    $activity->target_score = 70;
-
+    require_once __DIR__ . '/../../core/tpl/modal/modal_activity_add.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/modal/modal_activity_edit.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
 
-    print '<div class="wpeo-gridlayout grid-2">';
+    //$activity->ref          = 'A2024-0001';s
+    //$activity->source       = 'Processus direction';
+    //$activity->source_from  = 'La direction';
+    //$activity->input_data   = 'Besoin de lentreprise en terme de fonction.<br>Système de management SST';
+    //$activity->output_data  = 'Rôles et responsabilités distribués<br>Constitution de la CSSCT';
+    //$activity->score        = 50;
+    //$activity->target_score = 70;
 
-    echo saturne_get_badge_component_html();
+    $moreHtmlRight = <<<HTML
+    <div class="wpeo-button modal-open">
+        <input type="hidden" class="modal-options" data-modal-to-open="activity_add" data-from-id="{$id}" data-from-type="{$object->element}">
+        <i class="fas fa-plus button-icon"></i>
+    </div>
+    HTML;
 
-    foreach ($activity->fields as $key => $val) {
-        if (!isset($val['viewmode']) && $val['viewmode'] != 'badge') {
-            continue;
-        }
-        echo saturne_get_badge_component_html([
-            'id'        => 'badge_component_' . $key . '_' . $activity->id,
-            'iconClass' => 'fas fa-user',
-            'title'     => $val['label'],
-            'details'   => [$activity->{$key} ?? $langs->transnoentities('NotKnown')],
-            'actions'   => [
-                [
-                    'iconClass' => 'fas fa-pen',
-                    'label'     => 'Edit',
-                    'className' => 'modal-open',
-                    'hiddenInputs' => [
-                        [
-                            'class' => 'modal-options',
-                            'data'  => [
-                                'modal-to-open' => 'badge_component',
-                                'from-id'       => $activity->id,
-                                'from-type'     => $activity->element,
-                                'from-field'    => $key
+    print load_fiche_titre($langs->trans('Activities'), $moreHtmlRight, $activity->picto);
+
+    print '<div id="activity-list-container">';
+    $activities = $activity->fetchAll('', '', 0, 0, ['customsql' => 't.fk_element = ' . $id]);
+    foreach ($activities as $activitySingle) {
+        print '<div class="activity-container">';
+
+        print $activitySingle->getNomUrl(1, '', 0, '', -1, 1);
+
+        $html = <<<HTML
+        <div class="wpeo-button modal-open">
+            <input type="hidden" class="modal-options" data-modal-to-open="activity_edit" data-from-id="{$activitySingle->id}" data-from-type="{$activitySingle->element}" data-from-module="{$object->module}">
+            <i class="fas fa-pencil-alt button-icon"></i>
+        </div>
+        HTML;
+        echo $html;
+
+
+        print '<div class="wpeo-gridlayout grid-2">';
+        foreach ($activitySingle->fields as $key => $val) {
+            if (!isset($val['viewmode']) && $val['viewmode'] != 'badge') {
+                continue;
+            }
+            echo saturne_get_badge_component_html([
+                'id'        => 'badge_component_' . $key . '_' . $activitySingle->id,
+                'iconClass' => 'fas fa-user',
+                'title'     => $val['label'],
+                'details'   => [$activitySingle->{$key} ?? $langs->transnoentities('NotKnown')],
+                'actions'   => [
+                    [
+                        'iconClass' => 'fas fa-pen',
+                        'label'     => 'Edit',
+                        'className' => 'modal-open',
+                        'hiddenInputs' => [
+                            [
+                                'class' => 'modal-options',
+                                'data'  => [
+                                    'modal-to-open' => 'badge_component',
+                                    'from-id'       => $activitySingle->id,
+                                    'from-type'     => $activitySingle->element,
+                                    'from-field'    => $key
+                                ]
                             ]
                         ]
                     ]
-                ]
-            ],
-        ]);
+                ],
+            ]);
+        }
+        print '</div>';
+        print '</div>';
     }
     print '</div>';
 }

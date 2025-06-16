@@ -267,6 +267,9 @@ class modDigiQuali extends DolibarrModules
             // CONST SUBPROCESS
             $i++ => ['DIGIQUALI_SUBPROCESS_ADDON', 'chaine', 'mod_subprocess_standard', '', 0, 'current'],
 
+            // CONST ACTIVITY
+            $i++ => ['DIGIQUALI_ACTIVITY_ADDON', 'chaine', 'mod_activity_standard', '', 0, 'current'],
+
 			// CONST MODULE
 			$i++ => ['DIGIQUALI_VERSION','chaine', $this->version, '', 0, 'current'],
 			$i++ => ['DIGIQUALI_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],

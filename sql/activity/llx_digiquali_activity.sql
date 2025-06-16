@@ -14,20 +14,22 @@
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
 CREATE TABLE llx_digiquali_activity(
-  rowid          integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  ref            varchar(128) DEFAULT '(PROV)' NOT NULL,
-  ref_ext        varchar(128),
-  entity         integer DEFAULT 1 NOT NULL,
-  date_creation  datetime NOT NULL,
-  tms            timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  import_key     varchar(14),
-  status         integer DEFAULT 1 NOT NULL,
-  source         varchar(255),
-  source_from    varchar(255),
-  input_data     text,
-  output_data    text,
-  score          double(24,8),
-  target_score   double(24,8),
-  fk_user_creat  integer NOT NULL,
-  fk_user_modif  integer
+  rowid         integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  ref           varchar(128) DEFAULT '(PROV)' NOT NULL,
+  ref_ext       varchar(128),
+  entity        integer DEFAULT 1 NOT NULL,
+  date_creation datetime NOT NULL,
+  tms           timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  import_key    varchar(14),
+  status        integer DEFAULT 1 NOT NULL,
+  label         varchar(255) NOT NULL,
+  source        varchar(255),
+  source_from   varchar(255),
+  input_data    text,
+  output_data   text,
+  score         double(24,8),
+  target_score  double(24,8),
+  fk_user_creat integer NOT NULL,
+  fk_user_modif integer,
+  fk_element    integer NOT NULL
 ) ENGINE=innodb;

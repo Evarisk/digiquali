@@ -57,7 +57,8 @@ window.digiquali.activity.init = function() {
  * @return {void}
  */
 window.digiquali.activity.event = function() {
-  $(document).on('click', '.answer-activity-create:not(.button-disable)', window.digiquali.activity.createActivity);
+  $(document).on('click', '#activity_create', window.digiquali.activity.createActivity);
+  $(document).on('click', '#activity_update', window.digiquali.activity.updateActivity);
 };
 
 /**
@@ -74,23 +75,64 @@ window.digiquali.activity.createActivity = function() {
   const token = window.saturne.toolbox.getToken();
 
   const $this    = $(this);
-  const $modal   = $this.closest('#badge_component');
+  const $modal   = $this.closest('#activity_add');
   const fromId   = $modal.data('from-id');
   const fromType = $modal.data('from-type');
-  const $list    = $(document).find(`#activity__list${fromId}`);
+  const $list    = $(document).find(`#activity-list-container`);
 
-  const label = $modal.find('#answer-activity_-label').val();
+  const label = $modal.find('#myTextareadsf').val();
+
+  window.saturne.loader.display($list);
 
   $.ajax({
-    url: `${document.URL}&action=update_badge_component&token=${token}`,
+    url: `${document.URL}&action=add_activity&token=${token}`,
     type: 'POST',
     data: JSON.stringify({
       objectLine_id:      fromId,
       objectLine_element: fromType,
+      label: label
     }),
     success: function(resp) {
-      $modal.replaceWith($(resp).find('#badge_component'));
-      $list.replaceWith($(resp).find(`#activity__list${fromId}`));
+      $modal.replaceWith($(resp).find('#activity_add'));
+      $list.replaceWith($(resp).find(`#activity-list-container`));
+    }
+  });
+};
+
+/**
+ * Update activity
+ *
+ * @memberof DigiQuali_Activity
+ *
+ * @since   21.3.0
+ * @version 21.3.0
+ *
+ * @return {void}
+ */
+window.digiquali.activity.updateActivity = function() {
+  const token = window.saturne.toolbox.getToken();
+
+  const $this    = $(this);
+  const $modal   = $this.closest('#activity_edit');
+  const fromId   = $modal.data('from-id');
+  const fromType = $modal.data('from-type');
+  const $list    = $(document).find(`#activity-list-container`);
+
+  const label = $modal.find('#myTextareadsf').val();
+
+  window.saturne.loader.display($list);
+
+  $.ajax({
+    url: `${document.URL}&action=update_activity&token=${token}`,
+    type: 'POST',
+    data: JSON.stringify({
+      object_id:      fromId,
+      object_element: fromType,
+      label: label
+    }),
+    success: function(resp) {
+      $modal.replaceWith($(resp).find('#activity_edit'));
+      $list.replaceWith($(resp).find(`#activity-list-container`));
     }
   });
 };
