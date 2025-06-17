@@ -157,7 +157,7 @@ if ( $object->element_type == 'groupment' ) {
 
 $helpUrl = 'FR:Module_DigiQuali';
 
-saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
+saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist sidebar-secondary-opened');
 
 if ( ! $object->id) {
 	$object->ref    = $conf->global->MAIN_INFO_SOCIETE_NOM;
@@ -207,9 +207,8 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     $activities = $activity->fetchAll('', '', 0, 0, ['customsql' => 't.fk_element = ' . $id]);
     foreach ($activities as $activitySingle) {
         print '<div class="activity-container">';
-
+        print '<div class="activity-container__header">';
         print $activitySingle->getNomUrl(1, '', 0, '', -1, 1);
-
         $html = <<<HTML
         <div class="wpeo-button modal-open">
             <input type="hidden" class="modal-options" data-modal-to-open="activity_edit" data-from-id="{$activitySingle->id}" data-from-type="{$activitySingle->element}" data-from-module="{$object->module}">
@@ -217,9 +216,10 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
         </div>
         HTML;
         echo $html;
+        print '</div>';
 
 
-        print '<div class="wpeo-gridlayout grid-2">';
+        print '<div class="activity-container__body wpeo-gridlayout grid-2">';
         foreach ($activitySingle->fields as $key => $val) {
             if (!isset($val['viewmode']) && $val['viewmode'] != 'badge') {
                 continue;
