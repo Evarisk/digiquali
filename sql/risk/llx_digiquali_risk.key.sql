@@ -1,4 +1,4 @@
--- Copyright (C) 2024 EVARISK <technique@evarisk.com>
+-- Copyright (C) 2025 EVARISK <technique@evarisk.com>
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-ALTER TABLE llx_categorie_survey ADD PRIMARY KEY pk_categorie_survey (fk_categorie, fk_survey);
-ALTER TABLE llx_categorie_survey ADD INDEX idx_categorie_survey_fk_categorie (fk_categorie);
-ALTER TABLE llx_categorie_survey ADD INDEX idx_categorie_survey_fk_survey (fk_survey);
-ALTER TABLE llx_categorie_survey ADD CONSTRAINT fk_categorie_survey_categorie_rowid FOREIGN KEY (fk_categorie) REFERENCES llx_categorie (rowid);
-ALTER TABLE llx_categorie_survey ADD CONSTRAINT fk_categorie_survey_digiquali_survey_rowid FOREIGN KEY (fk_survey) REFERENCES llx_digiquali_survey (rowid);
+ALTER TABLE llx_digiquali_risk ADD INDEX idx_digiquali_risk_rowid (rowid);
+ALTER TABLE llx_digiquali_risk ADD INDEX idx_digiquali_risk_ref (ref);
+ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);
+ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_projet FOREIGN KEY (fk_projet) REFERENCES llx_projet(rowid);
+ALTER TABLE llx_digiquali_risk ADD UNIQUE uk_risk_ref (ref, entity);
