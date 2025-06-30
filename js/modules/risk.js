@@ -15,52 +15,46 @@
  */
 
 /**
- * \file    js/modules/activity.js
+ * \file    js/modules/risk.js
  * \ingroup digiquali
- * \brief   JavaScript activity file
+ * \brief   JavaScript risk file
  */
 
 'use strict';
 
 /**
- * Init activity JS
- *
- * @memberof DigiQuali_Activity
+ * Init risk JS
  *
  * @since   21.3.0
  * @version 21.3.0
  */
-window.digiquali.activity = {};
+window.digiquali.risk = {};
 
 /**
- * Activity init
- *
- * @memberof DigiQuali_Activity
+ * Risk init
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.activity.init = function() {
-  window.digiquali.activity.event();
+window.digiquali.risk.init = function init() {
+  window.digiquali.risk.event();
 };
 
 /**
- * Activity event
- *
- * @memberof DigiQuali_Activity
+ * Risk event
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.activity.event = function() {
-  $(document).on('input', '#myTextareadsf', window.digiquali.activity.updateModalActivityAddButton);
+window.digiquali.risk.event = function initializeEvents() {
+  $(document).on('input', '#myTextareadsf', window.digiquali.risk.updateModalRiskAddButton);
 
-  $(document).on('click', '#activity_create', window.digiquali.activity.createActivity);
-  $(document).on('click', '#activity_update', window.digiquali.activity.updateActivity);
+  $(document).on('click', '#risk_create', window.digiquali.risk.createRisk);
+  $(document).on('click', '#risk_update', window.digiquali.risk.updateRisk);
 };
 
 /**
@@ -71,10 +65,10 @@ window.digiquali.activity.event = function() {
  *
  * @return {void}
  */
-window.digiquali.activity.updateModalActivityAddButton = function() {
+window.digiquali.risk.updateModalRiskAddButton = function updateModalRiskAddButton() {
   const $this   = $(this);
-  const $modal  = $this.closest('#activity_add');
-  const $button = $modal.find('#activity_create');
+  const $modal  = $this.closest('#risk_add');
+  const $button = $modal.find('#risk_create');
   const value   = $this.val();
 
   if (value.length > 0) {
@@ -85,30 +79,28 @@ window.digiquali.activity.updateModalActivityAddButton = function() {
 };
 
 /**
- * Create activity
- *
- * @memberof DigiQuali_Activity
+ * Create risk
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.activity.createActivity = function() {
+window.digiquali.risk.createRisk = function createRisk() {
   const token = window.saturne.toolbox.getToken();
 
   const $this    = $(this);
-  const $modal   = $this.closest('#activity_add');
+  const $modal   = $this.closest('#risk_add');
   const fromId   = $modal.data('from-id');
   const fromType = $modal.data('from-type');
-  const $list    = $(document).find(`#activity-list-container`);
+  const $list    = $(document).find(`#risk-list-container`);
 
   const label = $modal.find('#myTextareadsf').val();
 
   window.saturne.loader.display($list);
 
   $.ajax({
-    url: `${document.URL}&action=add_activity&token=${token}`,
+    url: `${document.URL}&action=add_risk&token=${token}`,
     type: 'POST',
     data: JSON.stringify({
       objectLine_id:      fromId,
@@ -117,37 +109,35 @@ window.digiquali.activity.createActivity = function() {
       token: token
     }),
     success: function(resp) {
-      $modal.replaceWith($(resp).find('#activity_add'));
-      $list.replaceWith($(resp).find(`#activity-list-container`));
+      $modal.replaceWith($(resp).find('#risk_add'));
+      $list.replaceWith($(resp).find(`#risk-list-container`));
     }
   });
 };
 
 /**
- * Update activity
- *
- * @memberof DigiQuali_Activity
+ * Update risk
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.activity.updateActivity = function() {
+window.digiquali.risk.updateRisk = function updateRisk() {
   const token = window.saturne.toolbox.getToken();
 
   const $this    = $(this);
-  const $modal   = $this.closest('#activity_edit');
+  const $modal   = $this.closest('#risk_edit');
   const fromId   = $modal.data('from-id');
   const fromType = $modal.data('from-type');
-  const $list    = $(document).find(`#activity-list-container`);
+  const $list    = $(document).find(`#risk-list-container`);
 
   const label = $modal.find('#myTextareadsf').val();
 
   window.saturne.loader.display($list);
 
   $.ajax({
-    url: `${document.URL}&action=update_activity&token=${token}`,
+    url: `${document.URL}&action=update_risk&token=${token}`,
     type: 'POST',
     data: JSON.stringify({
       object_id:      fromId,
@@ -155,8 +145,8 @@ window.digiquali.activity.updateActivity = function() {
       label: label
     }),
     success: function(resp) {
-      $modal.replaceWith($(resp).find('#activity_edit'));
-      $list.replaceWith($(resp).find(`#activity-list-container`));
+      $modal.replaceWith($(resp).find('#risk_edit'));
+      $list.replaceWith($(resp).find(`#risk-list-container`));
     }
   });
 };
