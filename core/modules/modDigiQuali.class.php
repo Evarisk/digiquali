@@ -501,19 +501,36 @@ class modDigiQuali extends DolibarrModules
         $this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
         $r++;
 
+        /* DIGIQUALI STANDDARD PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('DigiQualiStandards')));
+        $this->rights[$r][4] = 'digiqualistandard';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('DigiQualiStandards')));
+        $this->rights[$r][4] = 'digiqualistandard';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('DigiQualiStandards')));
+        $this->rights[$r][4] = 'digiqualistandard';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
         /* DIGIQUALI ELEMENT PERMISSSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Test')));
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('DigiQualiElements')));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'read';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Test')));
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('DigiQualiElements')));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'write';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Test')));
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('DigiQualiElements')));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'delete';
         $r++;
@@ -742,8 +759,8 @@ class modDigiQuali extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=digiquali',
             'type'     => 'left',
-            'titre'    => $langs->trans('TEST'),
-            'prefix'   => '<i class="fas fa-exclamation-triangle pictofixedwidth"></i>',
+            'titre'    => $langs->trans('Mapping'),
+            'prefix'   => '<i class="fas fa-sitemap pictofixedwidth"></i>',
             'mainmenu' => 'digiquali',
             'leftmenu' => 'digiqualistandard',
             'url'      => '/digiquali/view/digiqualistandard/digiqualistandard_card.php?module_name=digiquali',
