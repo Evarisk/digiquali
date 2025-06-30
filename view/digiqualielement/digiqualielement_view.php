@@ -35,6 +35,7 @@ require_once __DIR__ . '/../../digiquali.inc.php';
 require_once __DIR__ . '/../../class/digiqualielement.class.php';
 require_once __DIR__ . '/../../class/digiqualistandard.class.php';
 require_once __DIR__ . '/../../class/activity.class.php';
+require_once __DIR__ . '/../../class/risk.class.php';
 require_once __DIR__ . '/../../lib/digiquali_digiqualielement.lib.php';
 
 // Global variables definitions
@@ -61,6 +62,7 @@ $fkStandard          = GETPOSTISSET('fk_standard') ? GETPOSTINT('fk_standard') :
 $object            = new DigiQualiElement($db);
 $digiQualiStandard = new DigiQualiStandard($db);
 $activity          = new Activity($db);
+$risk              = new Digiquali\Risk($db);
 $extrafields       = new ExtraFields($db);
 
 // Initialize view objects
@@ -69,7 +71,7 @@ $form = new Form($db);
 // Fetch optionals attributes and labels
 $extrafields->fetch_name_optionals_label($object->table_element);
 
-$hookmanager->initHooks([$object->element . 'card', $object->module. 'view', 'globalcard']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks([$object->element . 'card', $object->module . 'view', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Load object
 require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php';
@@ -131,7 +133,7 @@ if (empty($reshook)) {
 //    $object->element = $object->element_type;
 
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/component_actions.tpl.php';
-    require_once __DIR__ . '/../../core/tpl/digiquali_activity_action.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/actions/digiquali_activity_actions.tpl.php';
 }
 
 /*
@@ -168,7 +170,7 @@ if ( ! $object->id) {
 
 // Part to show record
 if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
-    saturne_get_fiche_head($object, 'card', $title);
+    saturne_get_fiche_head($object, $activity->element, $title);
     saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true);
 
     print '<div class="fichecenter">';
@@ -185,6 +187,8 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     require_once __DIR__ . '/../../core/tpl/modal/modal_activity_add.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/modal_activity_edit.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/modal/modal_risk_add.tpl.php';
+
 
     //$activity->ref          = 'A2024-0001';s
     //$activity->source       = 'Processus direction';
@@ -218,7 +222,6 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
         echo $html;
         print '</div>';
 
-
         print '<div class="activity-container__body wpeo-gridlayout grid-2">';
         foreach ($activitySingle->fields as $key => $val) {
             if (!isset($val['viewmode']) && $val['viewmode'] != 'badge') {
@@ -226,7 +229,7 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
             }
             echo saturne_get_badge_component_html([
                 'id'        => 'badge_component_' . $key . '_' . $activitySingle->id,
-                'iconClass' => 'fas fa-user',
+                'iconClass' => $val['picto'] ?? '',
                 'title'     => $val['label'],
                 'details'   => [$activitySingle->{$key} ?? $langs->transnoentities('NotKnown')],
                 'actions'   => [
@@ -249,6 +252,7 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
                 ],
             ]);
         }
+        require_once __DIR__ . '/../../core/tpl/digiquali_risk_list_view.tpl.php';
         print '</div>';
         print '</div>';
     }

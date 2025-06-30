@@ -488,6 +488,7 @@ Mapping = Cartographie
 # Data - Donnée
 Process       = Processus
 SubProcess    = Sous-processus
+Subprocess    = Sous-processus
 NewProcess    = Nouveau processus
 NewSubprocess = Nouveau sous-processus
 
@@ -498,8 +499,11 @@ NewSubprocess = Nouveau sous-processus
 #
 
 # Data - Donnée
-InputData  = Données d'entrées
-OutputData = Données de sorties
+InputData      = Données d'entrées
+OutputData     = Données de sorties
+ActualScore    = Score actuel
+TargetScore    = Score cible
+ActivityCreate = Ajout de l'activité
 
 
 

@@ -30,7 +30,32 @@
  */
 function digiqualielement_prepare_head(DigiQualiElement $object): array
 {
-    $moreparam['specialName'] = 'Processus';
+    // Global variables definitions
+    global $conf, $langs, $user;
+
+    // Load translation files required by the page
+    saturne_load_langs();
+
+    // Initialize values
+    $h    = -10;
+    $head = [];
+
+    if ($object->id > 0 && $user->hasRight($object->module, $object->element, 'read')) {
+        if ($user->hasRight($object->module, 'activity', 'read')) {
+            $head[$h][0] = dol_buildpath($object->module . '/view/' . $object->element . '/' . $object->element . '_view.php', 1) . '?id=' . $object->id;
+            $head[$h][1] = $conf->browser->layout == 'classic' ? '<i class="fas fa-tasks pictofixedwidth"></i>' . $langs->trans('Activities') : '<i class="fas fa-tasks"></i>';
+            $head[$h][2] = 'activity';
+        }
+
+//        if ($user->hasRight('ticket', 'read')) {
+//            $head[$h][0] = dol_buildpath($object->module . '/view/digiriskelement/digiriskelement_register.php', 1) . '?id=' . $object->id;
+//            $head[$h][1] = $conf->browser->layout == 'classic' ? '<i class="fa fa-ticket-alt pictofixedwidth"></i>' . $langs->trans('Tickets') : '<i class="fas fa-ticket-alt"></i>';
+//            $head[$h][2] = 'elementRegister';
+//        }
+    }
+
+    $moreparam['specialName'] = $langs->trans(dol_ucfirst($object->element_type));
     $moreparam['handlePhoto'] = true;
-    return saturne_object_prepare_head($object, [], $moreparam);
+
+    return saturne_object_prepare_head($object, $head, $moreparam);
 }

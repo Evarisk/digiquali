@@ -87,10 +87,11 @@ if (empty($resHook)) {
 $title   = $langs->trans('Informations');
 $helpUrl = 'FR:Module_DigiQuali';
 
-saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
+saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist sidebar-secondary-opened');
 
 // Part to show record
 if ($object->id > 0) {
+    print '<div>';
     saturne_get_fiche_head($object, 'card', $title);
     saturne_banner_tab($object, 'ref', 'none', 0, 'ref', 'ref', '', true);
 
@@ -101,6 +102,7 @@ if ($object->id > 0) {
     print '</div>';
 
     print dol_get_fiche_end();
+    print '</div>';
 }
 
 // End of page

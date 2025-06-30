@@ -518,7 +518,41 @@ class modDigiQuali extends DolibarrModules
         $this->rights[$r][5] = 'delete';
         $r++;
 
-		/* ADMINPAGE PANEL ACCESS PERMISSIONS */
+        /* ACTIVITY PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Activity')));
+        $this->rights[$r][4] = 'activity';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Activity')));
+        $this->rights[$r][4] = 'activity';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Activity')));
+        $this->rights[$r][4] = 'activity';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* RISK PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Risk')));
+        $this->rights[$r][4] = 'risk';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Risk')));
+        $this->rights[$r][4] = 'risk';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Risk')));
+        $this->rights[$r][4] = 'risk';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* ADMINPAGE PANEL ACCESS PERMISSIONS */
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
 		$this->rights[$r][1] = $langs->transnoentities('ReadAdminPage', 'DigiQuali');
 		$this->rights[$r][4] = 'adminpage';

@@ -17,33 +17,35 @@
 
 /**
  * \file    core/tpl/modal/modal_activity_add.tpl.php
- * \ingroup saturne
+ * \ingroup digiquali
  * \brief   Template page for modal activity add
  */
 
 /**
  * The following vars must be defined:
- * Global   : $langs
- * Objects  : $object
- * Variable : $taskNextValue
+ * Global  : $langs
+ * Objects : $activity
  */ ?>
 
 <div class="wpeo-modal modal-activity-add" id="activity_add">
     <div class="modal-container wpeo-modal-event">
         <!-- Modal-Header -->
         <div class="modal-header">
-            <h2 class="modal-title"></h2>
+            <h2 class="modal-title"><?php echo $langs->trans('ActivityCreate') . ' ' . $activity->getNextNumRef(); ?></h2>
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <!-- Modal-Content -->
         <div class="modal-content">
-            <div class="answer-task-container">
-                <textarea id="myTextareadsf" name="myTextarea" rows="4" cols="50"></textarea>
+            <div class="">
+                <label>
+                    <span class="title"><?php echo $langs->trans('Label'); ?></span>
+                    <input type="text" id="myTextareadsf" name="myTextarea">
+                </label>
             </div>
         </div>
         <!-- Modal-Footer -->
         <div class="modal-footer">
-            <div class="wpeo-button modal-close" id="activity_create">
+            <div class="wpeo-button button-disable modal-close" id="activity_create">
                 <i class="fas fa-plus pictofixedwidth"></i><?php echo $langs->trans('Add'); ?>
             </div>
         </div>

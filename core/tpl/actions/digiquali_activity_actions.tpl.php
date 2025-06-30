@@ -16,9 +16,9 @@
  */
 
 /**
- * \file    core/tpl/digiquali_activity_action.tpl.php
+ * \file    core/tpl/actions/digiquali_activity_actions.tpl.php
  * \ingroup digiquali
- * \brief   Template page for answers activity action
+ * \brief   Template page for activity actions
  */
 
 /**
@@ -63,3 +63,5 @@ if ($action == 'delete_activity' && !empty($permissionToDeleteActivity)) {
     $activity->delete($user);
     // @todo manage error
 }
+
+require_once __DIR__ . '/digiquali_risk_actions.tpl.php';
