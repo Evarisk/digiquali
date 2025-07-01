@@ -503,34 +503,34 @@ class modDigiQuali extends DolibarrModules
 
         /* DIGIQUALI STANDDARD PERMISSSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('DigiQualiStandards')));
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('DigiQualiStandards'));
         $this->rights[$r][4] = 'digiqualistandard';
         $this->rights[$r][5] = 'read';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('DigiQualiStandards')));
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('DigiQualiStandards'));
         $this->rights[$r][4] = 'digiqualistandard';
         $this->rights[$r][5] = 'write';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('DigiQualiStandards')));
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('DigiQualiStandards'));
         $this->rights[$r][4] = 'digiqualistandard';
         $this->rights[$r][5] = 'delete';
         $r++;
 
         /* DIGIQUALI ELEMENT PERMISSSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('DigiQualiElements')));
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('DigiQualiElements'));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'read';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('DigiQualiElements')));
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('DigiQualiElements'));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'write';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('DigiQualiElements')));
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('DigiQualiElements'));
         $this->rights[$r][4] = 'digiqualielement';
         $this->rights[$r][5] = 'delete';
         $r++;

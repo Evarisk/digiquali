@@ -152,7 +152,7 @@ if ( $object->element_type == 'groupment' ) {
 
 $helpUrl = 'FR:Module_DigiQuali';
 
-saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
+saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist sidebar-secondary-opened');
 
 // Part to create
 if ($action == 'create') {
