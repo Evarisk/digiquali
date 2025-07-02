@@ -467,6 +467,9 @@ if ($action == 'create') {
                                 $objectName .= $objectSingle->$subnameField . ' ';
                             }
                         }
+                    } elseif ($objectType == 'productlot') {
+                        $product->fetch($objectSingle->fk_product);
+                        $objectName = $objectSingle->$nameField . ' - ' . $product->ref;
                     } else {
                         $objectName = $objectSingle->$nameField;
                     }
