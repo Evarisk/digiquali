@@ -30,10 +30,11 @@
 // Permission
 $permissionToAddTask  = $user->hasRight('projet', 'creer') || $user->hasRight('projet', 'all', 'creer');
 $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('projet', 'all', 'lire');
-
 ?>
 
-<div class="risk-list__container" id="risk_list_container_<?php echo $activitySingle->id ?>">
+<div class="risk-list__container gridw-2" id="risk_list_container_<?php echo $activitySingle->id ?>">
+    <div class="risk-list__level red"></div> <!-- 4 colors: yellow, orange, red, black -->
+
     <div class="risk__content">
         <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
             <?php if ($object->status == 0) : ?>
@@ -50,29 +51,48 @@ $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('pr
                     <i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>
                 </div>
             <?php endif; ?>
+            <div class="risk__content-medias">
+                <?php echo saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, $question, '', 0, $object->status == 0, 1); ?>
+            </div>
         </div>
-        <div class="risk__content-medias">
-            <?php echo saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, $question, '', 0, $object->status == 0, 1); ?>
+        <div class="risk__content-container">
+            <div class="risk__content-heading">
+                <div class="risk-ref"><?php echo $risk->getNomUrl(1, '', 0, '', -1, 1); ?>RA10</div>
+                <div class="risk-tags">Nom du tag<?php echo $risk->description; ?></div>
+                <div class="risk-date"><i class="fas fa-calendar-alt"></i> 26/02//2025 - 30/02/2025<?php echo $risk->description; ?></div>
+                <div class="risk-control-percentage"><i class="fas fa-clipboard-list"></i>Maîtrise : <strong><?php echo $risk->control_percentage; ?></strong></div>
+                <div class="risk-residual-risk"><i class="fas fa-exclamation-triangle"></i>Risque résiduel : <strong>16<?php echo $risk->description; ?></strong></div>
+            </div>
+            <div class="risk__content-body">
+                <div class="risk-description"><?php echo $risk->description; ?>Description du risque</div>
+            </div>
         </div>
-        <div class="risk-ref"><?php echo $risk->getNomUrl(1, '', 0, '', -1, 1); ?></div>
-        <div class="risk-tags"><?php echo $risk->description; ?></div>
-        <div class="risk-date"><?php echo $risk->description; ?></div>
-        <div class="risk-control-percentage"><?php echo $risk->control_percentage; ?></div>
-        <div class="risk-residual-risk"><?php echo $risk->description; ?></div>
-        <div class="risk-description"><?php echo $risk->description; ?></div>
-        <div class="wpeo-button modal-open">
-            <input type="hidden" class="modal-options" data-modal-to-open="risk_add" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
-            <i class="fas fa-plus"></i>
+
+        <div class="risk-list__actions">
+            <div class="wpeo-button button-square-40 button-rounded modal-open">
+                <input type="hidden" class="modal-options" data-modal-to-open="risk_add" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
+                <i class="fas fa-plus"></i>
+            </div>
         </div>
     </div>
     <div class="task__content">
-        <div class="task-ref"><?php echo $risk->getNomUrl(1, '', 0, '', -1, 1); ?></div>
-        <div class="task-date"><?php echo $risk->description; ?></div>
-        <div class="task-description"><?php echo $risk->description; ?></div>
+        <input type="checkbox" />
+        <div class="task__content-container">
+            <div class="task__content-heading">
+                <div class="task-ref"><?php echo $risk->getNomUrl(1, '', 0, '', -1, 1); ?>TIK2111-0111</div>
+                <div class="task-date"><i class="fas fa-calendar-alt"></i> 26/02//2025 - 30/02/2025<?php echo $risk->description; ?></div>
+            </div>
+            <div class="task__content-body">
+                <div class="task-description"><?php echo $risk->description; ?>Description de la tâche</div>
+            </div>
+        </div>
+
         <?php if (!empty($object->project) && !empty($permissionToAddTask)) : ?>
-            <div class="wpeo-button button-square-50 add-action modal-open">
-                <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
-                <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
+            <div class="risk-list__actions">
+                <div class="wpeo-button button-square-40 button-rounded add-action modal-open">
+                    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
+                    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
+                </div>
             </div>
         <?php endif; ?>
         <?php if (!empty($permissionToReadTask)) :

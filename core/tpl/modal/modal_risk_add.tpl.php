@@ -34,54 +34,58 @@
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <div class="modal-content">
-            <div class="modal-section">
+            <div class="modal-section wpeo-grid grid-2">
                 <label class="modal-label">Photo</label>
                 <div class="modal-photo-upload">
-                    <button class="icon-button"><i class="fas fa-camera"></i></button>
-                    <button class="icon-button"><i class="fas fa-folder"></i></button>
-                    <button class="icon-button"><i class="fas fa-plus"></i></button>
+                    <button class="wpeo-button button-square-40 icon-button"><i class="button-icon fas fa-camera"></i><span class="button-add animated fas fa-plus-circle"></span></button>
+                    <button class="wpeo-button button-square-40 icon icon-button"><i class="fas fa-folder"></i><span class="button-add animated fas fa-plus-circle"></span></button>
+                    <button class="wpeo-button button-square-40 icon icon-button"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
 
-            <div class="modal-section">
+            <div class="modal-section wpeo-grid grid-2">
                 <label class="modal-label" for="risk_tags">Tags</label>
-                <input type="text" id="risk_tags" name="risk_tags" value="Nom du tag">
+                <div>
+                    <input type="text" id="risk_tags" name="risk_tags" value="Nom du tag">
+                </div>
             </div>
 
-            <div class="modal-section">
+            <div class="modal-section wpeo-grid grid-2">
                 <label class="modal-label" for="risk_description">Description</label>
-                <textarea id="risk_description" name="risk_description" rows="4"></textarea>
+                <div>
+                    <textarea id="risk_description" name="risk_description" rows="4"></textarea>
+                </div>
             </div>
 
-            <div class="modal-section modal-row">
+            <div class="modal-section modal-row wpeo-grid grid-2">
                 <label class="modal-label">Gravité</label>
                 <div class="input-group">
                     <div class="mood-icons">
-                        <button class="mood-button"><i class="far fa-smile"></i></button>
-                        <button class="mood-button"><i class="far fa-meh"></i></button>
-                        <button class="mood-button active"><i class="far fa-frown"></i></button>
-                        <button class="mood-button"><i class="fas fa-skull"></i></button>
+                        <button class="mood-button button-grey"><i class="button-icon fas fa-smile"></i></button>
+                        <button class="mood-button button-yellow"><i class="button-icon fas fa-meh"></i></button>
+                        <button class="mood-button button-red active"><i class="button-icon fas fa-frown"></i></button>
+                        <button class="mood-button button-black"><i class="button-icon fas fa-skull"></i></button>
                     </div>
                     <input type="number" value="80" class="small-input">
                     <span class="unit">%</span>
                 </div>
             </div>
 
-            <div class="modal-section modal-row">
+            <div class="modal-section modal-row wpeo-grid grid-2">
                 <label class="modal-label">Fréquence</label>
                 <div class="input-group">
                     <div class="frequency-buttons">
-                        <button class="frequency-button">1D</button>
-                        <button class="frequency-button active">1W</button>
-                        <button class="frequency-button">1M</button>
-                        <button class="frequency-button">1Y</button>
+                        <button class="frequency-button button-grey">1D</button>
+                        <button class="frequency-button button-yellow active">1W</button>
+                        <button class="frequency-button button-red">1M</button>
+                        <button class="frequency-button button-black">1Y</button>
                     </div>
                     <input type="number" value="80" class="small-input">
                     <span class="unit">%</span>
                 </div>
             </div>
 
-            <div class="modal-section modal-row">
+            <div class="modal-section modal-row wpeo-grid grid-2">
                 <label class="modal-label">Maîtrise</label>
                 <div class="input-group">
                     <span class="range-value">0</span>
@@ -92,37 +96,43 @@
                 </div>
             </div>
 
-            <div class="modal-summary-boxes">
+            <div class="modal-summary-boxes wpeo-gridlayout grid-2">
                 <div class="summary-box">
-                    <span class="summary-title">Risque résiduel</span>
-                    <span class="summary-subtitle">Risque x maitrise</span>
+                    <div class="summary-box-content">
+                        <span class="summary-title">Risque résiduel</span>
+                        <span class="summary-subtitle">Risque x maitrise</span>
+                    </div>
                     <span class="summary-percentage green">80%</span>
                 </div>
                 <div class="summary-box">
-                    <span class="summary-title">Risque</span>
-                    <span class="summary-subtitle">Gravité x fréquence</span>
+                    <div class="summary-box-content">
+                        <span class="summary-title">Risque</span>
+                        <span class="summary-subtitle">Gravité x fréquence</span>
+                    </div>
                     <span class="summary-percentage green">80%</span>
                 </div>
             </div>
 
             <div class="modal-last-added-risk">
                 <h3>Dernier risque ajouté</h3>
-                <div class="risk-item">
-                    <div class="risk-thumbnail">
-                        <img src="https://via.placeholder.com/60x60" alt="Risk thumbnail">
-                    </div>
-                    <div class="risk-details">
-                        <div class="risk-header">
-                            <span class="risk-code">RA10</span>
-                            <span class="risk-tag">Nom du tag (10)</span>
-                            <span class="risk-date"><i class="far fa-calendar-alt"></i> 26/02/2025</span>
-                            <span class="risk-mastery"><i class="fas fa-shield-alt"></i> Maîtrise : 20%</span>
+                <div class="risk-list__container">
+                    <div class="risk__content">
+                        <div class="risk-thumbnail">
+                            <img src="https://via.placeholder.com/60x60" alt="Risk thumbnail">
                         </div>
-                        <div class="risk-residual">
-                            <i class="fas fa-exclamation-triangle"></i> Risque résiduel : 16
-                        </div>
-                        <div class="risk-description">
-                            Manque de compétence
+                        <div class="risk__content-container">
+                            <div class="risk__content-heading">
+                                <span class="risk-ref">RA10</span>
+                                <span class="risk-tags">Nom du tag (10)</span>
+                                <span class="risk-date"><i class="fas fa-calendar-alt"></i> 26/02/2025</span>
+                                <span class="risk-mastery"><i class="fas fa-shield-alt"></i> Maîtrise : 20%</span>
+                                <span class="risk-residual"><i class="fas fa-exclamation-triangle"></i> Risque résiduel : 16</span>
+                            </div>
+                            <div class="risk__content-body">
+                                <div class="risk-description">
+                                    Manque de compétence
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
