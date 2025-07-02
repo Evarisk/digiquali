@@ -326,7 +326,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print $langs->trans("Description");
 	print '</td>';
 	print '<td>';
-	print $object->description;
+    print dol_htmlentitiesbr($object->description);
 	print '</td></tr>';
 
 	// Categories

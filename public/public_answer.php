@@ -168,9 +168,9 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_SHOW_TITLE')) {
 $publicInterface = true;
 
 $sheet->fetch($object->fk_sheet);
-$questions = $sheet->fetchAllQuestions();
+$questionsAndGroups = $sheet->fetchQuestionsAndGroups();
 
-require_once __DIR__ . '/../core/tpl/frontend/digiquali_answers_frontend.tpl.php';
+require_once __DIR__ . '/../core/tpl/digiquali_answers.tpl.php';
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signatory->id > 0) {
     $previousStatus        = $object->status;
     $object->status        = $object::STATUS_VALIDATED; // Special case because public answer need draft status object to complete question

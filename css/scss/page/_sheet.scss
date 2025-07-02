@@ -28,12 +28,14 @@
 
 .group-header {
   cursor: pointer;
-  padding: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #ddd;
-  background-color: #eaeaea;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  margin: 5px 0;
+  border: 1px solid #dee2e6;
 }
 
 .group-questions {
@@ -48,6 +50,15 @@
 }
 
 .toggle-icon {
-  font-size: 20px;
-  color: #555;
+  background-color: #6c757d;
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 16px;
 }

@@ -157,7 +157,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
                 $questionAnswers = [$questionAnswer];
             }
 
-            $out .= '<div class="table-cell select-answer answer-cell">';
+            $out .= '<div class="table-cell select-answer answer-cell" data-questionId="' . $question->id . '">';
             $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" value="0">';
             if (is_array($answers) && !empty($answers)) {
                 foreach($answers as $answer) {

@@ -440,6 +440,11 @@ controldocument                         = fiche de controle
 controldocument.odt                     = Fiche de Contrôle
 controldocument_photo.odt               = Fiche de Contrôle avec photos
 controldocument_photo                   = fiche de controle avec photos
+controldocument_photo_landscape_actions = fiche de controle avec photos (paysage)
+controldocument_photo_landscape_actions.odt = Fiche de Contrôle avec photos (paysage)
+controldocument_withgood-notgood-medias = fiche de contrôle avec photos (bon/mauvais)
+controldocument_withgood-notgood-medias.odt = Fiche de Contrôle avec photos (bon/mauvais)
+
 
 
 

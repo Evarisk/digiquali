@@ -228,6 +228,18 @@ if (empty($reshook)) {
 		}
 	}
 
+	if ($action == 'moveLineInGroup' && $permissiontoadd) {
+		$idsArray = json_decode(file_get_contents('php://input'), true);
+		$groupId = GETPOST('groupId', 'int');
+
+		if ($groupId > 0 && is_array($idsArray['order']) && !empty($idsArray['order'])) {
+			$questionGroup->fetch($groupId);
+			$ids = array_values($idsArray['order']);
+			$reIndexedIds = array_combine(range(1, count($ids)), array_values($ids));
+			$questionGroup->updateQuestionPosition($reIndexedIds);
+		}
+	}
+
 	// Action to delete
 	if ($action == 'confirm_delete' && !empty($permissiontodelete)) {
 		if (!($object->id > 0)) {
@@ -747,7 +759,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
                 print '<tr id="group-' . $group->id . '" class="line-row question-group">';
                 print '<td colspan="8">';
                 print '<div class="group-header" onclick="window.digiquali.sheet.toggleGroup(' . $group->id . ')">';
-                print '<span class="group-title">' . $group->getNomUrl(1) . '</span>';
+                print '<span class="group-title">' . $group->getNomUrl(1) . ' - ' . $group->label . '</span>';
                 print '<span class="toggle-icon">+</span>';
                 print '</div>';
                 print '</td>';
@@ -766,7 +778,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
                 if (is_array($groupQuestions) && !empty($groupQuestions)) {
                     foreach ($groupQuestions as $question) {
-                        print '<tr id="question-' . $question->id . '" class="hidden group-question group-question-'. $group->id .'">';
+                        print '<tr id="question-' . $question->id . '" class="hidden group-question group-question-'. $group->id .' line-row-group" data-group-id="' . $group->id . '">';
                         print '<td style="padding-left: 20px;">' . $question->getNomUrl(1) . '</td>';
                         print '<td>' . $question->label . '</td>';
                         print '<td>' . $question->description . '</td>';
@@ -786,6 +798,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
                             ) . '</td>';
                         print '<td class="center">' . $question->getLibStatut(5) . '</td>';
                         print '<td class="center">';
+                        print '</td>';
+                        if ($object->status < $object::STATUS_LOCKED) {
+                            print '<td class="sheet-move-line ui-sortable-handle group-question-handle" data-group-id="' . $group->id . '">';
+                        } else {
+                            print '<td>';
+                        }
                         print '</td>';
                         print '</tr>';
                     }
@@ -866,7 +884,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="id" value="' . $id . '">';
         print '<td class="widthcentpercentminusx">';
-        print img_picto('', $questionGroup->picto, 'class="pictofixedwidth"') . $questionGroup->selectQuestionGroupList(0, 'questionGroupId', 's.status = ' . QuestionGroup::STATUS_VALIDATED, '1', 0, 0, array(), '', 0, 0, 'maxwidth600 minwidth400 widthcentpercentminusx', '', false, $questionsAndGroupsIdsArray['questiongroup']);
+        print img_picto('', $questionGroup->picto, 'class="pictofixedwidth"') . $questionGroup->selectQuestionGroupList(0, 'questionGroupId', 's.status IN (' . QuestionGroup::STATUS_VALIDATED . ', ' . QuestionGroup::STATUS_LOCKED . ')', '1', 0, 0, array(), '', 0, 0, 'maxwidth600 minwidth400 widthcentpercentminusx', '', false, $questionsAndGroupsIdsArray['questiongroup']);
         print '</td>';
         print '<td>';
         print '<input type="hidden" name="action" value="addQuestionGroup">';

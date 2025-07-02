@@ -40,7 +40,7 @@ require_once __DIR__ . '/../class/sheet.class.php';
 require_once __DIR__ . '/../lib/digiquali.lib.php';
 
 // Global variables definitions
-global $conf, $db, $langs, $user;
+global $conf, $db, $entity, $langs, $user;
 
 saturne_load_langs(['exports']);
 

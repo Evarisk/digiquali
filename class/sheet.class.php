@@ -731,19 +731,24 @@ class Sheet extends SaturneObject
                 if ($questionOrGroup->element == 'questiongroup') {
                     $questionsInGroup = $questionOrGroup->fetchQuestionsOrderedByPosition();
                     $groupHasQuestions = !empty($questionsInGroup);
-
-                    $out .= '  <li class="group-item '. ($typeSelected == 'questiongroup' && $idSelected == $questionOrGroup->id ? 'selected' : '') .'" data-id="'. $questionOrGroup->id .'">';
-                    $out .= '    <span class="icon fas '. ($groupHasQuestions ? 'fa-chevron-up' : '') . ' fa-fw toggle-group-in-tree" style="margin-right: 10px;"></span>';
+                    $out .= '  <li class="group-item ' . ($typeSelected == 'questiongroup' && $idSelected == $questionOrGroup->id ? 'selected' : '') . '" data-id="' . $questionOrGroup->id . '">';
+                    $out .= '    <span class="icon fas ' . ($groupHasQuestions ? 'fa-chevron-right' : '') . ' fa-fw toggle-group-in-tree" style="margin-right: 10px;"></span>';
                     $out .= '    <span class="icon fas fa-folder fa-2x"></span>';
-                    $out .= '    <a href="'. $questionGroupCardUrl . '?id=' . $questionOrGroup->id . '&sheet_id='. $this->id .'" class="group-item-link">';
+                    $out .= '    <a href="' . $questionGroupCardUrl . '?id=' . $questionOrGroup->id . '&sheet_id=' . $this->id . '" class="group-item-link">';
                     $out .= '      <div class="title-container">';
-                    $out .= '          <span class="ref">' . $questionOrGroup->ref . '</span>';
-                    $out .= '          <span class="label">' . $questionOrGroup->label . '</span>';
+                    $out .= '        <span class="ref">' . $questionOrGroup->ref . '</span>';
+                    $out .= '        <span class="label">' . $questionOrGroup->label . '</span>';
+                    $out .= '      </div>';
+                    $out .= '      <div class="add-object-container">';
+                    $out .= '        <a id="newQuestion" href="' . $questionCardUrl . '?action=create&sheet_id=' . $this->id . '">';
+                    $out .= '          <div class="wpeo-button button-square-30 wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestion') . '">';
+                    $out .= '            <strong>' . $modQuestion->prefix . '</strong><span class="button-add animated fas fa-plus-circle"></span>';
+                    $out .= '          </div>';
+                    $out .= '        </a>';
                     $out .= '      </div>';
                     $out .= '    </a>';
-                    $out .= '    <a href="'. $questionCardUrl . '?action=create&sheet_id='. $this->id .'&question_group_id='. $questionOrGroup->id .'" class="add-question-btn" title="Ajouter une question">';
-                    $out .= '      <span class="fas fa-plus-circle"></span>';
-                    $out .= '    </a>';
+                    $out .= '  </li>';
+
                     $out .= '  </li>';
 
                     if ($groupHasQuestions) {

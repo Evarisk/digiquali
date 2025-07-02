@@ -49,7 +49,7 @@ if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER or empty($questio
                 <?php if ($question->enter_comment > 0) : ?>
                     <label class="question__footer-comment">
                         <i class="far fa-comment-dots question-comment-icon"></i>
-                        <input class="question-textarea question-comment" name="comment<?php echo $question->id; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" value="<?php echo $comment; ?>" <?php echo ($object->status == 2 ? 'disabled' : ''); ?>>
+                        <input class="question-textarea question-comment" name="comment<?php echo $question->id . "_" . $questionGroupId; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" value="<?php echo $comment; ?>" <?php echo ($object->status == 2 ? 'disabled' : ''); ?>>
                     </label>
                 <?php endif; ?>
                 <?php if ($question->authorize_answer_photo > 0) : ?>

@@ -38,8 +38,24 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
 
             $questionGroup->fetch($questionGroupId);
             $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
-            print '<div class="digiquali-question-group">';
-            print '<h3>' . img_picto('', $questionGroup->picto) . ' ' . htmlspecialchars($questionGroup->label) . '</h3>';
+
+            $totalQuestions = 0;
+            $answeredQuestions = 0;
+            if (is_array($groupQuestions) && !empty($groupQuestions)) {
+                $totalQuestions = count($groupQuestions);
+                foreach ($groupQuestions as $questionInGroup) {
+                    $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionInGroup->id, $questionGroupId);
+                    if (is_array($result) && !empty($result)) {
+                        $lineInGroup = array_shift($result);
+                        if (!empty($lineInGroup->answer)) {
+                            $answeredQuestions++;
+                        }
+                    }
+                }
+            }
+
+            print '<div class="digiquali-question-group" id="'. $questionGroup->id .'">';
+            print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $answeredQuestions . '/' . $totalQuestions . ' réponses aux questions</span></h3>';
             if (!empty($questionGroup->description)) {
                 print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
             }
