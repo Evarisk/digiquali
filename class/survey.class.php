@@ -669,6 +669,89 @@ class Survey extends SaturneObject
 
         return $ret;
     }
+
+    /**
+     * Calculate the total number of points for correct answers and the total possible number of points
+     * (on the current survey)
+     *
+     * @return array
+     */
+    public function calculatePoints(): array
+    {
+        $surveyTotalPoints = 0;
+        $surveyCorrectAnswersTotalPoints = 0;
+
+        // Extract group ids of the survey
+        $questionGroupIds = [];
+        foreach ($this->lines as $questionAnswer) {
+            // Manage independant questions (not in a group)
+            if (is_null($questionAnswer->fk_question_group)) {
+                $question = new Question($this->db);
+                if ($question->checkAnswerIsCorrect($this)) {
+                    $surveyCorrectAnswersTotalPoints += $question->points;
+                }
+                $surveyTotalPoints += $question->points;
+            }
+            // Manage group of questions (treated after foreach)
+            else if (!in_array($questionAnswer->fk_question_group, $questionGroupIds)) {
+                $questionGroupIds[] = $questionAnswer->fk_question_group;
+            }
+        }
+
+        // Add points for all the question groups of the survey
+        foreach ($questionGroupIds as $questionGroupId) {
+            
+            $questionGroup = new QuestionGroup($this->db);
+            $questionGroup->fetch($questionGroupId);
+    
+            [$questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints] = $questionGroup->calculatePoints($this);
+
+            $surveyTotalPoints += $questionGroupTotalPoints;
+            $surveyCorrectAnswersTotalPoints += $questionGroupCorrectAnswersTotalPoints;
+        }
+
+        return [$surveyCorrectAnswersTotalPoints, $surveyTotalPoints];
+    }
+
+    /**
+	 * To know if the rate of correct answers is bigger than the attempted success rate of the current survey
+	 *
+	 * @return bool
+	 */
+	public function isCorrect(): bool
+	{
+        [$correctPoints, $totalPoints] = $this->calculatePoints();
+        $correctAnswersRate = 0;
+        if ($totalPoints > 0) {
+            $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+
+        if ($correctAnswersRate >= $this->success_rate) {
+            return true;
+        }
+
+		return false;
+	}
+
+    /**
+     * Return a formatted string to print survey score (in points)
+     * and success rate
+     * 
+     * @return string
+	 */
+    public function getFormattedResults(): string
+	{
+        global $langs;
+
+        [$correctPoints, $totalPoints] = $this->calculatePoints();
+        $successRate = 0;
+        if ($totalPoints > 0) {
+            $successRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+        $pointsResult = $correctPoints . ' / ' . $totalPoints . ' ' . strtolower(($totalPoints > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+        $successRateResult = $successRate . ' %';
+		return $successRateResult . ' (' . $pointsResult . ')';
+	}
 }
 
 /**

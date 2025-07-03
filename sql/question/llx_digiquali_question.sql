@@ -25,6 +25,7 @@ CREATE TABLE llx_digiquali_question(
   type                   varchar(128),
   label                  varchar(255) NOT NULL,
   description            text,
+  points                 float DEFAULT 1 NOT NULL,
   show_photo             boolean,
   authorize_answer_photo boolean,
   enter_comment          boolean,

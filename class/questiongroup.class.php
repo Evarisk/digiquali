@@ -118,6 +118,7 @@ class QuestionGroup extends SaturneObject
         'status'                 => ['type' => 'integer',      'label' => 'Status',               'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => 1, 'index' => 1],
         'label'                  => ['type' => 'varchar(255)', 'label' => 'Label',                'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1, 'noteditable' => 0, 'index' => 1],
         'description'            => ['type' => 'text',         'label' => 'Description',          'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 1, 'noteditable' => 0],
+        'success_rate'           => ['type' => 'real',         'label' => 'SuccessScore',     'enabled' => 1, 'position' => 95,  'notnull' => 0, 'visible' => 1, 'help' => 'PercentageValue', 'default' => 0, 'validate' => 1, 'bounds' => ['min' => 0, 'max' => '100']],
         'fk_user_creat'          => ['type' => 'integer',      'label' => 'UserCreation',         'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
         'fk_user_modif'          => ['type' => 'integer',      'label' => 'UserModification',     'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
     ];
@@ -172,6 +173,10 @@ class QuestionGroup extends SaturneObject
      */
     public $description;
 
+    /**
+     * @var float success_rate
+     */
+    public float $success_rate = 0;
 
     /**
      * @var int User ID
@@ -558,4 +563,74 @@ class QuestionGroup extends SaturneObject
             return [];
         }
     }
+
+    /**
+     * Calculate the total number of points for correct answers and the total possible number of points
+     * (of the current group)
+     *
+     * @return array
+     */
+    public function calculatePoints(Survey $survey): array
+    {
+        $questionGroupTotalPoints = 0;
+        $questionGroupCorrectAnswersTotalPoints = 0;
+
+        foreach ($survey->lines as $questionAnswer) {
+
+            if ($questionAnswer->fk_question_group === $this->id) {
+                $question = new Question($this->db);
+                $question->fetch($questionAnswer->fk_question);
+    
+                $questionGroupTotalPoints += $question->points;
+                if ($question->checkAnswerIsCorrect($questionAnswer->answer) >= 0) {
+                    $questionGroupCorrectAnswersTotalPoints += $question->points;
+                }
+            }
+
+        }
+
+        return [$questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints];
+    }
+
+    /**
+	 * To know if the rate of correct answers is bigger than the attempted success rate of the current group
+	 *
+	 * @return bool
+	 */
+	public function isCorrect(Survey $survey): bool
+	{
+        [$correctPoints, $totalPoints] = $this->calculatePoints($survey);
+        $correctAnswersRate = 0;
+        if ($totalPoints > 0) {
+            $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+
+        if ($correctAnswersRate >= $this->success_rate) {
+            return true;
+        }
+
+		return false;
+	}
+    
+    /**
+     * Return a array of formatted string to print group score (in points)
+     * and success rate
+     * 
+     * @param Survey $survey the survey on which check answers are correct or not
+     * 
+     * @return array
+	 */
+    public function getFormattedSuccessPointsAndRates(Survey $survey): array
+	{
+        global $langs;
+
+        [$correctPoints, $totalPoints] = $this->calculatePoints($survey);
+        $successRate = 0;
+        if ($totalPoints > 0) {
+            $successRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+        $pointsResult = $correctPoints . ' / ' . $totalPoints . ' ' . strtolower(($totalPoints > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+        $successRateResult = $successRate . ' %' . ' (min ' . $this->success_rate . ' %)';
+		return [$pointsResult, $successRateResult];
+	}
 }

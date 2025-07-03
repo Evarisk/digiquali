@@ -37,6 +37,14 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
             $questionGroupId = $questionOrGroup->id;
 
             $questionGroup->fetch($questionGroupId);
+
+            $isGroupCorrectCssClass = '';
+            $isGroupCorrect = $questionGroup->isCorrect($object);
+            $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
+            if ($showCorrection) {
+                $isGroupCorrectCssClass = $isGroupCorrect ? ' correct' : ' incorrect';
+            }
+
             $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
 
             $totalQuestions = 0;
@@ -54,10 +62,15 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
                 }
             }
 
-            print '<div class="digiquali-question-group" id="'. $questionGroup->id .'">';
+            print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'">';
             print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $answeredQuestions . '/' . $totalQuestions . ' réponses aux questions</span></h3>';
             if (!empty($questionGroup->description)) {
                 print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
+            }
+            if ($showCorrection) {
+                [$pointsResult, $rateResult] = $questionGroup->getFormattedSuccessPointsAndRates($object);
+                print '<p>' . $pointsResult . '</p>';
+                print '<p>' . $rateResult . '</p>';
             }
 
             if (is_array($groupQuestions) && !empty($groupQuestions)) {

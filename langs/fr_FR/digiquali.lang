@@ -133,6 +133,14 @@ ShowOnlyQuestionsWithNoAnswer = Afficher uniquement les questions qui n'ont pas 
 AveragePercentageQuestions    = Moyenne des questions
 AddToSheet                    = Ajouter au modèle
 PercentageQuestionStep        = Nombre d'étapes du curseur
+NumberOfPoints                = Nombre de points
+Point                         = Point
+Points                        = Points
+AnswerCorrectness             = Validité de la réponse
+ExpectedAnswer                = Réponse correcte
+QuestionWithOneCorrectAnswer  = Ce type de question naccepte qu'une seule réponse correcte
+AnswerCorrectnessMinBound     = Valeur minimale de réponse correcte
+AnswerCorrectnessMaxBound     = Valeur maximale de réponse correcte
 
 
 #
@@ -194,6 +202,7 @@ ExportFailed                   = L'export a échoué
 ToImportDataGoToImportPage     = Pour importer des données, veuillez vous rendre sur la page d'import :
 NbQuestions                    = Nombre de questions
 SuccessScore                   = Score de réussite
+SuccessScoreWithUnit           = Score de réussite (%)
 PercentageValue                = Valeur en pourcentage
 
 # Notice - notice
@@ -464,6 +473,8 @@ NeedObjectToLink      = Vous devez sélectionner un objet à lier
 ConfirmValidateSurvey = Êtes-vous sûr de vouloir valider le questionnaire ?
 PublicSurvey          = Interface publique de questionnaire
 PublicSurveyToCome    = Interface publique de questionnaire à venir
+PointsResult          = Points acquis
+RateResult            = Pourcentage de réussite
 
 
 #
@@ -512,6 +523,7 @@ WriteComment             = Écrire un commentaire
 WriteAnswer              = Écrire une réponse
 In                       = Dans
 See                      = Voir
+Pts                      = %s pts
 
 # Statistics
 
@@ -531,3 +543,10 @@ NoDetailedStatisticsAvailable = Pas de statistiques détaillées disponibles
 NoQuestionsLinked = Aucune question liée à cette fiche
 AnswersStatistics = Statistiques des réponses
 NoControlsLinked = Aucun contrôle lié à cette fiche
+
+#
+# Fields validation errors
+#
+
+FieldMaxValue = Le champ '%s' doit être inférieure ou égale à %s
+FieldMinValue = Le champ '%s' doit être supérieure ou égale à %s
