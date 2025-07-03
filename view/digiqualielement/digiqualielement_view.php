@@ -210,7 +210,7 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     print '<div id="activity-list-container">';
     $activities = $activity->fetchAll('', '', 0, 0, ['customsql' => 't.fk_element = ' . $id]);
     foreach ($activities as $activitySingle) {
-        print '<div class="activity-container">';
+        print '<div class="activity-container" data-object-id="' . $activitySingle->id . '">';
         print '<div class="activity-container__header">';
         print $activitySingle->getNomUrl(1, '', 0, '', -1, 1);
         $html = <<<HTML
@@ -229,27 +229,28 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
             }
             echo saturne_get_badge_component_html([
                 'id'        => 'badge_component_' . $key . '_' . $activitySingle->id,
+                'field'     => $key,
                 'iconClass' => $val['picto'] ?? '',
                 'title'     => $val['label'],
                 'details'   => [$activitySingle->{$key} ?? $langs->transnoentities('NotKnown')],
-                'actions'   => [
-                    [
-                        'iconClass' => 'fas fa-pen',
-                        'label'     => 'Edit',
-                        'className' => 'modal-open',
-                        'hiddenInputs' => [
-                            [
-                                'class' => 'modal-options',
-                                'data'  => [
-                                    'modal-to-open' => 'badge_component',
-                                    'from-id'       => $activitySingle->id,
-                                    'from-type'     => $activitySingle->element,
-                                    'from-field'    => $key
-                                ]
-                            ]
-                        ]
-                    ]
-                ],
+//                'actions'   => [
+//                    [
+//                        'iconClass' => 'fas fa-pen',
+//                        'label'     => 'Edit',
+//                        'className' => 'modal-open',
+//                        'hiddenInputs' => [
+//                            [
+//                                'class' => 'modal-options',
+//                                'data'  => [
+//                                    'modal-to-open' => 'badge_component',
+//                                    'from-id'       => $activitySingle->id,
+//                                    'from-type'     => $activitySingle->element,
+//                                    'from-field'    => $key
+//                                ]
+//                            ]
+//                        ]
+//                    ]
+//                ],
             ]);
         }
         require_once __DIR__ . '/../../core/tpl/digiquali_risk_list_view.tpl.php';

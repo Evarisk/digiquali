@@ -49,8 +49,7 @@ if ($action == 'fetch_activity') {
 if ($action == 'update_activity' && !empty($permissionToAddActivity)) {
     $data = json_decode(file_get_contents('php://input'), true);
     $activity->fetch($data['object_id']);
-
-    $activity->label = $data['label'];
+    $activity->{$data['field']} = $data['value'];
 
     $activity->update($user);
     // @todo manage error

@@ -58,6 +58,7 @@ window.digiquali.activity.init = function() {
  */
 window.digiquali.activity.event = function() {
   $(document).on('input', '#myTextareadsf', window.digiquali.activity.updateModalActivityAddButton);
+  $(document).on('blur', '[contenteditable="true"]', window.digiquali.activity.updateContentEditable);
 
   $(document).on('click', '#activity_create', window.digiquali.activity.createActivity);
   $(document).on('click', '#activity_update', window.digiquali.activity.updateActivity);
@@ -82,6 +83,41 @@ window.digiquali.activity.updateModalActivityAddButton = function() {
   } else {
     $button.addClass('button-disable');
   }
+};
+
+/**
+ * Toggles a configuration setting based on a button state and updates the UI dynamically
+ *
+ * This function is used to send an AJAX request to toggle a specific setting and dynamically
+ * update the relevant UI elements based on the response
+ *
+ * @memberof Saturne_Utils
+ *
+ * @since   1.8.0
+ * @version 1.8.0
+ *
+ * @param {string} action  - The action name to send in the AJAX request
+ * @param {string} dataKey - The key name for the data payload
+ */
+window.digiquali.activity.updateContentEditable = function() {
+  const querySeparator  = window.saturne.toolbox.getQuerySeparator(document.URL);
+  const token           = window.saturne.toolbox.getToken();
+  const $content        = $(this);
+  const $container      = $(this).closest('.activity-container');
+
+  const objectId    = $container.data('object-id');
+  const field       = $content.data('field');
+  const contentText = $content.text();
+
+  $.ajax({
+    url: `${document.URL}${querySeparator}&action=update_activity&token=${token}`,
+    type: 'POST',
+    data: JSON.stringify({
+      object_id: objectId,
+      field:     field,
+      value:     contentText
+    }),
+  });
 };
 
 /**

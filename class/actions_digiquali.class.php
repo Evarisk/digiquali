@@ -182,7 +182,7 @@ class ActionsDigiquali
      */
     public function printMainArea(array $parameters): int
     {
-        if (preg_match('/digiqualiview|digiqualielementdocument|digiqualielementagenda/', $parameters['context'])) {
+        if (preg_match('/digiqualiview|digiqualistandardagenda|digiqualielementdocument|digiqualielementagenda/', $parameters['context'])) {
             ob_start();
             saturne_more_left_menu('digiquali', 'DigiQualiElement');
             $this->resprints = ob_get_clean();
@@ -199,7 +199,7 @@ class ActionsDigiquali
      */
     public function saturneCustomHeaderFunction(array $parameters): int
     {
-        if (preg_match('/digiqualielementdocument|digiqualielementagenda/', $parameters['context'])) {
+        if (preg_match('/digiqualielementdocument|digiqualistandardagenda|digiqualielementagenda/', $parameters['context'])) {
             $this->results = ['loadMediaGallery' => 1, 'moreCSSOnBody' => 'sidebar-secondary-opened'];
         }
 
