@@ -178,7 +178,7 @@ class Risk extends SaturneObject
     /**
      * @var string|null Photo
      */
-    public ?string $photo;
+    public ?string $photo = null;
 
     /**
      * @var string|null Description
@@ -300,9 +300,26 @@ class Risk extends SaturneObject
         return $ret;
     }
 
-    public static function getActivityInfos(Risk $risk)
+    public function getRiskInfos(): array
     {
+        global $db;
 
+        $out = [];
+
+        $out['risk']['ref']         = $this->getNomUrl(1, 'nolink', 1);
+        $out['risk']['description'] = $this->description;
+
+        // @todo pas de gestion de user pour le moment
+        $userTmp = new User($db);
+        $userTmp->fetch($this->fk_user_creat);
+        $out['risk']['author'] = $userTmp->getNomUrl(1);
+
+        $out['risk']['date'] = dol_print_date($this->date_creation, 'day');
+
+        $out['risk']['control_percentage'] = $this->control_percentage . '%';
+        $out['risk']['residual_risk']      = $this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) . '%': 0;
+
+        return $out;
     }
 }
 

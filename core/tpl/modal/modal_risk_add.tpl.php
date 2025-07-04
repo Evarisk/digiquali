@@ -51,47 +51,47 @@
             </div>
 
             <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label" for="risk_description">Description</label>
+                <label class="modal-label" for="description"><?php echo $langs->trans('Description'); ?></label>
                 <div>
-                    <textarea id="risk_description" name="risk_description" rows="4"></textarea>
+                    <textarea id="description" name="description" rows="4"></textarea>
                 </div>
             </div>
 
             <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label">Gravité</label>
+                <label class="modal-label"><?php echo $langs->trans('Gravity'); ?></label>
                 <div class="input-group">
-                    <div class="mood-icons">
-                        <button class="mood-button button-grey"><i class="button-icon fas fa-smile"></i></button>
-                        <button class="mood-button button-yellow"><i class="button-icon fas fa-meh"></i></button>
-                        <button class="mood-button button-red active"><i class="button-icon fas fa-frown"></i></button>
-                        <button class="mood-button button-black"><i class="button-icon fas fa-skull"></i></button>
+                    <div class="gravity-buttons">
+                        <button class="gravity-button button-grey selected" data-gravity-value="25"><i class="button-icon fas fa-smile"></i></button>
+                        <button class="gravity-button button-yellow" data-gravity-value="50"><i class="button-icon fas fa-meh"></i></button>
+                        <button class="gravity-button button-red" data-gravity-value="75"><i class="button-icon fas fa-frown"></i></button>
+                        <button class="gravity-button button-black" data-gravity-value="100"><i class="button-icon fas fa-skull"></i></button>
                     </div>
-                    <input type="number" value="80" class="small-input">
+                    <input type="number" min="0" max="100" value="25" class="small-input" id="gravity-percentage-input">
                     <span class="unit">%</span>
                 </div>
             </div>
 
             <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label">Fréquence</label>
+                <label class="modal-label"><?php echo $langs->trans('Frequency'); ?></label>
                 <div class="input-group">
                     <div class="frequency-buttons">
-                        <button class="frequency-button button-grey">1D</button>
-                        <button class="frequency-button button-yellow active">1W</button>
-                        <button class="frequency-button button-red">1M</button>
-                        <button class="frequency-button button-black">1Y</button>
+                        <button class="frequency-button button-grey selected" data-frequency-value="25">1D</button>
+                        <button class="frequency-button button-yellow" data-frequency-value="50">1W</button>
+                        <button class="frequency-button button-red" data-frequency-value="75">1M</button>
+                        <button class="frequency-button button-black" data-frequency-value="100">1Y</button>
                     </div>
-                    <input type="number" value="80" class="small-input">
+                    <input type="number" min="0" max="100" value="25" class="small-input" id="frequency-percentage-input">
                     <span class="unit">%</span>
                 </div>
             </div>
 
             <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label">Maîtrise</label>
+                <label class="modal-label"><?php echo $langs->trans('ControlPercentage'); ?></label>
                 <div class="input-group">
                     <span class="range-value">0</span>
-                    <input type="range" min="0" max="100" value="80" class="slider">
+                    <input type="range" min="0" max="100" value="0" id="control-slider">
                     <span class="range-value">100</span>
-                    <input type="number" value="80" class="small-input">
+                    <input type="number" value="0" class="small-input" id="control-percentage-input">
                     <span class="unit">%</span>
                 </div>
             </div>
@@ -99,17 +99,17 @@
             <div class="modal-summary-boxes wpeo-gridlayout grid-2">
                 <div class="summary-box">
                     <div class="summary-box-content">
-                        <span class="summary-title">Risque résiduel</span>
-                        <span class="summary-subtitle">Risque x maitrise</span>
+                        <span class="summary-title"><?php echo $langs->trans('Risk'); ?></span>
+                        <span class="summary-subtitle"><?php echo $langs->trans('RiskCalculation'); ?></span>
                     </div>
-                    <span class="summary-percentage green">80%</span>
+                    <span class="summary-percentage grey" id="risk-percentage-value">6.25%</span>
                 </div>
                 <div class="summary-box">
                     <div class="summary-box-content">
-                        <span class="summary-title">Risque</span>
-                        <span class="summary-subtitle">Gravité x fréquence</span>
+                        <span class="summary-title"><?php echo $langs->trans('ResidualRisk'); ?></span>
+                        <span class="summary-subtitle"><?php echo $langs->trans('ResidualRiskCalculation'); ?></span>
                     </div>
-                    <span class="summary-percentage green">80%</span>
+                    <span class="summary-percentage grey" id="residual-risk-percentage-value">0%</span>
                 </div>
             </div>
 
@@ -139,7 +139,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="wpeo-button modal-close" id="risk_create">
+            <button class="wpeo-button button-disable modal-close" id="risk_create">
                 <span class="fas fa-save pictofixedwidth"></span>
                 <?php echo $langs->trans('Save'); ?>
             </button>

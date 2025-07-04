@@ -30,7 +30,8 @@
 // Permission
 $permissionToAddTask  = $user->hasRight('projet', 'creer') || $user->hasRight('projet', 'all', 'creer');
 $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('projet', 'all', 'lire');
-?>
+
+$riskInfos = $risk->getRiskInfos(); ?>
 
 <div class="risk-list__container gridw-2" id="risk_list_container_<?php echo $activitySingle->id ?>">
     <div class="risk-list__level red"></div> <!-- 4 colors: yellow, orange, red, black -->
@@ -57,14 +58,14 @@ $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('pr
         </div>
         <div class="risk__content-container">
             <div class="risk__content-heading">
-                <div class="risk-ref"><?php echo $risk->getNomUrl(1, '', 0, '', -1, 1); ?>RA10</div>
+                <div class="ref"><?php echo $riskInfos['risk']['ref'] ?></div>
                 <div class="risk-tags">Nom du tag<?php echo $risk->description; ?></div>
-                <div class="risk-date"><i class="fas fa-calendar-alt"></i> 26/02//2025 - 30/02/2025<?php echo $risk->description; ?></div>
-                <div class="risk-control-percentage"><i class="fas fa-clipboard-list"></i>Maîtrise : <strong><?php echo $risk->control_percentage; ?></strong></div>
-                <div class="risk-residual-risk"><i class="fas fa-exclamation-triangle"></i>Risque résiduel : <strong>16<?php echo $risk->description; ?></strong></div>
+                <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskInfos['risk']['date'] ?></div>
+                <div class="control-percentage"><i class="fas fa-clipboard-list"></i><?php echo $langs->trans('ControlPercentage'); ?> : <strong><?php echo $riskInfos['risk']['control_percentage'] ?></strong></div>
+                <div class="residual-risk"><i class="fas fa-exclamation-triangle"></i><?php echo $langs->trans('ResidualRisk'); ?> : <strong><?php echo $riskInfos['risk']['residual_risk'] ?></strong></div>
             </div>
             <div class="risk__content-body">
-                <div class="risk-description"><?php echo $risk->description; ?>Description du risque</div>
+                <div class="description"><?php echo $riskInfos['risk']['description'] ?></div>
             </div>
         </div>
 

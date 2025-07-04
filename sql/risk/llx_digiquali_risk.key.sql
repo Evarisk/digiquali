@@ -16,5 +16,6 @@
 ALTER TABLE llx_digiquali_risk ADD INDEX idx_digiquali_risk_rowid (rowid);
 ALTER TABLE llx_digiquali_risk ADD INDEX idx_digiquali_risk_ref (ref);
 ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);
+ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_activity FOREIGN KEY (fk_activity) REFERENCES llx_digiquali_activity(rowid);
 ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_projet FOREIGN KEY (fk_projet) REFERENCES llx_projet(rowid);
 ALTER TABLE llx_digiquali_risk ADD UNIQUE uk_risk_ref (ref, entity);

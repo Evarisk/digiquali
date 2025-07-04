@@ -478,8 +478,9 @@ surveydocument_photo.odt = Fiche du Questionnaire avec photos
 #
 
 # Data - Donnée
-Mapping            = Cartographie
+Digiqualistandard  = Standard DigiQuali
 DigiQualiStandards = standards DigiQuali
+Mapping            = Cartographie
 
 
 
@@ -507,6 +508,19 @@ OutputData     = Données de sorties
 ActualScore    = Score actuel
 TargetScore    = Score cible
 ActivityCreate = Ajout de l'activité
+
+
+
+#
+# Risk - risque
+#
+
+# Data - Donnée
+ControlPercentage       = Maîtrise
+ResidualRisk            = Risque résiduel
+ResidualRiskCalculation = Risque x maitrise
+Risk                    = Risque
+RiskCalculation         = Gravité x fréquence
 
 
 

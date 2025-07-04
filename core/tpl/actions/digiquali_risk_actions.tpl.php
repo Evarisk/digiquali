@@ -36,13 +36,13 @@ $permissionToDeleteRisk = $user->hasRight($risk->module, $risk->element, 'write'
 if ($action == 'add_risk' && !empty($permissionToAddRisk)) {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    echo '<pre>'; print_r($data  ); echo '</pre>'; exit;
+    $risk->description          = $data['description'];
+    $risk->gravity_percentage   = $data['gravity_percentage'];
+    $risk->frequency_percentage = $data['frequency_percentage'];
+    $risk->control_percentage   = $data['control_percentage'];
+    $risk->fk_activity          = $data['objectLine_id'];
 
-
-    $activity->label      = $data['label'];
-    $activity->fk_element = $data['objectLine_id'];
-
-    $activity->create($user);
+    $risk->create($user);
     // @todo manage error
 }
 

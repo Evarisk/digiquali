@@ -253,7 +253,11 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
 //                ],
             ]);
         }
-        require_once __DIR__ . '/../../core/tpl/digiquali_risk_list_view.tpl.php';
+
+        $risks = $risk->fetchAll('', '', 0, 0, ['customsql' => 't.fk_activity = ' . $activitySingle->id]);
+        foreach ($risks as $risk) {
+            require __DIR__ . '/../../core/tpl/digiquali_risk_list_view.tpl.php';
+        }
         print '</div>';
         print '</div>';
     }

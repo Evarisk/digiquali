@@ -270,6 +270,9 @@ class modDigiQuali extends DolibarrModules
             // CONST ACTIVITY
             $i++ => ['DIGIQUALI_ACTIVITY_ADDON', 'chaine', 'mod_activity_standard', '', 0, 'current'],
 
+            // CONST RISK
+            $i++ => ['DIGIQUALI_RISK_ADDON', 'chaine', 'mod_risk_standard', '', 0, 'current'],
+
 			// CONST MODULE
 			$i++ => ['DIGIQUALI_VERSION','chaine', $this->version, '', 0, 'current'],
 			$i++ => ['DIGIQUALI_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],

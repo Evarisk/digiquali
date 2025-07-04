@@ -16,10 +16,10 @@
     max-width: 200px;
     font-weight: 600;
   }
-  #risk_description, #risk_tags {
+  #description, #risk_tags {
     width: 100%;
   }
-  .mood-button, .frequency-button {
+  .gravity-button, .frequency-button {
     display: inline-block;
     width: 50px;
     height: 50px;
@@ -55,7 +55,7 @@
     &.button-black {
       background: $color__dark;
     }
-    &.active {
+    &.selected {
       border-color: $color__primary;
     }
   }
@@ -88,23 +88,27 @@
         color: $color__public-primary;
       }
       .summary-percentage {
-        width: 50px;
+        width: 60px;
         height: 50px;
         line-height: 50px;
         border-radius: 6px;
         text-align: center;
 
-        &.green {
-          background: $color__green;
-          color: #fff !important;
+        &.grey {
+          background: $color__grey;
+          color: rgba(0,0,0,0.5);
         }
         &.yellow {
           background: $color__yellow;
-          color: #fff !important;
+          color: #fff
         }
         &.red {
           background: $color__red;
-          color: #fff !important;
+          color: #fff
+        }
+        &.black {
+          background: $color__dark;
+          color: #fff
         }
       }
     }
