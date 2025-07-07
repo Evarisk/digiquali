@@ -138,9 +138,11 @@ Point                         = Point
 Points                        = Points
 AnswerCorrectness             = Validité de la réponse
 ExpectedAnswer                = Réponse correcte
-QuestionWithOneCorrectAnswer  = Ce type de question naccepte qu'une seule réponse correcte
+QuestionWithOneCorrectAnswer  = Ce type de question n'accepte qu'une seule réponse correcte
 AnswerCorrectnessMinBound     = Valeur minimale de réponse correcte
 AnswerCorrectnessMaxBound     = Valeur maximale de réponse correcte
+QuestionMinBoundExceeded      = La valeur minimale de réponse correcte d'un pourcentage ne peut pas être inférieure à 0
+QuestionMaxBoundExceeded      = La valeur minimale de réponse correcte d'un pourcentage ne peut pas être supérieure à 100
 
 
 #
