@@ -17,23 +17,23 @@
  */
 
 /**
- *  \file    core/modules/digiquali/risk/mod_risk_standard.php
+ *  \file    core/modules/digiquali/riskassessment/mod_riskassessment_standard.php
  *  \ingroup digiquali
- *  \brief   File of class to manage mod_risk_standard numbering rules standard
+ *  \brief   File of class to manage mod_riskassessment_standard numbering rules standard
  */
 
 // Load Saturne libraries
 require_once __DIR__ . '/../../../../../saturne/core/modules/saturne/modules_saturne.php';
 
 /**
- * Class to manage risk numbering rules standard
+ * Class to manage riskassessment numbering rules standard
  */
-class mod_risk_standard extends ModeleNumRefSaturne
+class mod_riskassessment_standard extends ModeleNumRefSaturne
 {
     /**
      * @var string Numbering module ref prefix
      */
-    public string $prefix = 'RK';
+    public string $prefix = 'RA';
 
     /**
      * @var string Name

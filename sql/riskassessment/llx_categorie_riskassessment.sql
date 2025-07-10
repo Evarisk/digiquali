@@ -13,8 +13,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-ALTER TABLE llx_categorie_risk ADD PRIMARY KEY pk_categorie_risk (fk_categorie, fk_risk);
-ALTER TABLE llx_categorie_risk ADD INDEX idx_categorie_risk_fk_categorie (fk_categorie);
-ALTER TABLE llx_categorie_risk ADD INDEX idx_categorie_risk_fk_risk (fk_risk);
-ALTER TABLE llx_categorie_risk ADD CONSTRAINT fk_categorie_risk_categorie_rowid FOREIGN KEY (fk_categorie) REFERENCES llx_categorie (rowid);
-ALTER TABLE llx_categorie_risk ADD CONSTRAINT fk_categorie_risk_risk_rowid FOREIGN KEY (fk_risk) REFERENCES llx_risk (rowid);
+CREATE TABLE llx_categorie_riskassessment
+(
+  fk_categorie      integer NOT NULL,
+  fk_riskassessment integer NOT NULL,
+  import_key        varchar(14)
+) ENGINE = INNODB;

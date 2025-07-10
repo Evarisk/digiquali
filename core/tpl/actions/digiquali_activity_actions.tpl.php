@@ -63,4 +63,4 @@ if ($action == 'delete_activity' && !empty($permissionToDeleteActivity)) {
     // @todo manage error
 }
 
-require_once __DIR__ . '/digiquali_risk_actions.tpl.php';
+require_once __DIR__ . '/digiquali_riskassessment_actions.tpl.php';

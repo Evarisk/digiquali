@@ -16,33 +16,33 @@
  */
 
 /**
- * \file    core/tpl/actions/digiquali_risk_actions.tpl.php
+ * \file    core/tpl/actions/digiquali_riskassessment_actions.tpl.php
  * \ingroup digiquali
- * \brief   Template page for risk actions in activity object
+ * \brief   Template page for risk assessment actions in activity object
  */
 
 /**
  * The following vars must be defined:
  * Global     : $langs, $user
  * Parameters : $action
- * Objects    : $risk
+ * Objects    : $riskAssessment
  */
 
 // Permission
-$permissionToAddRisk    = $user->hasRight($risk->module, $risk->element, 'read');
-$permissionToDeleteRisk = $user->hasRight($risk->module, $risk->element, 'write');
+$permissionToAddRiskAssessment    = $user->hasRight($riskAssessment->module, $riskAssessment->element, 'read');
+$permissionToDeleteRiskAssessment = $user->hasRight($riskAssessment->module, $riskAssessment->element, 'write');
 
-// Risk action
-if ($action == 'add_risk' && !empty($permissionToAddRisk)) {
+// Risk assessment action
+if ($action == 'add_riskassessment' && !empty($permissionToAddRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $risk->description          = $data['description'];
-    $risk->gravity_percentage   = $data['gravity_percentage'];
-    $risk->frequency_percentage = $data['frequency_percentage'];
-    $risk->control_percentage   = $data['control_percentage'];
-    $risk->fk_activity          = $data['objectLine_id'];
+    $riskAssessment->comment              = $data['comment'];
+    $riskAssessment->gravity_percentage   = $data['gravity_percentage'];
+    $riskAssessment->frequency_percentage = $data['frequency_percentage'];
+    $riskAssessment->control_percentage   = $data['control_percentage'];
+    $riskAssessment->fk_activity          = $data['objectLine_id'];
 
-    $risk->create($user);
+    $riskAssessment->create($user);
     // @todo manage error
 }
 
@@ -52,7 +52,7 @@ if ($action == 'fetch_risk') {
     // @todo manage error
 }
 
-if ($action == 'update_risk' && !empty($permissionToAddRisk)) {
+if ($action == 'update_risk' && !empty($permissionToAddRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
     $activity->fetch($data['object_id']);
 
@@ -62,7 +62,7 @@ if ($action == 'update_risk' && !empty($permissionToAddRisk)) {
     // @todo manage error
 }
 
-if ($action == 'delete_risk' && !empty($permissionToDeleteRisk)) {
+if ($action == 'delete_risk' && !empty($permissionToDeleteRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
     $activity->fetch($data['risk_id']);
 

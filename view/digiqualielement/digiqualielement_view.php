@@ -35,7 +35,7 @@ require_once __DIR__ . '/../../digiquali.inc.php';
 require_once __DIR__ . '/../../class/digiqualielement.class.php';
 require_once __DIR__ . '/../../class/digiqualistandard.class.php';
 require_once __DIR__ . '/../../class/activity.class.php';
-require_once __DIR__ . '/../../class/risk.class.php';
+require_once __DIR__ . '/../../class/riskassessment.class.php';
 require_once __DIR__ . '/../../lib/digiquali_digiqualielement.lib.php';
 
 // Global variables definitions
@@ -62,7 +62,7 @@ $fkStandard          = GETPOSTISSET('fk_standard') ? GETPOSTINT('fk_standard') :
 $object            = new DigiQualiElement($db);
 $digiQualiStandard = new DigiQualiStandard($db);
 $activity          = new Activity($db);
-$risk              = new Digiquali\Risk($db);
+$riskAssessment    = new Digiquali\RiskAssessment($db);
 $extrafields       = new ExtraFields($db);
 
 // Initialize view objects
@@ -187,7 +187,7 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     require_once __DIR__ . '/../../core/tpl/modal/modal_activity_add.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/modal_activity_edit.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
-    require_once __DIR__ . '/../../core/tpl/modal/modal_risk_add.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_add.tpl.php';
 
 
     //$activity->ref          = 'A2024-0001';s
@@ -254,10 +254,8 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
             ]);
         }
 
-        $risks = $risk->fetchAll('', '', 0, 0, ['customsql' => 't.fk_activity = ' . $activitySingle->id]);
-        foreach ($risks as $risk) {
-            require __DIR__ . '/../../core/tpl/digiquali_risk_list_view.tpl.php';
-        }
+        require __DIR__ . '/../../core/tpl/digiquali_riskassessment_list_view.tpl.php';
+
         print '</div>';
         print '</div>';
     }

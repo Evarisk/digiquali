@@ -16,49 +16,47 @@
  */
 
 /**
- * \file    core/tpl/modal/modal_risk_add.tpl.php
+ * \file    core/tpl/modal/modal_riskassessment_add.tpl.php
  * \ingroup digiquali
- * \brief   Template page for modal risk add
+ * \brief   Template page for modal riskassessment add
  */
 
 /**
  * The following vars must be defined:
  * Global  : $langs
- * Objects : $risk
+ * Objects : $riskAssessment
  */ ?>
 
-<div class="wpeo-modal modal-risk-add" id="risk_add">
+<div class="wpeo-modal modal-riskassessment-add" id="riskassessment_add">
     <div class="modal-container wpeo-modal-event">
         <div class="modal-header">
-            <h2 class="modal-title">Ajout d'un risque</h2>
+            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentAdd') . ' ' . $riskAssessment->getNextNumRef(); ?></h2>
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <div class="modal-content">
             <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label">Photo</label>
-                <div class="modal-photo-upload">
-                    <button class="wpeo-button button-square-40 icon-button"><i class="button-icon fas fa-camera"></i><span class="button-add animated fas fa-plus-circle"></span></button>
-                    <button class="wpeo-button button-square-40 icon icon-button"><i class="fas fa-folder"></i><span class="button-add animated fas fa-plus-circle"></span></button>
-                    <button class="wpeo-button button-square-40 icon icon-button"><i class="fas fa-plus"></i></button>
+                <label class="modal-label"><?php echo $langs->trans('Photo'); ?></label>
+                <?php echo saturne_show_media_buttons(); ?>
+            </div>
+
+            <!-- @todo gestion tags -->
+            <div class="modal-section wpeo-grid grid-2">
+                <label class="modal-label" for="tags">Tags</label>
+                <div>
+                    <input type="text" id="tags" name="tags" value="Nom du tag">
                 </div>
             </div>
 
+            <!-- @todo gestion wyswigs -->
             <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label" for="risk_tags">Tags</label>
+                <label class="modal-label" for="comment"><?php echo $langs->trans('Comment'); ?></label>
                 <div>
-                    <input type="text" id="risk_tags" name="risk_tags" value="Nom du tag">
-                </div>
-            </div>
-
-            <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label" for="description"><?php echo $langs->trans('Description'); ?></label>
-                <div>
-                    <textarea id="description" name="description" rows="4"></textarea>
+                    <textarea id="comment" name="comment" rows="4"></textarea>
                 </div>
             </div>
 
             <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label"><?php echo $langs->trans('Gravity'); ?></label>
+                <label class="modal-label" for="gravity-percentage-input"><?php echo $langs->trans('Gravity'); ?></label>
                 <div class="input-group">
                     <div class="gravity-buttons">
                         <button class="gravity-button button-grey selected" data-gravity-value="25"><i class="button-icon fas fa-smile"></i></button>
@@ -66,13 +64,13 @@
                         <button class="gravity-button button-red" data-gravity-value="75"><i class="button-icon fas fa-frown"></i></button>
                         <button class="gravity-button button-black" data-gravity-value="100"><i class="button-icon fas fa-skull"></i></button>
                     </div>
-                    <input type="number" min="0" max="100" value="25" class="small-input" id="gravity-percentage-input">
+                    <input type="number" class="small-input" id="gravity-percentage-input" min="0" max="100" value="25">
                     <span class="unit">%</span>
                 </div>
             </div>
 
             <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label"><?php echo $langs->trans('Frequency'); ?></label>
+                <label class="modal-label" for="frequency-percentage-input"><?php echo $langs->trans('Frequency'); ?></label>
                 <div class="input-group">
                     <div class="frequency-buttons">
                         <button class="frequency-button button-grey selected" data-frequency-value="25">1D</button>
@@ -80,18 +78,18 @@
                         <button class="frequency-button button-red" data-frequency-value="75">1M</button>
                         <button class="frequency-button button-black" data-frequency-value="100">1Y</button>
                     </div>
-                    <input type="number" min="0" max="100" value="25" class="small-input" id="frequency-percentage-input">
+                    <input type="number" class="small-input" id="frequency-percentage-input" min="0" max="100" value="25">
                     <span class="unit">%</span>
                 </div>
             </div>
 
             <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label"><?php echo $langs->trans('ControlPercentage'); ?></label>
+                <label class="modal-label" for="control-percentage-input"><?php echo $langs->trans('ControlPercentage'); ?></label>
                 <div class="input-group">
                     <span class="range-value">0</span>
-                    <input type="range" min="0" max="100" value="0" id="control-slider">
+                    <input type="range" id="control-slider" min="0" max="100" value="0">
                     <span class="range-value">100</span>
-                    <input type="number" value="0" class="small-input" id="control-percentage-input">
+                    <input type="number" class="small-input" id="control-percentage-input" value="0">
                     <span class="unit">%</span>
                 </div>
             </div>
@@ -113,18 +111,18 @@
                 </div>
             </div>
 
-            <div class="modal-last-added-risk">
+            <div class="modal-last-added-riskassessment">
                 <h3>Dernier risque ajouté</h3>
-                <div class="risk-list__container">
-                    <div class="risk__content">
-                        <div class="risk-thumbnail">
+                <div class="riskassessment-list__container">
+                    <div class="riskassessment__content">
+                        <div class="riskassessment-thumbnail">
                             <img src="https://via.placeholder.com/60x60" alt="Risk thumbnail">
                         </div>
-                        <div class="risk__content-container">
-                            <div class="risk__content-heading">
-                                <span class="risk-ref">RA10</span>
-                                <span class="risk-tags">Nom du tag (10)</span>
-                                <span class="risk-date"><i class="fas fa-calendar-alt"></i> 26/02/2025</span>
+                        <div class="riskassessment__content-container">
+                            <div class="riskassessment__content-heading">
+                                <span class="ref">RA10</span>
+                                <span class="tags">Nom du tag (10)</span>
+                                <span class="date"><i class="fas fa-calendar-alt"></i> 26/02/2025</span>
                                 <span class="risk-mastery"><i class="fas fa-shield-alt"></i> Maîtrise : 20%</span>
                                 <span class="risk-residual"><i class="fas fa-exclamation-triangle"></i> Risque résiduel : 16</span>
                             </div>
@@ -139,7 +137,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="wpeo-button button-disable modal-close" id="risk_create">
+            <button class="wpeo-button button-disable modal-close" id="riskassessment_create">
                 <span class="fas fa-save pictofixedwidth"></span>
                 <?php echo $langs->trans('Save'); ?>
             </button>

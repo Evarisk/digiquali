@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-CREATE TABLE llx_digiquali_risk
+CREATE TABLE llx_digiquali_riskassessment
 (
   rowid                integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
   ref                  varchar(128) DEFAULT '(PROV)' NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE llx_digiquali_risk
   import_key           varchar(14),
   status               smallint DEFAULT 1,
   photo                varchar(255),
-  description          text,
+  comment              text,
   gravity_percentage   DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
   frequency_percentage DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
   control_percentage   DECIMAL(5, 2) NOT NULL DEFAULT 0.00,

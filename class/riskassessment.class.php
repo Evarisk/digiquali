@@ -16,14 +16,15 @@
  */
 
 /**
- * \file    class/risk.class.php
+ * \file    class/riskassessment.class.php
  * \ingroup digiquali
- * \brief   This file is a CRUD class file for Risk (Create/Read/Update/Delete).
+ * \brief   This file is a CRUD class file for RiskAssessment (Create/Read/Update/Delete)
  */
 
 namespace Digiquali;
 
 use DoliDB;
+use Task;
 use User;
 use SaturneObject;
 
@@ -31,9 +32,9 @@ use SaturneObject;
 require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
 
 /**
- * Class for Risk
+ * Class for RiskAssessment
  */
-class Risk extends SaturneObject
+class RiskAssessment extends SaturneObject
 {
     /**
      * @var string Module name
@@ -43,12 +44,12 @@ class Risk extends SaturneObject
     /**
      * @var string Element type of object
      */
-    public $element = 'risk';
+    public $element = 'riskassessment';
 
     /**
      * @var string Name of table without prefix where object is stored. This is also the key used for extrafields management
      */
-    public $table_element = 'digiquali_risk';
+    public $table_element = 'digiquali_riskassessment';
 
     /**
      * @var int Does this object support multicompany module ?
@@ -67,7 +68,7 @@ class Risk extends SaturneObject
     public int $isCategoryManaged = 1;
 
     /**
-     * @var string Name of icon for risk. Must be a 'fa-xxx' fontawesome code (or 'fa-xxx_fa_color_size') or 'risk@digiquali' if picto is file 'img/object_risk.png'
+     * @var string Name of icon for riskassessment. Must be a 'fa-xxx' fontawesome code (or 'fa-xxx_fa_color_size') or 'riskassessment@digiquali' if picto is file 'img/object_riskassessment.png'
      */
     public string $picto = 'fontawesome_fa-exclamation-triangle_fas_#d35968';
 
@@ -126,7 +127,7 @@ class Risk extends SaturneObject
         'import_key'           => ['type' => 'varchar(14)',  'label' => 'ImportId',          'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => -2, 'index' => 0],
         'status'               => ['type' => 'smallint',     'label' => 'Status',            'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 1,  'index' => 1, 'searchmulti' => 1, 'default' => 1, 'arrayofkeyval' => [1 => 'InProgress', 2 => 'Locked', 3 => 'Archived'], 'css' => 'minwidth200'],
         'photo'                => ['type' => 'varchar(255)', 'label' => 'Photo',             'enabled' => 1, 'position' => 80,  'notnull' => 0, 'visible' => 1],
-        'description'          => ['type' => 'html',         'label' => 'Description',       'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 1],
+        'comment'              => ['type' => 'html',         'label' => 'Comment',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 1],
         'gravity_percentage'   => ['type' => 'real',         'label' => 'Gravity',           'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 1, 'default' => 0.00],
         'frequency_percentage' => ['type' => 'real',         'label' => 'Frequency',         'enabled' => 1, 'position' => 110, 'notnull' => 1, 'visible' => 1, 'default' => 0.00],
         'control_percentage'   => ['type' => 'real',         'label' => 'ControlPercentage', 'enabled' => 1, 'position' => 120, 'notnull' => 1, 'visible' => 1, 'default' => 0.00],
@@ -181,9 +182,9 @@ class Risk extends SaturneObject
     public ?string $photo = null;
 
     /**
-     * @var string|null Description
+     * @var string|null Comment
      */
-    public ?string $description = null;
+    public ?string $comment = null;
 
     /**
      * @var float Gravity percentage
@@ -300,24 +301,52 @@ class Risk extends SaturneObject
         return $ret;
     }
 
-    public function getRiskInfos(): array
+    /**
+     * Initialise object with example values
+     * ID must be 0 if object instance is a specimen
+     *
+     * @return void
+     */
+    public function initAsSpecimen(): void
+    {
+        global $langs;
+
+         parent::initAsSpecimen();
+
+        $this->ref           = 'RAXX';
+        $this->date_creation = dol_now();
+        $this->comment       = $langs->trans('NoData');
+    }
+
+    public function getRiskAssessmentInfos($task): array
     {
         global $db;
 
         $out = [];
 
-        $out['risk']['ref']         = $this->getNomUrl(1, 'nolink', 1);
-        $out['risk']['description'] = $this->description;
+        $out[$this->element]['ref']     = $this->getNomUrl(1, 'nolink', 1);
+        $out[$this->element]['comment'] = $this->comment;
 
         // @todo pas de gestion de user pour le moment
         $userTmp = new User($db);
         $userTmp->fetch($this->fk_user_creat);
-        $out['risk']['author'] = $userTmp->getNomUrl(1);
+        $out[$this->element]['author'] = $userTmp->getNomUrl(1);
 
-        $out['risk']['date'] = dol_print_date($this->date_creation, 'day');
+        $out[$this->element]['date'] = dol_print_date($this->date_creation, 'day');
 
-        $out['risk']['control_percentage'] = $this->control_percentage . '%';
-        $out['risk']['residual_risk']      = $this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) . '%': 0;
+        $out[$this->element]['control_percentage'] = $this->control_percentage . '%';
+        $out[$this->element]['residual_risk']      = ($this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) : 0) . '%';
+
+        $out[$task->element]['ref']   = $task->getNomUrl(1, 'withproject');
+        $out[$task->element]['label'] = $task->label;
+
+        // @todo pas de gestion de user pour le moment
+        $userTmp = new User($db);
+        $userTmp->fetch($task->fk_user_creat);
+        $out[$task->element]['author'] = $userTmp->getNomUrl(1);
+
+        $out[$task->element]['date']  = !empty($task->date_start) ? dol_print_date($task->date_start, 'dayhour') : '?';
+        $out[$task->element]['date'] .= ' - ' . (!empty($task->date_end) ? dol_print_date($task->date_end, 'dayhour') : '?');
 
         return $out;
     }

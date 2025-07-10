@@ -13,9 +13,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-ALTER TABLE llx_digiquali_risk ADD INDEX idx_digiquali_risk_rowid (rowid);
-ALTER TABLE llx_digiquali_risk ADD INDEX idx_digiquali_risk_ref (ref);
-ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);
-ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_activity FOREIGN KEY (fk_activity) REFERENCES llx_digiquali_activity(rowid);
-ALTER TABLE llx_digiquali_risk ADD CONSTRAINT llx_digiquali_risk_fk_projet FOREIGN KEY (fk_projet) REFERENCES llx_projet(rowid);
-ALTER TABLE llx_digiquali_risk ADD UNIQUE uk_risk_ref (ref, entity);
+ALTER TABLE llx_categorie_riskassessment ADD PRIMARY KEY pk_categorie_riskassessment (fk_categorie, fk_riskassessment);
+ALTER TABLE llx_categorie_riskassessment ADD INDEX idx_categorie_riskassessment_fk_categorie (fk_categorie);
+ALTER TABLE llx_categorie_riskassessment ADD INDEX idx_categorie_riskassessment_fk_riskassessment (fk_riskassessment);
+ALTER TABLE llx_categorie_riskassessment ADD CONSTRAINT fk_categorie_riskassessment_categorie_rowid FOREIGN KEY (fk_categorie) REFERENCES llx_categorie (rowid);
+ALTER TABLE llx_categorie_riskassessment ADD CONSTRAINT fk_categorie_riskassessment_riskassessment_rowid FOREIGN KEY (fk_riskassessment) REFERENCES llx_riskassessment (rowid);

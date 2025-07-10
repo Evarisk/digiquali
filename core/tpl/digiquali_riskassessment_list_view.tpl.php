@@ -16,27 +16,39 @@
  */
 
 /**
- * \file    core/tpl/digiquali_risk_list_view.tpl.php
+ * \file    core/tpl/digiquali_riskassessment_list_view.tpl.php
  * \ingroup digiquali
- * \brief   Template page for risk lines
+ * \brief   Template page for riskassessment lines
  */
 
 /**
  * The following vars must be defined:
- * Global  : $langs, $user
- * Objects : $activity
+ * Global  : $db, $langs, $user
+ * Objects : $activity, $riskAssessment
  */
 
 // Permission
 $permissionToAddTask  = $user->hasRight('projet', 'creer') || $user->hasRight('projet', 'all', 'creer');
 $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('projet', 'all', 'lire');
 
-$riskInfos = $risk->getRiskInfos(); ?>
+require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
 
-<div class="risk-list__container gridw-2" id="risk_list_container_<?php echo $activitySingle->id ?>">
-    <div class="risk-list__level red"></div> <!-- 4 colors: yellow, orange, red, black -->
+$task = new Task($db);
 
-    <div class="risk__content">
+$riskAssessments = $riskAssessment->fetchAll('DESC', 'rowid', 1, 0, ['customsql' => 't.fk_activity = ' . $activitySingle->id]);
+if (!is_array($riskAssessments) || empty($riskAssessments)) {
+    $riskAssessment->initAsSpecimen();
+} else {
+    $riskAssessment = reset($riskAssessments);
+    //$task->fetch($riskAssessment->fk_task);
+}
+$task->initAsSpecimen();
+$riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task); ?>
+
+<div class="riskassessment-list__container gridw-2" id="riskassessment_list_container_<?php echo $activitySingle->id ?>">
+    <div class="riskassessment-list__level red"></div> <!-- 4 colors: yellow, orange, red, black -->
+
+    <div class="riskassessment__content">
         <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
             <?php if ($object->status == 0) : ?>
                 <input hidden multiple class="fast-upload<?php echo getDolGlobalInt('SATURNE_USE_FAST_UPLOAD_IMPROVEMENT') ? '-improvement' : ''; ?>" id="fast-upload-answer-photo<?php echo $question->id ?>" type="file" name="userfile[]" capture="environment" accept="image/*">
@@ -56,22 +68,22 @@ $riskInfos = $risk->getRiskInfos(); ?>
                 <?php echo saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, $question, '', 0, $object->status == 0, 1); ?>
             </div>
         </div>
-        <div class="risk__content-container">
-            <div class="risk__content-heading">
-                <div class="ref"><?php echo $riskInfos['risk']['ref'] ?></div>
-                <div class="risk-tags">Nom du tag<?php echo $risk->description; ?></div>
-                <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskInfos['risk']['date'] ?></div>
-                <div class="control-percentage"><i class="fas fa-clipboard-list"></i><?php echo $langs->trans('ControlPercentage'); ?> : <strong><?php echo $riskInfos['risk']['control_percentage'] ?></strong></div>
-                <div class="residual-risk"><i class="fas fa-exclamation-triangle"></i><?php echo $langs->trans('ResidualRisk'); ?> : <strong><?php echo $riskInfos['risk']['residual_risk'] ?></strong></div>
+        <div class="riskassessment__content-container">
+            <div class="riskassessment__content-heading">
+                <div class="ref"><?php echo $riskAssessmentInfos[$riskAssessment->element]['ref'] ?></div>
+<!--                <div class="tags">Nom du tag--><?php //echo @todo: Add tags $risk->description; ?><!--</div>-->
+                <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskAssessmentInfos[$riskAssessment->element]['date'] ?></div>
+                <div class="control-percentage"><i class="fas fa-shield-alt"></i><?php echo $langs->trans('ControlPercentage'); ?> : <strong><?php echo $riskAssessmentInfos[$riskAssessment->element]['control_percentage'] ?></strong></div>
+                <div class="residual-risk"><i class="fas fa-exclamation-triangle"></i><?php echo $langs->trans('ResidualRisk'); ?> : <strong><?php echo $riskAssessmentInfos[$riskAssessment->element]['residual_risk'] ?></strong></div>
             </div>
-            <div class="risk__content-body">
-                <div class="description"><?php echo $riskInfos['risk']['description'] ?></div>
+            <div class="riskassessment__content-body">
+                <div class="comment"><?php echo $riskAssessmentInfos[$riskAssessment->element]['comment'] ?></div>
             </div>
         </div>
 
-        <div class="risk-list__actions">
+        <div class="riskassessment-list__actions">
             <div class="wpeo-button button-square-40 button-rounded modal-open">
-                <input type="hidden" class="modal-options" data-modal-to-open="risk_add" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
+                <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_add" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
                 <i class="fas fa-plus"></i>
             </div>
         </div>
@@ -80,11 +92,11 @@ $riskInfos = $risk->getRiskInfos(); ?>
         <input type="checkbox" />
         <div class="task__content-container">
             <div class="task__content-heading">
-                <div class="task-ref"><?php echo $risk->getNomUrl(1, '', 0, '', -1, 1); ?>TIK2111-0111</div>
-                <div class="task-date"><i class="fas fa-calendar-alt"></i> 26/02//2025 - 30/02/2025<?php echo $risk->description; ?></div>
+                <div class="ref"><?php echo $riskAssessmentInfos['project_task']['ref']; ?></div>
+                <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskAssessmentInfos['project_task']['date']; ?></div>
             </div>
             <div class="task__content-body">
-                <div class="task-description"><?php echo $risk->description; ?>Description de la tâche</div>
+                <div class="label"><?php echo $riskAssessmentInfos['project_task']['label']; ?></div>
             </div>
         </div>
 

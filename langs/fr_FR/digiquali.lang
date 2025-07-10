@@ -512,7 +512,7 @@ ActivityCreate = Ajout de l'activité
 
 
 #
-# Risk - risque
+# RiskAssessment - Évaluation
 #
 
 # Data - Donnée
@@ -521,6 +521,7 @@ ResidualRisk            = Risque résiduel
 ResidualRiskCalculation = Risque x maitrise
 Risk                    = Risque
 RiskCalculation         = Gravité x fréquence
+RiskAssessmentAdd       = Ajout de l'évaluation
 
 
 

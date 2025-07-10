@@ -49,7 +49,6 @@ $contextpage         = GETPOST('contextpage', 'aZ') ? GETPOST('contextpage', 'aZ
 $backtopage          = GETPOST('backtopage', 'alpha');
 $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 $elementType         = GETPOSTINT('element_type');
-$fkParent            = GETPOSTISSET('fk_parent') ? GETPOSTINT('fk_parent') : getDolGlobalInt('DIGIQUALI_ACTIVE_STANDARD');
 $fkStandard          = GETPOSTISSET('fk_standard') ? GETPOSTINT('fk_standard') : getDolGlobalInt('DIGIQUALI_ACTIVE_STANDARD');
 
 // Initialize technical objects
@@ -166,7 +165,7 @@ if ($action == 'create') {
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="add">';
     print '<input type="hidden" name="fk_standard" value="' . $fkStandard . '">';
-    print '<input type="hidden" name="fk_parent" value="' . $fkParent . '">';
+    print '<input type="hidden" name="fk_parent" value="' . GETPOSTINT('fk_parent') . '">';
     print '<input type="hidden" name="element_type" value="' . $elementType . '">';
     print '<input type="hidden" name="action" value="add">';
     if ($backtopage) {
@@ -179,14 +178,6 @@ if ($action == 'create') {
     print dol_get_fiche_head();
 
     print '<table class="border centpercent tableforfieldcreate">';
-
-    if (!GETPOSTISSET('fk_parent') || $fkParent == $fkStandard) {
-        $object->fields['fk_parent']['type'] = 'integer:SaturneStandard:saturne/class/saturnestandard.class.php';
-        $_POST['fk_parent']                  = $fkStandard;
-    } else {
-        $object->fields['fk_parent']['type'] = 'integer:SaturneElement:saturne/class/saturneelement.class.php';
-    }
-    $_POST['fk_standard'] = $fkStandard;
 
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';

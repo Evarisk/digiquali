@@ -270,8 +270,8 @@ class modDigiQuali extends DolibarrModules
             // CONST ACTIVITY
             $i++ => ['DIGIQUALI_ACTIVITY_ADDON', 'chaine', 'mod_activity_standard', '', 0, 'current'],
 
-            // CONST RISK
-            $i++ => ['DIGIQUALI_RISK_ADDON', 'chaine', 'mod_risk_standard', '', 0, 'current'],
+            // CONST RISKASSESSMENT
+            $i++ => ['DIGIQUALI_RISKASSESSMENT_ADDON', 'chaine', 'mod_riskassessment_standard', '', 0, 'current'],
 
 			// CONST MODULE
 			$i++ => ['DIGIQUALI_VERSION','chaine', $this->version, '', 0, 'current'],
@@ -555,20 +555,20 @@ class modDigiQuali extends DolibarrModules
         $this->rights[$r][5] = 'delete';
         $r++;
 
-        /* RISK PERMISSSIONS */
+        /* RISKASSESSMENT PERMISSSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Risk')));
-        $this->rights[$r][4] = 'risk';
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('RiskAssessment')));
+        $this->rights[$r][4] = 'riskassessment';
         $this->rights[$r][5] = 'read';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Risk')));
-        $this->rights[$r][4] = 'risk';
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('RiskAssessment')));
+        $this->rights[$r][4] = 'riskassessment';
         $this->rights[$r][5] = 'write';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Risk')));
-        $this->rights[$r][4] = 'risk';
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('RiskAssessment')));
+        $this->rights[$r][4] = 'riskassessment';
         $this->rights[$r][5] = 'delete';
         $r++;
 
