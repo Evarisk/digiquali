@@ -521,7 +521,7 @@ class Sheet extends SaturneObject
 
         if ($reindexLast) {
             $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
-            $sql .= ' SET position = ( SELECT MAX(position) + 1 FROM llx_element_element WHERE fk_source = '. $this->id .' AND sourcetype = "digiquali_sheet" )';
+            $sql .= ' SET position = ( (SELECT (COALESCE(MAX(position), 0) + 1) FROM llx_element_element WHERE fk_source = '. $this->id .' AND sourcetype = "digiquali_sheet" )';
             $sql .= ' WHERE fk_source = ' . $this->id;
             $sql .= ' AND sourcetype = "digiquali_sheet"';
             $sql .= ' AND (targettype = "digiquali_question" OR targettype = "digiquali_questiongroup")';
