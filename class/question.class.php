@@ -760,14 +760,18 @@ class Question extends SaturneObject
 		$questionJson = json_decode($this->json, true);
 		$questionConfig = $questionJson['config'] ?? [];
 
-		if (isset($questionConfig[$this->type]['answer-min-value'], $questionConfig[$this->type]['answer-max-value'])) {
-			
-			$minAnswerValue = $questionConfig[$this->type]['answer-min-value'];
-			$maxAnswerValue = $questionConfig[$this->type]['answer-max-value'];
+		$minAnswerValue = $questionConfig[$this->type]['answer-min-value'] ?? null;
+		$maxAnswerValue = $questionConfig[$this->type]['answer-max-value'] ?? null;
+		$hasMinAnswerValue = isset($minAnswerValue);
+		$hasMaxAnswerValue = isset($maxAnswerValue);
+		$hasMinAndMaxValues = $hasMinAnswerValue && $hasMaxAnswerValue;
 
-			if ($answerValue >= $minAnswerValue && $answerValue <= $maxAnswerValue) {
-				return true;
-			}
+		if ($hasMinAndMaxValues) {
+			return $answerValue >= $minAnswerValue && $answerValue <= $maxAnswerValue;
+		} else if ($hasMaxAnswerValue) {
+			return $answerValue <= $maxAnswerValue;
+		} else if ($hasMinAnswerValue) {
+			return $answerValue >= $minAnswerValue;
 		}
 
 		return false;

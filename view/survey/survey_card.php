@@ -163,17 +163,17 @@ if (empty($resHook)) {
             }
         }
 
-        if (GETPOST('fk_sheet') > 0) {
-            if ($linkedObjectSelected == 0) {
-                setEventMessages($langs->trans('NeedObjectToLink'), [], 'errors');
-                header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create&fk_sheet=' . GETPOST('fk_sheet'));
-                exit;
-            }
-        } else {
-            setEventMessages($langs->trans('NeedFkSheet'), [], 'errors');
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create');
-            exit;
-        }
+        // if (GETPOST('fk_sheet') > 0) {
+        //     if ($linkedObjectSelected == 0) {
+        //         setEventMessages($langs->trans('NeedObjectToLink'), [], 'errors');
+        //         header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create&fk_sheet=' . GETPOST('fk_sheet'));
+        //         exit;
+        //     }
+        // } else {
+        //     setEventMessages($langs->trans('NeedFkSheet'), [], 'errors');
+        //     header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create');
+        //     exit;
+        // }
     }
 
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
@@ -521,7 +521,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="setsuccess_rate">';
         print '<table class="nobordernopadding centpercent">';
-        print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
+        print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" step="0.01" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
         print '</td><td class="left"><input type="submit" class="smallpaddingimp button" name="modify" value="' . $langs->trans('Modify') . '"><input type="submit" class="smallpaddingimp button button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '"></td></tr></tbody></table>';
         print '</form>';
     } else {

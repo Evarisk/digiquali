@@ -153,7 +153,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
 			}
 
             $out .= '<div class="question-number' . ($answerCssClass ?? '') . '">';
-            $out .= '<input type="number" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
+            $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
             $out .= '</div>';
             break;
         case 'UniqueChoice':

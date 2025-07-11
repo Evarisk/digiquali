@@ -219,7 +219,7 @@ if ($action == 'create') {
 
 	// Success score
 	print '<tr><td class="fieldrequired">'.$langs->trans("SuccessScoreWithUnit").'</td><td>';
-	print '<input class="flat" type="number" step="1" min="0" max="100" size="2" name="success_rate" id="success_rate" value="'.GETPOST('success_rate').'">';
+	print '<input class="flat" type="number" step="0.01" min="0" max="100" size="3" name="success_rate" id="success_rate" value="'.GETPOST('success_rate').'">';
 	print '</td></tr>';
 
 	// Other attributes
@@ -273,7 +273,7 @@ if (($id || $ref) && $action == 'edit') {
 
 	// Success score
 	print '<tr><td class="fieldrequired">'.$langs->trans("SuccessScoreWithUnit").'</td><td>';
-	print '<input class="flat" type="number" step="1" min="0" max="100" size="2" name="success_rate" id="success_rate" value="'.$object->success_rate.'">';
+	print '<input class="flat" type="number" step="0.01" min="0" max="100" size="3" name="success_rate" id="success_rate" value="'.$object->success_rate.'">';
 	print '</td></tr>';
 
 	// Other attributes
