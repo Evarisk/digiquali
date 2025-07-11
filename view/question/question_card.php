@@ -852,12 +852,16 @@ if ($action == 'create') {
     print '</td></tr>';
 
 	// Min value
-	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-min-value"><td><label for="answer-min-value">' . $langs->transnoentities('AnswerCorrectnessMinBound') . '</label></td><td>';
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-min-value"><td>';
+	print '<label for="answer-min-value">' . $langs->transnoentities('AnswerCorrectnessMinBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
 	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' min="0"' : '') . ' name="answer-min-value" id="answer-min-value" value="' . (!empty(GETPOSTFLOAT('answer-min-value')) ? GETPOSTFLOAT('answer-min-value') : '') . '">';
 	print '</td></tr>';
 
 	// Max value
-	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-max-value"><td><label for="answer-max-value">' . $langs->transnoentities('AnswerCorrectnessMaxBound') . '</label></td><td>';
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-max-value"><td>';
+	print '<label for="answer-max-value">' . $langs->transnoentities('AnswerCorrectnessMaxBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
 	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' max="100"' : '') . ' name="answer-max-value" id="answer-max-value" value="' . (!empty(GETPOSTFLOAT('answer-max-value')) ? GETPOSTFLOAT('answer-max-value') : '') . '">';
 	print '</td></tr>';
 
@@ -996,12 +1000,16 @@ if (($id || $ref) && $action == 'edit') {
     print '</td></tr>';
 
 	// Min value
-	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-min-value"><td><label for="answer-min-value">' . $langs->transnoentities('AnswerCorrectnessMinBound') . ($object->type == 'Percentage' ? ' (%)' : '') . '</label></td><td>';
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-min-value"><td>';
+	print '<label for="answer-min-value">' . $langs->transnoentities('AnswerCorrectnessMinBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
 	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' min="0"' : '') . ' name="answer-min-value" id="answer-min-value" value="' . ($objectConfig['config'][$object->type]['answer-min-value'] ?? '') . '">';
 	print '</td></tr>';
 
 	// Max value
-	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-max-value"><td><label for="answer-max-value">' . $langs->transnoentities('AnswerCorrectnessMaxBound') . ($object->type == 'Percentage' ? ' (%)' : '') . '</label></td><td>';
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-max-value"><td>';
+	print '<label for="answer-max-value">' . $langs->transnoentities('AnswerCorrectnessMaxBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
 	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' max="100"' : '') . ' name="answer-max-value" id="answer-max-value" value="' . ($objectConfig['config'][$object->type]['answer-max-value'] ?? '') . '">';
 	print '</td></tr>';
 
