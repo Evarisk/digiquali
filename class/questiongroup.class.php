@@ -118,7 +118,7 @@ class QuestionGroup extends SaturneObject
         'status'                 => ['type' => 'integer',      'label' => 'Status',               'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => 1, 'index' => 1],
         'label'                  => ['type' => 'varchar(255)', 'label' => 'Label',                'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1, 'noteditable' => 0, 'index' => 1],
         'description'            => ['type' => 'text',         'label' => 'Description',          'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 1, 'noteditable' => 0],
-        'success_rate'           => ['type' => 'real',         'label' => 'SuccessScore',     'enabled' => 1, 'position' => 95,  'notnull' => 0, 'visible' => 1, 'help' => 'PercentageValue', 'default' => 0, 'validate' => 1, 'bounds' => ['min' => 0, 'max' => 100]],
+        'success_rate'           => ['type' => 'real',         'label' => 'SuccessScore',         'enabled' => 1, 'position' => 95,  'notnull' => 0, 'visible' => 1, 'help' => 'PercentageValue', 'default' => 0, 'validate' => 1, 'bounds' => ['min' => 0, 'max' => 100]],
         'fk_user_creat'          => ['type' => 'integer',      'label' => 'UserCreation',         'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
         'fk_user_modif'          => ['type' => 'integer',      'label' => 'UserModification',     'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
     ];

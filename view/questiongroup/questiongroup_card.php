@@ -161,7 +161,9 @@ if (empty($reshook)) {
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
 
 	// TODO remove in the future if PR dolibarr accepted (missing call to setEventMessages on update when using validateField())
-	setEventMessages($object->error, $object->errors, 'errors');
+	if ($error > 0 && $action === 'edit') {
+		setEventMessages($object->error, $object->errors, 'errors');
+	}
 
     // Actions confirm_lock, confirm_archive
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
