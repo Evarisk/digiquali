@@ -703,8 +703,8 @@ class Question extends SaturneObject
 	 */
 	public function getAllCorrectAnswers(): array
 	{
-		// Selon le type de question : 
-		// - si choix unique/multiple/okko/okkona : on va chercher dans la table llx_answer les bonnes réponses à cette question
+		// Depending question type :
+		// - For UniqueChoice/MultipleChoices/OkKo/OkKoToFixNonApplicable : search correct answers for this question in llx_answer
 		$answer = new Answer($this->db);
 		$correctAnswers = $answer->fetchAll('', '', 0, 0, ['fk_question' => $this->id, 'correct' => 1, 'status' => 1]);
 		
@@ -724,7 +724,7 @@ class Question extends SaturneObject
 	 * 
 	 * @param mixed $answerValue
 	 *
-	 * @return int Return -1 if a least on answer is false, 0 for question of type text, 1 if all answers are correct
+	 * @return int Return -1 if at least one answer is false, 0 for question of type text, 1 if all answers are correct
 	 */
 	public function checkAnswerIsCorrect(mixed $answerValue): int
 	{
@@ -854,7 +854,7 @@ class Question extends SaturneObject
 	/**
 	 * List of question types which can have bounds
 	 *
-	 * @return array ['UniqueChoice', etc...]
+	 * @return array ['Percentage', etc...]
 	 */
 	public static function getQuestionTypesWithBounds(): array
 	{

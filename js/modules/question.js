@@ -136,7 +136,6 @@ window.digiquali.question.changeQuestionType = function() {
   const defaultPointsByQuestionType = JSON.parse($(this).attr('data-default-points'));
   $(document).find('#points').val(defaultPointsByQuestionType[questionType]);
   const questionTypesWithBounds = JSON.parse($(this).attr('data-question-types-with-bounds'));
-  console.log(questionTypesWithBounds.includes(questionType));
   if (questionTypesWithBounds.includes(questionType)) {
     $(document).find('#question-answer-min-value').removeClass('hidden');
     $(document).find('#question-answer-max-value').removeClass('hidden');
