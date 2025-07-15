@@ -115,11 +115,25 @@ if (empty($reshook)) {
 
     if ($action == 'addQuestionGroup') {
         $questionGroupId = GETPOST('questionGroupId');
+        $targetQuestionGroupId = GETPOST('targetGroupId');
         if ($questionGroupId > 0) {
-            $questionGroup->fetch($questionGroupId);
-            $questionGroup->add_object_linked('digiquali_' . $object->element, $id);
+			$questionGroup->fetch($questionGroupId);
 
-            $object->updateQuestionsAndGroupsPosition([], [], true);
+			// Linked new group to its parent (it could be the model or another group of the model)
+			if ($targetQuestionGroupId == 0) {
+				$targetLinkedId = $id;
+				$targetElementType = $object->element;
+			} else {
+				$targetLinkedId = $targetQuestionGroupId;
+				$targetElementType = 'questiongroup';
+			}
+			$questionGroup->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
+
+            if ($targetQuestionGroupId > 0) {
+				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
+			} else {
+				$object->updateQuestionsAndGroupsPosition([], [], true);
+			}
 
             $object->call_trigger('SHEET_ADDQUESTIONGROUP', $user);
             setEventMessages($langs->trans('AddQuestionGroupLink', 1) . ' ' . $questionGroup->ref, []);
@@ -133,9 +147,24 @@ if (empty($reshook)) {
 		if ($questionId > 0) {
 			$question->fetch($questionId);
 
-			$question->add_object_linked('digiquali_' . $object->element,$id);
+			// Add question to target group or to sheet
+			$targetQuestionGroupId = GETPOST('targetGroupId');
+			if ($targetQuestionGroupId == 0) {
+				$targetLinkedId = $id;
+				$targetElementType = $object->element;
+			} else {
+				$targetLinkedId = $targetQuestionGroupId;
+				$targetElementType = 'questiongroup';
+			}
 
-            $object->updateQuestionsAndGroupsPosition([], [], true);
+			$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
+
+			// TODO gérer les positions entre question et groupe
+			if ($targetQuestionGroupId > 0) {
+				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
+			} else {
+				$object->updateQuestionsAndGroupsPosition([], [], true);
+			}
 
             $object->call_trigger('SHEET_ADDQUESTION', $user);
 			setEventMessages($langs->trans('AddQuestionLink', 1) . ' ' . $question->ref, []);
@@ -150,8 +179,20 @@ if (empty($reshook)) {
 	if ($action == 'unlinkQuestion' && $permissiontoadd) {
 		$questionId = GETPOST('questionId');
 		$question->fetch($questionId);
-		$question->element = 'digiquali_'.$question->element;
-		$question->deleteObjectLinked($id, 'digiquali_' . $object->element);
+
+		$question->fetchObjectLinked();
+
+		$linkedObjectsIds = $question->linkedObjectsIds;
+		if (isset($linkedObjectsIds['digiquali_questiongroup'])) {
+			$sourceId = array_shift($linkedObjectsIds['digiquali_questiongroup']);
+			$sourceType = 'digiquali_questiongroup';
+		}
+		if (isset($linkedObjectsIds['digiquali_sheet'])) {
+			$sourceId = array_shift($linkedObjectsIds['digiquali_sheet']);
+			$sourceType = 'digiquali_sheet';
+		}
+
+		$question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question');
 
 		setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, array());
 
@@ -162,8 +203,15 @@ if (empty($reshook)) {
     if ($action == 'unlinkQuestionGroup' && $permissiontoadd) {
         $questionGroupId = GETPOST('questionGroupId');
         $questionGroup->fetch($questionGroupId);
-        $questionGroup->element = 'digiquali_'.$questionGroup->element;
-        $questionGroup->deleteObjectLinked($id, 'digiquali_' . $object->element);
+
+
+		$parentGroupId = $questionGroup->getParentGroupId();
+		if ($parentGroupId == 0) {
+			$sourceElementType = 'sheet';
+		} else {
+			$sourceElementType = $questionGroup->element;
+		}
+		$questionGroup->deleteObjectLinked($parentGroupId, 'digiquali_' . $sourceElementType, $questionGroup->id, 'digiquali_questiongroup');
 
         setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, array());
 
@@ -210,6 +258,9 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'moveLine' && $permissiontoadd) {
+
+		// TODO gérer le fait qu'on supprime un groupe de son emplacement
+		// TODO gérer le fait qu'on rajoute un groupe dans son nouvel emplacement
 		$idsArray = json_decode(file_get_contents('php://input'), true);
 
         $questionIds = [];
@@ -543,8 +594,10 @@ if (($id || $ref) && $action == 'edit') {
 
 // Part to show record
 if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'create'))) {
-    print $object->getQuestionAndGroupsTree();
-    print '<div id="cardContent" class="margin-for-tree">';
+	if ($object->displayTree()) {
+		print $object->getQuestionAndGroupsTree();
+	}
+    print '<div id="cardContent" class="' . ($object->displayTree() ? 'margin-for-tree' : '') . '">';
 	$res = $object->fetch_optionals();
 
 	saturne_get_fiche_head($object, 'card', $title);
@@ -747,151 +800,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print '</tr></thead>';
     print '<tbody>';
 
-    if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
-        foreach ($questionsAndGroups as $questionOrGroup) {
-            $questionsAndGroupsIdsArray[$questionOrGroup->element][] = $questionOrGroup->id;
+    $object->displayGroupsAndQuestions($questionsAndGroups);
 
-            if ($questionOrGroup->element === 'questiongroup') {
-                $group = $questionOrGroup;
-
-                $groupQuestions = $group->fetchQuestionsOrderedByPosition();
-
-                print '<tr id="group-' . $group->id . '" class="line-row question-group">';
-                print '<td colspan="8">';
-                print '<div class="group-header" onclick="window.digiquali.sheet.toggleGroup(' . $group->id . ')">';
-                print '<span class="group-title">' . $group->getNomUrl(1) . ' - ' . $group->label . '</span>';
-                print '<span class="toggle-icon">+</span>';
-                print '</div>';
-                print '</td>';
-                if ($object->status < $object::STATUS_LOCKED) {
-                    print '<td class="center">';
-                    print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=unlinkQuestionGroup&questionGroupId=' . $group->id . '">';
-                    print img_delete();
-                    print '</a>';
-                    print '</td>';
-                    print '<td class="sheet-move-line ui-sortable-handle" onmousedown="window.digiquali.sheet.closeAllGroups()">';
-                    print '</td>';
-                } else {
-                    print '<td>';
-                }
-                print '</tr>';
-
-                if (is_array($groupQuestions) && !empty($groupQuestions)) {
-                    foreach ($groupQuestions as $question) {
-                        print '<tr id="question-' . $question->id . '" class="hidden group-question group-question-'. $group->id .' line-row-group" data-group-id="' . $group->id . '">';
-                        print '<td style="padding-left: 20px;">' . $question->getNomUrl(1) . '</td>';
-                        print '<td>' . $question->label . '</td>';
-                        print '<td>' . $question->description . '</td>';
-                        print '<td>' . $langs->transnoentities($question->type) . '</td>';
-                        print '<td class="center"><input type="checkbox" disabled></td>';
-                        print '<td class="center">' . saturne_show_medias_linked(
-                                'digiquali',
-                                $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/photo_ok',
-                                1, '', 0, 0, 0, 50, 50, 0, 0, 0, 'question/' . $question->ref . '/photo_ok',
-                                $question, 'photo_ok', 0, 0, 1, 1
-                            ) . '</td>';
-                        print '<td class="center">' . saturne_show_medias_linked(
-                                'digiquali',
-                                $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/photo_ko',
-                                1, '', 0, 0, 0, 50, 50, 0, 0, 0, 'question/' . $question->ref . '/photo_ko',
-                                $question, 'photo_ko', 0, 0, 1, 1
-                            ) . '</td>';
-                        print '<td class="center">' . $question->getLibStatut(5) . '</td>';
-                        print '<td class="center">';
-                        print '</td>';
-                        if ($object->status < $object::STATUS_LOCKED) {
-                            print '<td class="sheet-move-line ui-sortable-handle group-question-handle" data-group-id="' . $group->id . '">';
-                        } else {
-                            print '<td>';
-                        }
-                        print '</td>';
-                        print '</tr>';
-                    }
-                }
-            } else {
-                $question = $questionOrGroup;
-                print '<tr id="' . $question->id . '" class="line-row">';
-                print '<td>' . $question->getNomUrl(1) . '</td>';
-                print '<td>' . $question->label . '</td>';
-                print '<td>' . $question->description . '</td>';
-                print '<td>' . $langs->transnoentities($question->type) . '</td>';
-                print '<td class="center"><input type="checkbox" disabled></td>';
-                print '<td class="center">' . saturne_show_medias_linked(
-                        'digiquali',
-                        $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/photo_ok',
-                        1, '', 0, 0, 0, 50, 50, 0, 0, 0, 'question/' . $question->ref . '/photo_ok',
-                        $question, 'photo_ok', 0, 0, 1, 1
-                    ) . '</td>';
-                print '<td class="center">' . saturne_show_medias_linked(
-                        'digiquali',
-                        $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/photo_ko',
-                        1, '', 0, 0, 0, 50, 50, 0, 0, 0, 'question/' . $question->ref . '/photo_ko',
-                        $question, 'photo_ko', 0, 0, 1, 1
-                    ) . '</td>';
-                print '<td class="center">' . $question->getLibStatut(5) . '</td>';
-                print '<td class="center">';
-                print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=unlinkQuestion&questionId=' . $question->id . '">';
-                print img_delete();
-                print '</a>';
-                print '</td>';
-                if ($object->status < $object::STATUS_LOCKED) {
-                    print '<td class="sheet-move-line ui-sortable-handle" onmousedown="window.digiquali.sheet.closeAllGroups()">';
-                } else {
-                    print '<td>';
-                }
-                print '</tr>';
-            }
-        }
-    }
-
-
-
-    // Ensure distinct actions are set in the form
-    if ($object->status < $object::STATUS_LOCKED) {
-        print '<tr class="add-line">';
-        print '<td class="maxwidth300 widthcentpercentminusx">';
-        print '<div id="addChoice">';
-        print '<button type="button" id="addQuestionButton" class="butAction">' . img_picto('', $question->picto) . ' ' . $langs->trans("Question") . ' ' . img_picto('', 'fa-link') . '</button>';
-        print '<button type="button" id="addGroupButton" class="butAction">' . img_picto('', $questionGroup->picto) . ' ' . $langs->trans("QuestionGroup") . ' ' . img_picto('', 'fa-link') . '</button>';
-        print '</div>';
-        print '</td>';
-        print '<td colspan="9">';
-        print '</td>';
-        print '</tr>';
-        print '</form>';
-
-
-
-        print '<tr id="addQuestionRow" class="hidden">';
-        // Form for adding a question
-        print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '" id="addQuestionForm">';
-        print '<input type="hidden" name="token" value="' . newToken() . '">';
-        print '<input type="hidden" name="id" value="' . $id . '">';
-        print '<td class="widthcentpercentminusx">';
-        print img_picto('', $question->picto, 'class="pictofixedwidth"') . $question->selectQuestionList(0, 'questionId', '', '1', 0, 0, array(), '', 0, 0, 'maxwidth600 minwidth400 widthcentpercentminusx', '', false, $questionsAndGroupsIdsArray['question']);
-        print '</td>';
-        print '<td>';
-        print '<input type="hidden" name="action" value="addQuestion">';
-        print '<input type="submit" id="actionButtonAdd" class="button hideifnotset button-save" name="add" value="' . $langs->trans("Add") . '">';
-        print '</td><td colspan="8">';
-        print '</td></form></tr>';
-
-// Form for adding a group
-
-
-        print '<tr id="addGroupRow" class="hidden">';
-        print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '" id="addGroupForm">';
-        print '<input type="hidden" name="token" value="' . newToken() . '">';
-        print '<input type="hidden" name="id" value="' . $id . '">';
-        print '<td class="widthcentpercentminusx">';
-        print img_picto('', $questionGroup->picto, 'class="pictofixedwidth"') . $questionGroup->selectQuestionGroupList(0, 'questionGroupId', 's.status IN (' . QuestionGroup::STATUS_VALIDATED . ', ' . QuestionGroup::STATUS_LOCKED . ')', '1', 0, 0, array(), '', 0, 0, 'maxwidth600 minwidth400 widthcentpercentminusx', '', false, $questionsAndGroupsIdsArray['questiongroup']);
-        print '</td>';
-        print '<td>';
-        print '<input type="hidden" name="action" value="addQuestionGroup">';
-        print '<input type="submit" id="actionButtonAddQuestionGroup" class="button hideifnotset button-save" name="add" value="' . $langs->trans("Add") . '">';
-        print '</td><td colspan="8">';
-        print '</td></form></tr>';
-    }
+	$isAddFormsVisible = true;
+	$groupId = 0; // root of the model
+	include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_addforms.tpl.php';
 
 	print '</table>';
 	print '</div>';

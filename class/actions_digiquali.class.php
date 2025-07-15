@@ -918,7 +918,8 @@ class ActionsDigiquali
                 if ($parameters['key'] == 'average_percentage_questions') {
                     $out[$parameters['key']] = round($mean, 2) . ' %';
                 } elseif ($parameters['key'] == 'verdict_object') {
-                    $out[$parameters['key']] = '<span class="wpeo-button button-' . ($mean > $object->success_rate ? 'green' : 'red') . ' badge-status' . '">' . ($mean > $object->success_rate ? $langs->transnoentities('OK') : $langs->transnoentities('KO')) . '</span>';
+                    $isCorrect = $object->isCorrect();
+                    $out[$parameters['key']] = '<span class="wpeo-button button-' . ($isCorrect ? 'green' : 'red') . ' badge-status' . '">' . ($isCorrect ? $langs->transnoentities('OK') : $langs->transnoentities('KO')) . '</span>';
                 }
             }
 

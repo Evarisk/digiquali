@@ -163,17 +163,17 @@ if (empty($resHook)) {
             }
         }
 
-        // if (GETPOST('fk_sheet') > 0) {
-        //     if ($linkedObjectSelected == 0) {
-        //         setEventMessages($langs->trans('NeedObjectToLink'), [], 'errors');
-        //         header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create&fk_sheet=' . GETPOST('fk_sheet'));
-        //         exit;
-        //     }
-        // } else {
-        //     setEventMessages($langs->trans('NeedFkSheet'), [], 'errors');
-        //     header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create');
-        //     exit;
-        // }
+        if (GETPOST('fk_sheet') > 0) {
+            if ($linkedObjectSelected == 0) {
+                setEventMessages($langs->trans('NeedObjectToLink'), [], 'errors');
+                header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create&fk_sheet=' . GETPOST('fk_sheet'));
+                exit;
+            }
+        } else {
+            setEventMessages($langs->trans('NeedFkSheet'), [], 'errors');
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create');
+            exit;
+        }
     }
 
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
@@ -344,7 +344,6 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     saturne_banner_tab($object, 'ref', '', 1, 'ref', 'ref', '', !empty($object->photo));
 
     $sheet->fetch($object->fk_sheet);
-    $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
     $questions = $sheet->fetchAllQuestions();
 
     $questionCounter = 0;
@@ -677,7 +676,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     <?php if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || $answerCounter != $questionCounter) {
         print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '');
         print '<div id="tablelines" class="question-answer-container">';
-        require_once __DIR__ . '/../../core/tpl/digiquali_answers.tpl.php';
+        $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
+        $object->displayAnswers($objectLine, $questionsAndGroups, false);
         print '</div>';
     }
 

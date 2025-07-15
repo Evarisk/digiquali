@@ -29,7 +29,7 @@ window.digiquali.sheet.init = function() {
 window.digiquali.sheet.event = function() {
 
   $( document ).on( 'click', '.toggle-group-in-tree', window.digiquali.sheet.toggleGroupInTree );
-  $( document ).on( 'click', '#addQuestionButton, #addGroupButton', window.digiquali.sheet.buttonActions );
+  $( document ).on( 'click', '.addQuestionButton, .addGroupButton', window.digiquali.sheet.buttonActions );
   $(document).on('mouseenter', '.sheet-move-line.ui-sortable-handle', window.digiquali.sheet.draganddrop);
   $(document).on('mouseenter', '.group-question-handle', window.digiquali.sheet.dragandDropInGroup);
 
@@ -47,7 +47,6 @@ window.digiquali.sheet.event = function() {
       $(this).find('.toggle-group-in-tree').removeClass('fa-chevron-down').addClass('fa-chevron-right');
     }
   });
-
 };
 
 /**
@@ -56,15 +55,21 @@ window.digiquali.sheet.event = function() {
  * @since   20.1.0
  * @version 20.1.0
  */
-window.digiquali.sheet.buttonActions = function() {
-  const addQuestionRow = $('#addQuestionRow');
-  const addGroupRow = $('#addGroupRow');
+window.digiquali.sheet.buttonActions = function(evt) {
 
-  if ($(this).attr('id') === 'addQuestionButton') {
+  const currentGroupId = evt.currentTarget.dataset.groupId;
+    
+  const addQuestionRow = $(`#addQuestionRow-${currentGroupId}`);
+  const addGroupRow = $(`#addGroupRow-${currentGroupId}`);
+
+  if ($(this).data('action') === 'addQuestionButton') {
     addQuestionRow.removeClass('hidden');
     addGroupRow.addClass('hidden');
-  } else {
+  } else if ($(this).data('action') === 'addGroupButton') {
     addGroupRow.removeClass('hidden');
+    addQuestionRow.addClass('hidden');
+  } else {
+    addGroupRow.addClass('hidden');
     addQuestionRow.addClass('hidden');
   }
 }
@@ -80,10 +85,24 @@ window.digiquali.sheet.toggleGroup = function(groupId) {
   const groupQuestions = $(`.group-question-${groupId}`);
   const toggleIcon = $(`#group-${groupId} .toggle-icon`);
 
+  const addLine = $(`#addLine-${groupId}`);
+  addLine.toggleClass('hidden');
+
+  const isHidden = addLine.hasClass('hidden');
+  toggleIcon.text(isHidden ? '+' : '-');
+
+  // When closing the group
+  if (isHidden) {
+    // hide questions/groups add forms
+    const groupRow = $(`#addGroupRow-${groupId}`);
+    groupRow.addClass('hidden');
+    const questionRow = $(`#addQuestionRow-${groupId}`);
+    questionRow.addClass('hidden');
+  }
+
   groupQuestions.each(function () {
     const question = $(this);
-    const isHidden = question.toggleClass('hidden').hasClass('hidden');
-    toggleIcon.text(isHidden ? '+' : '-');
+    question.toggleClass('hidden');
   });
 }
 
@@ -151,12 +170,12 @@ window.digiquali.sheet.draganddrop = function () {
 
   $('#tablelines tbody').sortable({
     handle: '.sheet-move-line',
-    connectWith:'#tablelines tbody .line-row',
+    connectWith:'#tablelines tbody .line-row-group',
     tolerance:'intersect',
     over:function(){
       $(this).css('cursor', 'grabbing');
     },
-    stop: function() {
+    stop: function(event, ui) {
       $(this).css('cursor', 'default');
       let token = $('.fiche').find('input[name="token"]').val();
 
@@ -166,9 +185,19 @@ window.digiquali.sheet.draganddrop = function () {
         separator = '?'
       }
       let lineOrder = [];
-      $('.line-row').each(function(  ) {
+      // find new parent
+      const movedEl = ui.item;
+      let siblingEl = movedEl.prev('.question-group');
+      // TODO group id devrait être le vrai id du groupe
+      // TODO parent id devrait être le groupe parent
+      // TODO ajouter data-position ?
+      movedEl.data('group-id', siblingEl.data('group-id'));
+      
+      $('.line-row').each(function() {
         lineOrder.push($(this).attr('id'));
       });
+      // TODO récupérer tous les éléments ayant un data-parent-id
+      // et faire un tableau avec id élément => id parent dans l'ordre d'apparition dans le DOM et sa position
 
       window.saturne.loader.display($('.side-nav .question-list'));
 

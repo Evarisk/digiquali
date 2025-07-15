@@ -149,8 +149,7 @@ if (empty($reshook)) {
         $questionId = GETPOST('questionId', 'int');
         if ($questionId > 0) {
             $question->fetch($questionId);
-            $question->element = 'digiquali_'.$question->element;
-            $question->deleteObjectLinked('', '', $object->id, $object->table_element);
+			$object->deleteObjectLinked($object->id, 'digiquali_questiongroup', $question->id, 'digiquali_question');
 
             setEventMessages($langs->trans('RemoveQuestionFromGroup') . ' ' . $question->ref, array());
         }
@@ -179,10 +178,12 @@ $help_url = 'FR:Module_DigiQuali';
 saturne_header(0,'', $title, $help_url);
 if ($sheetId > 0) {
     $sheet->fetch($sheetId);
-    print $sheet->getQuestionAndGroupsTree($object->element, $object->id);
+	if ($sheet->displayTree()) {
+		print $sheet->getQuestionAndGroupsTree($object->element, $object->id);
+	}
 }
 
-print '<div id="cardContent" '. ($sheetId > 0 ? 'class="margin-for-tree"' : '') .'>';
+print '<div id="cardContent" '. ($sheetId > 0 ? 'class="' . ($sheet->displayTree() ? 'margin-for-tree' : '') . '"' : '') .'>';
 
 // Part to create
 if ($action == 'create') {
@@ -437,11 +438,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print '</tr></thead>';
 
     $questionsLinked = $object->fetchQuestionsOrderedByPosition();
-    $alreadyAdded = [];
 
     if (is_array($questionsLinked) && !empty($questionsLinked)) {
         foreach ($questionsLinked as $questionLinked) {
-                $alreadyAdded[] = $questionLinked->id;
                 print '<tr id="' . $questionLinked->id . '" class="line-row oddeven">';
                 print '<td>';
                 print img_picto('', $questionLinked->picto, 'class="pictofixedwidth"') . $questionLinked->ref;
@@ -480,11 +479,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print '<td>-</td>';
 
         print '<td>';
-        if (!empty($alreadyAdded)) {
-            $filter = ['customsql' => 't.rowid NOT IN (' . implode(',', $alreadyAdded) . ')'];
-        } else {
-            $filter = [];
-        }
+        // if (!empty($alreadyAdded)) {
+            // $filter = ['customsql' => 't.rowid NOT IN (' . implode(',', $alreadyAdded) . ')'];
+            $filter = ['customsql' => "t.rowid NOT IN (SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question')"];
+        // } else {
+        //     $filter = [];
+        // }
         $questionList = saturne_fetch_all_object_type('Question', '', '', 0, 0, $filter);
         $questionArray = [];
         if (is_array($questionList) && !empty($questionList)) {

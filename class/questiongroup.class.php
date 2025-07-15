@@ -446,6 +446,9 @@ class QuestionGroup extends SaturneObject
 		$sql .= " FROM " . MAIN_DB_PREFIX . "digiquali_questiongroup as s";
 
 		$sql              .= " WHERE s.entity IN (" . getEntity($this->table_element) . ")";
+        $sql              .= " AND s.rowid NOT IN (";
+		$sql              .= "	SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_questiongroup'";
+		$sql			  .= ")";
 		if ($filter) $sql .= " AND (" . $filter . ")";
 
 		$sql .= $this->db->order("rowid", "ASC");
@@ -518,7 +521,9 @@ class QuestionGroup extends SaturneObject
     public function addQuestion($questionId) {
         global $user;
 
-        $this->add_object_linked('digiquali_question', $questionId, $this->id, 'question_group');
+        $question = new Question($this->db);
+        $question->fetch($questionId);
+        $question->add_object_linked('digiquali_questiongroup', $this->id);
         $this->call_trigger('QUESTIONGROUP_ADDQUESTION', $user);
     }
 
@@ -553,14 +558,123 @@ class QuestionGroup extends SaturneObject
      *
      * @return array
      */
-    public function fetchQuestionsOrderedByPosition()
+    public function fetchQuestionsOrderedByPosition(?int $groupId = null)
     {
-        $this->fetchObjectLinked('', '', $this->id, $this->table_element, 'OR', '', 'position');
+        $this->fetchObjectLinked($groupId ?? $this->id, $this->table_element, '', '', 'OR', '', 'position');
 
         if (!empty($this->linkedObjects['digiquali_question'])) {
             return $this->linkedObjects['digiquali_question'];
         } else {
             return [];
+        }
+    }
+
+    /**
+     * Get question groups
+     *
+     * @return array
+     */
+    public function fetchQuestionGroupsOrderedByPosition(?int $groupId = null)
+    {
+        $this->fetchObjectLinked($groupId ?? $this->id, $this->table_element, null, 'digiquali_questiongroup', 'OR', '', 'position');
+
+        if (!empty($this->linkedObjects['digiquali_questiongroup'])) {
+            return $this->linkedObjects['digiquali_questiongroup'];
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * Get id of the parent group
+     *
+     * @return int
+     */
+    public function getParentGroupId()
+    {
+        $this->fetchObjectLinked(null, 'digiquali_questiongroup', $this->id, 'digiquali_questiongroup', 'OR', '', 'position');
+
+        if (isset($this->linkedObjectsIds['digiquali_questiongroup'])) {
+            return intval(array_shift($this->linkedObjectsIds['digiquali_questiongroup']));
+        }
+        return 0;
+    }
+
+    /**
+     * Return the number of questions in the group)
+     * 
+     * @param bool $includeSubGroups If you want to include questions of subgroups or not
+     *
+     * @return int
+     */
+    public function getNumberOfQuestions(bool $includeSubGroups = true): int
+    {
+        $groupQuestions = $this->fetchQuestionsOrderedByPosition();
+        $numberOfQuestions = count($groupQuestions);
+
+        if ($includeSubGroups) {
+            $questionGroups = $this->fetchQuestionGroupsOrderedByPosition();
+
+            foreach ($questionGroups as $singleQuestionGroup) {
+                $numberOfQuestions += $singleQuestionGroup->getNumberOfQuestions();
+            }
+        }
+
+        return $numberOfQuestions;
+    }
+
+    /**
+     * Display question group in sheet card
+     *
+     * @return void
+     */
+    public function displayInSheetCard($sheetObject, $subLevel = 0)
+    {
+        global $langs, $db;
+
+        $groupQuestions = $this->fetchQuestionsOrderedByPosition();
+        $numberOfQuestions = $this->getNumberOfQuestions();
+
+        $questionGroups = $this->fetchQuestionGroupsOrderedByPosition();
+        
+
+        print '<tr id="group-' . $this->id . '" class="line-row question-group" data-group-id="' . $this->getParentGroupId() . '">';
+        print '<td colspan="8">';
+        print '<div class="group-header" onclick="window.digiquali.sheet.toggleGroup(' . $this->id . ')" style="margin-left: calc(2rem * ' . $subLevel . ');">';
+        print '<span class="group-title">' . $this->getNomUrl(1) . ' - ' . $this->label . ' (' . $numberOfQuestions . ' question' . ($numberOfQuestions > 1 ? 's' : '').')</span>';
+        print '<span class="toggle-icon">+</span>';
+        print '</div>';
+        print '</td>';
+        if ($sheetObject->status < $sheetObject::STATUS_LOCKED) {
+            print '<td class="center">';
+            print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $sheetObject->id . '&amp;action=unlinkQuestionGroup&questionGroupId=' . $this->id . '&token=' . newToken() . '">';
+            print img_delete();
+            print '</a>';
+            print '</td>';
+            // print '<td class="sheet-move-line ui-sortable-handle" onmousedown="window.digiquali.sheet.closeAllGroups()">';
+            print '<td class="sheet-move-line ui-sortable-handle">';
+            print '</td>';
+        } else {
+            print '<td>';
+        }
+        print '</tr>';
+
+        $groupId = $this->id;
+        $object = $sheetObject;
+        $tdOffsetStyle = 'style="padding-left: calc(2rem + 2rem * ' . $subLevel . ' + 12px);"';
+        include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_addforms.tpl.php';
+
+        if (is_array($groupQuestions) && !empty($groupQuestions)) {
+            foreach ($groupQuestions as $question) {
+                include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_question.tpl.php';
+            }            
+        }
+
+        if (is_array($questionGroups) && !empty($questionGroups)) {
+            $subLevel++;
+            foreach ($questionGroups as $singleGroup) {
+                $singleGroup->displayInSheetCard($sheetObject, $subLevel);
+            }
         }
     }
 
@@ -572,24 +686,55 @@ class QuestionGroup extends SaturneObject
      */
     public function calculatePoints(Survey $survey): array
     {
+        $numberOfAnsweredQuestions = 0;
+        $numberOfQuestions = 0;
         $questionGroupTotalPoints = 0;
         $questionGroupCorrectAnswersTotalPoints = 0;
 
-        foreach ($survey->lines as $questionAnswer) {
+        $this->fetchObjectLinked($this->id, 'digiquali_questiongroup');
 
-            if ($questionAnswer->fk_question_group === $this->id) {
+        // Compute questions points
+        if (isset($this->linkedObjectsIds['digiquali_question'])) {
+            foreach ($this->linkedObjectsIds['digiquali_question'] as $questionId) {
                 $question = new Question($this->db);
-                $question->fetch($questionAnswer->fk_question);
-    
-                $questionGroupTotalPoints += $question->points;
-                if ($question->checkAnswerIsCorrect($questionAnswer->answer) >= 0) {
-                    $questionGroupCorrectAnswersTotalPoints += $question->points;
-                }
-            }
+                $question->fetch($questionId);
 
+                foreach ($survey->lines as $questionAnswer) {
+                    if ($questionId == $questionAnswer->fk_question) {
+                        if ($question->checkAnswerIsCorrect($questionAnswer->answer) >= 0) {
+                            $questionGroupCorrectAnswersTotalPoints += $question->points;
+                        }
+                        if ($questionAnswer->answer !== '') {
+                            $numberOfAnsweredQuestions++;
+                        }
+                        $questionGroupTotalPoints += $question->points;
+                    }
+                }
+                $numberOfQuestions++;
+            }
         }
 
-        return [$questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints];
+        // Compute groups points
+        if (isset($this->linkedObjectsIds['digiquali_questiongroup'])) {
+            foreach ($this->linkedObjectsIds['digiquali_questiongroup'] as $groupId) {
+                $questionGroup = new QuestionGroup($this->db);
+                $questionGroup->fetch($groupId);
+
+                [$subGroupNumberOfAnsweredQuestions, $subGroupNumberOfQuestion, $subGroupCorrectAnswersTotalPoints, $subGroupTotalPoints, $groupWithAtLeastOneIncorrectSubGroup] = $questionGroup->calculatePoints($survey);
+
+                $numberOfAnsweredQuestions += $subGroupNumberOfAnsweredQuestions;
+                $numberOfQuestions += $subGroupNumberOfQuestion;
+                $questionGroupTotalPoints += $subGroupTotalPoints;
+                $questionGroupCorrectAnswersTotalPoints += $subGroupCorrectAnswersTotalPoints;
+
+                if (!$this->isCorrectFromPoints($subGroupCorrectAnswersTotalPoints, $subGroupTotalPoints)) {
+                    $atLeastOneIncorrectSubGroup = true;
+                }
+                $atLeastOneIncorrectSubGroup = $atLeastOneIncorrectSubGroup || $groupWithAtLeastOneIncorrectSubGroup;
+            }
+        }
+
+        return [$numberOfAnsweredQuestions, $numberOfQuestions, $questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints, $atLeastOneIncorrectSubGroup];
     }
 
     /**
@@ -599,7 +744,23 @@ class QuestionGroup extends SaturneObject
 	 */
 	public function isCorrect(Survey $survey): bool
 	{
-        [$correctPoints, $totalPoints] = $this->calculatePoints($survey);
+
+        [$numberOfAnsweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints($survey);
+
+        if ($atLeastOneIncorrectSubGroup) {
+            return false;
+        }
+
+        return $this->isCorrectFromPoints($correctPoints, $totalPoints);
+	}
+
+    /**
+	 * To know if the rate of correct answers is bigger than the attempted success rate of the current group
+	 *
+	 * @return bool
+	 */
+	public function isCorrectFromPoints($correctPoints, $totalPoints): bool
+	{
         $correctAnswersRate = 0;
         if ($totalPoints > 0) {
             $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
@@ -624,7 +785,7 @@ class QuestionGroup extends SaturneObject
 	{
         global $langs;
 
-        [$correctPoints, $totalPoints] = $this->calculatePoints($survey);
+        [$numberOfCorrectAnswers, $numberOfQuestions, $correctPoints, $totalPoints] = $this->calculatePoints($survey);
         $successRate = 0;
         if ($totalPoints > 0) {
             $successRate = round($correctPoints / $totalPoints * 100, 2);

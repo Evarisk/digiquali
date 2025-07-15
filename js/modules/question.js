@@ -133,9 +133,11 @@ window.digiquali.question.changeQuestionType = function() {
   let questionType = $(this).val();
   if (questionType === 'Percentage') {
     $(document).find('#percentage-question-step').removeClass('hidden');
+    $(document).find('#percentage-question-step input').prop('disabled', false);
     $('.question-answer-min-max-unit').text(' (%)');
   } else {
     $(document).find('#percentage-question-step').addClass('hidden');
+    $(document).find('#percentage-question-step input').prop('disabled', true);
     $('.question-answer-min-max-unit').text('');
   }
   const defaultPointsByQuestionType = JSON.parse($(this).attr('data-default-points'));
@@ -144,8 +146,12 @@ window.digiquali.question.changeQuestionType = function() {
   if (questionTypesWithBounds.includes(questionType)) {
     $(document).find('#question-answer-min-value').removeClass('hidden');
     $(document).find('#question-answer-max-value').removeClass('hidden');
+    $(document).find('#question-answer-min-value input').prop('disabled', false);
+    $(document).find('#question-answer-max-value input').prop('disabled', false);
   } else {
     $(document).find('#question-answer-min-value').addClass('hidden');
     $(document).find('#question-answer-max-value').addClass('hidden');
+    $(document).find('#question-answer-min-value input').prop('disabled', true);
+    $(document).find('#question-answer-max-value input').prop('disabled', true);
   }
 };

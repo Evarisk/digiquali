@@ -565,6 +565,7 @@ class Question extends SaturneObject
 	 * @return       string      HTML string with
 	 * @throws Exception
 	 */
+	// TODO remove this method and replace with saturne_fetch_all_object_type + voir questiongroup card (multiselect_array)
 	public function selectQuestionList($selected = '', $htmlname = 'socid', $filter = '', $showempty = '1', $showtype = 0, $forcecombo = 0, $events = array(), $filterkey = '', $outputmode = 0, $limit = 0, $morecss = 'minwidth100', $moreparam = '', $multiple = false, $alreadyAdded = array())
 	{
 		$out      = '';
@@ -583,11 +584,14 @@ class Question extends SaturneObject
 		// On recherche les societes
 		$sql  = "SELECT *";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "digiquali_question as s";
-
 		$sql              .= " WHERE s.entity IN (" . getEntity($this->table_element) . ")";
+		// TODO REVIEW not possible to put this in $filter param because of testSqlAndScriptInject which return empty string
+		$sql              .= " AND s.rowid NOT IN (";
+		$sql              .= "	SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question'";
+		$sql			  .= ")";
 		if ($filter) $sql .= " AND (" . $filter . ")";
 
-		$sql .= $this->db->order("rowid", "ASC");
+		$sql .= $this->db->order("s.rowid", "ASC");
 		$sql .= $this->db->plimit($limit, 0);
 
 		// Build output string
@@ -812,13 +816,13 @@ class Question extends SaturneObject
 	 *
 	 * @return bool
 	 */
-	public function hasAtLeastOneCorrectAnswer(): bool
+	public function hasAtLeastOneCorrectAnswer(int $answerIdToCheck = 0): bool
 	{
 		if ($this->mustHaveOnlyOneCorrectAnswer()) {
 			$answer = new Answer($this->db);
 			$answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $this->id, 'status' => 1, 'correct' => 1]);
 	
-			return (is_array($answerList) && count($answerList) > 0);
+			return (is_array($answerList) && count($answerList) > 0 && !in_array($answerIdToCheck, array_keys($answerList)));
 		}
 		return false;
 	}
@@ -885,4 +889,20 @@ class Question extends SaturneObject
 
 		return (($questionWithCorrectAnswer >= 0) ? $this->points : 0) . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
 	}
+
+	/**
+     * Get id of the parent group
+     *
+     * @return int
+     */
+    public function getParentGroupId()
+    {
+        $this->fetchObjectLinked(null, 'digiquali_questiongroup', $this->id, 'digiquali_question', 'OR', '', 'position');
+
+        if (isset($this->linkedObjectsIds['digiquali_questiongroup'])) {
+            return array_shift($this->linkedObjectsIds['digiquali_questiongroup']);
+        }
+		// 0 => sheet root
+        return 0;
+    }
 }

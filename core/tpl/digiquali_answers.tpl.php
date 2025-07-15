@@ -36,34 +36,24 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
         if ($questionOrGroup->element == 'questiongroup') {
             $questionGroupId = $questionOrGroup->id;
 
+            $questionGroup = new QuestionGroup($object->db);
             $questionGroup->fetch($questionGroupId);
 
             $isGroupCorrectCssClass = '';
-            $isGroupCorrect = $questionGroup->isCorrect($object);
+            $groupCssStyles = '';
+            $isGroupCorrect = null;
             $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
             if ($showCorrection) {
+                $isGroupCorrect = $questionGroup->isCorrect($object);
                 $isGroupCorrectCssClass = $isGroupCorrect ? ' correct' : ' incorrect';
             }
 
             $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
 
-            $totalQuestions = 0;
-            $answeredQuestions = 0;
-            if (is_array($groupQuestions) && !empty($groupQuestions)) {
-                $totalQuestions = count($groupQuestions);
-                foreach ($groupQuestions as $questionInGroup) {
-                    $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionInGroup->id, $questionGroupId);
-                    if (is_array($result) && !empty($result)) {
-                        $lineInGroup = array_shift($result);
-                        if (!empty($lineInGroup->answer)) {
-                            $answeredQuestions++;
-                        }
-                    }
-                }
-            }
-
-            print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'">';
-            print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $answeredQuestions . '/' . $totalQuestions . ' réponses aux questions</span></h3>';
+            [$numberOfAnsweredQuestions, $numberOfQuestions] = $questionGroup->calculatePoints($object);
+            
+            print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'" ' .$groupCssStyles. '>';
+            print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $numberOfAnsweredQuestions . '/' . $numberOfQuestions . ' réponses aux questions</span></h3>';
             if (!empty($questionGroup->description)) {
                 print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
             }
@@ -88,6 +78,8 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
                 }
                 print '</div>';
             }
+            $object->displayAnswers($objectLine, $questionGroup->fetchQuestionGroupsOrderedByPosition(), $isFrontend, ++$level);
+
             print '</div>';
         } else {
             $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionOrGroup->id, 0);

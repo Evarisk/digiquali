@@ -1,10 +1,11 @@
-#addChoice {
+.addChoice {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
+  margin-left: -12px;
 }
 
-#addChoice .butAction {
+.addChoice .butAction {
   padding: 10px 15px;
   cursor: pointer;
   border-radius: 4px;
@@ -17,7 +18,7 @@
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-#addChoice .butAction:hover {
+.addChoice .butAction:hover {
   transform: translateY(-2px);
 }
 

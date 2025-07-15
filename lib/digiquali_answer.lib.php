@@ -126,7 +126,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
     switch ($question->type) {
         case 'Text':
             $out .= '<div>';
-            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
+            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
             $out .= '</div>';
             break;
         case 'Percentage':
@@ -142,7 +142,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
 
             $out .= '<div class="percentage-cell' . ($answerCssClass ?? '') . '">';
             $out .= img_picto('', 'fontawesome_fa-frown_fas_#D53C3D_3em', 'class="range-image"');
-            $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . $questionAnswer . '"' . $disabled . '>';
+            $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . $questionAnswer . '"' . $disabled . '>';
             $out .= img_picto('', 'fontawesome_fa-grin_fas_#57AD39_3em', 'class="range-image"');
             $out .= '</div>';
             break;
@@ -153,7 +153,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
 			}
 
             $out .= '<div class="question-number' . ($answerCssClass ?? '') . '">';
-            $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
+            $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
             $out .= '</div>';
             break;
         case 'UniqueChoice':
@@ -163,10 +163,6 @@ function show_answer_from_question(Question $question, CommonObject $object, str
             $answers = $answer->fetchAll('ASC', 'position', 0, 0, ['customsql' => 't.status = ' . Answer::STATUS_VALIDATED . ' AND t.fk_question = ' . $question->id]);
             $pictos  = get_answer_pictos_array();
 
-			if ($showCorrection) {
-				$allCorrectAnswers = $question->getAllCorrectAnswers();
-			}
-
             if (strpos($questionAnswer, ',') !== false) {
                 $questionAnswers = explode(',', $questionAnswer);
             } else {
@@ -174,13 +170,12 @@ function show_answer_from_question(Question $question, CommonObject $object, str
             }
 
             $out .= '<div class="table-cell select-answer answer-cell" data-questionId="' . $question->id . '">';
-            $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" value="0">';
+            $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '" value="0">';
             if (is_array($answers) && !empty($answers)) {
                 foreach($answers as $answer) {
 
 					if ($showCorrection) {
-						$isAnswerCorrect = in_array(intval($answer->position), $allCorrectAnswers);
-						$answerCssClass = ($isAnswerCorrect && $questionAnswer !== '' ? ' correct' : ' incorrect');
+						$answerCssClass = ($answer->correct == 1 ? ' correct' : ' incorrect');
 					}
 
                     $out .= '<input type="hidden" class="answer-color answer-color-' . $answer->position . '" value="' . $answer->color . '">';

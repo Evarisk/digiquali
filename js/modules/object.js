@@ -109,10 +109,7 @@ window.digiquali.object.selectAnswer = function() {
   let autoSave        = $(this).closest('.table-id-' + questionId).attr('data-autoSave');
   let answer          = '';
   let answerValue     = $(this).hasClass('answer') ? $(this).attr('value') : $(this).val();
-  let questionGroupId   = $(this).closest('.digiquali-question-group').attr('id');
-  let comment         = $(this).closest('.table-id-' + questionId).find('input[name="comment' + questionId + '_' + questionGroupId + '"]').val();
-
-  console.log('questionId: ' + questionId + ', publicInterface: ' + publicInterface + ', autoSave: ' + autoSave + ', answer: ' + answerValue + ', comment: ' + comment + ', questionGroupId: ' + questionGroupId)
+  let comment         = $(this).closest('.table-id-' + questionId).find('input[name="comment' + questionId + '"]').val();
 
   if ($(this).closest('.table-cell').hasClass('select-answer')) {
     if ($(this).hasClass('multiple-answers')) {
@@ -139,7 +136,7 @@ window.digiquali.object.selectAnswer = function() {
   }
 
   if (!publicInterface && autoSave == 1 && !$(this).hasClass('multiple-answers')) {
-    window.digiquali.object.saveAnswer(questionId, answer, comment, questionGroupId);
+    window.digiquali.object.saveAnswer(questionId, answer, comment);
   } else {
     window.digiquali.object.updateButtonsStatus();
   }
@@ -196,7 +193,7 @@ window.digiquali.object.updateButtonsStatus = function() {
  * @param  {string} comment    Comment value
  * @return {void}
  */
-window.digiquali.object.saveAnswer = function(questionId, answer, comment, questionGroupId) {
+window.digiquali.object.saveAnswer = function(questionId, answer, comment) {
   let token          = window.saturne.toolbox.getToken();
   let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
   window.saturne.loader.display($('.table-id-' + questionId));
@@ -208,8 +205,7 @@ window.digiquali.object.saveAnswer = function(questionId, answer, comment, quest
       autoSave: true,
       questionId: questionId,
       answer: answer,
-      comment: comment,
-      questionGroupId: questionGroupId
+      comment: comment
     }),
     processData: false,
     contentType: false,
@@ -242,7 +238,6 @@ window.digiquali.object.rangePercent = function(fromInit) {
   let questionId   = slider.closest('.table-id').attr('data-questionId');
   let publicInterface = $(this).closest('.table-id-' + questionId).attr('data-publicInterface');
   let autoSave        = $(this).closest('.table-id-' + questionId).attr('data-autoSave');
-  let questionGroupId   = $(this).closest('.digiquali-question-group').attr('id');
 
   slider.parent().find('.range-percent').remove();
 
@@ -269,7 +264,7 @@ window.digiquali.object.rangePercent = function(fromInit) {
 
   if (!fromInit) {
     if (!publicInterface && autoSave == 1 && !$(this).hasClass('multiple-answers')) {
-      window.digiquali.object.saveAnswer(questionId, rangePercent, comment, questionGroupId);
+      window.digiquali.object.saveAnswer(questionId, rangePercent, comment);
     } else {
       window.digiquali.object.updateButtonsStatus();
     }

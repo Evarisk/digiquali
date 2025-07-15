@@ -515,15 +515,19 @@ class Sheet extends SaturneObject
      *
      * @param array $questionIds Array containing position and ids of questions and group questions in sheet
      */
-    public function updateQuestionsAndGroupsPosition(?array $questionIds, ?array $questionGroupIds, $reindexLast = false)
+    public function updateQuestionsAndGroupsPosition(?array $questionIds, ?array $questionGroupIds, $reindexLast = false, ?int $fk_source = null, string $sourcetype = 'digiquali_sheet')
     {
         $this->db->begin();
 
+        if (is_null($fk_source)) {
+            $fk_source = $this->id;
+        }
+
         if ($reindexLast) {
             $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
-            $sql .= ' SET position = ( SELECT MAX(position) + 1 FROM llx_element_element WHERE fk_source = '. $this->id .' AND sourcetype = "digiquali_sheet" )';
-            $sql .= ' WHERE fk_source = ' . $this->id;
-            $sql .= ' AND sourcetype = "digiquali_sheet"';
+            $sql .= ' SET position = ( SELECT (COALESCE(MAX(position), 0) + 1) FROM llx_element_element WHERE fk_source = '. (int) $fk_source .' AND sourcetype = \'' . $this->db->escape($sourcetype) . '\' )';
+            $sql .= ' WHERE fk_source = ' . $fk_source;
+            $sql .= ' AND sourcetype = \'' . $this->db->escape($sourcetype) . '\'';
             $sql .= ' AND (targettype = "digiquali_question" OR targettype = "digiquali_questiongroup")';
             $sql .= ' AND position IS NULL';
 
@@ -586,20 +590,22 @@ class Sheet extends SaturneObject
      * @param array $question Array containing questions with fk_question_group
      */
     public function fetchAllQuestions() {
-        $questionAndGroups = $this->fetchQuestionsAndGroups();
+        $questionAndGroups = $this->fetchQuestionsAndGroups($this->id, 'digiquali_sheet', true);
         $questions = [];
         if (is_array($questionAndGroups) && !empty($questionAndGroups)) {
             foreach($questionAndGroups as $questionOrGroup) {
                 if ($questionOrGroup->element == 'questiongroup') {
-                    $groupQuestions = $questionOrGroup->fetchQuestionsOrderedByPosition();
-                    if (is_array($groupQuestions) && !empty($groupQuestions)) {
-                        foreach($groupQuestions as $groupQuestion) {
-                            $groupQuestion->fk_question_group = $questionOrGroup->id;
-                            $questions[] = $groupQuestion;
-                        }
-                    }
+                    // $groupQuestion->fk_question_group = $questionOrGroup->id;
+                    // $questions[] = $groupQuestion;
+                    // $groupQuestions = $questionOrGroup->fetchQuestionsOrderedByPosition();
+                    // if (is_array($groupQuestions) && !empty($groupQuestions)) {
+                    //     foreach($groupQuestions as $groupQuestion) {
+                    //         $groupQuestion->fk_question_group = $questionOrGroup->id;
+                    //         $questions[] = $groupQuestion;
+                    //     }
+                    // }
                 } else {
-                    $questionOrGroup->fk_question_group = 0;
+                    // $questionOrGroup->fk_question_group = 0;
                     $questions[] = $questionOrGroup;
                 }
             }
@@ -613,15 +619,15 @@ class Sheet extends SaturneObject
      *
      * @return array Array containing questions and groups
      */
-    public function fetchQuestionsAndGroups() {
+    public function fetchQuestionsAndGroups(?int $sourceId = null, string $sourceType = 'digiquali_sheet', bool $recursive = false) {
 
         require_once __DIR__ . '/question.class.php';
         require_once __DIR__ . '/questiongroup.class.php';
 
         $sql = 'SELECT ee.fk_target, ee.targettype, ee.position';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'element_element as ee';
-        $sql .= ' WHERE ee.fk_source = ' . $this->id;
-        $sql .= ' AND ee.sourcetype = "digiquali_sheet"';
+        $sql .= ' WHERE ee.fk_source = ' . ($sourceId ?? $this->id);
+        $sql .= ' AND ee.sourcetype = "' . $this->db->escape($sourceType) . '"';
         $sql .= ' AND (ee.targettype = "digiquali_question" OR ee.targettype = "digiquali_questiongroup")';
         $sql .= ' ORDER BY ee.position ASC';
 
@@ -638,6 +644,9 @@ class Sheet extends SaturneObject
                 } else {
                     $questionGroup->fetch($obj->fk_target);
                     $questionAndGroups[] = $questionGroup;
+                    if ($recursive) {
+                        $questionAndGroups = array_merge($questionAndGroups, $this->fetchQuestionsAndGroups($questionGroup->id, 'digiquali_questiongroup', true));
+                    }
                 }
             }
         }
@@ -953,5 +962,29 @@ class Sheet extends SaturneObject
         return 0;
     }
 
+    /**
+     * Display question groups and questions in sheet card
+     *
+     * @return void
+     */
+    public function displayGroupsAndQuestions($questionsAndGroups)
+    {
+        global $langs;
+
+        if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
+            foreach ($questionsAndGroups as $questionOrGroup) {
+                $object = $this;
+                include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_questiongroup.tpl.php';
+            }
+        }
+    }
+
+    /**
+     * Indicates if we want to display tree (with questions and groups/subgroups) on the sheet card
+     */
+    public function displayTree(): bool
+    {
+        return (getDolGlobalBool('DIGIQUALI_DISABLE_TREE_DISPLAY') === false);
+    }
 }
 
