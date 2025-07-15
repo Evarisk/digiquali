@@ -713,8 +713,8 @@ class Control extends SaturneObject
             $object->next_control_date = '';
         }
 
-        $object->context = 'createfromclone';
-        $object->track_id     = generate_random_id();
+        $object->context  = 'createfromclone';
+        $object->track_id = generate_random_id();
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 
