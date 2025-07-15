@@ -40,9 +40,6 @@ window.digiquali.question = {};
  */
 window.digiquali.question.init = function() {
   window.digiquali.question.event();
-
-  // Force execute change() just after having added the event to display min/max unit depending question type
-  $('select[data-type="question-type"]').change();
 };
 
 /**
