@@ -715,10 +715,10 @@ class Survey extends SaturneObject
                 $questionGroup = new QuestionGroup($this->db);
                 $questionGroup->fetch($groupId);
 
-                [$subGroupNumberOfAnsweredQuestions, $subGroupNumberOfQuestion, $questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints, $questionGroupWithAtLeastOneIncorrectSubGroup] = $questionGroup->calculatePoints($this);
+                [$subGroupNumberOfAnsweredQuestions, $subGroupNumberOfQuestions, $questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints, $questionGroupWithAtLeastOneIncorrectSubGroup] = $questionGroup->calculatePoints($this);
 
                 $numberOfAnsweredQuestions += $subGroupNumberOfAnsweredQuestions;
-                $numberOfQuestions += $subGroupNumberOfQuestion;
+                $numberOfQuestions += $subGroupNumberOfQuestions;
                 $surveyTotalPoints += $questionGroupTotalPoints;
                 $surveyCorrectAnswersTotalPoints += $questionGroupCorrectAnswersTotalPoints;
 
@@ -740,7 +740,7 @@ class Survey extends SaturneObject
 	 */
 	public function isCorrect(): bool
 	{
-        [$correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints();
+        [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints();
 
         if ($atLeastOneIncorrectSubGroup) {
             return false;
