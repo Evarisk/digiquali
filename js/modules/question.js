@@ -40,6 +40,7 @@ window.digiquali.question = {};
  */
 window.digiquali.question.init = function() {
   window.digiquali.question.event();
+  window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
 };
 
 /**
@@ -131,11 +132,9 @@ window.digiquali.question.changeQuestionType = function() {
   if (questionType === 'Percentage') {
     $(document).find('#percentage-question-step').removeClass('hidden');
     $(document).find('#percentage-question-step input').prop('disabled', false);
-    $('.question-answer-min-max-unit').text(' (%)');
   } else {
     $(document).find('#percentage-question-step').addClass('hidden');
     $(document).find('#percentage-question-step input').prop('disabled', true);
-    $('.question-answer-min-max-unit').text('');
   }
   const defaultPointsByQuestionType = JSON.parse($(this).attr('data-default-points'));
   $(document).find('#points').val(defaultPointsByQuestionType[questionType]);
@@ -151,4 +150,15 @@ window.digiquali.question.changeQuestionType = function() {
     $(document).find('#question-answer-min-value input').prop('disabled', true);
     $(document).find('#question-answer-max-value input').prop('disabled', true);
   }
+
+  window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
 };
+
+window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType = function() {
+  const questionType = $('#selecttype').val();
+  if (questionType === 'Percentage') {
+    $('.question-answer-min-max-unit').text(' (%)');
+  } else {
+    $('.question-answer-min-max-unit').text('');
+  }
+}
