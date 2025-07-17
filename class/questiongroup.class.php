@@ -213,7 +213,9 @@ class QuestionGroup extends SaturneObject
         $result = parent::create($user, $notrigger);
 
         if ($result > 0) {
-            if (GETPOST('sheet_id') > 0) {
+            if (GETPOST('parent_group_id') > 0) {
+                $this->add_object_linked('digiquali_questiongroup', GETPOST('parent_group_id'));
+            } else if (GETPOST('sheet_id') > 0) {
                 $sheet = new Sheet($this->db);
                 $sheet->fetch(GETPOST('sheet_id'));
 

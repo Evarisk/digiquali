@@ -206,6 +206,8 @@ NbQuestions                    = Nombre de questions
 SuccessScore                   = Score de réussite
 SuccessScoreWithUnit           = Score de réussite (%)
 PercentageValue                = Valeur en pourcentage
+CreateNewQuestion              = Créer une nouvelle question
+CreateNewQuestionGroup         = Créer un nouveau groupe de questions
 
 # Notice - notice
 MissingConfigElementTypeTitle   = Configuration manquante pour les éléments liés

@@ -63,6 +63,7 @@ $contextpage         = GETPOST('contextpage', 'aZ') ?GETPOST('contextpage', 'aZ'
 $backtopage          = GETPOST('backtopage', 'alpha');
 $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 $sheetId             = GETPOST('sheet_id', 'int');
+$parentGroupId       = GETPOST('parent_group_id', 'int'); // parent group id (0 if at root of the sheet)
 
 // Initialize objects
 // Technical objets
@@ -193,6 +194,7 @@ if ($action == 'create') {
 	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
     print '<input type="hidden" name="sheet_id" value="' . $sheetId . '">';
+	print '<input type="hidden" name="parent_group_id" value="'.$parentGroupId.'">';
 	if ($backtopage) print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	if ($backtopageforcancel) print '<input type="hidden" name="backtopageforcancel" value="'.$backtopageforcancel.'">';
 
