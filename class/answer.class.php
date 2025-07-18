@@ -115,6 +115,7 @@ class Answer extends SaturneObject
         'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 5, 'index' => 1, 'default' => 1],
         'value'         => ['type' => 'text',         'label' => 'Value',            'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1],
         'position'      => ['type' => 'integer',      'label' => 'Position',         'enabled' => 1, 'position' => 90,  'notnull' => 1, 'visible' => 0],
+        'correct'       => ['type' => 'boolean',      'label' => 'AnswerCorrectness','enabled' => 1, 'position' => 95,  'notnull' => 1, 'visible' => 0, 'default' => 0],
         'color'         => ['type' => 'varchar(255)', 'label' => 'Color',            'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 0],
         'pictogram'     => ['type' => 'varchar(255)', 'label' => 'Pictogram',        'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 1],
         'fk_question'   => ['type' => 'integer',      'label' => 'FkQuestion',       'enabled' => 1, 'position' => 120, 'notnull' => 1, 'visible' => 0, 'index' => 1, 'foreignkey' => 'digiquali_question.rowid'],
@@ -171,6 +172,11 @@ class Answer extends SaturneObject
      * @var int Position.
      */
     public int $position;
+
+    /**
+     * @var bool Correct.
+     */
+    public bool $correct = false;
 
     /**
      * @var string Color.

@@ -163,17 +163,17 @@ if (empty($resHook)) {
             }
         }
 
-        if (GETPOST('fk_sheet') > 0) {
-            if ($linkedObjectSelected == 0) {
-                setEventMessages($langs->trans('NeedObjectToLink'), [], 'errors');
-                header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create&fk_sheet=' . GETPOST('fk_sheet'));
-                exit;
-            }
-        } else {
-            setEventMessages($langs->trans('NeedFkSheet'), [], 'errors');
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create');
-            exit;
-        }
+        // if (GETPOST('fk_sheet') > 0) {
+        //     if ($linkedObjectSelected == 0) {
+        //         setEventMessages($langs->trans('NeedObjectToLink'), [], 'errors');
+        //         header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create&fk_sheet=' . GETPOST('fk_sheet'));
+        //         exit;
+        //     }
+        // } else {
+        //     setEventMessages($langs->trans('NeedFkSheet'), [], 'errors');
+        //     header('Location: ' . $_SERVER['PHP_SELF'] . '?action=create');
+        //     exit;
+        // }
     }
 
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
@@ -512,45 +512,29 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print saturne_show_medias_linked('digiquali', $pathPhotos, 'small', 0, 0, 0, 0, $onPhone ? 40 : 50, $onPhone ? 40 : 50, 0, 0, 0, 'survey/' . $object->ref . '/photos/', $object, 'photo', $object->status < Survey::STATUS_LOCKED, $permissiontodelete && $object->status < Survey::STATUS_LOCKED);
     print '</td></tr>';
 
-    $averagePercentageQuestions = 0;
-    $percentQuestionCounter     = 0;
-
-    foreach ($questions as $questionLinked) {
-        if ($questionLinked->type !== 'Percentage') {
-            continue; // Skip non-percentage questions
-        }
-
-        $percentQuestionCounter++;
-        foreach ($object->lines as $line) {
-            if ($line->fk_question === $questionLinked->id) {
-                $averagePercentageQuestions += $line->answer;
-            }
-        }
+    print '<tr class="field_success_rate"><td class="titlefield fieldname_success_rate">';
+    print $form->editfieldkey('SuccessScore', 'success_rate', $object->success_rate, $object, $permissiontoadd && $object->status < Survey::STATUS_LOCKED, 'string', '', 0, 0,'id', $langs->trans('PercentageValue'));
+    print '</td><td class="valuefield fieldname_success_rate">';
+    if ($action == 'editsuccess_rate') {
+        print '<form action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" method="post">';
+        print '<input type="hidden" name="token" value="' . newToken() . '">';
+        print '<input type="hidden" name="action" value="setsuccess_rate">';
+        print '<table class="nobordernopadding centpercent">';
+        print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" step="0.01" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
+        print '</td><td class="left"><input type="submit" class="smallpaddingimp button" name="modify" value="' . $langs->trans('Modify') . '"><input type="submit" class="smallpaddingimp button button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '"></td></tr></tbody></table>';
+        print '</form>';
+    } else {
+        print (!empty($object->success_rate) ? price2num($object->success_rate, 2) : 0) . ' %';
     }
+    print '</td></tr>';
 
-    $averagePercentageQuestions = ($percentQuestionCounter > 0) ? ($averagePercentageQuestions / $percentQuestionCounter) : 0;
-
-    if ($percentQuestionCounter > 0) {
+    if ($object->status >= SURVEY::STATUS_LOCKED) {
+        $surveyResult = $object->getFormattedResults();
+    
         print '<tr class="field_success_rate"><td class="titlefield fieldname_success_rate">';
-        print $form->editfieldkey('SuccessScore', 'success_rate', $object->success_rate, $object, $permissiontoadd && $object->status < Survey::STATUS_LOCKED, 'string', '', 0, 0,'id', $langs->trans('PercentageValue'));
+        print $langs->trans('RateResult');
         print '</td><td class="valuefield fieldname_success_rate">';
-        if ($action == 'editsuccess_rate') {
-            print '<form action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" method="post">';
-            print '<input type="hidden" name="token" value="' . newToken() . '">';
-            print '<input type="hidden" name="action" value="setsuccess_rate">';
-            print '<table class="nobordernopadding centpercent">';
-            print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
-            print '</td><td class="left"><input type="submit" class="smallpaddingimp button" name="modify" value="' . $langs->trans('Modify') . '"><input type="submit" class="smallpaddingimp button button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '"></td></tr></tbody></table>';
-            print '</form>';
-        } else {
-            print (!empty($object->success_rate) ? price2num($object->success_rate, 2) : 0) . ' %';
-        }
-        print '</td></tr>';
-
-        print '<tr class="field_average"><td class="titlefield fieldname_average">';
-        print $langs->trans('AveragePercentageQuestions');
-        print '</td><td class="valuefield fieldname_average">';
-        print '<span class="badge badge-' . ($object->success_rate > $averagePercentageQuestions ? 'status8' : 'status4') . ' badge-status' . '">' . price2num($averagePercentageQuestions, 2) . ' %</div>';
+        print '<span class="badge badge-' . ($object->isCorrect() ? 'status4' : 'status8') . ' badge-status' . '">' . $surveyResult . '</div>';
         print '</td></tr>';
     }
 

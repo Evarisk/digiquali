@@ -40,6 +40,9 @@ window.digiquali.question = {};
  */
 window.digiquali.question.init = function() {
   window.digiquali.question.event();
+
+  // Force execute change() just after having added the event to display min/max unit depending question type
+  $('select[data-type="question-type"]').change();
 };
 
 /**
@@ -130,7 +133,19 @@ window.digiquali.question.changeQuestionType = function() {
   let questionType = $(this).val();
   if (questionType === 'Percentage') {
     $(document).find('#percentage-question-step').removeClass('hidden');
+    $('.question-answer-min-max-unit').text(' (%)');
   } else {
     $(document).find('#percentage-question-step').addClass('hidden');
+    $('.question-answer-min-max-unit').text('');
+  }
+  const defaultPointsByQuestionType = JSON.parse($(this).attr('data-default-points'));
+  $(document).find('#points').val(defaultPointsByQuestionType[questionType]);
+  const questionTypesWithBounds = JSON.parse($(this).attr('data-question-types-with-bounds'));
+  if (questionTypesWithBounds.includes(questionType)) {
+    $(document).find('#question-answer-min-value').removeClass('hidden');
+    $(document).find('#question-answer-max-value').removeClass('hidden');
+  } else {
+    $(document).find('#question-answer-min-value').addClass('hidden');
+    $(document).find('#question-answer-max-value').addClass('hidden');
   }
 };

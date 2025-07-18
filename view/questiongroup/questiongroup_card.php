@@ -160,6 +160,11 @@ if (empty($reshook)) {
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
 
+	// TODO remove in the future if PR dolibarr accepted (missing call to setEventMessages on update when using validateField())
+	if ($error > 0 && $action === 'edit') {
+		setEventMessages($object->error, $object->errors, 'errors');
+	}
+
     // Actions confirm_lock, confirm_archive
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
 }
@@ -214,6 +219,11 @@ if ($action == 'create') {
 		print "</td></tr>";
 	}
 
+	// Success score
+	print '<tr><td class="fieldrequired">'.$langs->trans("SuccessScoreWithUnit").'</td><td>';
+	print '<input class="flat" type="number" step="0.01" min="0" max="100" size="3" name="success_rate" id="success_rate" value="'.GETPOST('success_rate').'">';
+	print '</td></tr>';
+
 	// Other attributes
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_add.tpl.php';
 
@@ -261,6 +271,11 @@ if (($id || $ref) && $action == 'edit') {
 	print '<tr><td><label class="" for="description">' . $langs->trans("Description") . '</label></td><td>';
 	$doleditor = new DolEditor('description', $object->description, '', 90, 'dolibarr_details', '', false, true, $conf->global->FCKEDITOR_ENABLE_SOCIETE, ROWS_3, '90%');
 	$doleditor->Create();
+	print '</td></tr>';
+
+	// Success score
+	print '<tr><td class="fieldrequired">'.$langs->trans("SuccessScoreWithUnit").'</td><td>';
+	print '<input class="flat" type="number" step="0.01" min="0" max="100" size="3" name="success_rate" id="success_rate" value="'.$object->success_rate.'">';
 	print '</td></tr>';
 
 	// Other attributes
@@ -335,6 +350,15 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print $form->showCategories($object->id, 'questiongroup', 1);
 		print "</td></tr>";
 	}
+
+	// Success score
+	print '<tr><td class="titlefield">';
+	print $langs->trans("SuccessScore");
+	print '</td>';
+	print '<td>';
+	print $object->success_rate . ' %';
+	print '</td></tr>';
+
 
 	// Other attributes. Fields from hook formObjectOptions and Extrafields.
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_view.tpl.php';

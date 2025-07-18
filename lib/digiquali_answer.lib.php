@@ -108,10 +108,11 @@ function get_answer_pictos_array(): array
  * @param  CommonObject $object         Object (Control, Survey, ...)
  * @param  number       $questionGroupId Question group ID
  * @param  string       $questionAnswer Answer of the question (ControlLine, SurveyLine, ...)
+ * @param  bool         $showAnwserCorrection Will show the right and wrong answers if true (in combinaison with object status)
  * @return string       $out            HTML output
  * @throws Exception
  */
-function show_answer_from_question(Question $question, CommonObject $object, string $questionAnswer, int $questionGroupId = 0): string
+function show_answer_from_question(Question $question, CommonObject $object, string $questionAnswer, int $questionGroupId = 0, bool $showAnwserCorrection = false): string
 {
     global $db, $langs;
 
@@ -120,6 +121,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
     $out            = '';
     $disabled       = ($object->status > $object::STATUS_DRAFT ? ' disabled' : '');
     $questionConfig = json_decode($question->json, true)['config'] ?? [];
+	$showCorrection = ($object->status >= $object::STATUS_LOCKED && $showAnwserCorrection);
 
     switch ($question->type) {
         case 'Text':
@@ -133,15 +135,25 @@ function show_answer_from_question(Question $question, CommonObject $object, str
                 $step = $questionConfig[$question->type]['step'];
             }
 
-            $out .= '<div class="percentage-cell">';
+			if ($showCorrection) {
+				$isAnswerCorrect = $question->isAnswerInQuestionRange($questionAnswer);
+				$answerCssClass = ($isAnswerCorrect && $questionAnswer !== '' ? ' correct' : ' incorrect');
+			}
+
+            $out .= '<div class="percentage-cell' . ($answerCssClass ?? '') . '">';
             $out .= img_picto('', 'fontawesome_fa-frown_fas_#D53C3D_3em', 'class="range-image"');
             $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . $questionAnswer . '"' . $disabled . '>';
             $out .= img_picto('', 'fontawesome_fa-grin_fas_#57AD39_3em', 'class="range-image"');
             $out .= '</div>';
             break;
         case 'Range':
-            $out .= '<div class="question-number">';
-            $out .= '<input type="number" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
+			if ($showCorrection) {
+				$isAnswerCorrect = $question->isAnswerInQuestionRange($questionAnswer);
+				$answerCssClass = ($isAnswerCorrect && $questionAnswer !== '' ? ' correct' : ' incorrect');
+			}
+
+            $out .= '<div class="question-number' . ($answerCssClass ?? '') . '">';
+            $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
             $out .= '</div>';
             break;
         case 'UniqueChoice':
@@ -150,6 +162,10 @@ function show_answer_from_question(Question $question, CommonObject $object, str
         case 'MultipleChoices':
             $answers = $answer->fetchAll('ASC', 'position', 0, 0, ['customsql' => 't.status = ' . Answer::STATUS_VALIDATED . ' AND t.fk_question = ' . $question->id]);
             $pictos  = get_answer_pictos_array();
+
+			if ($showCorrection) {
+				$allCorrectAnswers = $question->getAllCorrectAnswers();
+			}
 
             if (strpos($questionAnswer, ',') !== false) {
                 $questionAnswers = explode(',', $questionAnswer);
@@ -161,8 +177,14 @@ function show_answer_from_question(Question $question, CommonObject $object, str
             $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '_' . $questionGroupId . '" value="0">';
             if (is_array($answers) && !empty($answers)) {
                 foreach($answers as $answer) {
+
+					if ($showCorrection) {
+						$isAnswerCorrect = in_array(intval($answer->position), $allCorrectAnswers);
+						$answerCssClass = ($isAnswerCorrect && $questionAnswer !== '' ? ' correct' : ' incorrect');
+					}
+
                     $out .= '<input type="hidden" class="answer-color answer-color-' . $answer->position . '" value="' . $answer->color . '">';
-                    $out .= '<span class="answer' . (!empty($answer->pictogram) ? ' answer-icon' : '' ) . ($question->type == 'MultipleChoices' ? ' multiple-answers square' : ' single-answer') . (in_array($answer->position, $questionAnswers) ? ' active' : '') . ($object->status > 0 ? ' disable' : '') . '" style="' . (in_array($answer->position, $questionAnswers) ? 'background:' . $answer->color . '; ' : '') . 'color:' . $answer->color . ';' . 'box-shadow: 0 0 0 3px ' . $answer->color . ';" value="' . $answer->position . '">';
+                    $out .= '<span class="answer' . ($answerCssClass ?? '') . (!empty($answer->pictogram) ? ' answer-icon' : '' ) . ($question->type == 'MultipleChoices' ? ' multiple-answers square' : ' single-answer') . (in_array($answer->position, $questionAnswers) ? ' active' : '') . ($object->status > 0 ? ' disable' : '') . '" style="' . (in_array($answer->position, $questionAnswers) ? 'background:' . $answer->color . '; ' : '') . 'color:' . $answer->color . ';' . 'box-shadow: 0 0 0 3px ' . $answer->color . ';" value="' . $answer->position . '">';
                     $out .= !empty($answer->pictogram) ? $pictos[$answer->pictogram]['picto_source'] : $answer->value;
                     $out .= '</span>';
                 }

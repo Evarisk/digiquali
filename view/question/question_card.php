@@ -21,7 +21,7 @@
  *		\brief      Page to create/edit/view question
  */
 
-// Load DigiQuali environment
+ // Load DigiQuali environment
 if (file_exists('../digiquali.main.inc.php')) {
 	require_once __DIR__ . '/../digiquali.main.inc.php';
 } elseif (file_exists('../../digiquali.main.inc.php')) {
@@ -287,8 +287,29 @@ if (empty($reshook)) {
             $objectConfig = ['config' => []];
             if (GETPOSTISSET('step') && !empty(GETPOSTINT('step'))) {
                 $objectConfig['config'][$object->type]['step'] = GETPOSTINT('step');
-            }
-
+            } else {
+				unset($objectConfig['config'][$object->type]['step']);
+			}
+			$answerMinValue = (GETPOSTISSET('answer-min-value') && GETPOST('answer-min-value') !== '') ? GETPOSTFLOAT('answer-min-value') : null;
+            if (isset($answerMinValue)) {
+				if ($object->type == 'Percentage' && $answerMinValue < 0) {
+					$answerMinValue = 0;
+					setEventMessages($langs->trans('QuestionMinBoundExceeded'), [], 'warnings');
+				}
+                $objectConfig['config'][$object->type]['answer-min-value'] = $answerMinValue;
+            } else {
+				unset($objectConfig['config'][$object->type]['answer-min-value']);
+			}
+            $answerMaxValue = (GETPOSTISSET('answer-max-value') && GETPOST('answer-max-value') !== '') ? GETPOSTFLOAT('answer-max-value') : null;
+            if (isset($answerMaxValue)) {
+				if ($object->type == 'Percentage' && $answerMaxValue > 100) {
+					$answerMaxValue = 100;
+					setEventMessages($langs->trans('QuestionMaxBoundExceeded'), [], 'warnings');
+				}
+                $objectConfig['config'][$object->type]['answer-max-value'] = $answerMaxValue;
+            } else {
+				unset($objectConfig['config'][$object->type]['answer-max-value']);
+			}
 
 			$result = $object->create($user);
 			if ($result > 0) {
@@ -304,6 +325,7 @@ if (empty($reshook)) {
                     $answer->value       = $langs->transnoentities('OK');
                     $answer->pictogram   = 'check';
                     $answer->color       = '#47e58e';
+					$answer->correct 	 = true;
 
                     $answer->create($user);
 
@@ -311,6 +333,7 @@ if (empty($reshook)) {
                     $answer->value       = $langs->transnoentities('KO');
                     $answer->pictogram   = 'times';
                     $answer->color       = '#e05353';
+					$answer->correct	 = false;
 
                     $answer->create($user);
                 }
@@ -320,6 +343,7 @@ if (empty($reshook)) {
                     $answer->value       = $langs->transnoentities('ToFix');
                     $answer->pictogram   = 'tools';
                     $answer->color       = '#e9ad4f';
+					$answer->correct     = false;
 
                     $answer->create($user);
 
@@ -327,6 +351,7 @@ if (empty($reshook)) {
                     $answer->value       = $langs->transnoentities('NonApplicable');
                     $answer->pictogram   = 'N/A';
                     $answer->color       = '#989898';
+					$answer->correct     = false;
 
                     $answer->create($user);
                 }
@@ -352,6 +377,37 @@ if (empty($reshook)) {
 
 	// Action to update record
 	if ($action == 'update' && !empty($permissiontoadd)) {
+
+		$questionType = GETPOST('type');
+
+		$objectConfig = ['config' => [$questionType => null]];
+		if (GETPOSTISSET('step') && !empty(GETPOSTINT('step'))) {
+			$objectConfig['config'][$questionType]['step'] = GETPOSTINT('step');
+		} else {
+			unset($objectConfig['config'][$questionType]['step']);
+		}
+		$answerMinValue = (GETPOSTISSET('answer-min-value') && GETPOST('answer-min-value') !== '') ? GETPOSTFLOAT('answer-min-value') : null;
+		if (isset($answerMinValue)) {
+			if ($object->type == 'Percentage' && $answerMinValue < 0) {
+				$answerMinValue = 0;
+				setEventMessages($langs->trans('QuestionMinBoundExceeded'), [], 'warnings');
+			}
+			$objectConfig['config'][$questionType]['answer-min-value'] = $answerMinValue;
+		} else {
+			unset($objectConfig['config'][$questionType]['answer-min-value']);
+		}
+		$answerMaxValue = (GETPOSTISSET('answer-max-value') && GETPOST('answer-max-value') !== '') ? GETPOSTFLOAT('answer-max-value') : null;
+		if (isset($answerMaxValue)) {
+			if ($object->type == 'Percentage' && $answerMaxValue > 100) {
+				$answerMaxValue = 100;
+				setEventMessages($langs->trans('QuestionMaxBoundExceeded'), [], 'warnings');
+			}
+			$objectConfig['config'][$questionType]['answer-max-value'] = $answerMaxValue;
+		} else {
+			unset($objectConfig['config'][$questionType]['answer-max-value']);
+		}
+
+		$object->json = json_encode($objectConfig);
 
 		$previousType = $object->type;
 
@@ -430,6 +486,7 @@ if (empty($reshook)) {
 				if (!$error && !empty($val['validate']) && is_callable(array($object, 'validateField'))) {
 					if (!$object->validateField($object->fields, $key, $value)) {
 						$error++;
+						setEventMessages($object->error, $object->errors, 'errors');
 					}
 				}
 			}
@@ -493,6 +550,7 @@ if (empty($reshook)) {
 						$answer->value       = $langs->transnoentities('OK');
 						$answer->pictogram   = 'check';
 						$answer->color       = '#47e58e';
+						$answer->correct	 = true;
 
 						$answer->create($user);
 
@@ -500,6 +558,7 @@ if (empty($reshook)) {
 						$answer->value       = $langs->transnoentities('KO');
 						$answer->pictogram   = 'times';
 						$answer->color       = '#e05353';
+						$answer->correct	 = false;
 
 						$answer->create($user);
 					}
@@ -509,6 +568,7 @@ if (empty($reshook)) {
 						$answer->value = $langs->transnoentities('ToFix');
 						$answer->pictogram = 'tools';
 						$answer->color = '#e9ad4f';
+						$answer->correct = false;
 
 						$answer->create($user);
 
@@ -516,6 +576,7 @@ if (empty($reshook)) {
 						$answer->value = $langs->transnoentities('NonApplicable');
 						$answer->pictogram = 'N/A';
 						$answer->color = '#989898';
+						$answer->correct = false;
 
 						$answer->create($user);
 					}
@@ -587,6 +648,15 @@ if (empty($reshook)) {
 		$answerValue = GETPOST('answerValue');
 		$answerColor = GETPOST('answerColor');
 		$answerPicto = GETPOST('answerPicto');
+		$answerCorrect = boolval(GETPOST('answerCorrect'));
+
+		if ($answerCorrect === true && $object->hasAtLeastOneCorrectAnswer()) {
+			setEventMessages($langs->trans('QuestionWithOneCorrectAnswer'), [], 'errors');
+			$urltogo = str_replace('__ID__', $result, $backtopage);
+			$urltogo = preg_replace('/--IDFORBACKTOPAGE--/', $id, $urltogo);
+			header('Location: ' . $urltogo . '&answerValue='. $answerValue .'&answerPicto='. $answerPicto .'#answerList');
+			exit;
+		}
 
 		if (empty($answerValue)) {
 			setEventMessages($langs->trans('EmptyValue'), [], 'errors');
@@ -598,6 +668,7 @@ if (empty($reshook)) {
 			$answer->value = $answerValue;
 			$answer->color = $answerColor;
 			$answer->pictogram = $answerPicto;
+			$answer->correct = $answerCorrect;
 			$answer->fk_question = $id;
 
 			$result = $answer->create($user);
@@ -619,6 +690,7 @@ if (empty($reshook)) {
 		$answerColor = GETPOST('answerColor');
 		$answerPicto = GETPOST('answerPicto');
 		$answerId    = GETPOST('answerId');
+		$answerCorrect = GETPOST('answerCorrect') === 'on';
 
 		$answer->fetch($answerId);
 		if (empty($answerValue)) {
@@ -628,9 +700,19 @@ if (empty($reshook)) {
 			header('Location: ' . $urltogo . '&action=editAnswer&answerId='. $answerId .'&answerValue='. $answerValue .'&answerPicto='. $answerPicto . '#answerList');
 			exit;
 		} else {
+
+			if ($answerCorrect === true && $object->hasAtLeastOneCorrectAnswer()) {
+				setEventMessages($langs->trans('QuestionWithOneCorrectAnswer'), [], 'errors');
+				$urltogo = str_replace('__ID__', $result, $backtopage);
+				$urltogo = preg_replace('/--IDFORBACKTOPAGE--/', $id, $urltogo);
+				header('Location: ' . $urltogo . '&answerValue='. $answerValue .'&answerPicto='. $answerPicto .'#answerList');
+				exit;
+			}
+
 			$answer->value = $answerValue;
 			$answer->color = $answerColor;
 			$answer->pictogram = $answerPicto;
+			$answer->correct = $answerCorrect;
 
 			$result = $answer->update($user);
 
@@ -751,13 +833,36 @@ if ($action == 'create') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type"');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\'');
+	print '</td></tr>';
+
+	// Points
+	$points = GETPOST('points');
+	if ($points === '') {
+		$points = $object->getDefaultPoints();
+	}
+	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
+	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$points.'">';
 	print '</td></tr>';
 
     // Step for percentage question type default hidden
     print '<tr class="' . (GETPOST('type') == 'Percentage' ? '' : 'hidden') . '" id="percentage-question-step"><td class="fieldrequired"><label for="step">' . $langs->transnoentities('PercentageQuestionStep') . '</label></td><td>';
     print '<input type="number" name="step" id="step" min="2" value="' . (!empty(GETPOSTINT('step')) ? GETPOSTINT('step') : 2) . '">';
     print '</td></tr>';
+
+	// Min value
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-min-value"><td>';
+	print '<label for="answer-min-value">' . $langs->transnoentities('AnswerCorrectnessMinBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
+	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' min="0"' : '') . ' name="answer-min-value" id="answer-min-value" value="' . (!empty(GETPOSTFLOAT('answer-min-value')) ? GETPOSTFLOAT('answer-min-value') : '') . '">';
+	print '</td></tr>';
+
+	// Max value
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-max-value"><td>';
+	print '<label for="answer-max-value">' . $langs->transnoentities('AnswerCorrectnessMaxBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
+	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' max="100"' : '') . ' name="answer-max-value" id="answer-max-value" value="' . (!empty(GETPOSTFLOAT('answer-max-value')) ? GETPOSTFLOAT('answer-max-value') : '') . '">';
+	print '</td></tr>';
 
 	// Description -- Description
 	print '<tr><td class=""><label class="" for="description">' . $langs->trans("Description") . '</label></td><td>';
@@ -880,13 +985,32 @@ if (($id || $ref) && $action == 'edit') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type"');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\'');
+	print '</td></tr>';
+
+	// Points -- Nombre de points
+	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
+	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$object->points.'">';
 	print '</td></tr>';
 
     // Step for percentage question type default hidden
     print '<tr class="' . ($object->type == 'Percentage' ? '' : 'hidden') . '" id="percentage-question-step"><td class="fieldrequired"><label for="step">' . $langs->transnoentities('PercentageQuestionStep') . '</label></td><td>';
     print '<input type="number" name="step" id="step" min="1" value="' . ($objectConfig['config'][$object->type]['step'] ?? 100) . '">';
     print '</td></tr>';
+
+	// Min value
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-min-value"><td>';
+	print '<label for="answer-min-value">' . $langs->transnoentities('AnswerCorrectnessMinBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
+	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' min="0"' : '') . ' name="answer-min-value" id="answer-min-value" value="' . ($objectConfig['config'][$object->type]['answer-min-value'] ?? '') . '">';
+	print '</td></tr>';
+
+	// Max value
+	print '<tr class="' . ($object->canHaveBounds() ? '' : 'hidden') . '" id="question-answer-max-value"><td>';
+	print '<label for="answer-max-value">' . $langs->transnoentities('AnswerCorrectnessMaxBound') . '<span class="question-answer-min-max-unit"></span></label>';
+	print '</td><td>';
+	print '<input type="number" step="any"' . ($object->type == 'Percentage' ? ' max="100"' : '') . ' name="answer-max-value" id="answer-max-value" value="' . ($objectConfig['config'][$object->type]['answer-max-value'] ?? '') . '">';
+	print '</td></tr>';
 
 	//Description -- Description
 	print '<tr><td><label class="" for="description">' . $langs->trans("Description") . '</label></td><td>';
@@ -1053,6 +1177,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print $langs->transnoentities($object->type);
 	print '</td></tr>';
 
+	// Points -- Nombre de points
+	print '<tr><td class="valignmiddle">'.$langs->trans("NumberOfPoints").'</td><td>';
+	print $object->points;
+	print "</td></tr>";
+
     $objectConfig = json_decode($object->json, true)['config'];
 
     // Config
@@ -1061,6 +1190,20 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print $langs->transnoentities('PercentageQuestionStep');
         print '</td><td>';
         print $objectConfig[$object->type]['step'];
+        print '</td></tr>';
+    }
+    if ($object->canHaveBounds() && isset($objectConfig[$object->type]['answer-min-value'])) {
+        print '<tr><td class="titlefield">';
+        print $langs->transnoentities('AnswerCorrectnessMinBound');
+        print '</td><td>';
+        print $objectConfig[$object->type]['answer-min-value'] . ($object->type == 'Percentage' ? ' %' : '');
+        print '</td></tr>';
+    }
+    if ($object->canHaveBounds() && isset($objectConfig[$object->type]['answer-max-value'])) {
+        print '<tr><td class="titlefield">';
+        print $langs->transnoentities('AnswerCorrectnessMaxBound');
+        print '</td><td>';
+        print $objectConfig[$object->type]['answer-max-value'] . ($object->type == 'Percentage' ? ' %' : '');
         print '</td></tr>';
     }
 
@@ -1195,7 +1338,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print '<td>' . $langs->trans('Value') . '</td>';
 		print '<td class="center">' . $langs->trans('Picto') . '</td>';
 		print '<td class="center">' . $langs->trans('Color') . '</td>';
-		print '<td class="center">' . $langs->trans('Action') . '</td>';
+		print '<td class="center">' . $langs->trans('ExpectedAnswer') . '</td>';
+		if ($object->isAnswersActionsEnabled()) {
+			print '<td class="center">' . $langs->trans('Action') . '</td>';
+		}
 		print '<td class="center"></td>';
 		print '</tr></thead>';
 
@@ -1210,7 +1356,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 					print '<tr id="'. $answerSingle->id .'" class="line-row oddeven">';
 					print '<td>';
-					print img_picto('', $answerSingle->picto, 'class="pictofixedwidth"') . $answerSingle->ref;
+					print img_picto('', $answerSingle->picto, 'class="pictofixedwidth"') . $answerSingle->ref; 
 					print '</td>';
 
 					print '<td>';
@@ -1226,9 +1372,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					print '<input type="color" name="answerColor" value="' . $answerSingle->color . '">';
 					print '</td>';
 
-					print '<td class="center">';
-					print $form->buttonsSaveCancel();
-					print '</td>';
+					if ($object->isCorrectable()) {
+						print '<td class="center">';
+						print '<input type="checkbox" name="answerCorrect"' . ($answerSingle->correct === true ? ' checked' : ''). '>';
+						print '</td>';
+					}
+
+					if ($object->isAnswersActionsEnabled()) {
+						print '<td class="center">';
+						print $form->buttonsSaveCancel();
+						print '</td>';
+					}
 
 					if ($object->status < $object::STATUS_LOCKED) {
 						print '<td class="move-line ui-sortable-handle">';
@@ -1257,6 +1411,13 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					print '<span class="color-circle" style="background:'. $answerSingle->color .'; color:'. $answerSingle->color .';">';
 					print '</span>';
 					print '</td>';
+
+					print '<td class="center">';
+					print '<input type="checkbox"' . ($answerSingle->correct === true ? ' checked' : '') . ' disabled>';
+
+					print '</span>';
+					print '</td>';
+
 					print '<td class="center">';
 					if ($object->status < Question::STATUS_LOCKED && ($object->type != 'OkKo' && $object->type != 'OkKoToFixNonApplicable')) {
 						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=editAnswer&answerId=' . $answerSingle->id . '#answerList">';
@@ -1272,7 +1433,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 						print '</a>';
 						print '</td>';
 						print '<td class="move-line ui-sortable-handle">';
-					} else {
+					} else if ($object->isAnswersActionsEnabled()) {
 						print '</td>';
 						print '<td>';
 					}
@@ -1308,6 +1469,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			</script>
 			<?php
 
+			if ($object->isCorrectable()) {
+				print '<td class="center">';
+				print '<input type="checkbox" name="answerCorrect">';
+				print '</td>';
+			}
 
 			print '<td class="center">';
 			print '<input type="submit" class="button wpeo-button" value="' . $langs->trans("Add") . '">';
