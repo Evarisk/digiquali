@@ -555,7 +555,7 @@ class QuestionGroup extends SaturneObject
      */
     public function fetchQuestionsOrderedByPosition()
     {
-        $this->fetchObjectLinked('', '', $this->id, $this->table_element, 'OR', '', 'position');
+        $this->fetchObjectLinked('', '', $this->id, $this->table_element, 'OR', '', 'position, fk_source DESC');
 
         if (!empty($this->linkedObjects['digiquali_question'])) {
             return $this->linkedObjects['digiquali_question'];
