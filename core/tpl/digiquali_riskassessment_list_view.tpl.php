@@ -46,7 +46,7 @@ $task->initAsSpecimen();
 $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task); ?>
 
 <div class="riskassessment-list__container gridw-2" id="riskassessment_list_container_<?php echo $activitySingle->id ?>">
-    <div class="riskassessment-list__level red"></div> <!-- 4 colors: yellow, orange, red, black -->
+    <div class="riskassessment-list__level <?php echo $riskAssessmentInfos[$riskAssessment->element]['risk'] ?>"></div>
 
     <div class="riskassessment__content">
         <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
@@ -83,9 +83,19 @@ $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task); ?>
 
         <div class="riskassessment-list__actions">
             <div class="wpeo-button button-square-40 button-rounded modal-open">
-                <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_add" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
+                <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_create" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
                 <i class="fas fa-plus"></i>
             </div>
+            <?php if ($riskAssessmentInfos[$riskAssessment->element]['id'] > 0) : ?>
+                <div class="wpeo-button button-square-40 button-rounded modal-open">
+                    <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_update" data-from-id="<?php echo $riskAssessmentInfos[$riskAssessment->element]['id']; ?>" data-from-module="<?php echo $riskAssessment->module; ?>">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <div class="wpeo-button button-square-40 button-rounded modal-open">
+                    <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_list" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
+                    <i class="fas fa-list"></i>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
     <div class="task__content">

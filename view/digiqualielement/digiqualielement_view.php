@@ -184,19 +184,12 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
 
     print dol_get_fiche_end();
 
-    require_once __DIR__ . '/../../core/tpl/modal/modal_activity_add.tpl.php';
-    require_once __DIR__ . '/../../core/tpl/modal/modal_activity_edit.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/modal/activity/modal_activity_add.tpl.php';
+   // require_once __DIR__ . '/../../core/tpl/task/modal_task_add.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_add.tpl.php';
-
-
-    //$activity->ref          = 'A2024-0001';s
-    //$activity->source       = 'Processus direction';
-    //$activity->source_from  = 'La direction';
-    //$activity->input_data   = 'Besoin de lentreprise en terme de fonction.<br>Système de management SST';
-    //$activity->output_data  = 'Rôles et responsabilités distribués<br>Constitution de la CSSCT';
-    //$activity->score        = 50;
-    //$activity->target_score = 70;
+    require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_edit.tpl.php';
+    //require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_list.tpl.php';
 
     $moreHtmlRight = <<<HTML
     <div class="wpeo-button modal-open">
@@ -205,7 +198,12 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     </div>
     HTML;
 
-    print load_fiche_titre($langs->trans('Activities'), $moreHtmlRight, $activity->picto);
+    $moreTitle    = '';
+    $nbActivities = Activity::getNbActivities($object);
+    if ($nbActivities > 0) {
+        $moreTitle .= '<span class="opacitymedium colorblack marginleftonly">(' . $nbActivities . ')</span>';
+    }
+    print load_fiche_titre($langs->trans('ProcessusActivities') . $moreTitle, $moreHtmlRight, $activity->picto);
 
     print '<div id="activity-list-container">';
     $activities = $activity->fetchAll('', '', 0, 0, ['customsql' => 't.fk_element = ' . $id]);
@@ -213,13 +211,6 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
         print '<div class="activity-container" data-object-id="' . $activitySingle->id . '">';
         print '<div class="activity-container__header">';
         print $activitySingle->getNomUrl(1, '', 0, '', -1, 1);
-        $html = <<<HTML
-        <div class="wpeo-button modal-open">
-            <input type="hidden" class="modal-options" data-modal-to-open="activity_edit" data-from-id="{$activitySingle->id}" data-from-type="{$activitySingle->element}" data-from-module="{$object->module}">
-            <i class="fas fa-pencil-alt button-icon"></i>
-        </div>
-        HTML;
-        echo $html;
         print '</div>';
 
         print '<div class="activity-container__body wpeo-gridlayout grid-2">';

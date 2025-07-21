@@ -16,7 +16,7 @@
  */
 
 /**
- * \file    core/tpl/modal/modal_activity_add.tpl.php
+ * \file    core/tpl/modal/activity/modal_activity_add.tpl.php
  * \ingroup digiquali
  * \brief   Template page for modal activity add
  */

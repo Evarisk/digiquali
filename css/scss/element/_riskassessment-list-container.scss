@@ -108,14 +108,14 @@
     &.black {
       background: $color__dark;
     }
+    &.red {
+      background: $color__red;
+    }
     &.yellow {
       background: $color__yellow;
     }
-    &.orange {
-      background: $color__orange;
-    }
-    &.red {
-      background: $color__red;
+    &.grey {
+      background: $color__grey;
     }
   }
 }

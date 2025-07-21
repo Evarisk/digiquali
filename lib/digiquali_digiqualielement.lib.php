@@ -43,7 +43,14 @@ function digiqualielement_prepare_head(DigiQualiElement $object): array
     if ($object->id > 0 && $user->hasRight($object->module, $object->element, 'read')) {
         if ($user->hasRight($object->module, 'activity', 'read')) {
             $head[$h][0] = dol_buildpath($object->module . '/view/' . $object->element . '/' . $object->element . '_view.php', 1) . '?id=' . $object->id;
-            $head[$h][1] = $conf->browser->layout == 'classic' ? '<i class="fas fa-tasks pictofixedwidth"></i>' . $langs->trans('Activities') : '<i class="fas fa-tasks"></i>';
+            $head[$h][1] = $conf->browser->layout == 'classic' ? '<i class="fas fa-list pictofixedwidth"></i>' . $langs->trans('ProcessusActivities') : '<i class="fas fa-list"></i>';
+
+            require_once __DIR__ . '/../class/activity.class.php';
+            $nbActivities = Activity::getNbActivities($object);
+            if ($nbActivities > 0) {
+                $head[$h][1] .= '<span class="badge marginleftonlyshort">' . $nbActivities . '</span>';
+            }
+
             $head[$h][2] = 'activity';
         }
 

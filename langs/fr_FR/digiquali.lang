@@ -503,12 +503,19 @@ NewSubprocess     = Nouveau sous-processus
 #
 
 # Data - Donnée
-InputData      = Données d'entrées
-OutputData     = Données de sorties
-ActualScore    = Score actuel
-TargetScore    = Score cible
-ActivityCreate = Ajout de l'activité
+ProcessusActivities = Activités
+InputData           = Données d'entrées
+OutputData          = Données de sorties
+ActualScore         = Score actuel
+TargetScore         = Score cible
+ActivityCreate      = Ajout de l'activité
 
+# Specimen - Échantillon
+ActivityLabelSpecimen      = Attribuer les rôles, Responsabilités et autorités au sein de l'organisme en matière de SST
+ActivitySourceSpecimen     = Processus direction
+ActivitySourceFromSpecimen = La direction
+ActivityInputDataSpecimen  = Besoin de l'entreprise en terme de fonction.<br>Système de management SST
+ActivityOutputDataSpecimen = Rôles et responsabilités distribués<br>Constitution de la CSSCT
 
 
 #
@@ -516,12 +523,18 @@ ActivityCreate = Ajout de l'activité
 #
 
 # Data - Donnée
+Gravity                 = Gravité
 ControlPercentage       = Maîtrise
 ResidualRisk            = Risque résiduel
 ResidualRiskCalculation = Risque x maitrise
 Risk                    = Risque
 RiskCalculation         = Gravité x fréquence
 RiskAssessmentAdd       = Ajout de l'évaluation
+RiskAssessmentEdit      = Édition de l'évaluation
+1D                      = 1J
+1W                      = 1S
+1M                      = 1M
+1Y                      = 1A
 
 
 

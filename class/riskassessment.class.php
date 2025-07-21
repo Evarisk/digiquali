@@ -313,9 +313,12 @@ class RiskAssessment extends SaturneObject
 
          parent::initAsSpecimen();
 
-        $this->ref           = 'RAXX';
-        $this->date_creation = dol_now();
-        $this->comment       = $langs->trans('NoData');
+        $this->ref                  = 'RAXX';
+        $this->date_creation        = dol_now();
+        $this->comment              = $langs->trans('NoData');
+        $this->gravity_percentage   = 0.00;
+        $this->frequency_percentage = 0.00;
+        $this->control_percentage   = 0.00;
     }
 
     public function getRiskAssessmentInfos($task): array
@@ -324,6 +327,7 @@ class RiskAssessment extends SaturneObject
 
         $out = [];
 
+        $out[$this->element]['id']      = $this->id;
         $out[$this->element]['ref']     = $this->getNomUrl(1, 'nolink', 1);
         $out[$this->element]['comment'] = $this->comment;
 
@@ -335,7 +339,11 @@ class RiskAssessment extends SaturneObject
         $out[$this->element]['date'] = dol_print_date($this->date_creation, 'day');
 
         $out[$this->element]['control_percentage'] = $this->control_percentage . '%';
-        $out[$this->element]['residual_risk']      = ($this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) : 0) . '%';
+
+        $residualRiskPercentage = ($this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) : 0) . '%';
+
+        $out[$this->element]['risk']          = $this->getRiskPercentageClass();
+        $out[$this->element]['residual_risk'] = '<span class="wpeo-button ' . $this->getResidualRiskPercentageClass() . '">' . $residualRiskPercentage . '</span>';
 
         $out[$task->element]['ref']   = $task->getNomUrl(1, 'withproject');
         $out[$task->element]['label'] = $task->label;
@@ -349,6 +357,38 @@ class RiskAssessment extends SaturneObject
         $out[$task->element]['date'] .= ' - ' . (!empty($task->date_end) ? dol_print_date($task->date_end, 'dayhour') : '?');
 
         return $out;
+    }
+
+    public function getRiskPercentageClass(): string
+    {
+        $riskPercentage = ($this->gravity_percentage * $this->frequency_percentage) / 100;
+        if ($riskPercentage >= 75) {
+            $riskPercentageClass = 'black';
+        } else if ($riskPercentage >= 50) {
+            $riskPercentageClass = 'red';
+        } else if ($riskPercentage >= 25) {
+            $riskPercentageClass = 'yellow';
+        } else {
+            $riskPercentageClass = 'grey';
+        }
+
+        return $riskPercentageClass;
+    }
+
+    public function getResidualRiskPercentageClass(): string
+    {
+        $residualRiskPercentage = ($this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) : 0);
+        if ($residualRiskPercentage >= 75) {
+            $residualRiskPercentageClass = 'button-dark';
+        } else if ($residualRiskPercentage >= 50) {
+            $residualRiskPercentageClass = 'button-red';
+        } else if ($residualRiskPercentage >= 25) {
+            $residualRiskPercentageClass = 'button-yellow';
+        } else {
+            $residualRiskPercentageClass = 'button-grey';
+        }
+
+        return $residualRiskPercentageClass;
     }
 }
 

@@ -33,32 +33,36 @@ $permissionToAddRiskAssessment    = $user->hasRight($riskAssessment->module, $ri
 $permissionToDeleteRiskAssessment = $user->hasRight($riskAssessment->module, $riskAssessment->element, 'write');
 
 // Risk assessment action
-if ($action == 'add_riskassessment' && !empty($permissionToAddRiskAssessment)) {
+if ($action == 'create_riskassessment' && !empty($permissionToAddRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $riskAssessment->comment              = $data['comment'];
-    $riskAssessment->gravity_percentage   = $data['gravity_percentage'];
-    $riskAssessment->frequency_percentage = $data['frequency_percentage'];
-    $riskAssessment->control_percentage   = $data['control_percentage'];
-    $riskAssessment->fk_activity          = $data['objectLine_id'];
+    $riskAssessment->comment                              = $data['comment'];
+    $riskAssessment->gravity_percentage                   = $data['gravity_percentage'];
+    $riskAssessment->frequency_percentage                 = $data['frequency_percentage'];
+    $riskAssessment->control_percentage                   = $data['control_percentage'];
+    $riskAssessment->{'fk_' . $data['fk_object_element']} = $data['fk_object_id'];
 
     $riskAssessment->create($user);
     // @todo manage error
 }
 
-if ($action == 'fetch_risk') {
+if ($action == 'fetch_riskassessment') {
     $data = json_decode(file_get_contents('php://input'), true);
-    $activity->fetch($data['from_id']);
+
+    $riskAssessment->fetch($data['from_id']);
     // @todo manage error
 }
 
-if ($action == 'update_risk' && !empty($permissionToAddRiskAssessment)) {
+if ($action == 'update_riskassessment' && !empty($permissionToAddRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
-    $activity->fetch($data['object_id']);
+    $riskAssessment->fetch($data['object_id']);
 
-    $activity->label = $data['label'];
+    $riskAssessment->comment              = $data['comment'];
+    $riskAssessment->gravity_percentage   = $data['gravity_percentage'];
+    $riskAssessment->frequency_percentage = $data['frequency_percentage'];
+    $riskAssessment->control_percentage   = $data['control_percentage'];
 
-    $activity->update($user);
+    $riskAssessment->update($user);
     // @todo manage error
 }
 

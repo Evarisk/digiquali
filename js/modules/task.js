@@ -120,6 +120,9 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
   if (modalToOpen === 'activity_edit') {
     action = 'fetch_activity';
   }
+  if (modalToOpen === 'riskassessment_update') {
+    action = 'fetch_riskassessment';
+  }
 
   $.ajax({
     url: `${document.URL}&action=${action}&token=${token}`,
@@ -129,6 +132,9 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
     }),
     success: function(resp) {
       $(`#${modalToOpen}`).replaceWith($(resp).find(`#${modalToOpen}`).addClass('modal-active'));
+      if (modalToOpen === 'riskassessment_update') {
+        window.digiquali.riskassessment.initializeModalUIState($(`#${modalToOpen}`));
+      }
     }
   });
 };

@@ -172,6 +172,11 @@ class Activity extends SaturneObject
     public $status;
 
     /**
+     * @var string|null Label
+     */
+    public ?string $label;
+
+    /**
      * @var string|null Source
      */
     public ?string $source = null;
@@ -355,7 +360,23 @@ class Activity extends SaturneObject
         }
     }
 
-	/**
+    public function initAsSpecimen()
+    {
+        global $langs;
+
+        parent::initAsSpecimen();
+
+        $this->ref          = 'A2024-0001';
+        $this->label        = $langs->trans('ActivityLabelSpecimen');
+        $this->source       = $langs->trans('ActivitySourceSpecimen');
+        $this->source_from  = $langs->trans('ActivitySourceFromSpecimen');
+        $this->input_data   = $langs->trans('ActivityInputDataSpecimen');
+        $this->output_data  = $langs->trans('ActivityOutputDataSpecimen');
+        $this->score        = 50;
+        $this->target_score = 70;
+    }
+
+    /**
 	 * Write information of trigger description
 	 *
 	 * @param  Object $object Object calling the trigger
@@ -384,9 +405,21 @@ class Activity extends SaturneObject
 		return $ret;
 	}
 
-    public static function getActivityInfos(Activity $activity)
+    public static function getNbActivities($object): int
     {
+        $nbActivities = 0;
+        // Enable caching of object type count activity
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/memory.lib.php';
+        $cacheKey      = 'count_activities_' . $object->element . '_' . $object->id;
+        $dataRetrieved = dol_getcache($cacheKey);
+        if (!is_null($dataRetrieved)) {
+            $nbActivities = $dataRetrieved;
+        } else {
+            $nbActivities = saturne_fetch_all_object_type('Activity', '', '', 0, 0, ['customsql' => 't.status = ' . Activity::STATUS_VALIDATED . ' AND t.fk_element = ' . $object->id], 'AND', false, true, false, '', ['count' => true]);
+            dol_setcache($cacheKey, $nbActivities, 120); // If setting cache fails, this is not a problem, so we do not test result
+        }
 
+        return $nbActivities;
     }
 }
 
