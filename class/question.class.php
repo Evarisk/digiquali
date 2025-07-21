@@ -23,6 +23,7 @@
 
 // Load Saturne libraries.
 require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+require_once __DIR__ . '/answer.class.php';
 
 /**
  * Class for Question.
@@ -904,5 +905,20 @@ class Question extends SaturneObject
         }
 		// 0 => sheet root
         return 0;
+    }
+
+	/**
+     * Display the question in the sheet card
+	 * 
+	 * @param Sheet $sheetObject The sheet of the question
+	 * @param string $positionPath The path of the question based on positions
+	 * @param string $tdOffsetStyle Additional CSS styles to put on question
+	 * 
+     */
+    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '')
+    {
+		global $langs;
+		$question = $this;
+		include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_question.tpl.php';
     }
 }

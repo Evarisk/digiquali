@@ -4,11 +4,10 @@
 if ($questionOrGroup->element === 'questiongroup') {
     $group = $questionOrGroup;
 
-    $group->displayInSheetCard($object);
+    $group->displayInSheetCard($object, $positionPath);
 
 } else { // DISPLAY QUESTION
     $question = $questionOrGroup;
-    
     $sheetObject = $object;
-    include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_question.tpl.php';
+    $question->displayInSheetCard($sheetObject, $positionPath);
 }

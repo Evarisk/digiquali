@@ -17,11 +17,11 @@ if ($object->status < $object::STATUS_LOCKED) {
     print '<tr id="addLine-'. $groupId .'" class="add-line' . ($isAddFormsVisible ? '' : ' hidden') . '">';
     print '<td class="maxwidth300 widthcentpercentminusx" colspan="9" ' . $tdOffsetStyle . '>';
     print '<div id="addChoice-'. $groupId .'" class="addChoice">';
-    print '<button type="button" class="addQuestionButton butAction" data-action="addQuestionButton" data-group-id="'. $groupId .'">' . img_picto('', $question->picto) . ' ' . $langs->trans("Question") . ' ' . img_picto('', 'fa-link') . '</button>';
+    print '<button type="button" class="addQuestionButton butAction" data-action="addQuestionButton" data-parent-id="'. $groupId .'">' . img_picto('', $question->picto) . ' ' . $langs->trans("Question") . ' ' . img_picto('', 'fa-link') . '</button>';
     print '<a id="createNewQuestion" class="butAction" href="' . $addQuestionHref .'" aria-label="' . $langs->trans('CreateNewQuestion') . '">';
     print ' <strong>'. $langs->trans('CreateNewQuestion') .'</strong><span class="button-add animated fas fa-plus-circle"></span>';
     print '</a>';
-    print '<button type="button" class="addGroupButton butAction" data-action="addGroupButton" data-group-id="'. $groupId .'">' . img_picto('', $questionGroup->picto) . ' ' . $langs->trans("QuestionGroup") . ' ' . img_picto('', 'fa-link') . '</button>';
+    print '<button type="button" class="addGroupButton butAction" data-action="addGroupButton" data-parent-id="'. $groupId .'">' . img_picto('', $questionGroup->picto) . ' ' . $langs->trans("QuestionGroup") . ' ' . img_picto('', 'fa-link') . '</button>';
     print '<a id="createNewQuestionGroup" class="butAction" href="' . $addQuestionGroupHref . '" aria-label="' . $langs->trans('CreateNewQuestionGroup') . '">';
     print ' <strong>'. $langs->trans('CreateNewQuestionGroup') .'&nbsp;</strong><span class="button-add animated fas fa-plus-circle"></span>';
     print '</a>';

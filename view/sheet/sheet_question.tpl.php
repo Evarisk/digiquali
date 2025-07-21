@@ -1,6 +1,8 @@
 <?php 
 
-print '<tr id="question-' . $question->id . '" class="' . ($question->getParentGroupId() > 0 ? 'hidden ' : '') . 'group-question group-question-'. $this->id .' line-row" data-group-id="' . $question->getParentGroupId() . '">';
+$parentGroupId = $question->getParentGroupId();
+
+print '<tr id="question-' . $question->id . '" class="' . ($parentGroupId > 0 ? 'hidden ' : '') . 'question line-row" data-id="' . $question->id . '" data-parent-id="' . $parentGroupId . '" data-position-path="' . $positionPath . '">';
 print '<td ' . $tdOffsetStyle . '>' . $question->getNomUrl(1) . '</td>';
 print '<td>' . $question->label . '</td>';
 print '<td>' . $question->description . '</td>';
@@ -27,7 +29,7 @@ print '<td class="center">';
     }
 print '</td>';
 if ($sheetObject->status < $sheetObject::STATUS_LOCKED) {
-    print '<td class="sheet-move-line ui-sortable-handle group-question-handle" data-group-id="' . $this->id . '">';
+    print '<td class="sheet-move-line ui-sortable-handle" data-parent-id="' . $parentGroupId . '">';
 } else {
     print '<td>';
 }

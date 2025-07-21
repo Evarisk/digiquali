@@ -32,8 +32,7 @@ if (is_array($questions) && !empty($questions)) {
     foreach ($questions as $question) {
         $questionAnswer = '';
         $comment        = '';
-        // TODO check comment is working
-        $result         = $objectLine->fetchFromParentWithQuestion($object->id, $question->id, $question->fk_question_group ?? null);
+        $result         = $objectLine->fetchFromParentWithQuestion($object->id, $question->id);
         if (is_array($result) && !empty($result)) {
             $objectLine = array_shift($result);
             $questionAnswer = $objectLine->answer;

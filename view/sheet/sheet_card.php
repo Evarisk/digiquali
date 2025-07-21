@@ -159,7 +159,6 @@ if (empty($reshook)) {
 
 			$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
 
-			// TODO gérer les positions entre question et groupe
 			if ($targetQuestionGroupId > 0) {
 				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
 			} else {
@@ -258,36 +257,46 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'moveLine' && $permissiontoadd) {
+		$newPositionsArray = json_decode(file_get_contents('php://input'), true);
 
-		// TODO gérer le fait qu'on supprime un groupe de son emplacement
-		// TODO gérer le fait qu'on rajoute un groupe dans son nouvel emplacement
-		$idsArray = json_decode(file_get_contents('php://input'), true);
-
-        $questionIds = [];
-        $questionGroupIds = [];
-
-		if (is_array($idsArray['order']) && !empty($idsArray['order'])) {
-            foreach($idsArray['order'] as $position => $id) {
-                if (strstr($id, 'group-')) {
-                    $questionGroupIds[$position] = substr($id, 6);
-                } else {
-                    $questionIds[$position] = $id;
-                }
-            }
-
-		    $object->updateQuestionsAndGroupsPosition($questionIds, $questionGroupIds);
-		}
-	}
-
-	if ($action == 'moveLineInGroup' && $permissiontoadd) {
-		$idsArray = json_decode(file_get_contents('php://input'), true);
 		$groupId = GETPOST('groupId', 'int');
+		$movedItemId = GETPOST('movedItemId', 'alphanohtml');
+		$movedItemType = GETPOST('movedItemType', 'alphanohtml');
 
-		if ($groupId > 0 && is_array($idsArray['order']) && !empty($idsArray['order'])) {
-			$questionGroup->fetch($groupId);
-			$ids = array_values($idsArray['order']);
-			$reIndexedIds = array_combine(range(1, count($ids)), array_values($ids));
-			$questionGroup->updateQuestionPosition($reIndexedIds);
+		if ($movedItemId > 0) {
+			if ($movedItemType == 'question') {
+				$question = new Question($object->db);
+				if ($question->fetch($movedItemId)) {
+					$question->element = 'digiquali_question';
+					$question->updateObjectLinked($groupId, ($groupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet'));
+				}
+			}
+			if ($movedItemType == 'questiongroup') {
+				$questionGroup = new QuestionGroup($object->db);
+				if ($questionGroup->fetch($movedItemId)) {
+					$question->element = 'digiquali_questiongroup';
+					$question->updateObjectLinked($groupId, ($groupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet'));
+				}
+			}
+		}
+
+		if ($groupId >= 0) {
+			$questionPositions = [];
+			foreach ($newPositionsArray['question_positions'] as $singleQuestionPosition) {
+				$questionPositions[$singleQuestionPosition['position']] = $singleQuestionPosition['id'];
+			}
+			$questionGroupPositions = [];
+			foreach ($newPositionsArray['questiongroup_positions'] as $singleQuestionGroupPosition) {
+				$questionGroupPositions[$singleQuestionGroupPosition['position']] = $singleQuestionGroupPosition['id'];
+			}
+			if ($groupId == 0) {
+				$object->updateQuestionsAndGroupsPosition($questionPositions, $questionGroupPositions);
+			} else {
+				$group = new QuestionGroup($object->db);
+				$group->fetch($groupId);
+				$group->updateQuestionsPositions($questionPositions);
+				$group->updateQuestionGroupsPositions($questionGroupPositions);
+			}
 		}
 	}
 
@@ -715,6 +724,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print '</div>';
 
 	print '<div class="clearboth"></div>';
+
+	print '<div id="dialog-moved-error" title="' . $langs->trans('Error') . '">';
+	print '<p>';
+	print $langs->trans("LineMovedOutsideParentError");
+	print '</p>';
+	print '</div>';
 
     $questionsAndGroups = $object->fetchQuestionsAndGroups();
 

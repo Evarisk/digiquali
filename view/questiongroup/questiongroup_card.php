@@ -143,7 +143,7 @@ if (empty($reshook)) {
 			$ids = array_values($idsArray['order']);
 			$reIndexedIds = array_combine(range(1, count($ids)), array_values($ids));
 		}
-		$object->updateQuestionPosition($reIndexedIds);
+		$object->updateQuestionsPositions($reIndexedIds);
 	}
 
     if ($action == 'removeQuestion') {

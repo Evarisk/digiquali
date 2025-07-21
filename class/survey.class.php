@@ -273,7 +273,6 @@ class Survey extends SaturneObject
                     $surveyLine->status                  = 1;
                     $surveyLine->{'fk_'. $this->element} = $this->id;
                     $surveyLine->fk_question             = $question->id;
-                    // $surveyLine->fk_question_group       = $question->fk_question_group;
 
                     $surveyLine->create($user);
                 }
@@ -889,7 +888,6 @@ class SurveyLine extends SaturneObject
         'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0, 'foreignkey' => 'user.rowid'],
         'fk_survey'         => ['type' => 'integer:Survey:digiquali/class/survey.class.php',     'label' => 'Survey',     'picto' => 'fontawesome_fa-marker_fas_#d35968',   'enabled' => 1, 'position' => 140,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
         'fk_question'       => ['type' => 'integer:Question:digiquali/class/question.class.php', 'label' => 'Question',   'picto' => 'fontawesome_fa-question_fas_#d35968', 'enabled' => 1, 'position' => 150,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_question.rowid'],
-        // 'fk_question_group' => ['type' => 'integer:QuestionGroup:digiquali/class/questiongroup.class.php', 'label' => 'QuestionGroup', 'picto' => 'fontawesome_fa-folder_fas_#d35968', 'enabled' => 1, 'position' => 160, 'notnull' => 1, 'default' => 0, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx'],
     ];
 
     /**
@@ -971,11 +969,6 @@ class SurveyLine extends SaturneObject
      * @var ?int|null Question ID
      */
     public int $fk_question;
-
-    /**
-     * @var int Question group ID
-     */
-    // public int $fk_question_group;
 
     /**
      * Constructor

@@ -323,6 +323,8 @@ class QuestionGroup extends SaturneObject
 	 */
 	public function createFromClone(User $user, int $fromid): int
 	{
+        global $user;
+
 		dol_syslog(__METHOD__, LOG_DEBUG);
 
 		$error = 0;
@@ -332,6 +334,7 @@ class QuestionGroup extends SaturneObject
 		$this->db->begin();
 
 		$object->fetchCommon($fromid);
+        $previousObject = clone $object;
         $object->fetchObjectLinked('', '', $this->id, $this->table_element);
 
         $previousQuestions = $object->linkedObjects['digiquali_question'];
@@ -374,10 +377,24 @@ class QuestionGroup extends SaturneObject
 					$object->setCategories($categoryIds);
 				}
 			}
-            if (!empty($previousQuestions)) {
-                foreach ($previousQuestions as $previousQuestion) {
-                    $object->addQuestion($previousQuestion->id);
+
+            $sheet = new Sheet($this->db);
+
+            // Clone questions/questiongroups because one element is linked to only one parent
+            $previousQuestionsAndGroups = $previousObject->fetchQuestionsAndGroups();
+            foreach ($previousQuestionsAndGroups as $previousQuestionOrGroup) {
+                if ($previousQuestionOrGroup instanceof Question) {
+                    $previousQuestion = $previousQuestionOrGroup;
+                    $clonedQuestion = new Question($this->db);
+                    $clonedQuestion->id = $clonedQuestion->createFromClone($user, $previousQuestion->id, []);
+                    $clonedQuestion->add_object_linked('digiquali_' . $object->element, $object->id);
+                } else {
+                    $previousQuestionGroup = $previousQuestionOrGroup;
+                    $clonedQuestionGroup = new QuestionGroup($this->db);
+                    $clonedQuestionGroup->id = $clonedQuestionGroup->createFromClone($user, $previousQuestionGroup->id, []);
+                    $clonedQuestionGroup->add_object_linked('digiquali_' . $object->element, $object->id);
                 }
+                $sheet->updateQuestionsAndGroupsPosition(null, null, true, $object->id, 'digiquali_questiongroup');
             }
 		} else {
 			$error++;
@@ -520,7 +537,7 @@ class QuestionGroup extends SaturneObject
      *
      * @param  int $questionId ID of question
      */
-    public function addQuestion($questionId) {
+    public function addQuestion($questionId, ?int $position = null) {
         global $user;
 
         $question = new Question($this->db);
@@ -532,15 +549,39 @@ class QuestionGroup extends SaturneObject
     /**
      * Move questions
      */
-    public function updateQuestionPosition($questionIds)
+    public function updateQuestionsPositions(array $questionIds)
     {
-
         foreach ($questionIds as $position => $questionId) {
             $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
             $sql .= ' SET position =' . $position;
-            $sql .= ' WHERE fk_source = ' . $questionId;
-            $sql .= ' AND sourcetype = \'digiquali_question\'';
-            $sql .= ' AND fk_target = ' . $this->id;
+            $sql .= ' WHERE fk_source = ' . $this->id;
+            $sql .= ' AND sourcetype = \'digiquali_questiongroup\'';
+            $sql .= ' AND fk_target = ' .  $questionId;
+            $sql .= ' AND targettype = \'digiquali_question\'';
+            $res = $this->db->query($sql);
+
+            if (!$res) {
+                $error++;
+            }
+        }
+        if ($error) {
+            $this->db->rollback();
+        } else {
+            $this->db->commit();
+        }
+    }
+
+    /**
+     * Move Groups
+     */
+    public function updateQuestionGroupsPositions(array $questionGroupIds)
+    {
+        foreach ($questionGroupIds as $position => $questionGroupId) {
+            $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
+            $sql .= ' SET position = ' . $position;
+            $sql .= ' WHERE fk_source = ' . $this->id;
+            $sql .= ' AND sourcetype = \'digiquali_questiongroup\'';
+            $sql .= ' AND fk_target = ' . $questionGroupId;
             $sql .= ' AND targettype = \'digiquali_questiongroup\'';
             $res = $this->db->query($sql);
 
@@ -588,6 +629,17 @@ class QuestionGroup extends SaturneObject
     }
 
     /**
+     * Fetch all questions and groups of the questiongroup
+     *
+     * @return array Array containing questions and groups
+     */
+    public function fetchQuestionsAndGroups(?int $sourceId = null, string $sourceType = 'digiquali_questiongroup', bool $recursive = false) {
+
+        $sheet = new Sheet($this->db);
+        return $sheet->fetchQuestionsAndGroups($sourceId ?? $this->id, $sourceType, $recursive);
+    }
+
+    /**
      * Get id of the parent group
      *
      * @return int
@@ -603,7 +655,7 @@ class QuestionGroup extends SaturneObject
     }
 
     /**
-     * Return the number of questions in the group)
+     * Return the number of questions in the group
      * 
      * @param bool $includeSubGroups If you want to include questions of subgroups or not
      *
@@ -630,17 +682,14 @@ class QuestionGroup extends SaturneObject
      *
      * @return void
      */
-    public function displayInSheetCard($sheetObject, $subLevel = 0)
+    public function displayInSheetCard($sheetObject, $positionPath, $subLevel = 0)
     {
         global $langs, $db;
 
-        $groupQuestions = $this->fetchQuestionsOrderedByPosition();
         $numberOfQuestions = $this->getNumberOfQuestions();
+        $questionsAndGroups = $this->fetchQuestionsAndGroups();
 
-        $questionGroups = $this->fetchQuestionGroupsOrderedByPosition();
-        
-
-        print '<tr id="group-' . $this->id . '" class="line-row question-group" data-group-id="' . $this->getParentGroupId() . '">';
+        print '<tr id="group-' . $this->id . '" class="line-row-group question-group" data-id="' . $this->id . '" data-parent-id="' . $this->getParentGroupId() . '" data-position-path="' . $positionPath . '">';
         print '<td colspan="8">';
         print '<div class="group-header" onclick="window.digiquali.sheet.toggleGroup(' . $this->id . ')" style="margin-left: calc(2rem * ' . $subLevel . ');">';
         print '<span class="group-title">' . $this->getNomUrl(1) . ' - ' . $this->label . ' (' . $numberOfQuestions . ' question' . ($numberOfQuestions > 1 ? 's' : '').')</span>';
@@ -666,17 +715,18 @@ class QuestionGroup extends SaturneObject
         $tdOffsetStyle = 'style="padding-left: calc(2rem + 2rem * ' . $subLevel . ' + 12px);"';
         include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_addforms.tpl.php';
 
-        if (is_array($groupQuestions) && !empty($groupQuestions)) {
-            foreach ($groupQuestions as $question) {
-                include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_question.tpl.php';
-            }            
-        }
+        $subLevel++;
 
-        if (is_array($questionGroups) && !empty($questionGroups)) {
-            $subLevel++;
-            foreach ($questionGroups as $singleGroup) {
-                $singleGroup->displayInSheetCard($sheetObject, $subLevel);
+        $position = 1;
+        foreach ($questionsAndGroups as $questionOrGroup) {
+            if ($questionOrGroup instanceof Question) {
+                $question = $questionOrGroup;
+                $question->displayInSheetCard($sheetObject, $positionPath . '/' . $position, $tdOffsetStyle);
+            } else {
+                $questionGroup = $questionOrGroup;
+                $questionGroup->displayInSheetCard($sheetObject, $positionPath . '/' . $position, $subLevel);
             }
+            $position++;
         }
     }
 
