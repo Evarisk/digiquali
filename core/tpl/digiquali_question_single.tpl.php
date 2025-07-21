@@ -24,7 +24,7 @@
 if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER or empty($questionAnswer)) : ?>
     <?php
         $questionWithCorrectAnswerCssClass = '';
-        $questionWithCorrectAnswer = $question->checkAnswerIsCorrect($questionAnswer);
+        $questionWithCorrectAnswer = $question->checkAnswerIsCorrect('');
         $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
         if ($showCorrection) {
             if ($questionWithCorrectAnswer > 0) {

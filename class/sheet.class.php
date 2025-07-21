@@ -634,6 +634,7 @@ class Sheet extends SaturneObject
 
                 if ($obj->targettype == 'digiquali_question') {
                     $question->fetch($obj->fk_target);
+                    $question->id        = $obj->fk_target;
                     $questionAndGroups[] = $question;
                 } else {
                     $questionGroup->fetch($obj->fk_target);
