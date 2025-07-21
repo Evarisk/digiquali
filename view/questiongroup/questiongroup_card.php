@@ -481,12 +481,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print '<td>-</td>';
 
         print '<td>';
-        // if (!empty($alreadyAdded)) {
-            // $filter = ['customsql' => 't.rowid NOT IN (' . implode(',', $alreadyAdded) . ')'];
-            $filter = ['customsql' => "t.rowid NOT IN (SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question')"];
-        // } else {
-        //     $filter = [];
-        // }
+		
+		$filter = ['customsql' => "t.rowid NOT IN (SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question')"];
         $questionList = saturne_fetch_all_object_type('Question', '', '', 0, 0, $filter);
         $questionArray = [];
         if (is_array($questionList) && !empty($questionList)) {

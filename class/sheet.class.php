@@ -347,7 +347,6 @@ class Sheet extends SaturneObject
                         $clonedQuestionGroup->add_object_linked('digiquali_' . $object->element, $sheetID);
                         $questionGroupIds[$position+1] = $clonedQuestionGroup->id;
                     }
-                    // $object->updateQuestionsAndGroupsPosition(null, null, true);
                 }
                 $object->updateQuestionsAndGroupsPosition($questionIds, $questionGroupIds);
                 
