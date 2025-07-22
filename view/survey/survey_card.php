@@ -224,9 +224,8 @@ if (empty($resHook)) {
 
 $title   = $langs->trans(ucfirst($object->element));
 $helpUrl = 'FR:Module_DigiQuali';
-$moreJS  = ['/saturne/js/includes/hammer.min.js'];
 
-saturne_header(1,'', $title, $helpUrl, '', 0, 0, $moreJS);
+saturne_header(1,'', $title, $helpUrl);
 
 // Part to create
 if ($action == 'create') {

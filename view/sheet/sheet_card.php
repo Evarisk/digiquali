@@ -434,11 +434,10 @@ if (empty($reshook)) {
 
 $title    = $langs->trans('Sheet');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/saturne/js/includes/hammer.min.js'];
 
 $objectsMetadata = saturne_get_objects_metadata();
 
-saturne_header(1,'', $title, $help_url, '', 0, 0, $moreJS);
+saturne_header(1,'', $title, $help_url);
 
 // Part to create
 if ($action == 'create') {

@@ -21,7 +21,7 @@
  * \brief   Template page for question lines
  */
 
-if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || !$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || empty($questionAnswer)) : ?>
+if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($questionAnswer)) : ?>
     <?php
         $questionWithCorrectAnswerCssClass = '';
         $questionWithCorrectAnswer = $question->checkAnswerIsCorrect($questionAnswer);
@@ -62,7 +62,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || !$user-
                 <?php if ($question->enter_comment > 0) : ?>
                     <label class="question__footer-comment">
                         <i class="far fa-comment-dots question-comment-icon"></i>
-                        <input class="question-textarea question-comment" name="comment<?php echo $question->id . "_" . $questionGroupId; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" value="<?php echo $comment; ?>" <?php echo ($object->status == 2 ? 'disabled' : ''); ?>>
+                        <textarea class="question-textarea question-comment" name="comment<?php echo $question->id . "_" . $questionGroupId; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($object->status == 2 ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
                     </label>
                 <?php endif; ?>
                 <?php if ($question->authorize_answer_photo > 0) : ?>
