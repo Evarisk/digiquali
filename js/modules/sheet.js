@@ -213,7 +213,6 @@ window.digiquali.sheet.initDragAndDropInParent = function () {
         // If parent is not the sheet root
         if (currentParentId > 0) {
           // Search if dragged item stays in the same parent
-          console.log('get previous 1');
           let prevGroupEl = $('#tablelines tbody tr:nth-child(' + (movedElNewIndex + 1) + ')');
           do {  
             prevGroupEl = prevGroupEl.prev();
