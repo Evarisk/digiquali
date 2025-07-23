@@ -531,6 +531,7 @@ Risk                    = Risque
 RiskCalculation         = Gravité x fréquence
 RiskAssessmentAdd       = Ajout de l'évaluation
 RiskAssessmentEdit      = Édition de l'évaluation
+RiskAssessmentList      = Liste des évaluations
 1D                      = 1J
 1W                      = 1S
 1M                      = 1M

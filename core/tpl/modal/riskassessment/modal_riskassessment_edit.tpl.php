@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/modal/modal_riskassessment_edit.tpl.php
  * \ingroup digiquali
- * \brief   Template page for modal riskassessment edit
+ * \brief   Template page for modal risk assessment edit
  */
 
 /**

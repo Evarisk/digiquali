@@ -174,7 +174,7 @@ class Activity extends SaturneObject
     /**
      * @var string|null Label
      */
-    public ?string $label;
+    public ?string $label = null;
 
     /**
      * @var string|null Source
@@ -420,6 +420,16 @@ class Activity extends SaturneObject
         }
 
         return $nbActivities;
+    }
+
+    public function getActivityInfos() {
+        $out = [];
+
+        $out[$this->element]['id']      = $this->id;
+        $out[$this->element]['ref']     = $this->getNomUrl(1, 'nolink', 1, '', -1, 1);
+        $out[$this->element]['element'] = $this->element;
+
+        return $out[$this->element];
     }
 }
 

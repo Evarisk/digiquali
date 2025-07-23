@@ -115,23 +115,6 @@ if (empty($reshook)) {
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     require_once DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
-//	if ($action == 'add' && $permissiontoadd) { ?>
-<!--		<script>-->
-<!--			jQuery( '.digirisk-wrap .navigation-container .unit.active' ).removeClass( 'active' );-->
-<!--			//console.log( this );-->
-<!--			let id = $(this).attr('value');-->
-<!--			jQuery( this ).closest( '.unit' ).addClass( 'active' );-->
-<!---->
-<!--			var unitActive = jQuery( this ).closest( '.unit.active' ).attr('id');-->
-<!--			localStorage.setItem('unitactive', unitActive );-->
-<!---->
-<!--			jQuery( this ).closest( '.unit' ).attr( 'value', id );-->
-<!--		</script>-->
-<!--		--><?php
-//	}
-
-//    $object->element = $object->element_type;
-
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/component_actions.tpl.php';
     require_once __DIR__ . '/../../core/tpl/actions/digiquali_activity_actions.tpl.php';
 }
@@ -189,11 +172,11 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
    // require_once __DIR__ . '/../../core/tpl/task/modal_task_add.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_add.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_edit.tpl.php';
-    //require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_list.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_list.tpl.php';
 
     $moreHtmlRight = <<<HTML
     <div class="wpeo-button modal-open">
-        <input type="hidden" class="modal-options" data-modal-to-open="activity_add" data-from-id="{$id}" data-from-type="{$object->element}">
+        <input type="hidden" class="modal-options" data-modal-to-open="activity_create" data-from-id="{$id}" data-from-type="{$object->element}">
         <i class="fas fa-plus button-icon"></i>
     </div>
     HTML;
@@ -205,12 +188,14 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
     }
     print load_fiche_titre($langs->trans('ProcessusActivities') . $moreTitle, $moreHtmlRight, $activity->picto);
 
-    print '<div id="activity-list-container">';
+    print '<div class="activity-list-container" id="activity_list_container_' . $id . '">';
     $activities = $activity->fetchAll('', '', 0, 0, ['customsql' => 't.fk_element = ' . $id]);
     foreach ($activities as $activitySingle) {
+        $activityInfos = $activitySingle->getActivityInfos();
+
         print '<div class="activity-container" data-object-id="' . $activitySingle->id . '">';
         print '<div class="activity-container__header">';
-        print $activitySingle->getNomUrl(1, '', 0, '', -1, 1);
+        print $activityInfos['ref'];
         print '</div>';
 
         print '<div class="activity-container__body wpeo-gridlayout grid-2">';
@@ -245,7 +230,7 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
             ]);
         }
 
-        require __DIR__ . '/../../core/tpl/digiquali_riskassessment_list_view.tpl.php';
+        $riskAssessment->displayRiskAssessmentList($activityInfos, 1);
 
         print '</div>';
         print '</div>';

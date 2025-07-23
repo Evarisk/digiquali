@@ -38,37 +38,40 @@ window.digiquali.activity = {};
  *
  * @return {void}
  */
-window.digiquali.activity.init = function() {
+window.digiquali.activity.init = function init() {
   window.digiquali.activity.event();
 };
 
 /**
- * Activity event
+ * Activity event initialization. Binds all necessary event listeners
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.activity.event = function() {
-  $(document).on('input', '#myTextareadsf', window.digiquali.activity.updateModalActivityAddButton);
+window.digiquali.activity.event = function initializeEvents() {
+  $(document).on('input', '#label', window.digiquali.activity.updateModalActivityButton);
   $(document).on('blur', '[contenteditable="true"]', window.digiquali.activity.updateContentEditable);
 
-  $(document).on('click', '#activity_create', window.digiquali.activity.createActivity);
+  // Events for create activity
+  $(document).on('click', '#activity_add', function createActivity() {
+    window.saturne.object.ObjectFromModal.call(this, 'create', 'activity');
+  });
 };
 
 /**
- * Update modal task add button state when input change value
+ * Update modal activity button state when input change value
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.activity.updateModalActivityAddButton = function() {
+window.digiquali.activity.updateModalActivityButton = function() {
   const $this   = $(this);
-  const $modal  = $this.closest('#activity_add');
-  const $button = $modal.find('#activity_create');
+  const $modal  = $this.closest('#activity_create');
+  const $button = $modal.find('#activity_add');
   const value   = $this.val();
 
   if (value.length > 0) {
@@ -110,44 +113,5 @@ window.digiquali.activity.updateContentEditable = function() {
       field:     field,
       value:     contentText
     }),
-  });
-};
-
-/**
- * Create activity
- *
- * @memberof DigiQuali_Activity
- *
- * @since   21.3.0
- * @version 21.3.0
- *
- * @return {void}
- */
-window.digiquali.activity.createActivity = function() {
-  const token = window.saturne.toolbox.getToken();
-
-  const $this    = $(this);
-  const $modal   = $this.closest('#activity_add');
-  const fromId   = $modal.data('from-id');
-  const fromType = $modal.data('from-type');
-  const $list    = $(document).find(`#activity-list-container`);
-
-  const label = $modal.find('#myTextareadsf').val();
-
-  window.saturne.loader.display($list);
-
-  $.ajax({
-    url: `${document.URL}&action=add_activity&token=${token}`,
-    type: 'POST',
-    data: JSON.stringify({
-      objectLine_id:      fromId,
-      objectLine_element: fromType,
-      label: label,
-      token: token
-    }),
-    success: function(resp) {
-      $modal.replaceWith($(resp).find('#activity_add'));
-      $list.replaceWith($(resp).find(`#activity-list-container`));
-    }
   });
 };

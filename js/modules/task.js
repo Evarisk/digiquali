@@ -117,7 +117,7 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
   if (modalToOpen.match(/timespent_edit/)) {
     action = 'fetch_task_timespent';
   }
-  if (modalToOpen === 'activity_edit') {
+  if (modalToOpen === 'activity_edit' || modalToOpen === 'riskassessment_list') {
     action = 'fetch_activity';
   }
   if (modalToOpen === 'riskassessment_update') {
@@ -127,13 +127,14 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
   $.ajax({
     url: `${document.URL}&action=${action}&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       from_id: fromId,
     }),
     success: function(resp) {
       $(`#${modalToOpen}`).replaceWith($(resp).find(`#${modalToOpen}`).addClass('modal-active'));
       if (modalToOpen === 'riskassessment_update') {
-        window.digiquali.riskassessment.initializeModalUIState($(`#${modalToOpen}`));
+        window.digiquali.riskAssessment.initializeModalUIState($(`#${modalToOpen}`));
       }
     }
   });

@@ -27,7 +27,7 @@
  * Objects : $activity
  */ ?>
 
-<div class="wpeo-modal modal-activity-add" id="activity_add">
+<div class="wpeo-modal modal-activity-add" id="activity_create">
     <div class="modal-container wpeo-modal-event">
         <!-- Modal-Header -->
         <div class="modal-header">
@@ -39,13 +39,13 @@
             <div class="">
                 <label>
                     <span class="title"><?php echo $langs->trans('Label'); ?></span>
-                    <input type="text" id="myTextareadsf" name="myTextarea">
+                    <input type="text" class="input-ajax" id="label" name="label">
                 </label>
             </div>
         </div>
         <!-- Modal-Footer -->
         <div class="modal-footer">
-            <div class="wpeo-button button-disable modal-close" id="activity_create">
+            <div class="wpeo-button button-disable modal-close" id="activity_add">
                 <i class="fas fa-plus pictofixedwidth"></i><?php echo $langs->trans('Add'); ?>
             </div>
         </div>

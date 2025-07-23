@@ -340,10 +340,10 @@ class RiskAssessment extends SaturneObject
 
         $out[$this->element]['control_percentage'] = $this->control_percentage . '%';
 
-        $residualRiskPercentage = ($this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) : 0) . '%';
+        $residualRiskPercentage = round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) . '%';
 
-        $out[$this->element]['risk']          = $this->getRiskPercentageClass();
-        $out[$this->element]['residual_risk'] = '<span class="wpeo-button ' . $this->getResidualRiskPercentageClass() . '">' . $residualRiskPercentage . '</span>';
+        $out[$this->element]['risk']          = $this->getResidualRiskPercentageClass();
+        $out[$this->element]['residual_risk'] = $residualRiskPercentage;
 
         $out[$task->element]['ref']   = $task->getNomUrl(1, 'withproject');
         $out[$task->element]['label'] = $task->label;
@@ -359,36 +359,44 @@ class RiskAssessment extends SaturneObject
         return $out;
     }
 
-    public function getRiskPercentageClass(): string
-    {
-        $riskPercentage = ($this->gravity_percentage * $this->frequency_percentage) / 100;
-        if ($riskPercentage >= 75) {
-            $riskPercentageClass = 'black';
-        } else if ($riskPercentage >= 50) {
-            $riskPercentageClass = 'red';
-        } else if ($riskPercentage >= 25) {
-            $riskPercentageClass = 'yellow';
-        } else {
-            $riskPercentageClass = 'grey';
-        }
-
-        return $riskPercentageClass;
-    }
-
     public function getResidualRiskPercentageClass(): string
     {
-        $residualRiskPercentage = ($this->control_percentage > 0 ? round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2) : 0);
+        $residualRiskPercentage = round(($this->gravity_percentage * $this->frequency_percentage * (100 - $this->control_percentage)) / 10000, 2);
         if ($residualRiskPercentage >= 75) {
-            $residualRiskPercentageClass = 'button-dark';
+            $residualRiskPercentageClass = 'black';
         } else if ($residualRiskPercentage >= 50) {
-            $residualRiskPercentageClass = 'button-red';
+            $residualRiskPercentageClass = 'red';
         } else if ($residualRiskPercentage >= 25) {
-            $residualRiskPercentageClass = 'button-yellow';
+            $residualRiskPercentageClass = 'yellow';
         } else {
-            $residualRiskPercentageClass = 'button-grey';
+            $residualRiskPercentageClass = 'grey';
         }
 
         return $residualRiskPercentageClass;
+    }
+
+    public function displayRiskAssessmentList(array $activityInfos, $limit = 0): void
+    {
+        global $db, $langs, $user; // $langs and $user are used in tpl
+
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+
+        $task = new Task($db);
+
+        $riskAssessment  = new self($db);
+        $riskAssessments = $this->fetchAll('DESC', 'rowid', $limit, 0, ['customsql' => 't.fk_activity = ' . $activityInfos['id']]);
+        if (!is_array($riskAssessments) || empty($riskAssessments)) {
+            $riskAssessment->initAsSpecimen();
+            $task->initAsSpecimen();
+            $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task);
+            require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
+        } else {
+            foreach ($riskAssessments as $riskAssessment) {
+                $task->initAsSpecimen();
+                $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task);
+                require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
+            }
+        }
     }
 }
 

@@ -15,31 +15,31 @@
  */
 
 /**
- * \file    js/modules/riskassessment.js
+ * \file    js/modules/riskAssessment.js
  * \ingroup digiquali
- * \brief   JavaScript riskassessment file
+ * \brief   JavaScript risk assessment file
  */
 
 'use strict';
 
 /**
- * Init riskassessment JS
+ * Init risk assessment JS
  *
  * @since   21.3.0
  * @version 21.3.0
  */
-window.digiquali.riskassessment = {};
+window.digiquali.riskAssessment = {};
 
 /**
- * Risk init
+ * Risk assessment init
  *
  * @since   21.3.0
  * @version 21.3.0
  *
  * @return {void}
  */
-window.digiquali.riskassessment.init = function init() {
-  window.digiquali.riskassessment.event();
+window.digiquali.riskAssessment.init = function init() {
+  window.digiquali.riskAssessment.event();
 };
 
 /**
@@ -50,20 +50,20 @@ window.digiquali.riskassessment.init = function init() {
  *
  * @return {void}
  */
-window.digiquali.riskassessment.event = function initializeEvents() {
+window.digiquali.riskAssessment.event = function initializeEvents() {
   // Event for gravity buttons/inputs
-  $(document).on('click', '.gravity-button', window.digiquali.riskassessment.updateGravityPercentage);
-  $(document).on('change', '.gravity-percentage-input', window.digiquali.riskassessment.updateGravityPercentage);
+  $(document).on('click', '.gravity-button', window.digiquali.riskAssessment.updateGravityPercentage);
+  $(document).on('change', '.gravity-percentage-input', window.digiquali.riskAssessment.updateGravityPercentage);
 
   // Event for frequency buttons/inputs
-  $(document).on('click', '.frequency-button', window.digiquali.riskassessment.updateFrequencyPercentage);
-  $(document).on('change', '.frequency-percentage-input', window.digiquali.riskassessment.updateFrequencyPercentage);
+  $(document).on('click', '.frequency-button', window.digiquali.riskAssessment.updateFrequencyPercentage);
+  $(document).on('change', '.frequency-percentage-input', window.digiquali.riskAssessment.updateFrequencyPercentage);
 
   // Event for control slider/inputs
-  $(document).on('input', '.control-slider', window.digiquali.riskassessment.updateControlPercentage);
-  $(document).on('change', '.control-percentage-input', window.digiquali.riskassessment.updateControlPercentage);
+  $(document).on('input', '.control-slider', window.digiquali.riskAssessment.updateControlPercentage);
+  $(document).on('change', '.control-percentage-input', window.digiquali.riskAssessment.updateControlPercentage);
 
-  // Events for create/update buttons
+  // Events for create/update risk assessment
   $(document).on('click', '#riskassessment_add', function createRiskAssessment() {
     window.saturne.object.ObjectFromModal.call(this, 'create', 'riskassessment');
   });
@@ -82,7 +82,7 @@ window.digiquali.riskassessment.event = function initializeEvents() {
  * @param {jQuery} $modal The jQuery object of the modal that is being opened.
  * @return {void}
  */
-window.digiquali.riskassessment.initializeModalUIState = function initializeModalUIState($modal) {
+window.digiquali.riskAssessment.initializeModalUIState = function initializeModalUIState($modal) {
   // Trigger initial state for gravity
   $('.gravity-button.selected').each(function() {
     $(this).trigger('click');
@@ -107,7 +107,7 @@ window.digiquali.riskassessment.initializeModalUIState = function initializeModa
   $modal.find('.control-percentage-input').trigger('change');
 
   // Finally, ensure the add/update button state is correct for this specific modal
-  window.digiquali.riskassessment.updateModalRiskAssessmentButton($modal);
+  window.digiquali.riskAssessment.updateModalRiskAssessmentButton($modal);
 };
 
 
@@ -122,7 +122,7 @@ window.digiquali.riskassessment.initializeModalUIState = function initializeModa
  *
  * @return {void}
  */
-window.digiquali.riskassessment.updateGravityPercentage = function updateGravityPercentage() {
+window.digiquali.riskAssessment.updateGravityPercentage = function updateGravityPercentage() {
   const $this  = $(this); // The clicked button OR the input field that triggered this
   const $modal = $this.closest('.modal-riskassessment'); // Find the parent modal of the element that triggered the event
 
@@ -154,10 +154,10 @@ window.digiquali.riskassessment.updateGravityPercentage = function updateGravity
   $modal.find('.gravity-percentage-input').val(percentageValue);
 
   // Re-calculate and display risks for the current modal
-  window.digiquali.riskassessment.calculateAndDisplayRisks($modal);
+  window.digiquali.riskAssessment.calculateAndDisplayRisks($modal);
 
   // Call the updateModalRiskButton to re-evaluate the state of the create/update button
-  window.digiquali.riskassessment.updateModalRiskAssessmentButton($modal);
+  window.digiquali.riskAssessment.updateModalRiskAssessmentButton($modal);
 };
 
 /**
@@ -168,7 +168,7 @@ window.digiquali.riskassessment.updateGravityPercentage = function updateGravity
  *
  * @return {void}
  */
-window.digiquali.riskassessment.updateFrequencyPercentage = function updateFrequencyPercentage() {
+window.digiquali.riskAssessment.updateFrequencyPercentage = function updateFrequencyPercentage() {
   const $this  = $(this);
   const $modal = $this.closest('.modal-riskassessment');
 
@@ -193,8 +193,8 @@ window.digiquali.riskassessment.updateFrequencyPercentage = function updateFrequ
 
   $modal.find('.frequency-percentage-input').val(percentageValue);
 
-  window.digiquali.riskassessment.calculateAndDisplayRisks($modal);
-  window.digiquali.riskassessment.updateModalRiskAssessmentButton($modal);
+  window.digiquali.riskAssessment.calculateAndDisplayRisks($modal);
+  window.digiquali.riskAssessment.updateModalRiskAssessmentButton($modal);
 };
 
 /**
@@ -205,7 +205,7 @@ window.digiquali.riskassessment.updateFrequencyPercentage = function updateFrequ
  *
  * @return {void}
  */
-window.digiquali.riskassessment.updateControlPercentage = function updateControlPercentage() {
+window.digiquali.riskAssessment.updateControlPercentage = function updateControlPercentage() {
   const $this  = $(this);
   const $modal = $this.closest('.modal-riskassessment');
 
@@ -224,8 +224,8 @@ window.digiquali.riskassessment.updateControlPercentage = function updateControl
     $modal.find('.control-percentage-input').val(controlValue);
   }
 
-  window.digiquali.riskassessment.calculateAndDisplayRisks($modal);
-  window.digiquali.riskassessment.updateModalRiskAssessmentButton($modal);
+  window.digiquali.riskAssessment.calculateAndDisplayRisks($modal);
+  window.digiquali.riskAssessment.updateModalRiskAssessmentButton($modal);
 };
 
 
@@ -238,7 +238,7 @@ window.digiquali.riskassessment.updateControlPercentage = function updateControl
  * @param  {jQuery} $modal The jQuery object of the modal to target.
  * @return {void}
  */
-window.digiquali.riskassessment.calculateAndDisplayRisks = function calculateAndDisplayRisks($modal) {
+window.digiquali.riskAssessment.calculateAndDisplayRisks = function calculateAndDisplayRisks($modal) {
   // Get values from inputs within the SPECIFIC MODAL.
   const gravity   = window.saturne.utils.getSanitizedPercentageValue($modal.find('.gravity-percentage-input'));
   const frequency = window.saturne.utils.getSanitizedPercentageValue($modal.find('.frequency-percentage-input'));
@@ -299,7 +299,7 @@ window.digiquali.riskassessment.calculateAndDisplayRisks = function calculateAnd
  * @param  {jQuery} $modal The jQuery object of the modal to target.
  * @return {void}
  */
-window.digiquali.riskassessment.updateModalRiskAssessmentButton = function updateModalRiskAssessmentButton($modal) {
+window.digiquali.riskAssessment.updateModalRiskAssessmentButton = function updateModalRiskAssessmentButton($modal) {
   // Determine which button to target based on the modal's ID
   const $button = $modal.find('#riskassessment_add, #riskassessment_edit'); // Target both, jQuery will find the one that exists
 

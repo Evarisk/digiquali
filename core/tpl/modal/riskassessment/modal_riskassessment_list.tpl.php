@@ -16,131 +16,27 @@
  */
 
 /**
- * \file    core/tpl/modal/modal_riskassessment_add.tpl.php
+ * \file    core/tpl/modal/modal_riskassessment_list.tpl.php
  * \ingroup digiquali
- * \brief   Template page for modal riskassessment add
+ * \brief   Template page for modal risk assessment list
  */
 
 /**
  * The following vars must be defined:
  * Global  : $langs
- * Objects : $riskAssessment
- */ ?>
+ * Objects : $activity
+ */
 
-<div class="wpeo-modal modal-riskassessment-add" id="riskassessment_add">
+$activityInfos = $activity->getActivityInfos(); ?>
+
+<div class="wpeo-modal modal-riskassessment modal-riskassessment-list" id="riskassessment_list">
     <div class="modal-container wpeo-modal-event">
         <div class="modal-header">
-            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentAdd') . ' ' . $riskAssessment->getNextNumRef(); ?></h2>
+            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentList') . ' ' . $activityInfos['ref']; ?></h2>
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <div class="modal-content">
-            <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label"><?php echo $langs->trans('Photo'); ?></label>
-                <?php echo saturne_show_media_buttons(); ?>
-            </div>
-
-            <!-- @todo gestion tags -->
-<!--            <div class="modal-section wpeo-grid grid-2">-->
-<!--                <label class="modal-label" for="tags">Tags</label>-->
-<!--                <div>-->
-<!--                    <input type="text" id="tags" name="tags" value="Nom du tag">-->
-<!--                </div>-->
-<!--            </div>-->
-
-            <!-- @todo gestion wyswigs -->
-            <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label" for="comment"><?php echo $langs->trans('Comment'); ?></label>
-                <div>
-                    <textarea id="comment" name="comment" rows="4"></textarea>
-                </div>
-            </div>
-
-            <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label" for="gravity-percentage-input"><?php echo $langs->trans('Gravity'); ?></label>
-                <div class="input-group">
-                    <div class="gravity-buttons">
-                        <button class="gravity-button button-grey selected" data-gravity-value="25"><i class="button-icon fas fa-smile"></i></button>
-                        <button class="gravity-button button-yellow" data-gravity-value="50"><i class="button-icon fas fa-meh"></i></button>
-                        <button class="gravity-button button-red" data-gravity-value="75"><i class="button-icon fas fa-frown"></i></button>
-                        <button class="gravity-button button-black" data-gravity-value="100"><i class="button-icon fas fa-skull"></i></button>
-                    </div>
-                    <input type="number" class="small-input" id="gravity-percentage-input" min="0" max="100" value="25">
-                    <span class="unit">%</span>
-                </div>
-            </div>
-
-            <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label" for="frequency-percentage-input"><?php echo $langs->trans('Frequency'); ?></label>
-                <div class="input-group">
-                    <div class="frequency-buttons">
-                        <button class="frequency-button button-grey selected" data-frequency-value="25">1D</button>
-                        <button class="frequency-button button-yellow" data-frequency-value="50">1W</button>
-                        <button class="frequency-button button-red" data-frequency-value="75">1M</button>
-                        <button class="frequency-button button-black" data-frequency-value="100">1Y</button>
-                    </div>
-                    <input type="number" class="small-input" id="frequency-percentage-input" min="0" max="100" value="25">
-                    <span class="unit">%</span>
-                </div>
-            </div>
-
-            <div class="modal-section modal-row wpeo-grid grid-2">
-                <label class="modal-label" for="control-percentage-input"><?php echo $langs->trans('ControlPercentage'); ?></label>
-                <div class="input-group">
-                    <span class="range-value">0</span>
-                    <input type="range" id="control-slider" min="0" max="100" value="0">
-                    <span class="range-value">100</span>
-                    <input type="number" class="small-input" id="control-percentage-input" value="0">
-                    <span class="unit">%</span>
-                </div>
-            </div>
-
-            <div class="modal-summary-boxes wpeo-gridlayout grid-2">
-                <div class="summary-box">
-                    <div class="summary-box-content">
-                        <span class="summary-title"><?php echo $langs->trans('Risk'); ?></span>
-                        <span class="summary-subtitle"><?php echo $langs->trans('RiskCalculation'); ?></span>
-                    </div>
-                    <span class="summary-percentage grey" id="risk-percentage-value">6.25%</span>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-box-content">
-                        <span class="summary-title"><?php echo $langs->trans('ResidualRisk'); ?></span>
-                        <span class="summary-subtitle"><?php echo $langs->trans('ResidualRiskCalculation'); ?></span>
-                    </div>
-                    <span class="summary-percentage grey" id="residual-risk-percentage-value">0%</span>
-                </div>
-            </div>
-
-            <div class="modal-last-added-riskassessment">
-                <h3>Dernier risque ajouté</h3>
-                <div class="riskassessment-list__container">
-                    <div class="riskassessment__content">
-                        <div class="riskassessment-thumbnail">
-                            <img src="" alt="Risk thumbnail">
-                        </div>
-                        <div class="riskassessment__content-container">
-                            <div class="riskassessment__content-heading">
-                                <span class="ref">RA10</span>
-                                <span class="tags">Nom du tag (10)</span>
-                                <span class="date"><i class="fas fa-calendar-alt"></i> 26/02/2025</span>
-                                <span class="risk-mastery"><i class="fas fa-shield-alt"></i> Maîtrise : 20%</span>
-                                <span class="risk-residual"><i class="fas fa-exclamation-triangle"></i> Risque résiduel : 16</span>
-                            </div>
-                            <div class="risk__content-body">
-                                <div class="risk-description">
-                                    Manque de compétence
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="wpeo-button button-disable modal-close" id="riskassessment_create">
-                <span class="fas fa-save pictofixedwidth"></span>
-                <?php echo $langs->trans('Save'); ?>
-            </button>
+            <?php $riskAssessment->displayRiskAssessmentList($activityInfos); ?>
         </div>
     </div>
 </div>

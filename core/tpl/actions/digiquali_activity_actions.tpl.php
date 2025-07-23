@@ -30,11 +30,11 @@
  */
 
 // Activity action
-if ($action == 'add_activity' && !empty($permissionToAddActivity)) {
+if ($action == 'create_activity' && !empty($permissionToAddActivity)) {
     $data = json_decode(file_get_contents('php://input'), true);
 
     $activity->label      = $data['label'];
-    $activity->fk_element = $data['objectLine_id'];
+    $activity->fk_element = $data['fk_object_id'];
 
     $activity->create($user);
     // @todo manage error

@@ -23,30 +23,17 @@
 
 /**
  * The following vars must be defined:
- * Global  : $db, $langs, $user
- * Objects : $activity, $riskAssessment
+ * Global    : $db, $langs, $user
+ * Objects   : $riskAssessment
+ * variables : $activityInfos, $riskAssessmentInfos
  */
 
 // Permission
 $permissionToAddTask  = $user->hasRight('projet', 'creer') || $user->hasRight('projet', 'all', 'creer');
-$permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('projet', 'all', 'lire');
+$permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('projet', 'all', 'lire'); ?>
 
-require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
-
-$task = new Task($db);
-
-$riskAssessments = $riskAssessment->fetchAll('DESC', 'rowid', 1, 0, ['customsql' => 't.fk_activity = ' . $activitySingle->id]);
-if (!is_array($riskAssessments) || empty($riskAssessments)) {
-    $riskAssessment->initAsSpecimen();
-} else {
-    $riskAssessment = reset($riskAssessments);
-    //$task->fetch($riskAssessment->fk_task);
-}
-$task->initAsSpecimen();
-$riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task); ?>
-
-<div class="riskassessment-list__container gridw-2" id="riskassessment_list_container_<?php echo $activitySingle->id ?>">
-    <div class="riskassessment-list__level <?php echo $riskAssessmentInfos[$riskAssessment->element]['risk'] ?>"></div>
+<div class="riskassessment-list__container gridw-2" id="riskassessment_list_container_<?php echo $activityInfos['id']; ?>">
+    <div class="riskassessment-list__level <?php echo $riskAssessmentInfos[$riskAssessment->element]['risk']; ?>"></div>
 
     <div class="riskassessment__content">
         <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
@@ -83,7 +70,7 @@ $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task); ?>
 
         <div class="riskassessment-list__actions">
             <div class="wpeo-button button-square-40 button-rounded modal-open">
-                <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_create" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
+                <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_create" data-from-id="<?php echo $activityInfos['id']; ?>" data-from-type="<?php echo $activityInfos['element']; ?>">
                 <i class="fas fa-plus"></i>
             </div>
             <?php if ($riskAssessmentInfos[$riskAssessment->element]['id'] > 0) : ?>
@@ -92,7 +79,7 @@ $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task); ?>
                     <i class="fas fa-pen"></i>
                 </div>
                 <div class="wpeo-button button-square-40 button-rounded modal-open">
-                    <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_list" data-from-id="<?php echo $activitySingle->id; ?>" data-from-type="<?php echo $activitySingle->element; ?>">
+                    <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_list" data-from-id="<?php echo $activityInfos['id']; ?>" data-from-type="<?php echo $activityInfos['element']; ?>" data-from-module="<?php echo $riskAssessment->module; ?>">
                     <i class="fas fa-list"></i>
                 </div>
             <?php endif; ?>
