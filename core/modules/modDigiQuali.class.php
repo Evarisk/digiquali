@@ -635,36 +635,36 @@ class modDigiQuali extends DolibarrModules
 			'user'     => 0,
 		];
 
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=digiquali',
-            'type'     => 'left',
-            'titre'    => $langs->transnoentities('QuestionGroup'),
-            'prefix'   => '<i class="fas fa-folder pictofixedwidth"></i>',
-            'mainmenu' => 'digiquali',
-            'leftmenu' => 'digiquali_questiongroup',
-            'url'      => '/digiquali/view/questiongroup/questiongroup_list.php',
-            'langs'    => 'digiquali@digiquali',
-            'position' => 1000 + $r,
-            'enabled'  => '$conf->digiquali->enabled && $user->rights->digiquali->questiongroup->read',
-            'perms'    => '$user->rights->digiquali->questiongroup->read',
-            'target'   => '',
-            'user'     => 0,
-        ];
+        // $this->menu[$r++] = [
+        //     'fk_menu'  => 'fk_mainmenu=digiquali',
+        //     'type'     => 'left',
+        //     'titre'    => $langs->transnoentities('QuestionGroup'),
+        //     'prefix'   => '<i class="fas fa-folder pictofixedwidth"></i>',
+        //     'mainmenu' => 'digiquali',
+        //     'leftmenu' => 'digiquali_questiongroup',
+        //     'url'      => '/digiquali/view/questiongroup/questiongroup_list.php',
+        //     'langs'    => 'digiquali@digiquali',
+        //     'position' => 1000 + $r,
+        //     'enabled'  => '$conf->digiquali->enabled && $user->rights->digiquali->questiongroup->read',
+        //     'perms'    => '$user->rights->digiquali->questiongroup->read',
+        //     'target'   => '',
+        //     'user'     => 0,
+        // ];
 
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=digiquali,fk_leftmenu=digiquali_questiongroup',
-            'type'     => 'left',
-            'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
-            'mainmenu' => 'digiquali',
-            'leftmenu' => 'digiquali_questiongrouptags',
-            'url'      => '/categories/index.php?type=question_group',
-            'langs'    => 'digiquali@digiquali',
-            'position' => 1000 + $r,
-            'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->questiongroup->read',
-            'perms'    => '$user->rights->digiquali->questiongroup->read',
-            'target'   => '',
-            'user'     => 0,
-        ];
+        // $this->menu[$r++] = [
+        //     'fk_menu'  => 'fk_mainmenu=digiquali,fk_leftmenu=digiquali_questiongroup',
+        //     'type'     => 'left',
+        //     'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
+        //     'mainmenu' => 'digiquali',
+        //     'leftmenu' => 'digiquali_questiongrouptags',
+        //     'url'      => '/categories/index.php?type=question_group',
+        //     'langs'    => 'digiquali@digiquali',
+        //     'position' => 1000 + $r,
+        //     'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->questiongroup->read',
+        //     'perms'    => '$user->rights->digiquali->questiongroup->read',
+        //     'target'   => '',
+        //     'user'     => 0,
+        // ];
 
 		$this->menu[$r++] = [
 			'fk_menu'  => 'fk_mainmenu=digiquali',

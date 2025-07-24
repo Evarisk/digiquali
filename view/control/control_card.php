@@ -308,14 +308,13 @@ if (empty($resHook)) {
 
 $title    = $langs->trans('Control');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/saturne/js/includes/hammer.min.js'];
 
 if ($source == 'pwa') {
     $conf->dol_hide_topmenu  = 1;
     $conf->dol_hide_leftmenu = 1;
 }
 
-saturne_header(1,'', $title, $help_url, '', 0, 0, $moreJS);
+saturne_header(1,'', $title, $help_url);
 
 // Part to create
 if ($action == 'create') {
@@ -467,6 +466,9 @@ if ($action == 'create') {
                                 $objectName .= $objectSingle->$subnameField . ' ';
                             }
                         }
+                    } elseif ($objectType == 'productlot') {
+                        $product->fetch($objectSingle->fk_product);
+                        $objectName = $objectSingle->$nameField . ' - ' . $product->ref;
                     } else {
                         $objectName = $objectSingle->$nameField;
                     }
@@ -745,7 +747,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     $averagePercentageQuestions = 0;
     $percentQuestionCounter     = 0;
-    if (is_array($sheet->linkedObjects['digiquali_question']) && !empty($sheet->linkedObjects['digiquali_question'])) {
+    if (!empty($sheet->linkedObjects['digiquali_question']) && is_array($sheet->linkedObjects['digiquali_question'])) {
         foreach ($sheet->linkedObjects['digiquali_question'] as $questionLinked) {
             if ($questionLinked->type !== 'Percentage') {
                 continue; // Skip non-percentage questions
@@ -939,11 +941,25 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     <div class="progress-info">
         <span class="badge badge-info" style="margin-right: 10px;"><?php print $answerCounter . '/' . $questionCounter; ?></span>
         <div class="progress-bar" style="margin-right: 10px;">
-            <div class="progress progress-bar-success" style="width:<?php print ($questionCounter > 0 ? ($answerCounter / $questionCounter) * 100 : 0) . '%'; ?>;" title="<?php print($questionCounter > 0 ? $answerCounter . '/' . $questionCounter : 0); ?>"></div>
+            <?php
+            if ($questionCounter > 0) {
+                $percentage = ($answerCounter / $questionCounter) * 100;
+            } else {
+                $percentage = 0;
+            }
+            if ($percentage == 100) {
+                $class = 'progress-bar-success';
+            } elseif ($percentage > 0) {
+                $class = 'progress-bar-warning';
+            } else {
+                $class = 'progress-bar-danger';
+            }
+            print ('<progress class="progress ' . $class . '" max="100" value="' . $percentage . '" style="width: 100%;" title="' . ($questionCounter > 0 ? $answerCounter . '/' . $questionCounter : 0) . '"></progress>');
+            ?>
         </div>
         <?php if ($answerCounter != $questionCounter) {
             print img_picto($langs->trans(!empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) ? 'Enabled' : 'Disabled'), !empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) ? 'switch_on' : 'switch_off', 'data-toggle-action="show_only_questions_with_no_answer" data-toggle-key="show_only_questions_with_no_answer" data-update-targets=".progress-info,.question-answer-container" class="marginrightonly"');
-            print $form->textwithpicto($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'), 1, 'help', 'marginrightonly');
+            print $form->textwithpicto(!empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) && $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'), 1, 'help', 'marginrightonly');
         } else {
             $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER = 0;
         }
@@ -952,7 +968,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
         ?>
     </div>
 
-<?php if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || $answerCounter != $questionCounter) {
+<?php if (empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || !$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || $answerCounter != $questionCounter) {
         print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '');
         print '<div id="tablelines" class="question-answer-container">';
         if (!empty($object->project)) {

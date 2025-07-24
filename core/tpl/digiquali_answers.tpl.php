@@ -36,12 +36,31 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
         if ($questionOrGroup->element == 'questiongroup') {
             $questionGroupId = $questionOrGroup->id;
 
+            $questionGroup = new QuestionGroup($object->db);
             $questionGroup->fetch($questionGroupId);
+
+            $isGroupCorrectCssClass = '';
+            $groupCssStyles = '';
+            $isGroupCorrect = null;
+            $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
+            if ($showCorrection) {
+                $isGroupCorrect = $questionGroup->isCorrect($object);
+                $isGroupCorrectCssClass = $isGroupCorrect ? ' correct' : ' incorrect';
+            }
+
             $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
-            print '<div class="digiquali-question-group">';
-            print '<h3>' . img_picto('', $questionGroup->picto) . ' ' . htmlspecialchars($questionGroup->label) . '</h3>';
+
+            [$numberOfAnsweredQuestions, $numberOfQuestions] = $questionGroup->calculatePoints($object);
+            
+            print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'" ' .$groupCssStyles. '>';
+            print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $numberOfAnsweredQuestions . '/' . $numberOfQuestions . ' réponses aux questions</span></h3>';
             if (!empty($questionGroup->description)) {
                 print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
+            }
+            if ($showCorrection) {
+                [$pointsResult, $rateResult] = $questionGroup->getFormattedSuccessPointsAndRates($object);
+                print '<p>' . $pointsResult . '</p>';
+                print '<p>' . $rateResult . '</p>';
             }
 
             if (is_array($groupQuestions) && !empty($groupQuestions)) {
@@ -60,6 +79,8 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
                 }
                 print '</div>';
             }
+            $object->displayAnswers($objectLine, $questionGroup->fetchQuestionGroupsOrderedByPosition(), $isFrontend, ++$level);
+
             print '</div>';
         } else {
             $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionOrGroup->id, 0);

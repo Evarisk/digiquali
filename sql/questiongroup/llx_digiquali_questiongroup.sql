@@ -24,6 +24,7 @@ CREATE TABLE llx_digiquali_questiongroup(
   status        integer DEFAULT 1 NOT NULL,
   label         varchar(255) NOT NULL,
   description   text,
+  success_rate  double(24,8) NOT NULL DEFAULT 0,
   fk_user_creat integer NOT NULL,
   fk_user_modif integer
 ) ENGINE=innodb;

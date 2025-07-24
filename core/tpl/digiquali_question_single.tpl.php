@@ -21,8 +21,20 @@
  * \brief   Template page for question lines
  */
 
-if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER or empty($questionAnswer)) : ?>
-    <div class="question table-id-<?php echo $question->id ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
+if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($questionAnswer)) : ?>
+    <?php
+        $questionWithCorrectAnswerCssClass = '';
+        $questionWithCorrectAnswer = $question->checkAnswerIsCorrect($questionAnswer);
+        $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
+        if ($showCorrection) {
+            if ($questionWithCorrectAnswer > 0) {
+                $questionWithCorrectAnswerCssClass = ' correct';
+            } else if ($questionWithCorrectAnswer < 0) {
+                $questionWithCorrectAnswerCssClass = ' incorrect';
+            }
+        }
+    ?>
+    <div class="question<?php echo $questionWithCorrectAnswerCssClass ?> table-id-<?php echo $question->id ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
         <?php if ($question->show_photo > 0 && getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . '_DISPLAY_MEDIAS') && !empty($user->conf->DIGIQUALI_SHOW_OK_KO_PHOTOS)) { ?>
             <div class="question__header-medias">
                 <div class="question__photo-ref-ok">
@@ -40,16 +52,17 @@ if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER or empty($questio
                 <div class="question__header-content">
                     <div class="question-title"><?php echo $question->getNomUrl(1, '', 0, '', -1, 1); ?></div>
                     <div class="question-description"><?php echo $question->description; ?></div>
+                    <div class="question-points"><?php echo ($showCorrection ? $question->formatSingleQuestionScore($questionWithCorrectAnswer) : '') ?></div>
                 </div>
                 <div class="question__header-answer">
-                    <?php print show_answer_from_question($question, $object, $questionAnswer, $questionGroupId); ?>
+                    <?php print show_answer_from_question($question, $object, $questionAnswer, $questionGroupId, $showCorrection); ?>
                 </div>
             </div>
             <div class="question__footer">
                 <?php if ($question->enter_comment > 0) : ?>
                     <label class="question__footer-comment">
                         <i class="far fa-comment-dots question-comment-icon"></i>
-                        <input class="question-textarea question-comment" name="comment<?php echo $question->id; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" value="<?php echo $comment; ?>" <?php echo ($object->status == 2 ? 'disabled' : ''); ?>>
+                        <textarea class="question-textarea question-comment" name="comment<?php echo $question->id . "_" . $questionGroupId; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($object->status == 2 ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
                     </label>
                 <?php endif; ?>
                 <?php if ($question->authorize_answer_photo > 0) : ?>

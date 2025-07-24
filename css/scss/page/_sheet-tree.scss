@@ -29,7 +29,7 @@
   position: relative;
 }
 
-.sheet-header .add-object-container {
+.sheet-header .add-object-container, .group-item .add-object-container {
   position: absolute;
   right: 10px;
   top: 50%;
@@ -41,8 +41,19 @@
   transition: opacity 0.2s ease;
   z-index: 10;
 }
+.group-item .add-object-container .wpeo-button {
+  position: relative;
+  font-size: 12px;
+}
 
-.sheet-header:hover .add-object-container {
+.group-item .add-object-container .wpeo-button .button-add {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  font-size: 10px;
+}
+
+.sheet-header:hover .add-object-container, .group-item:hover .add-object-container {
   opacity: 1;
   pointer-events: auto;
 }

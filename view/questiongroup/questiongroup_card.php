@@ -63,6 +63,7 @@ $contextpage         = GETPOST('contextpage', 'aZ') ?GETPOST('contextpage', 'aZ'
 $backtopage          = GETPOST('backtopage', 'alpha');
 $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 $sheetId             = GETPOST('sheet_id', 'int');
+$parentGroupId       = GETPOST('parent_group_id', 'int'); // parent group id (0 if at root of the sheet)
 
 // Initialize objects
 // Technical objets
@@ -142,15 +143,14 @@ if (empty($reshook)) {
 			$ids = array_values($idsArray['order']);
 			$reIndexedIds = array_combine(range(1, count($ids)), array_values($ids));
 		}
-		$object->updateQuestionPosition($reIndexedIds);
+		$object->updateQuestionsPositions($reIndexedIds);
 	}
 
     if ($action == 'removeQuestion') {
         $questionId = GETPOST('questionId', 'int');
         if ($questionId > 0) {
             $question->fetch($questionId);
-            $question->element = 'digiquali_'.$question->element;
-            $question->deleteObjectLinked('', '', $object->id, $object->table_element);
+			$object->deleteObjectLinked($object->id, 'digiquali_questiongroup', $question->id, 'digiquali_question');
 
             setEventMessages($langs->trans('RemoveQuestionFromGroup') . ' ' . $question->ref, array());
         }
@@ -159,6 +159,11 @@ if (empty($reshook)) {
 
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
+
+	// TODO remove in the future if PR dolibarr accepted (missing call to setEventMessages on update when using validateField())
+	if ($error > 0 && $action === 'edit') {
+		setEventMessages($object->error, $object->errors, 'errors');
+	}
 
     // Actions confirm_lock, confirm_archive
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
@@ -174,10 +179,12 @@ $help_url = 'FR:Module_DigiQuali';
 saturne_header(0,'', $title, $help_url);
 if ($sheetId > 0) {
     $sheet->fetch($sheetId);
-    print $sheet->getQuestionAndGroupsTree($object->element, $object->id);
+	if ($sheet->displayTree()) {
+		print $sheet->getQuestionAndGroupsTree($object->element, $object->id);
+	}
 }
 
-print '<div id="cardContent" '. ($sheetId > 0 ? 'class="margin-for-tree"' : '') .'>';
+print '<div id="cardContent" '. ($sheetId > 0 ? 'class="' . ($sheet->displayTree() ? 'margin-for-tree' : '') . '"' : '') .'>';
 
 // Part to create
 if ($action == 'create') {
@@ -187,6 +194,7 @@ if ($action == 'create') {
 	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
     print '<input type="hidden" name="sheet_id" value="' . $sheetId . '">';
+	print '<input type="hidden" name="parent_group_id" value="'.$parentGroupId.'">';
 	if ($backtopage) print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 	if ($backtopageforcancel) print '<input type="hidden" name="backtopageforcancel" value="'.$backtopageforcancel.'">';
 
@@ -213,6 +221,11 @@ if ($action == 'create') {
         print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=questiongroup&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
 		print "</td></tr>";
 	}
+
+	// Success score
+	print '<tr><td class="fieldrequired">'.$langs->trans("SuccessScoreWithUnit").'</td><td>';
+	print '<input class="flat" type="number" step="0.01" min="0" max="100" size="3" name="success_rate" id="success_rate" value="'.GETPOST('success_rate').'">';
+	print '</td></tr>';
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_add.tpl.php';
@@ -261,6 +274,11 @@ if (($id || $ref) && $action == 'edit') {
 	print '<tr><td><label class="" for="description">' . $langs->trans("Description") . '</label></td><td>';
 	$doleditor = new DolEditor('description', $object->description, '', 90, 'dolibarr_details', '', false, true, $conf->global->FCKEDITOR_ENABLE_SOCIETE, ROWS_3, '90%');
 	$doleditor->Create();
+	print '</td></tr>';
+
+	// Success score
+	print '<tr><td class="fieldrequired">'.$langs->trans("SuccessScoreWithUnit").'</td><td>';
+	print '<input class="flat" type="number" step="0.01" min="0" max="100" size="3" name="success_rate" id="success_rate" value="'.$object->success_rate.'">';
 	print '</td></tr>';
 
 	// Other attributes
@@ -326,7 +344,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print $langs->trans("Description");
 	print '</td>';
 	print '<td>';
-	print $object->description;
+    print dol_htmlentitiesbr($object->description);
 	print '</td></tr>';
 
 	// Categories
@@ -335,6 +353,15 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print $form->showCategories($object->id, 'questiongroup', 1);
 		print "</td></tr>";
 	}
+
+	// Success score
+	print '<tr><td class="titlefield">';
+	print $langs->trans("SuccessScore");
+	print '</td>';
+	print '<td>';
+	print $object->success_rate . ' %';
+	print '</td></tr>';
+
 
 	// Other attributes. Fields from hook formObjectOptions and Extrafields.
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_view.tpl.php';
@@ -413,11 +440,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print '</tr></thead>';
 
     $questionsLinked = $object->fetchQuestionsOrderedByPosition();
-    $alreadyAdded = [];
 
     if (is_array($questionsLinked) && !empty($questionsLinked)) {
         foreach ($questionsLinked as $questionLinked) {
-                $alreadyAdded[] = $questionLinked->id;
                 print '<tr id="' . $questionLinked->id . '" class="line-row oddeven">';
                 print '<td>';
                 print img_picto('', $questionLinked->picto, 'class="pictofixedwidth"') . $questionLinked->ref;
@@ -456,11 +481,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print '<td>-</td>';
 
         print '<td>';
-        if (!empty($alreadyAdded)) {
-            $filter = ['customsql' => 't.rowid NOT IN (' . implode(',', $alreadyAdded) . ')'];
-        } else {
-            $filter = [];
-        }
+		
+		$filter = ['customsql' => "t.rowid NOT IN (SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question')"];
         $questionList = saturne_fetch_all_object_type('Question', '', '', 0, 0, $filter);
         $questionArray = [];
         if (is_array($questionList) && !empty($questionList)) {

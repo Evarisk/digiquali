@@ -712,9 +712,11 @@ class Control extends SaturneObject
         if (property_exists($object, 'next_control_date')) {
             $object->next_control_date = '';
         }
+        if (property_exists($object, 'track_id')) {
+            $object->track_id = generate_random_id();
+        }
 
         $object->context = 'createfromclone';
-        $object->track_id     = generate_random_id();
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 

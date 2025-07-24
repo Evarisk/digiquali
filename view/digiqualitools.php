@@ -40,7 +40,7 @@ require_once __DIR__ . '/../class/sheet.class.php';
 require_once __DIR__ . '/../lib/digiquali.lib.php';
 
 // Global variables definitions
-global $conf, $db, $langs, $user;
+global $conf, $db, $entity, $langs, $user;
 
 saturne_load_langs(['exports']);
 
@@ -257,8 +257,6 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
             if (is_array($digiqualiExportArray['questiongroups']) && !empty($digiqualiExportArray['questiongroups'])) {
                 foreach($digiqualiExportArray['questiongroups'] as $questionGroupSingle) {
                     $previousQuestionGroup = new QuestionGroup($db);
-                    $previousQuestionGroup->fetch($questionGroupSingle['rowid']);
-                    $previousQuestions = $previousQuestionGroup->fetchQuestionsOrderedByPosition();
 
                     $questionGroup->status = $questionGroupSingle['status'];
                     $questionGroup->label = $questionGroupSingle['label'];
@@ -268,25 +266,44 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
 
                     if ($questionGroupId > 0) {
                         $idCorrespondanceArray['questiongroup'][$questionGroupSingle['rowid']] = $questionGroupId;
-                        if (is_array($previousQuestions) && !empty($previousQuestions)) {
-                            foreach ($previousQuestions as $previousQuestion) {
-                                $previousQuestionId = $previousQuestion->id;
-                                $newQuestionId = $previousQuestion->create($user);
 
+                        // Create questions for this question group
+                        if (is_array($questionGroupSingle['questions']) && !empty($questionGroupSingle['questions'])) {
+                            foreach ($questionGroupSingle['questions'] as $questionSingle) {
+                                $question->ref_ext                = $questionSingle['ref'];
+                                $question->type                   = $questionSingle['type'];
+                                $question->label                  = $questionSingle['label'];
+                                $question->description            = $questionSingle['description'];
+                                $question->show_photo             = $questionSingle['show_photo'];
+                                $question->authorize_answer_photo = $questionSingle['authorize_answer_photo'];
+                                $question->enter_comment          = $questionSingle['enter_comment'];
+                                $question->status                 = Question::STATUS_VALIDATED;
+                                $question->import_key             = $importKey;
+
+                                $newQuestionId = $question->create($user);
                                 if ($newQuestionId > 0) {
                                     $questionGroup->addQuestion($newQuestionId);
-                                    $previousAnswers = $answer->fetchAll('', '', 0 , 0, ['customsql' => 'fk_question = ' . $previousQuestionId]);
-       
-                                    if (is_array($previousAnswers) && !empty($previousAnswers)) {
-                                        foreach ($previousAnswers as $previousAnswer) {
-                                            $previousAnswer->fk_question = $newQuestionId;
-                                            $newAnswerId = $previousAnswer->create($user);
+
+                                    if (array_key_exists('answers', $questionSingle) && !empty($questionSingle['answers'])) {
+                                        foreach ($questionSingle['answers'] as $answerSingle) {
+                                            $answer->ref_ext     = $answerSingle['ref'];
+                                            $answer->status      = $answerSingle['status'];
+                                            $answer->value       = $answerSingle['value'];
+                                            $answer->position    = $answerSingle['position'];
+                                            $answer->pictogram   = $answerSingle['pictogram'];
+                                            $answer->color       = $answerSingle['color'];
+                                            $answer->fk_question = $newQuestionId;
+                                            $answer->import_key  = $importKey;
+
+                                            $newAnswerId = $answer->create($user);
+
                                             if ($newAnswerId <= 0) {
                                                 $error++;
                                             }
                                         }
                                     }
-
+                                } else {
+                                    $error++;
                                 }
                             }
                         }

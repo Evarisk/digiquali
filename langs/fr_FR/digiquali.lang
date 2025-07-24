@@ -137,6 +137,16 @@ ShowOnlyQuestionsWithNoAnswer = Afficher uniquement les questions qui n'ont pas 
 AveragePercentageQuestions    = Moyenne des questions
 AddToSheet                    = Ajouter au modèle
 PercentageQuestionStep        = Nombre d'étapes du curseur
+NumberOfPoints                = Nombre de points
+Point                         = Point
+Points                        = Points
+AnswerCorrectness             = Validité de la réponse
+ExpectedAnswer                = Réponse correcte
+QuestionWithOneCorrectAnswer  = Ce type de question n'accepte qu'une seule réponse correcte
+AnswerCorrectnessMinBound     = Valeur minimale de réponse correcte
+AnswerCorrectnessMaxBound     = Valeur maximale de réponse correcte
+QuestionMinBoundExceeded      = La valeur minimale de réponse correcte d'un pourcentage ne peut pas être inférieure à 0
+QuestionMaxBoundExceeded      = La valeur minimale de réponse correcte d'un pourcentage ne peut pas être supérieure à 100
 
 
 #
@@ -198,11 +208,15 @@ ExportFailed                   = L'export a échoué
 ToImportDataGoToImportPage     = Pour importer des données, veuillez vous rendre sur la page d'import :
 NbQuestions                    = Nombre de questions
 SuccessScore                   = Score de réussite
+SuccessScoreWithUnit           = Score de réussite (%)
 PercentageValue                = Valeur en pourcentage
+CreateNewQuestion              = Créer une nouvelle question
+CreateNewQuestionGroup         = Créer un nouveau groupe de questions
 
 # Notice - notice
 MissingConfigElementTypeTitle   = Configuration manquante pour les éléments liés
 MissingConfigElementTypeMessage = Veuillez cliquer sur le lien pour configurer les éléments liés
+LineMovedOutsideParentError     = Il n'est pas possible de déplacer un élément en dehors de son parent
 
 
 
@@ -412,7 +426,7 @@ DraftValidatedLocked                           = -- (Brouillon + validé + verro
 CloneControlEquipments                         = Cloner les moyens de contrôle
 NoControl                                      = Aucun contrôle
 NoPeriodicityControl                           = Aucune périodicité de contrôle
-LockControlDate                                = Le verrouillage de ce contrôle en date du %s entrainera une date de prochain contrôle pour le %s soit dans %d jours.
+LockControlDate                                = Le verrouillage de ce contrôle en date du &emsp;&emsp;&emsp; : <b> %s </b> <br> entrainera une date de prochain contrôle pour le : <b> %s </b> <br> soit dans &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; : <b> %d jours. </b>
 
 
 
@@ -444,6 +458,11 @@ controldocument                         = fiche de controle
 controldocument.odt                     = Fiche de Contrôle
 controldocument_photo.odt               = Fiche de Contrôle avec photos
 controldocument_photo                   = fiche de controle avec photos
+controldocument_photo_landscape_actions = fiche de controle avec photos (paysage)
+controldocument_photo_landscape_actions.odt = Fiche de Contrôle avec photos (paysage)
+controldocument_withgood-notgood-medias = fiche de contrôle avec photos (bon/mauvais)
+controldocument_withgood-notgood-medias.odt = Fiche de Contrôle avec photos (bon/mauvais)
+
 
 
 
@@ -463,6 +482,8 @@ NeedObjectToLink      = Vous devez sélectionner un objet à lier
 ConfirmValidateSurvey = Êtes-vous sûr de vouloir valider le questionnaire ?
 PublicSurvey          = Interface publique de questionnaire
 PublicSurveyToCome    = Interface publique de questionnaire à venir
+PointsResult          = Points acquis
+RateResult            = Pourcentage de réussite
 
 
 #
@@ -581,6 +602,7 @@ WriteComment             = Écrire un commentaire
 WriteAnswer              = Écrire une réponse
 In                       = Dans
 See                      = Voir
+Pts                      = %s pts
 
 # Statistics
 
@@ -600,3 +622,10 @@ NoDetailedStatisticsAvailable = Pas de statistiques détaillées disponibles
 NoQuestionsLinked = Aucune question liée à cette fiche
 AnswersStatistics = Statistiques des réponses
 NoControlsLinked = Aucun contrôle lié à cette fiche
+
+#
+# Fields validation errors
+#
+
+FieldMaxValue = Le champ '%s' doit être inférieure ou égale à %s
+FieldMinValue = Le champ '%s' doit être supérieure ou égale à %s

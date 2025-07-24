@@ -137,7 +137,45 @@ if (empty($resHook)) {
                     $questionGroupExportArray['status']      = $questionGroupSingle->status;
                     $questionGroupExportArray['label']       = $questionGroupSingle->label;
                     $questionGroupExportArray['description'] = $questionGroupSingle->description;
+                    $questionsArrayForGroupSingle = [];
+                    $questionsInGroup = $questionGroupSingle->fetchQuestionsOrderedByPosition();
+                    if (is_array($questionsInGroup) && !empty($questionsInGroup)) {
+                        foreach ($questionsInGroup as $questionForGroupSingle) {
+                            if ($questionForGroupSingle->element == 'question') {
+                                $questionExportArray = [
+                                    'rowid'                  => $questionForGroupSingle->id,
+                                    'ref'                    => $questionForGroupSingle->ref,
+                                    'status'                 => $questionForGroupSingle->status,
+                                    'type'                   => $questionForGroupSingle->type,
+                                    'label'                  => $questionForGroupSingle->label,
+                                    'description'            => $questionForGroupSingle->description,
+                                    'show_photo'             => $questionForGroupSingle->show_photo,
+                                    'authorize_answer_photo' => $questionForGroupSingle->authorize_answer_photo,
+                                    'enter_comment'          => $questionForGroupSingle->enter_comment,
+                                ];
 
+                                $questionsArrayForGroupSingle[$questionForGroupSingle->id] = $questionExportArray;
+
+                                $answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $questionForGroupSingle->id]);
+                                if (is_array($answerList) && !empty($answerList)) {
+                                    foreach ($answerList as $answerSingle) {
+                                        $answerExportArray = [
+                                            'rowid'       => $answerSingle->id,
+                                            'ref'         => $answerSingle->ref,
+                                            'status'      => $answerSingle->status,
+                                            'value'       => $answerSingle->value,
+                                            'position'    => $answerSingle->position,
+                                            'pictogram'   => $answerSingle->pictogram,
+                                            'color'       => $answerSingle->color,
+                                            'fk_question' => $answerSingle->fk_question,
+                                        ];
+                                        $questionsArrayForGroupSingle[$answerSingle->fk_question]['answers'][$answerSingle->id] = $answerExportArray;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $questionGroupExportArray['questions'] = $questionsArrayForGroupSingle;
                     $digiqualiExportArray['questiongroups'][$questionGroupSingle->id] = $questionGroupExportArray;
                 }
 
@@ -186,8 +224,10 @@ $title   = $langs->trans('Export', 'DigiQuali');
 $helpUrl = 'FR:Module_DigiQuali';
 
 saturne_header(0,'', $title, $helpUrl);
-print $object->getQuestionAndGroupsTree();
-print '<div id="cardContent" class="margin-for-tree">';
+if ($object->displayTree()) {
+    print $object->getQuestionAndGroupsTree();
+}
+print '<div id="cardContent" class="' . ($object->displayTree() ? 'margin-for-tree' : '') . '">';
 
 saturne_get_fiche_head($object, 'export', $title);
 saturne_banner_tab($object);

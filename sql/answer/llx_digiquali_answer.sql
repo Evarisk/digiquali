@@ -24,6 +24,7 @@ CREATE TABLE llx_digiquali_answer(
     status        integer DEFAULT 1 NOT NULL,
 	value         text,
     position      integer,
+    correct       boolean DEFAULT 0 NOT NULL,
     pictogram     varchar(255),
     color         varchar(255),
     fk_question   integer NOT NULL,

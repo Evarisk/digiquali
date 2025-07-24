@@ -15,4 +15,27 @@
     border-radius: 5px;
     transition: width 0.3s; /* Animation de transition */
   }
+  .progress.progress-bar-success::-webkit-progress-value {
+    background-color: #28a745;
+  }
+
+  .progress.progress-bar-warning::-webkit-progress-value {
+    background-color: #a37c0d;
+  }
+
+  .progress.progress-bar-danger::-webkit-progress-value {
+    background-color: #8c4446;
+  }
+
+  .progress.progress-bar-success::-moz-progress-bar {
+    background-color: #28a745;
+  }
+
+  .progress.progress-bar-warning::-moz-progress-bar {
+    background-color: #a37c0d;
+  }
+
+  .progress.progress-bar-danger::-moz-progress-bar {
+    background-color: #8c4446;
+  }
 }
