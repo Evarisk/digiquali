@@ -66,10 +66,12 @@ if ($action == 'update_riskassessment' && !empty($permissionToAddRiskAssessment)
     // @todo manage error
 }
 
-if ($action == 'delete_risk' && !empty($permissionToDeleteRiskAssessment)) {
+if ($action == 'delete_riskassessment' && !empty($permissionToDeleteRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
-    $activity->fetch($data['risk_id']);
+    $riskAssessment->fetch($data['object_id']);
 
-    $activity->delete($user);
+    $riskAssessment->delete($user);
     // @todo manage error
 }
+
+require_once __DIR__ . '/digiquali_riskassessment_task_actions.tpl.php';

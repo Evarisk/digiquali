@@ -36,37 +36,7 @@ $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('pr
     <div class="riskassessment-list__level <?php echo $riskAssessmentInfos[$riskAssessment->element]['risk']; ?>"></div>
 
     <div class="riskassessment__content">
-        <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
-            <?php if ($object->status == 0) : ?>
-                <input hidden multiple class="fast-upload<?php echo getDolGlobalInt('SATURNE_USE_FAST_UPLOAD_IMPROVEMENT') ? '-improvement' : ''; ?>" id="fast-upload-answer-photo<?php echo $question->id ?>" type="file" name="userfile[]" capture="environment" accept="image/*">
-                <input type="hidden" class="question-answer-photo" id="answer_photo_<?php echo $question->id ?>" name="answer_photo_<?php echo $question->id ?>" value=""/>
-                <input type="hidden" class="fast-upload-options" data-from-subtype="answer_photo_<?php echo $question->id ?>" data-from-subdir="answer_photo/<?php echo $question->ref ?>"/>
-                <label for="fast-upload-answer-photo<?php echo $question->id ?>">
-                    <div class="wpeo-button button-square-50">
-                        <i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>
-                    </div>
-                </label>
-                <div class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="<?php echo $question->id ?>">
-                    <input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="<?php echo $object->id ?>" data-from-type="<?php echo $object->element ?>" data-from-subtype="answer_photo_<?php echo $question->id ?>" data-from-subdir="answer_photo/<?php echo $question->ref ?>"/>
-                    <i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>
-                </div>
-            <?php endif; ?>
-            <div class="risk__content-medias">
-                <?php echo saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, $question, '', 0, $object->status == 0, 1); ?>
-            </div>
-        </div>
-        <div class="riskassessment__content-container">
-            <div class="riskassessment__content-heading">
-                <div class="ref"><?php echo $riskAssessmentInfos[$riskAssessment->element]['ref'] ?></div>
-<!--                <div class="tags">Nom du tag--><?php //echo @todo: Add tags $risk->description; ?><!--</div>-->
-                <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskAssessmentInfos[$riskAssessment->element]['date'] ?></div>
-                <div class="control-percentage"><i class="fas fa-shield-alt"></i><?php echo $langs->trans('ControlPercentage'); ?> : <strong><?php echo $riskAssessmentInfos[$riskAssessment->element]['control_percentage'] ?></strong></div>
-                <div class="residual-risk"><i class="fas fa-exclamation-triangle"></i><?php echo $langs->trans('ResidualRisk'); ?> : <strong><?php echo $riskAssessmentInfos[$riskAssessment->element]['residual_risk'] ?></strong></div>
-            </div>
-            <div class="riskassessment__content-body">
-                <div class="comment"><?php echo $riskAssessmentInfos[$riskAssessment->element]['comment'] ?></div>
-            </div>
-        </div>
+        <?php $riskAssessment->displayRiskAssessmentView($riskAssessmentInfos[$riskAssessment->element]); ?>
 
         <div class="riskassessment-list__actions">
             <div class="wpeo-button button-square-40 button-rounded modal-open">
@@ -85,28 +55,18 @@ $permissionToReadTask = $user->hasRight('projet', 'lire') || $user->hasRight('pr
             <?php endif; ?>
         </div>
     </div>
-    <div class="task__content">
-        <input type="checkbox" />
-        <div class="task__content-container">
-            <div class="task__content-heading">
-                <div class="ref"><?php echo $riskAssessmentInfos['project_task']['ref']; ?></div>
-                <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskAssessmentInfos['project_task']['date']; ?></div>
-            </div>
-            <div class="task__content-body">
-                <div class="label"><?php echo $riskAssessmentInfos['project_task']['label']; ?></div>
-            </div>
-        </div>
+    <?php if (!empty($permissionToReadTask)) : ?>
+        <div class="riskassessment-task__content" id="riskassessment_task_list_container_<?php echo $riskAssessmentInfos[$riskAssessment->element]['id']; ?>">
+            <?php $riskAssessment->displayRiskAssessmentTaskView($riskAssessmentInfos['project_task']);
 
-        <?php if (!empty($object->project) && !empty($permissionToAddTask)) : ?>
-            <div class="risk-list__actions">
-                <div class="wpeo-button button-square-40 button-rounded add-action modal-open">
-                    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
-                    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
+            if (getDolGlobalInt('DIGIQUALI_MAPPING_PROJECT') && !empty($permissionToAddTask)) : ?>
+                <div class="riskassessment-task__actions">
+                    <div class="wpeo-button button-square-40 button-rounded modal-open">
+                        <input type="hidden" class="modal-options" data-modal-to-open="riskassessment_task_create" data-from-id="<?php echo $riskAssessmentInfos[$riskAssessment->element]['id']; ?>" data-from-type="<?php echo $riskAssessment->element; ?>">
+                        <i class="fas fa-plus"></i>
+                    </div>
                 </div>
-            </div>
-        <?php endif; ?>
-        <?php if (!empty($permissionToReadTask)) :
-            require __DIR__ . '/answers/answers_task_view.tpl.php';
-        endif; ?>
-    </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 </div>

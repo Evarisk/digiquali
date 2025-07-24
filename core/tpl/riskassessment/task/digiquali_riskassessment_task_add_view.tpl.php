@@ -16,27 +16,18 @@
  */
 
 /**
- * \file    core/tpl/modal/riskassessment/modal_riskassessment_list.tpl.php
+ * \file    core/tpl/digiquali_riskassessment_task_add_view.tpl.php
  * \ingroup digiquali
- * \brief   Template page for modal risk assessment list
+ * \brief   Template page for risk assessment task add view
  */
 
 /**
  * The following vars must be defined:
- * Global  : $langs
- * Objects : $activity
- */
+ * Globals : $langs
+ */ ?>
 
-$activityInfos = $activity->getActivityInfos(); ?>
-
-<div class="wpeo-modal modal-riskassessment modal-riskassessment-list" id="riskassessment_list">
-    <div class="modal-container wpeo-modal-event">
-        <div class="modal-header">
-            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentList') . ' ' . $activityInfos['ref']; ?></h2>
-            <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
-        </div>
-        <div class="modal-content">
-            <?php $riskAssessment->displayRiskAssessmentList($activityInfos); ?>
-        </div>
+<div class="riskassessment-task__content">
+    <div class="riskassessment-task__content-container">
+        <?php echo $langs->trans('RiskAssessmentTaskAdd'); ?>
     </div>
 </div>

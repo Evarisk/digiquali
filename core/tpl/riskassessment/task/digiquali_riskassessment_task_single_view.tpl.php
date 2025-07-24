@@ -16,27 +16,25 @@
  */
 
 /**
- * \file    core/tpl/modal/riskassessment/modal_riskassessment_list.tpl.php
+ * \file    core/tpl/digiquali_riskassessment_task_single_view.tpl.php
  * \ingroup digiquali
- * \brief   Template page for modal risk assessment list
+ * \brief   Template page for risk assessment task single view
  */
 
 /**
  * The following vars must be defined:
- * Global  : $langs
- * Objects : $activity
- */
+ * Globals : $langs
+ */ ?>
 
-$activityInfos = $activity->getActivityInfos(); ?>
-
-<div class="wpeo-modal modal-riskassessment modal-riskassessment-list" id="riskassessment_list">
-    <div class="modal-container wpeo-modal-event">
-        <div class="modal-header">
-            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentList') . ' ' . $activityInfos['ref']; ?></h2>
-            <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
+<div class="riskassessment-task__content">
+    <input type="checkbox" />
+    <div class="riskassessment-task__content-container">
+        <div class="riskassessment-task__content-heading">
+            <div class="ref"><?php echo $riskAssessmentInfos['ref']; ?></div>
+            <div class="date"><i class="fas fa-calendar-alt"></i><?php echo $riskAssessmentInfos['date']; ?></div>
         </div>
-        <div class="modal-content">
-            <?php $riskAssessment->displayRiskAssessmentList($activityInfos); ?>
+        <div class="riskassessment-task__content-body">
+            <div class="label"><?php echo $riskAssessmentInfos['label']; ?></div>
         </div>
     </div>
 </div>

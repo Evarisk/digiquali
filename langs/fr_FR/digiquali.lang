@@ -63,6 +63,10 @@ NextControlDateColor90Description                  = Code couleur pour la procha
 DisplaySurveyMediasSampleDescription = Afficher les médias d'exemple des questions dans le questionnaire
 ExtrafieldsSurveyManagement          = Gestion des attributs supplémentaires des questionnaires
 
+# Mapping - Cartographie
+SelectProject  = Sélectionner un projet
+MappingProject = Projet de la cartographie
+
 # Public interface - Interface publique
 AnswerPublicInterface                        = Interface publique de réponse aux questions pour __OBJECT_ELEMENT_REF__
 AnswerPublicInterfaceTitle                   = Titre de l'interface publique de réponse aux questions
@@ -537,6 +541,12 @@ RiskAssessmentList      = Liste des évaluations
 1M                      = 1M
 1Y                      = 1A
 
+
+
+#
+# RiskAssessmentTask - Tâche
+#
+RiskAssessmentTaskAdd = Ajout de la tâche
 
 
 #

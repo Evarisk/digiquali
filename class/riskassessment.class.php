@@ -386,16 +386,35 @@ class RiskAssessment extends SaturneObject
         $riskAssessment  = new self($db);
         $riskAssessments = $this->fetchAll('DESC', 'rowid', $limit, 0, ['customsql' => 't.fk_activity = ' . $activityInfos['id']]);
         if (!is_array($riskAssessments) || empty($riskAssessments)) {
-            $riskAssessment->initAsSpecimen();
-            $task->initAsSpecimen();
             $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task);
             require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
         } else {
             foreach ($riskAssessments as $riskAssessment) {
-                $task->initAsSpecimen();
                 $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task);
                 require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
             }
+        }
+    }
+
+    public function displayRiskAssessmentView(array $riskAssessmentInfos): void
+    {
+        global $db, $langs;
+
+        if ($riskAssessmentInfos['id'] > 0) {
+            require __DIR__ . '/../core/tpl/riskassessment/digiquali_riskassessment_single_view.tpl.php';
+        } else {
+            require __DIR__ . '/../core/tpl/riskassessment/digiquali_riskassessment_add_view.tpl.php';
+        }
+    }
+
+    public function displayRiskAssessmentTaskView(array $riskAssessmentInfos): void
+    {
+        global $db, $langs;
+
+        if ($riskAssessmentInfos['id'] > 0) {
+            require __DIR__ . '/../core/tpl/riskassessment/task/digiquali_riskassessment_task_single_view.tpl.php';
+        } else {
+            require __DIR__ . '/../core/tpl/riskassessment/task/digiquali_riskassessment_task_add_view.tpl.php';
         }
     }
 }

@@ -3,11 +3,11 @@
   overflow: hidden;
   border-radius: 10px;
 
-  .riskassessment__content, .task__content {
+  .riskassessment__content, .riskassessment-task__content {
     background: #fff;
     position: relative;
 
-    &:hover .riskassessment-list__actions {
+    &:hover .riskassessment-list__actions, &:hover .riskassessment-task__actions {
       opacity: 1 !important;
     }
   }
@@ -39,7 +39,7 @@
     }
   }
 
-  .task__content {
+  .riskassessment-task__content {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
@@ -51,7 +51,7 @@
       width: 20px;
       height: 20px;
     }
-    .task__content-heading {
+    .riskassessment-task__content-heading {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
@@ -68,7 +68,7 @@
     }
   }
 
-  .riskassessment-list__actions {
+  .riskassessment-list__actions, .riskassessment-task__actions {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
