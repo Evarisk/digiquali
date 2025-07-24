@@ -22,10 +22,13 @@
  */
 
 // Load DigiQuali environment
-if (!file_exists('../../digiquali.inc.php')) {
+if (file_exists('../digiquali.main.inc.php')) {
+    require_once __DIR__ . '/../digiquali.main.inc.php';
+} elseif (file_exists('../../digiquali.main.inc.php')) {
+    require_once __DIR__ . '/../../digiquali.main.inc.php';
+} else {
     die('Include of digiquali main fails');
 }
-require_once __DIR__ . '/../../digiquali.inc.php';
 
 // Load DigiQuali libraries
 require_once __DIR__ . '/../../class/digiqualielement.class.php';
@@ -213,28 +216,24 @@ if (($id || $ref) && $action == 'edit') {
 
     print '<table class="border centpercent tableforfieldedit">';
 
+    $object->fields['fk_parent']['type']        = 'integer:SaturneElement:saturne/class/saturneelement.class.php';
+    $object->fields['fk_parent']['noteditable'] = 0;
+
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
 
-	print '<tr><td>';
-	print $langs->trans("ShowInSelectOnPublicTicketInterface");
-	print '</td>';
-	print '<td>';
-	print '<input type="checkbox" id="show_in_selector" name="show_in_selector"' . (($object->show_in_selector == 0) ?  '' : ' checked=""') . '"> ';
-	print '</td></tr>';
-
-    if ($id != $conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH) {
-        $children         = $object->fetchDigiriskElementFlat($id);
-        $childrenElements = [];
-        if (is_array($children) && !empty($children)) {
-            foreach ($children as $key => $value) {
-                $childrenElements[$key] .= $key;
-            }
-        }
-        print '<tr><td>' . $langs->trans("ParentElement") . '</td><td>';
-        print $object->selectDigiriskElementList($object->fk_parent, 'fk_parent', ['customsql' => 'element_type="groupment" AND t.rowid NOT IN (' . rtrim(implode(',', $deletedElements) . ',' . implode(',', $childrenElements), ',') . ')'], 0, 0, [], 0, 0, 'minwidth100 maxwidth300', GETPOST('id'));
-        print '</td></tr>';
-    }
+//    if ($id != $conf->global->DIGIRISKDOLIBARR_DIGIRISKELEMENT_TRASH) {
+//        $children         = $object->fetchDigiriskElementFlat($id);
+//        $childrenElements = [];
+//        if (is_array($children) && !empty($children)) {
+//            foreach ($children as $key => $value) {
+//                $childrenElements[$key] .= $key;
+//            }
+//        }
+//        print '<tr><td>' . $langs->trans("ParentElement") . '</td><td>';
+//        print $object->selectDigiriskElementList($object->fk_parent, 'fk_parent', ['customsql' => 'element_type="groupment" AND t.rowid NOT IN (' . rtrim(implode(',', $deletedElements) . ',' . implode(',', $childrenElements), ',') . ')'], 0, 0, [], 0, 0, 'minwidth100 maxwidth300', GETPOST('id'));
+//        print '</td></tr>';
+//    }
 
     // Other attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_edit.tpl.php';

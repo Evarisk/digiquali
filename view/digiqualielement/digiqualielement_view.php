@@ -26,10 +26,16 @@ if (!defined('NOSCANPOSTFORINJECTION')) {
 }
 
 // Load DigiQuali environment
-if (!file_exists('../../digiquali.inc.php')) {
+if (file_exists('../digiquali.main.inc.php')) {
+    require_once __DIR__ . '/../digiquali.main.inc.php';
+} elseif (file_exists('../../digiquali.main.inc.php')) {
+    require_once __DIR__ . '/../../digiquali.main.inc.php';
+} else {
     die('Include of digiquali main fails');
 }
-require_once __DIR__ . '/../../digiquali.inc.php';
+
+// Load Dolibarr libraries
+require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
 
 // Load DigiQuali libraries
 require_once __DIR__ . '/../../class/digiqualielement.class.php';
@@ -59,11 +65,12 @@ $fkParent            = GETPOSTISSET('fk_parent') ? GETPOSTINT('fk_parent') : get
 $fkStandard          = GETPOSTISSET('fk_standard') ? GETPOSTINT('fk_standard') : getDolGlobalInt('DIGIQUALI_ACTIVE_STANDARD');
 
 // Initialize technical objects
-$object            = new DigiQualiElement($db);
-$digiQualiStandard = new DigiQualiStandard($db);
-$activity          = new Activity($db);
-$riskAssessment    = new Digiquali\RiskAssessment($db);
-$extrafields       = new ExtraFields($db);
+$object             = new DigiQualiElement($db);
+$digiQualiStandard  = new DigiQualiStandard($db);
+$activity           = new Activity($db);
+$riskAssessment     = new Digiquali\RiskAssessment($db);
+$riskAssessmentTask = new Task($db);
+$extrafields        = new ExtraFields($db);
 
 // Initialize view objects
 $form = new Form($db);
@@ -169,10 +176,12 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
 
     require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/activity/modal_activity_add.tpl.php';
-   // require_once __DIR__ . '/../../core/tpl/task/modal_task_add.tpl.php';
+
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_add.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_edit.tpl.php';
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_list.tpl.php';
+
+    require_once __DIR__ . '/../../core/tpl/modal/riskassessment/task/modal_riskassessment_task_add.tpl.php';
 
     $moreHtmlRight = <<<HTML
     <div class="wpeo-button modal-open">

@@ -22,10 +22,13 @@
  */
 
 // Load DigiQuali environment
-if (!file_exists('../../digiquali.inc.php')) {
+if (file_exists('../digiquali.main.inc.php')) {
+    require_once __DIR__ . '/../digiquali.main.inc.php';
+} elseif (file_exists('../../digiquali.main.inc.php')) {
+    require_once __DIR__ . '/../../digiquali.main.inc.php';
+} else {
     die('Include of digiquali main fails');
 }
-require_once __DIR__ . '/../../digiquali.inc.php';
 
 // Get module parameters
 $moduleName          = GETPOST('module_name', 'aZ') ?: 'saturne';
