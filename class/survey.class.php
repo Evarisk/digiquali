@@ -394,8 +394,11 @@ class Survey extends SaturneObject
         if (empty($options['photos'])) {
             $object->photo = '';
         }
+        if (property_exists($object, 'track_id')) {
+            $object->track_id = generate_random_id();
+        }
 
-        $object->context = 'createfromclone';
+        $object->context  = 'createfromclone';
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 
