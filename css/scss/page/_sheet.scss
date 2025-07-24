@@ -37,6 +37,20 @@
   border-radius: 5px;
   margin: 5px 0;
   border: 1px solid #dee2e6;
+
+  .toggle-icon {
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 16px;
+  }
 }
 
 .group-questions {
@@ -48,20 +62,6 @@
 }
 
 .group-title {
-  font-size: 16px;
-}
-
-.toggle-icon {
-  background-color: #6c757d;
-  color: white;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-family: monospace;
   font-size: 16px;
 }
 

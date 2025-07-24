@@ -10,13 +10,13 @@
   .fiche {
     margin-right: 0 !important;
   }
-}
 
-.side-nav #id-left {
-  resize: horizontal;
-  overflow: auto;
-  min-width: 150px;
-  max-width: 400px;
+  .side-nav #id-left {
+    resize: horizontal;
+    overflow: auto;
+    min-width: 150px;
+    max-width: 400px;
+  }
 }
 
 #id-right .margin-for-tree {
