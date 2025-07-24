@@ -1,4 +1,4 @@
--- Copyright (C) 2024 EVARISK <technique@evarisk.com>
+-- Copyright (C) 2025 EVARISK <technique@evarisk.com>
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-ALTER TABLE llx_categorie_survey ADD PRIMARY KEY pk_categorie_survey (fk_categorie, fk_survey);
-ALTER TABLE llx_categorie_survey ADD INDEX idx_categorie_survey_fk_categorie (fk_categorie);
-ALTER TABLE llx_categorie_survey ADD INDEX idx_categorie_survey_fk_survey (fk_survey);
-ALTER TABLE llx_categorie_survey ADD CONSTRAINT fk_categorie_survey_categorie_rowid FOREIGN KEY (fk_categorie) REFERENCES llx_categorie (rowid);
-ALTER TABLE llx_categorie_survey ADD CONSTRAINT fk_categorie_survey_digiquali_survey_rowid FOREIGN KEY (fk_survey) REFERENCES llx_digiquali_survey (rowid);
+CREATE TABLE llx_categorie_activity(
+  fk_categorie integer NOT NULL,
+  fk_activity  integer NOT NULL,
+  import_key   varchar(14)
+) ENGINE=innodb;

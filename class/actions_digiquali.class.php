@@ -175,6 +175,38 @@ class ActionsDigiquali
     }
 
     /**
+     * Overloading the printMainArea function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printMainArea(array $parameters): int
+    {
+        if (preg_match('/digiqualiview|digiqualistandardagenda|digiqualielementdocument|digiqualielementagenda/', $parameters['context'])) {
+            ob_start();
+            saturne_more_left_menu('digiquali', 'DigiQualiElement');
+            $this->resprints = ob_get_clean();
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the saturneCustomHeaderFunction function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function saturneCustomHeaderFunction(array $parameters): int
+    {
+        if (preg_match('/digiqualielementdocument|digiqualistandardagenda|digiqualielementagenda/', $parameters['context'])) {
+            $this->results = ['loadMediaGallery' => 1, 'moreCSSOnBody' => 'sidebar-secondary-opened'];
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
      * Overloading the formObjectOptions function : replacing the parent's function with the one below
      *
      * @param  array       $parameters Hook metadata (context, etc...)

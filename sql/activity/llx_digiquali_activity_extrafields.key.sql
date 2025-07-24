@@ -1,4 +1,4 @@
--- Copyright (C) 2024 EVARISK <technique@evarisk.com>
+-- Copyright (C) 2025 EVARISK <technique@evarisk.com>
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,9 +13,5 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program. If not, see https://www.gnu.org/licenses/.
 
-create table llx_digiquali_survey_extrafields(
-  rowid      integer AUTO_INCREMENT PRIMARY KEY,
-  tms        timestamp,
-  import_key varchar(14),
-  fk_object  integer NOT NULL
-) ENGINE=innodb;
+ALTER TABLE llx_digiquali_activity_extrafields ADD INDEX idx_digiquali_activity_extrafields_rowid (rowid);
+ALTER TABLE llx_digiquali_activity_extrafields ADD INDEX idx_digiquali_activity_extrafields_fk_object (fk_object);

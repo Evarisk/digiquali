@@ -71,6 +71,7 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
                         $objectLine = array_shift($result);
                         $questionAnswer = $objectLine->answer;
                         $comment = $objectLine->comment;
+                        $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
                     }
 
                     $question = $question;
@@ -87,6 +88,7 @@ if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
                 $objectLine = array_shift($result);
                 $questionAnswer = $objectLine->answer;
                 $comment = $objectLine->comment;
+                $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
             }
             $question = $questionOrGroup;
 
