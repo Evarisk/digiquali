@@ -104,6 +104,13 @@ if (empty($reshook)) {
         }
     }
 
+    if ($action == 'update' && $permissiontoadd) {
+        $fkParent = GETPOSTINT('fk_parent');
+        if ($fkParent == -1) {
+            $_POST['fk_parent'] = 0;
+        }
+    }
+
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     require_once DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
