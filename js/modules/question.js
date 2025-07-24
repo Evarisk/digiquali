@@ -40,9 +40,7 @@ window.digiquali.question = {};
  */
 window.digiquali.question.init = function() {
   window.digiquali.question.event();
-
-  // Force execute change() just after having added the event to display min/max unit depending question type
-  $('select[data-type="question-type"]').change();
+  window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
 };
 
 /**
@@ -133,10 +131,10 @@ window.digiquali.question.changeQuestionType = function() {
   let questionType = $(this).val();
   if (questionType === 'Percentage') {
     $(document).find('#percentage-question-step').removeClass('hidden');
-    $('.question-answer-min-max-unit').text(' (%)');
+    $(document).find('#percentage-question-step input').prop('disabled', false);
   } else {
     $(document).find('#percentage-question-step').addClass('hidden');
-    $('.question-answer-min-max-unit').text('');
+    $(document).find('#percentage-question-step input').prop('disabled', true);
   }
   const defaultPointsByQuestionType = JSON.parse($(this).attr('data-default-points'));
   $(document).find('#points').val(defaultPointsByQuestionType[questionType]);
@@ -144,8 +142,23 @@ window.digiquali.question.changeQuestionType = function() {
   if (questionTypesWithBounds.includes(questionType)) {
     $(document).find('#question-answer-min-value').removeClass('hidden');
     $(document).find('#question-answer-max-value').removeClass('hidden');
+    $(document).find('#question-answer-min-value input').prop('disabled', false);
+    $(document).find('#question-answer-max-value input').prop('disabled', false);
   } else {
     $(document).find('#question-answer-min-value').addClass('hidden');
     $(document).find('#question-answer-max-value').addClass('hidden');
+    $(document).find('#question-answer-min-value input').prop('disabled', true);
+    $(document).find('#question-answer-max-value input').prop('disabled', true);
   }
+
+  window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
 };
+
+window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType = function() {
+  const questionType = $('#selecttype').val();
+  if (questionType === 'Percentage') {
+    $('.question-answer-min-max-unit').text(' (%)');
+  } else {
+    $('.question-answer-min-max-unit').text('');
+  }
+}

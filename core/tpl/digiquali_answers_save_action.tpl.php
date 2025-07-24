@@ -38,13 +38,13 @@ if ($action == 'save') {
         foreach ($questions as $question) {
             if (!empty($object->lines)) {
                 foreach ($object->lines as $line) {
-                    if ($line->fk_question === $question->id && $line->fk_question_group === $question->fk_question_group) {
+                    if ($line->fk_question === $question->id) {
 
                         // Save answer value
                         if ($data['autoSave'] && $question->id == $data['questionId']) {
                             $questionAnswer = $data['answer'];
                         } else {
-                            $questionAnswer = GETPOST('answer' . $question->id . '_' . $question->fk_question_group);
+                            $questionAnswer = GETPOST('answer' . $question->id);
                         }
 
                         if (!empty($questionAnswer)) {
@@ -55,7 +55,7 @@ if ($action == 'save') {
                         if ($data['autoSave'] && $question->id == $data['questionId']) {
                             $comment = $data['comment'];
                         } else {
-                            $comment = GETPOST('comment' . $question->id . '_' . $question->fk_question_group);
+                            $comment = GETPOST('comment' . $question->id);
                         }
                         if (dol_strlen($comment) > 0) {
                             $line->comment = $comment;

@@ -273,7 +273,6 @@ class Survey extends SaturneObject
                     $surveyLine->status                  = 1;
                     $surveyLine->{'fk_'. $this->element} = $this->id;
                     $surveyLine->fk_question             = $question->id;
-                    $surveyLine->fk_question_group       = $question->fk_question_group;
 
                     $surveyLine->create($user);
                 }
@@ -678,59 +677,95 @@ class Survey extends SaturneObject
      */
     public function calculatePoints(): array
     {
+        $numberOfAnsweredQuestions = 0;
+        $numberOfQuestions = 0;
         $surveyTotalPoints = 0;
         $surveyCorrectAnswersTotalPoints = 0;
+        $atLeastOneIncorrectSubGroup = false;
 
-        // Extract group ids of the survey
-        $questionGroupIds = [];
-        foreach ($this->lines as $questionAnswer) {
-            // Manage independant questions (not in a group)
-            if (is_null($questionAnswer->fk_question_group)) {
+        // Fetch all questions or groups direct children of sheet
+        $this->fetchObjectLinked($this->fk_sheet, 'digiquali_sheet');
+
+        // Compute questions points
+        if (isset($this->linkedObjectsIds['digiquali_question'])) {
+            foreach ($this->linkedObjectsIds['digiquali_question'] as $questionId) {
                 $question = new Question($this->db);
-                if ($question->checkAnswerIsCorrect($this)) {
-                    $surveyCorrectAnswersTotalPoints += $question->points;
+                $question->fetch($questionId);
+
+                foreach ($this->lines as $questionAnswer) {
+                    if ($questionId == $questionAnswer->fk_question) {
+                        if ($question->checkAnswerIsCorrect($questionAnswer->answer)) {
+                            $surveyCorrectAnswersTotalPoints += $question->points;
+                        }
+                        if ($questionAnswer->answer !== '') {
+                            $numberOfAnsweredQuestions++;
+                        }
+                        $surveyTotalPoints += $question->points;
+                    }
                 }
-                $surveyTotalPoints += $question->points;
-            }
-            // Manage group of questions (treated after foreach)
-            else if (!in_array($questionAnswer->fk_question_group, $questionGroupIds)) {
-                $questionGroupIds[] = $questionAnswer->fk_question_group;
+
+                $numberOfQuestions++;
             }
         }
 
-        // Add points for all the question groups of the survey
-        foreach ($questionGroupIds as $questionGroupId) {
-            
-            $questionGroup = new QuestionGroup($this->db);
-            $questionGroup->fetch($questionGroupId);
-    
-            [$questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints] = $questionGroup->calculatePoints($this);
+        // Compute groups points
+        if (isset($this->linkedObjectsIds['digiquali_questiongroup'])) {
+            foreach ($this->linkedObjectsIds['digiquali_questiongroup'] as $groupId) {
+                $questionGroup = new QuestionGroup($this->db);
+                $questionGroup->fetch($groupId);
 
-            $surveyTotalPoints += $questionGroupTotalPoints;
-            $surveyCorrectAnswersTotalPoints += $questionGroupCorrectAnswersTotalPoints;
+                [$subGroupNumberOfAnsweredQuestions, $subGroupNumberOfQuestions, $questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints, $questionGroupWithAtLeastOneIncorrectSubGroup] = $questionGroup->calculatePoints($this);
+
+                $numberOfAnsweredQuestions += $subGroupNumberOfAnsweredQuestions;
+                $numberOfQuestions += $subGroupNumberOfQuestions;
+                $surveyTotalPoints += $questionGroupTotalPoints;
+                $surveyCorrectAnswersTotalPoints += $questionGroupCorrectAnswersTotalPoints;
+
+                if (!$this->isCorrectFromPoints($questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints)) {
+                    $atLeastOneIncorrectSubGroup = true;
+                }
+                $atLeastOneIncorrectSubGroup = $atLeastOneIncorrectSubGroup || $questionGroupWithAtLeastOneIncorrectSubGroup;
+            }
         }
 
-        return [$surveyCorrectAnswersTotalPoints, $surveyTotalPoints];
+        return [$numberOfAnsweredQuestions, $numberOfQuestions, $surveyCorrectAnswersTotalPoints, $surveyTotalPoints, $atLeastOneIncorrectSubGroup];
     }
 
     /**
 	 * To know if the rate of correct answers is bigger than the attempted success rate of the current survey
+     * and all the groups of the current survey are corrects.
 	 *
 	 * @return bool
 	 */
 	public function isCorrect(): bool
 	{
-        [$correctPoints, $totalPoints] = $this->calculatePoints();
+        [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints();
+
+        if ($atLeastOneIncorrectSubGroup) {
+            return false;
+        }
+
+        return $this->isCorrectFromPoints($correctPoints, $totalPoints);
+	}
+
+    /**
+	 * To know if the rate of correct answers is bigger than the attempted success rate of the current survey
+     * and all the groups of the current survey are corrects.
+	 *
+	 * @return bool
+	 */
+	public function isCorrectFromPoints($correctPoints, $totalPoints): bool
+	{
         $correctAnswersRate = 0;
         if ($totalPoints > 0) {
             $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
         }
 
-        if ($correctAnswersRate >= $this->success_rate) {
-            return true;
+        if ($correctAnswersRate < $this->success_rate) {
+            return false;
         }
 
-		return false;
+		return true;
 	}
 
     /**
@@ -743,7 +778,7 @@ class Survey extends SaturneObject
 	{
         global $langs;
 
-        [$correctPoints, $totalPoints] = $this->calculatePoints();
+        [$numberOfCorrectAnswers, $numberOfQuestions, $correctPoints, $totalPoints] = $this->calculatePoints();
         $successRate = 0;
         if ($totalPoints > 0) {
             $successRate = round($correctPoints / $totalPoints * 100, 2);
@@ -752,6 +787,16 @@ class Survey extends SaturneObject
         $successRateResult = $successRate . ' %';
 		return $successRateResult . ' (' . $pointsResult . ')';
 	}
+
+    /**
+     * Display survey questions & answers
+     */
+    public function displayAnswers(SurveyLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
+    {
+        $object = $this;
+
+        include DOL_DOCUMENT_ROOT . '/custom/digiquali/core/tpl/digiquali_answers.tpl.php';
+    }
 }
 
 /**
@@ -843,7 +888,6 @@ class SurveyLine extends SaturneObject
         'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0, 'foreignkey' => 'user.rowid'],
         'fk_survey'         => ['type' => 'integer:Survey:digiquali/class/survey.class.php',     'label' => 'Survey',     'picto' => 'fontawesome_fa-marker_fas_#d35968',   'enabled' => 1, 'position' => 140,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
         'fk_question'       => ['type' => 'integer:Question:digiquali/class/question.class.php', 'label' => 'Question',   'picto' => 'fontawesome_fa-question_fas_#d35968', 'enabled' => 1, 'position' => 150,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_question.rowid'],
-        'fk_question_group' => ['type' => 'integer:QuestionGroup:digiquali/class/questiongroup.class.php', 'label' => 'QuestionGroup', 'picto' => 'fontawesome_fa-folder_fas_#d35968', 'enabled' => 1, 'position' => 160, 'notnull' => 1, 'default' => 0, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx'],
     ];
 
     /**
@@ -925,11 +969,6 @@ class SurveyLine extends SaturneObject
      * @var ?int|null Question ID
      */
     public int $fk_question;
-
-    /**
-     * @var int Question group ID
-     */
-    public int $fk_question_group;
 
     /**
      * Constructor

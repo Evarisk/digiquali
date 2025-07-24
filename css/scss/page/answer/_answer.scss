@@ -441,12 +441,10 @@
   .digiquali-question-group {
     &.correct {
       border-color: $color__correct;
-      background: $color__correct-secondary;
     }
 
     &.incorrect {
       border-color: $color__incorrect;
-      background: $color__incorrect-secondary;
     }
   }
 

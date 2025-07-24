@@ -169,7 +169,6 @@ if (empty($reshook)) {
 				$value = ''; // This is an explicit foreign key field
 			}
 
-			//var_dump($key.' '.$value.' '.$object->fields[$key]['type']);
 			$object->$key = $value;
 			if ($val['notnull'] > 0 && $object->$key == '' && !is_null($val['default']) && $val['default'] == '(PROV)') {
 				$object->$key = '(PROV)';
@@ -701,7 +700,7 @@ if (empty($reshook)) {
 			exit;
 		} else {
 
-			if ($answerCorrect === true && $object->hasAtLeastOneCorrectAnswer()) {
+			if ($answerCorrect === true && $object->hasAtLeastOneCorrectAnswer($answerId)) {
 				setEventMessages($langs->trans('QuestionWithOneCorrectAnswer'), [], 'errors');
 				$urltogo = str_replace('__ID__', $result, $backtopage);
 				$urltogo = preg_replace('/--IDFORBACKTOPAGE--/', $id, $urltogo);
@@ -805,10 +804,12 @@ $help_url = 'FR:Module_DigiQuali';
 saturne_header(1,'', $title, $help_url);
 if ($sheetId > 0) {
     $sheet->fetch($sheetId);
-    print $sheet->getQuestionAndGroupsTree($object->element, $object->id, $questionGroupId);
+	if ($sheet->displayTree()) {
+		print $sheet->getQuestionAndGroupsTree($object->element, $object->id, $questionGroupId);
+	}
 }
 
-print '<div id="cardContent" '. ($sheetId > 0 ? 'class="margin-for-tree"' : '') .'>';
+print '<div id="cardContent" '. ($sheetId > 0 ? 'class="' . ($sheet->displayTree() ? 'margin-for-tree' : '') . '"' : '') .'>';
 // Part to create
 if ($action == 'create') {
 	print load_fiche_titre($langs->trans('NewQuestion'), '', 'object_'.$object->picto);

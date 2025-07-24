@@ -206,10 +206,13 @@ NbQuestions                    = Nombre de questions
 SuccessScore                   = Score de réussite
 SuccessScoreWithUnit           = Score de réussite (%)
 PercentageValue                = Valeur en pourcentage
+CreateNewQuestion              = Créer une nouvelle question
+CreateNewQuestionGroup         = Créer un nouveau groupe de questions
 
 # Notice - notice
 MissingConfigElementTypeTitle   = Configuration manquante pour les éléments liés
 MissingConfigElementTypeMessage = Veuillez cliquer sur le lien pour configurer les éléments liés
+LineMovedOutsideParentError     = Il n'est pas possible de déplacer un élément en dehors de son parent
 
 
 

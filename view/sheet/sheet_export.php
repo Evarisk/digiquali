@@ -224,8 +224,10 @@ $title   = $langs->trans('Export', 'DigiQuali');
 $helpUrl = 'FR:Module_DigiQuali';
 
 saturne_header(0,'', $title, $helpUrl);
-print $object->getQuestionAndGroupsTree();
-print '<div id="cardContent" class="margin-for-tree">';
+if ($object->displayTree()) {
+    print $object->getQuestionAndGroupsTree();
+}
+print '<div id="cardContent" class="' . ($object->displayTree() ? 'margin-for-tree' : '') . '">';
 
 saturne_get_fiche_head($object, 'export', $title);
 saturne_banner_tab($object);
