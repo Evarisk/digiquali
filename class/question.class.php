@@ -760,7 +760,7 @@ class Question extends SaturneObject
 	 *
 	 * @return bool
 	 */
-	public function isAnswerInQuestionRange(mixed $answerValue): bool
+	public function isAnswerInQuestionRange($answerValue): bool
 	{
 		$questionJson = json_decode($this->json, true);
 		$questionConfig = $questionJson['config'] ?? [];
