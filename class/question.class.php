@@ -712,7 +712,7 @@ class Question extends SaturneObject
 		// - For UniqueChoice/MultipleChoices/OkKo/OkKoToFixNonApplicable : search correct answers for this question in llx_answer
 		$answer = new Answer($this->db);
 		$correctAnswers = $answer->fetchAll('', '', 0, 0, ['fk_question' => $this->id, 'correct' => 1, 'status' => 1]);
-		
+
 		if (is_array($correctAnswers)) {
 			$retAnswersPositions = [];
 			foreach ($correctAnswers as $correctAnswer) {
@@ -720,25 +720,25 @@ class Question extends SaturneObject
 			}
 			return $retAnswersPositions;
 		}
-	
+
 		return [];
 	}
 
 	/**
 	 * To know if all the answers given for the question are correct or not
-	 * 
+	 *
 	 * @param mixed $answerValue
 	 *
 	 * @return int Return -1 if at least one answer is false, 0 for question of type text, 1 if all answers are correct
 	 */
-	public function checkAnswerIsCorrect(mixed $answerValue): int
+	public function checkAnswerIsCorrect($answerValue): int
 	{
 		$retValue = 1;
 		if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
 			$retValue = $this->isAnswerInQuestionRange($answerValue) ? 1 : -1;
 		} else if (in_array($this->type, [self::TYPE_OK_KO, self::TYPE_OK_KO_TOFIX_NA, self::TYPE_UNIQUE_CHOICE, self::TYPE_MULTIPLE_CHOICES])) {
 			$correctAnswers = $this->getAllCorrectAnswers();
-	
+
 			if (is_array($correctAnswers)) {
 				$listOfAnswersPositions = explode(',', $answerValue);
 				foreach ($listOfAnswersPositions as $answerItemPosition) {
@@ -751,7 +751,7 @@ class Question extends SaturneObject
 		} else {
 			$retValue = 0;
 		}
-			
+
 		return $retValue;
 	}
 
@@ -822,7 +822,7 @@ class Question extends SaturneObject
 		if ($this->mustHaveOnlyOneCorrectAnswer()) {
 			$answer = new Answer($this->db);
 			$answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $this->id, 'status' => 1, 'correct' => 1]);
-	
+
 			return (is_array($answerList) && count($answerList) > 0 && !in_array($answerIdToCheck, array_keys($answerList)));
 		}
 		return false;
@@ -879,9 +879,9 @@ class Question extends SaturneObject
 	/**
 	 * Return a formatted string to print question score (in points)
 	 * like : 0 / 3 points
-	 * 
+	 *
 	 * @param int $questionWithCorrectAnswer (values are those returned by Question::checkAnswerIsCorrect())
-	 * 
+	 *
 	 * @return string
 	 */
 	public function formatSingleQuestionScore(int $questionWithCorrectAnswer): string
@@ -909,11 +909,11 @@ class Question extends SaturneObject
 
 	/**
      * Display the question in the sheet card
-	 * 
+	 *
 	 * @param Sheet $sheetObject The sheet of the question
 	 * @param string $positionPath The path of the question based on positions
 	 * @param string $tdOffsetStyle Additional CSS styles to put on question
-	 * 
+	 *
      */
     public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '')
     {
