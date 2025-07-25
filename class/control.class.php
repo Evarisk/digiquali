@@ -1451,7 +1451,7 @@ class ControlLine extends SaturneObject
     /**
      * @var int Question group ID
      */
-    public int $fk_question_group;
+    public ?int $fk_question_group;
 
     /**
      * Constructor
