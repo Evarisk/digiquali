@@ -168,6 +168,7 @@ window.digiquali.task.createTask = function() {
   $.ajax({
     url: `${document.URL}&action=add_task&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       objectLine_id:      fromId,
       objectLine_element: fromType,
@@ -175,8 +176,7 @@ window.digiquali.task.createTask = function() {
       date_start:         startDate,
       date_end:           endDate,
       budget_amount:      budget,
-      fk_project:         projectId,
-      token: token
+      fk_project:         projectId
     }),
     success: function(resp) {
       $modal.replaceWith($(resp).find('#answer_task_add'));
@@ -212,6 +212,7 @@ window.digiquali.task.updateTask = function() {
   $.ajax({
     url: `${document.URL}&action=update_task&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       task_id:    taskId,
       label:      label,
@@ -254,6 +255,7 @@ window.digiquali.task.deleteTask = function() {
   $.ajax({
     url: `${document.URL}&action=delete_task&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       objectLine_id:      objectLineId,
       objectLine_element: objectLineElement,
@@ -319,6 +321,7 @@ window.digiquali.task.createTaskTimeSpent = function() {
   $.ajax({
     url: `${document.URL}&action=add_task_timespent&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       task_id:  taskId,
       comment:  comment,
@@ -357,6 +360,7 @@ window.digiquali.task.updateTaskTimeSpent = function() {
   $.ajax({
     url: `${document.URL}&action=update_task_timespent&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       task_timespent_id: taskTimeSpentId,
       comment:           comment,
@@ -400,6 +404,7 @@ window.digiquali.task.deleteTaskTimeSpent = function() {
   $.ajax({
     url: `${document.URL}&action=delete_task_timespent&token=${token}`,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       task_timespent_id: taskTimeSpentId
     }),
