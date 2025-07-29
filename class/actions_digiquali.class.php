@@ -743,7 +743,25 @@ class ActionsDigiquali
                     $formQuestion = [
                         ['type' => 'select', 'name' => 'sheet', 'label' => $langs->trans('Sheet'), 'values' => $sheetArray, 'morecss' => 'maxwidth300 maxwidth200onsmartphone']
                     ];
-                    $this->resprints = $form->formconfirm($_SERVER['PHP_SELF'], $langs->trans('ConfirmMassAddQuestion'), $langs->trans('ConfirmMassAddingQuestion', count($parameters['toselect'])), 'add_questions', $formQuestion, '', 0, 200, 500, 1);
+
+                    $numberOfQuestions      = count($parameters['toselect']);
+
+                    $elementElements = [];
+                    $sql             = "SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question'";
+                    $resql           = $this->db->query($sql);
+                    if ($resql) {
+                        $num_prods = $this->db->num_rows($resql);
+                        $i = 0;
+                        while ($i < $num_prods) {
+                            $i++;
+
+                            $row = $this->db->fetch_row($resql);
+                            $elementElements[] = $row[0];
+                        }
+                    }
+                    $parameters['toselect'] = array_diff($parameters['toselect'], $elementElements);
+                    $newNumberOfQuestions = count($parameters['toselect']);
+                    $this->resprints = $form->formconfirm($_SERVER['PHP_SELF'], $langs->trans('ConfirmMassAddQuestion'), $numberOfQuestions - $newNumberOfQuestions > 0 ? $langs->trans('ConfirmMassAddingQuestionAlreadyAffected', $newNumberOfQuestions, $numberOfQuestions - $newNumberOfQuestions) : $langs->trans('ConfirmMassAddingQuestion', $newNumberOfQuestions) , 'add_questions', $formQuestion, '', 0, 200, 500, 1);
                 } else {
                     setEventMessages('<a href="' . dol_buildpath('custom/digiquali/view/sheet/sheet_list.php', 1) . '">' . $langs->transnoentities('ObjectNotFound', img_picto('', $sheet->picto, 'class="paddingrightonly"') . $langs->transnoentities(ucfirst($sheet->element))) . '</a>', [], 'warnings');
                 }
