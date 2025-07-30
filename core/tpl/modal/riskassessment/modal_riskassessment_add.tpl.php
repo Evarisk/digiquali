@@ -34,10 +34,10 @@
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <div class="modal-content">
-            <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label"><?php echo $langs->trans('Photo'); ?></label>
-                <?php echo saturne_show_media_buttons(); ?>
-            </div>
+<!--            <div class="modal-section wpeo-grid grid-2">-->
+<!--                <label class="modal-label">--><?php //echo $langs->trans('Photo'); ?><!--</label>-->
+<!--                --><?php //echo saturne_show_media_buttons(); ?>
+<!--            </div>-->
 
             <!-- @todo gestion tags -->
 <!--            <div class="modal-section wpeo-grid grid-2">-->
@@ -108,31 +108,6 @@
                         <span class="summary-subtitle"><?php echo $langs->trans('ResidualRiskCalculation'); ?></span>
                     </div>
                     <span class="summary-percentage grey residual-risk-percentage-value">0%</span>
-                </div>
-            </div>
-
-            <div class="modal-last-added-riskassessment">
-                <h3>Dernier risque ajouté</h3>
-                <div class="riskassessment-list__container">
-                    <div class="riskassessment__content">
-                        <div class="riskassessment-thumbnail">
-                            <img src="" alt="Risk thumbnail">
-                        </div>
-                        <div class="riskassessment__content-container">
-                            <div class="riskassessment__content-heading">
-                                <span class="ref">RA10</span>
-                                <span class="tags">Nom du tag (10)</span>
-                                <span class="date"><i class="fas fa-calendar-alt"></i> 26/02/2025</span>
-                                <span class="risk-mastery"><i class="fas fa-shield-alt"></i> Maîtrise : 20%</span>
-                                <span class="risk-residual"><i class="fas fa-exclamation-triangle"></i> Risque résiduel : 16</span>
-                            </div>
-                            <div class="risk__content-body">
-                                <div class="risk-description">
-                                    Manque de compétence
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

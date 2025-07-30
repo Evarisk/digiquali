@@ -514,6 +514,7 @@ Mapping            = Cartographie
 #
 
 # Data - Donnée
+Digiqualielement  = les éléments DigiQuali
 DigiQualiElements = éléments DigiQuali
 Process           = Processus
 SubProcess        = Sous-processus

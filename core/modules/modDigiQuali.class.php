@@ -883,13 +883,36 @@ class modDigiQuali extends DolibarrModules
         if (getDolGlobalInt('DIGIQUALI_ACTIVE_STANDARD') == 0) {
             require_once __DIR__ . '/../../class/digiqualistandard.class.php';
 
-            $digiqualiStandard              = new DigiqualiStandard($this->db);
+            $digiqualiStandard = new DigiqualiStandard($this->db);
+
             $digiqualiStandard->ref         = 'ISO9001';
-            $digiqualiStandard->description = 'ISO9001Description';
+            $digiqualiStandard->description = $langs->transnoentities('ISO9001Description');
 
             $digiqualiStandardId = $digiqualiStandard->create($user);
-
-            dolibarr_set_const($this->db, 'DIGIQUALI_ACTIVE_STANDARD', $digiqualiStandardId, 'integer', 0, '', $conf->entity);
+            if ($digiqualiStandardId > 1) {
+//                require_once __DIR__ . '/../../class/digiqualielement.class.php';
+//
+//                $digiqualiElement = new DigiqualiElement($this->db);
+//
+//                $digiqualiElement->ref          = 'DQE-0001';
+//                $digiqualiElement->label        = $langs->transnoentities('DigiqualiElementLabelDefault');
+//                $digiqualiElement->description  = $langs->transnoentities('DigiqualiElementDescriptionDefault');
+//                $digiqualiElement->position     = 1;
+//                $digiqualiElement->element_type = DigiqualiElement::ELEMENT_TYPE_3;
+//                $digiqualiElement->fk_element   = null;
+//                $digiqualiElement->fk_standard  = $digiqualiStandardId;
+//
+//                $digiqualiElementId = $digiqualiElement->create($user);
+//                if ($digiqualiElementId > 0) {
+                    dolibarr_set_const($this->db, 'DIGIQUALI_ACTIVE_STANDARD', $digiqualiStandardId, 'integer', 0, '', $conf->entity);
+//                } else {
+//                    setEventMessages($digiqualiElement->error, $digiqualiElement->errors, 'errors');
+//                    return -1;
+//                }
+            } else {
+                setEventMessages($digiqualiStandard->error, $digiqualiStandard->errors, 'errors');
+                return -1;
+            }
         }
 
     if (getDolGlobalInt('DIGIQUALI_CONTROL_BACKWARD_COMPATIBILITY') == 0) {

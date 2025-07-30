@@ -34,10 +34,10 @@
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <div class="modal-content">
-            <div class="modal-section wpeo-grid grid-2">
-                <label class="modal-label"><?php echo $langs->trans('Photo'); ?></label>
-                <?php echo saturne_show_media_buttons(); ?>
-            </div>
+<!--            <div class="modal-section wpeo-grid grid-2">-->
+<!--                <label class="modal-label">--><?php //echo $langs->trans('Photo'); ?><!--</label>-->
+<!--                --><?php //echo saturne_show_media_buttons(); ?>
+<!--            </div>-->
 
             <!-- @todo gestion tags -->
 <!--            <div class="modal-section wpeo-grid grid-2">-->

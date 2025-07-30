@@ -25,8 +25,6 @@
 /**
  * Init task JS
  *
- * @memberof DigiQuali_Task
- *
  * @since   20.2.0
  * @version 20.2.0
  */
@@ -34,8 +32,6 @@ window.digiquali.task = {};
 
 /**
  * Task init
- *
- * @memberof DigiQuali_Task
  *
  * @since   20.2.0
  * @version 20.2.0
@@ -47,22 +43,36 @@ window.digiquali.task.init = function() {
 };
 
 /**
- * Task event
- *
- * @memberof DigiQuali_Task
+ * Task event initialization. Binds all necessary event listeners
  *
  * @since   20.2.0
  * @version 20.2.0
  *
  * @return {void}
  */
-window.digiquali.task.event = function() {
+window.digiquali.task.event = function initializeEvents() {
   // Task event
   $(document).on('input', '#answer-task-label', window.digiquali.task.updateModalTaskAddButton);
   $(document).on('click', '.answer-task-create:not(.button-disable)', window.digiquali.task.createTask);
   $(document).on('click', '.answer-task-save', window.digiquali.task.updateTask);
   $(document).on('click', '.question__action .delete-task', window.digiquali.task.deleteTask);
+
+  // Events for create/update/delete task
+  // $(document).on('click', '#task_add', function createTask() {
+  //   window.saturne.object.ObjectFromModal.call(this, 'create', 'task');
+  // });
+  // $(document).on('click', '#task_edit', function updateTask() {
+  //   window.saturne.object.ObjectFromModal.call(this, 'update', 'task');
+  // });
+  // $(document).on('click', '#task_delete', function deleteTask() {
+  //   window.saturne.object.ObjectFromModal.call(this, 'delete', 'task');
+  // });
+
+  $(document).on('click', '.answer-task-create:not(.button-disable)', window.digiquali.task.createTask);
+
   $(document).on('change', '.question__action-check input[type="checkbox"]', window.digiquali.task.checkTask);
+
+  $(document).on('click', '.modal-open', window.digiquali.task.autoFocusLabel);
 
   // Task timespent event
   $(document).on('click', '.answer-task-timespent-create', window.digiquali.task.createTaskTimeSpent);
@@ -92,12 +102,25 @@ window.digiquali.task.updateModalTaskAddButton = function() {
 };
 
 /**
+ * Update modal task add button state when input change value
+ *
+ * @since   20.2.0
+ * @version 20.2.0
+ *
+ * @return {void}
+ */
+window.digiquali.task.autoFocusLabel = function() {
+  const $this  = $(this);
+  const $modal = $this.closest('.question-answer-container').find('#answer_task_add');
+  const label  = $modal.find('#answer-task-label');
+  label.focus();
+};
+
+/**
  * Adds additional data when opening a modal
  *
  * This function allows passing extra information to a modal
  * when it is opened, based on the triggering element
- *
- * @memberof DigiQuali_Task
  *
  * @since   20.2.0
  * @version 20.2.0
@@ -143,8 +166,6 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
 /**
  * Create task
  *
- * @memberof DigiQuali_Task
- *
  * @since   20.2.0
  * @version 20.2.0
  *
@@ -188,8 +209,6 @@ window.digiquali.task.createTask = function() {
 /**
  * Update task
  *
- * @memberof DigiQuali_Task
- *
  * @since   20.2.0
  * @version 20.2.0
  *
@@ -230,8 +249,6 @@ window.digiquali.task.updateTask = function() {
 /**
  * Delete task
  *
- * @memberof DigiQuali_Task
- *
  * @since   20.2.0
  * @version 20.2.0
  *
@@ -271,8 +288,6 @@ window.digiquali.task.deleteTask = function() {
 /**
  * Check task
  *
- * @memberof DigiQuali_Task
- *
  * @since   20.2.0
  * @version 20.2.0
  *
@@ -297,8 +312,6 @@ window.digiquali.task.checkTask = function() {
 
 /**
  * Create task time spent
- *
- * @memberof DigiQuali_Task
  *
  * @since   20.2.0
  * @version 20.2.0
@@ -337,8 +350,6 @@ window.digiquali.task.createTaskTimeSpent = function() {
 /**
  * Update task timespent
  *
- * @memberof DigiQuali_Task
- *
  * @since   20.2.0
  * @version 20.2.0
  *
@@ -375,8 +386,6 @@ window.digiquali.task.updateTaskTimeSpent = function() {
 
 /**
  * Delete task time spent
- *
- * @memberof DigiQuali_Task
  *
  * @since   20.2.0
  * @version 20.2.0

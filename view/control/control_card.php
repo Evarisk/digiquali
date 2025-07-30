@@ -982,7 +982,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
                 require_once __DIR__ . '/../../core/tpl/modal/modal_task_timespent_edit.tpl.php';
             }
         }
-        require_once __DIR__ . '/../../core/tpl/digiquali_answers.tpl.php';
+
+        if (empty($questionsAndGroups)) {
+            print '<div>' . $langs->trans('NoQuestion') . '</div>';
+        } else {
+            require_once __DIR__ . '/../../core/tpl/digiquali_answers.tpl.php';
+        }
         print '</div>';
     }
 
