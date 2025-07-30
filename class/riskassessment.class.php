@@ -321,10 +321,8 @@ class RiskAssessment extends SaturneObject
         $this->control_percentage   = 0.00;
     }
 
-    public function getRiskAssessmentInfos($task): array
+    public function getRiskAssessmentInfos(): array
     {
-        global $db;
-
         $out = [];
 
         $out[$this->element]['id']      = $this->id;
@@ -332,7 +330,7 @@ class RiskAssessment extends SaturneObject
         $out[$this->element]['comment'] = $this->comment;
 
         // @todo pas de gestion de user pour le moment
-        $userTmp = new User($db);
+        $userTmp = new User($this->db);
         $userTmp->fetch($this->fk_user_creat);
         $out[$this->element]['author'] = $userTmp->getNomUrl(1);
 
@@ -345,11 +343,13 @@ class RiskAssessment extends SaturneObject
         $out[$this->element]['risk']          = $this->getResidualRiskPercentageClass();
         $out[$this->element]['residual_risk'] = $residualRiskPercentage;
 
+        $task = new Task($this->db);
+
         $out[$task->element]['ref']   = $task->getNomUrl(1, 'withproject');
         $out[$task->element]['label'] = $task->label;
 
         // @todo pas de gestion de user pour le moment
-        $userTmp = new User($db);
+        $userTmp = new User($this->db);
         $userTmp->fetch($task->fk_user_creat);
         $out[$task->element]['author'] = $userTmp->getNomUrl(1);
 
@@ -379,18 +379,14 @@ class RiskAssessment extends SaturneObject
     {
         global $db, $langs, $user; // $langs and $user are used in tpl
 
-        require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
-
-        $task = new Task($db);
-
         $riskAssessment  = new self($db);
         $riskAssessments = $this->fetchAll('DESC', 'rowid', $limit, 0, ['customsql' => 't.fk_activity = ' . $activityInfos['id']]);
         if (!is_array($riskAssessments) || empty($riskAssessments)) {
-            $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task);
+            $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos();
             require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
         } else {
             foreach ($riskAssessments as $riskAssessment) {
-                $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos($task);
+                $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos();
                 require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
             }
         }

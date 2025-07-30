@@ -307,7 +307,6 @@ class Control extends SaturneObject
             }
 
             $questions = $sheet->fetchAllQuestions();
-
             if (!empty($questions)) {
                 foreach ($questions as $question) {
                     $controlLine->ref         = $controlLine->getNextNumRef();
@@ -1444,14 +1443,14 @@ class ControlLine extends SaturneObject
     public int $fk_control;
 
     /**
-     * @var ?int|null Question ID
+     * @var int|null Question ID
      */
-    public int $fk_question;
+    public ?int $fk_question;
 
     /**
-     * @var int Question group ID
+     * @var int|null Question group ID
      */
-    public int $fk_question_group;
+    public ?int $fk_question_group = 0;
 
     /**
      * Constructor

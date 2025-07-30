@@ -196,21 +196,19 @@ window.digiquali.object.updateButtonsStatus = function() {
 window.digiquali.object.saveAnswer = function(questionId, answer, comment) {
   let token          = window.saturne.toolbox.getToken();
   let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
-  window.saturne.loader.display($('.table-id-' + questionId));
 
   $.ajax({
     url: document.URL + querySeparator + 'action=save&token=' + token,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       autoSave: true,
       questionId: questionId,
       answer: answer,
       comment: comment
     }),
-    processData: false,
-    contentType: false,
     success: function(resp) {
-      $('.fiche').replaceWith($(resp).find('.fiche'));
+      $('.progress-info').replaceWith($(resp).find('.progress-info'));
       $('#dialog-confirm-actionButtonValidate>.confirmmessage').replaceWith($(resp).find('#dialog-confirm-actionButtonValidate>.confirmmessage'));
     },
     error: function() {}

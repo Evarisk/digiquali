@@ -1,6 +1,29 @@
+/* Copyright (C) 2025 EVARISK <technique@evarisk.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 /**
- * Initialise l'objet "control" ainsi que la méthode "init" obligatoire pour la bibliothèque EoxiaJS.
+ * \file    js/modules/control.js
+ * \ingroup digiquali
+ * \brief   JavaScript control file
+ */
+
+'use strict';
+
+/**
+ * Init control JS
  *
  * @since   1.0.0
  * @version 1.0.0
@@ -8,31 +31,33 @@
 window.digiquali.control = {};
 
 /**
- * La méthode appelée automatiquement par la bibliothèque EoxiaJS.
+ * Control init
  *
  * @since   1.0.0
- * @version 1.0.0
+ * @version 21.2.0
  *
  * @return {void}
  */
-window.digiquali.control.init = function() {
-	window.digiquali.control.event();
+window.digiquali.control.init = function init() {
+  window.digiquali.control.event();
 };
 
 /**
- * La méthode contenant tous les événements pour le control.
+ * Control event initialization. Binds all necessary event listeners
  *
  * @since   1.0.0
- * @version 1.0.0
+ * @version 21.2.0
  *
  * @return {void}
  */
 window.digiquali.control.event = function() {
-  $( document ).on( 'click', '.validateButton', window.digiquali.control.getAnswerCounter);
-  $( document ).on( 'change', '#fk_sheet', window.digiquali.control.showSelectObjectLinked);
-  $( document ).on( 'click', '.clipboard-copy', window.digiquali.control.copyToClipboard );
-  $( document ).on( 'change', '#productId', window.digiquali.control.refreshLotSelector );
+  $(document).on( 'click', '.validateButton', window.digiquali.control.getAnswerCounter);
+  $(document).on( 'change', '#fk_sheet', window.digiquali.control.showSelectObjectLinked);
+  $(document).on( 'click', '.clipboard-copy', window.digiquali.control.copyToClipboard);
+  $(document).on( 'change', '#productId', window.digiquali.control.refreshLotSelector);
   $(document).on('click', '.switch-public-control-view', window.digiquali.control.switchPublicControlView);
+
+  // Event for sheet categories, sub categories and sheets in view mode pwa in create action
   $(document).on('click', '.photo-sheet-category', window.digiquali.control.getSheetCategoryID);
   $(document).on('click', '.photo-sheet-sub-category', window.digiquali.control.getSheetSubCategoryID);
   $(document).on('click', '.photo-sheet', window.digiquali.control.getSheetID);

@@ -175,7 +175,7 @@ if ($action == 'create') {
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="add">';
     print '<input type="hidden" name="fk_standard" value="' . $fkStandard . '">';
-    print '<input type="hidden" name="fk_parent" value="' . GETPOSTINT('fk_parent') . '">';
+    print '<input type="hidden" name="fk_element" value="' . GETPOSTINT('fk_element') . '">';
     print '<input type="hidden" name="element_type" value="' . $elementType . '">';
     print '<input type="hidden" name="action" value="add">';
     if ($backtopage) {
@@ -206,7 +206,7 @@ if ($action == 'create') {
 
 // Part to edit record
 if (($id || $ref) && $action == 'edit') {
-    print load_fiche_titre($titleEdit, '', $object->picto);
+    print load_fiche_titre($langs->trans('ModifyObject', dol_strtolower($langs->transnoentities(dol_ucfirst($object->element)))), '', $object->picto);
 
     print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
@@ -223,8 +223,7 @@ if (($id || $ref) && $action == 'edit') {
 
     print '<table class="border centpercent tableforfieldedit">';
 
-    $object->fields['fk_parent']['type']        = 'integer:SaturneElement:saturne/class/saturneelement.class.php';
-    $object->fields['fk_parent']['noteditable'] = 0;
+    $object->fields['fk_element']['visible'] = 1;
 
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_edit.tpl.php';
