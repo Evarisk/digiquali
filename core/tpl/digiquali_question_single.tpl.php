@@ -34,7 +34,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
             }
         }
     ?>
-    <div class="question<?php echo $questionWithCorrectAnswerCssClass ?> table-id-<?php echo $question->id ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
+    <div class="question<?php echo $questionWithCorrectAnswerCssClass ?> table-id-<?php echo $question->id ?> <?php echo !empty($objectLine->answer) ? 'question-complete' : ''; ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
         <?php if ($question->show_photo > 0 && getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . '_DISPLAY_MEDIAS') && !empty($user->conf->DIGIQUALI_SHOW_OK_KO_PHOTOS)) { ?>
             <div class="question__header-medias">
                 <div class="question__photo-ref-ok">
