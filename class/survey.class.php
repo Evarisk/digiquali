@@ -796,6 +796,8 @@ class Survey extends SaturneObject
      */
     public function displayAnswers(SurveyLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
     {
+        global $langs;
+
         $object = $this;
 
         include DOL_DOCUMENT_ROOT . '/custom/digiquali/core/tpl/digiquali_answers.tpl.php';
