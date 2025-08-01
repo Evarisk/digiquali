@@ -1275,6 +1275,18 @@ class Control extends SaturneObject
 
         return $ret;
     }
+
+    /**
+     * Display control questions & answers
+     */
+    public function displayAnswers(ControlLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
+    {
+        global $langs;
+
+        $object = $this;
+
+        include DOL_DOCUMENT_ROOT . '/custom/digiquali/core/tpl/digiquali_answers.tpl.php';
+    }
 }
 
 /**
