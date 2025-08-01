@@ -212,6 +212,22 @@ if (empty($resHook)) {
     }
 
     if (($massaction == 'add_questions' || ($action == 'add_questions' && $confirm == 'yes')) && $permissiontoadd) {
+
+        $elementElements = [];
+        $sql             = "SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question'";
+        $resql           = $db->query($sql);
+        if ($resql) {
+            $num_prods = $db->num_rows($resql);
+            $i = 0;
+            while ($i < $num_prods) {
+                $i++;
+
+                $row = $db->fetch_row($resql);
+                $elementElements[] = $row[0];
+            }
+        }
+        $toselect = array_diff($toselect, $elementElements);
+
         if (!empty($toselect)) {
             $totalQuestions  = 0;
             $questionInArray = [];
