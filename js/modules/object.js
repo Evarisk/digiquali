@@ -144,6 +144,7 @@ window.digiquali.object.selectAnswer = function() {
 
 window.digiquali.object.changeStatusQuestion = function() {
   $(this).closest('.question').addClass('question-complete');
+  window.digiquali.object.updateButtonsStatus();
 };
 
 /**
