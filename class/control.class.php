@@ -715,7 +715,7 @@ class Control extends SaturneObject
             $object->track_id = generate_random_id();
         }
 
-        $object->context = 'createfromclone';
+        $object->context[] = 'createfromclone';
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 
