@@ -313,7 +313,7 @@ class Activity extends SaturneObject
             $object->status = self::STATUS_VALIDATED;
         }
 
-        $object->context = 'createfromclone';
+        $object->context['createfromclone'] = 'createfromclone';
 
         $questionAndGroups = $object->fetchQuestionsAndGroups();
 
@@ -349,6 +349,8 @@ class Activity extends SaturneObject
             $this->error  = $object->error;
             $this->errors = $object->errors;
         }
+
+        unset($object->context['createfromclone']);
 
         // End
         if (!$error) {
