@@ -313,7 +313,7 @@ class Sheet extends SaturneObject
             $object->status = self::STATUS_VALIDATED;
         }
 
-        $object->context = 'createfromclone';
+        $object->context['createfromclone'] = 'createfromclone';
 
         $questionAndGroups = $object->fetchQuestionsAndGroups();
 
@@ -349,13 +349,15 @@ class Sheet extends SaturneObject
                     }
                 }
                 $object->updateQuestionsAndGroupsPosition($questionIds, $questionGroupIds);
-                
+
             }
         } else {
             $error++;
             $this->error  = $object->error;
             $this->errors = $object->errors;
         }
+
+        unset($object->context['createfromclone']);
 
         // End
         if (!$error) {
