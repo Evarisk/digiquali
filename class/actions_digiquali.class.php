@@ -182,9 +182,23 @@ class ActionsDigiquali
      */
     public function printMainArea(array $parameters): int
     {
+        global $langs;
+
         if (preg_match('/digiqualiview|digiqualistandardagenda|digiqualielementdocument|digiqualielementagenda/', $parameters['context'])) {
+            require_once __DIR__ . '/../class/digiqualielement.class.php';
+
+            $digiQualiElement = new DigiQualiElement($this->db);
+
             ob_start();
-            saturne_more_left_menu('digiquali', 'DigiQualiElement');
+            $moreParams = [
+                'moduleNameLowerCase'             => $digiQualiElement->module,
+                'objectClassName'                 => 'DigiQualiElement',
+                'objectElement'                   => $digiQualiElement->element,
+                'objectFields'                    => $digiQualiElement->fields,
+                'sideBarSecondaryNavigationTitle' => $langs->trans('DigiQualiElementNavigationTitle'),
+                'sideBarSecondaryTitle'           => $langs->trans('Mapping')
+            ];
+            saturne_more_left_menu($moreParams);
             $this->resprints = ob_get_clean();
         }
 

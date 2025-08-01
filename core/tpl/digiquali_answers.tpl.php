@@ -27,73 +27,71 @@
  * Objects   : $object, $sheet
  * Variables : $permissionToAddTask, $permissionToReadTask
  */
-if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
-    foreach ($questionsAndGroups as $questionOrGroup) {
-        $questionAnswer = '';
-        $comment        = '';
 
-        $questionGroupId = 0;
-        if ($questionOrGroup->element == 'questiongroup') {
-            $questionGroupId = $questionOrGroup->id;
+foreach ($questionsAndGroups as $questionOrGroup) {
+    $questionAnswer = '';
+    $comment        = '';
 
-            $questionGroup = new QuestionGroup($object->db);
-            $questionGroup->fetch($questionGroupId);
+    $questionGroupId = 0;
+    if ($questionOrGroup->element == 'questiongroup') {
+        $questionGroupId = $questionOrGroup->id;
 
-            $isGroupCorrectCssClass = '';
-            $groupCssStyles = '';
-            $isGroupCorrect = null;
-            $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
-            if ($showCorrection) {
-                $isGroupCorrect = $questionGroup->isCorrect($object);
-                $isGroupCorrectCssClass = $isGroupCorrect ? ' correct' : ' incorrect';
-            }
+        $questionGroup = new QuestionGroup($object->db);
+        $questionGroup->fetch($questionGroupId);
 
-            $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
-
-            [$numberOfAnsweredQuestions, $numberOfQuestions] = $questionGroup->calculatePoints($object);
-            
-            print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'" ' .$groupCssStyles. '>';
-            print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $numberOfAnsweredQuestions . '/' . $numberOfQuestions . ' réponses aux questions</span></h3>';
-            if (!empty($questionGroup->description)) {
-                print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
-            }
-            if ($showCorrection) {
-                [$pointsResult, $rateResult] = $questionGroup->getFormattedSuccessPointsAndRates($object);
-                print '<p>' . $pointsResult . '</p>';
-                print '<p>' . $rateResult . '</p>';
-            }
-
-            if (is_array($groupQuestions) && !empty($groupQuestions)) {
-                print '<div class="group-questions">';
-                foreach ($groupQuestions as $question) {
-                    $result = $objectLine->fetchFromParentWithQuestion($object->id, $question->id, $questionGroupId);
-                    if (is_array($result) && !empty($result)) {
-                        $objectLine = array_shift($result);
-                        $questionAnswer = $objectLine->answer;
-                        $comment = $objectLine->comment;
-                        $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
-                    }
-
-                    $question = $question;
-                    include __DIR__ . '/digiquali_question_single.tpl.php';
-                }
-                print '</div>';
-            }
-            $object->displayAnswers($objectLine, $questionGroup->fetchQuestionGroupsOrderedByPosition(), $isFrontend, ++$level);
-
-            print '</div>';
-        } else {
-            $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionOrGroup->id, 0);
-            if (is_array($result) && !empty($result)) {
-                $objectLine = array_shift($result);
-                $questionAnswer = $objectLine->answer;
-                $comment = $objectLine->comment;
-                $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
-            }
-            $question = $questionOrGroup;
-
-            include __DIR__ . '/digiquali_question_single.tpl.php';
+        $isGroupCorrectCssClass = '';
+        $groupCssStyles = '';
+        $isGroupCorrect = null;
+        $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
+        if ($showCorrection) {
+            $isGroupCorrect = $questionGroup->isCorrect($object);
+            $isGroupCorrectCssClass = $isGroupCorrect ? ' correct' : ' incorrect';
         }
+
+        $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
+
+        [$numberOfAnsweredQuestions, $numberOfQuestions] = $questionGroup->calculatePoints($object);
+
+        print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'" ' .$groupCssStyles. '>';
+        print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $numberOfAnsweredQuestions . '/' . $numberOfQuestions . ' réponses aux questions</span></h3>';
+        if (!empty($questionGroup->description)) {
+            print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
+        }
+        if ($showCorrection) {
+            [$pointsResult, $rateResult] = $questionGroup->getFormattedSuccessPointsAndRates($object);
+            print '<p>' . $pointsResult . '</p>';
+            print '<p>' . $rateResult . '</p>';
+        }
+
+        if (is_array($groupQuestions) && !empty($groupQuestions)) {
+            print '<div class="group-questions">';
+            foreach ($groupQuestions as $question) {
+                $result = $objectLine->fetchFromParentWithQuestion($object->id, $question->id, $questionGroupId);
+                if (is_array($result) && !empty($result)) {
+                    $objectLine = array_shift($result);
+                    $questionAnswer = $objectLine->answer;
+                    $comment = $objectLine->comment;
+                    $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
+                }
+
+                $question = $question;
+                include __DIR__ . '/digiquali_question_single.tpl.php';
+            }
+            print '</div>';
+        }
+        $object->displayAnswers($objectLine, $questionGroup->fetchQuestionGroupsOrderedByPosition(), $isFrontend, ++$level);
+
+        print '</div>';
+    } else {
+        $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionOrGroup->id, 0);
+        if (is_array($result) && !empty($result)) {
+            $objectLine = array_shift($result);
+            $questionAnswer = $objectLine->answer;
+            $comment = $objectLine->comment;
+            $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
+        }
+        $question = $questionOrGroup;
+
+        include __DIR__ . '/digiquali_question_single.tpl.php';
     }
 }
-?>

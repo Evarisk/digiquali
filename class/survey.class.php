@@ -278,7 +278,7 @@ class Survey extends SaturneObject
                 }
             }
 
-            if ($this->context != 'createfromclone') {
+            if ($this->context['createfromclone'] != 'createfromclone') {
                 $objectsMetadata = saturne_get_objects_metadata();
                 foreach ($objectsMetadata as $objectMetadata) {
                     if (!empty(GETPOST($objectMetadata['post_name'])) && GETPOST($objectMetadata['post_name']) > 0) {
@@ -398,7 +398,7 @@ class Survey extends SaturneObject
             $object->track_id = generate_random_id();
         }
 
-        $object->context  = 'createfromclone';
+        $object->context['createfromclone']  = 'createfromclone';
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 
@@ -451,6 +451,8 @@ class Survey extends SaturneObject
             $this->error  = $object->error;
             $this->errors = $object->errors;
         }
+
+        unset($object->context['createfromclone']);
 
         // End
         if (!$error) {
@@ -774,7 +776,7 @@ class Survey extends SaturneObject
     /**
      * Return a formatted string to print survey score (in points)
      * and success rate
-     * 
+     *
      * @return string
 	 */
     public function getFormattedResults(): string
@@ -796,6 +798,8 @@ class Survey extends SaturneObject
      */
     public function displayAnswers(SurveyLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
     {
+        global $langs;
+
         $object = $this;
 
         include DOL_DOCUMENT_ROOT . '/custom/digiquali/core/tpl/digiquali_answers.tpl.php';

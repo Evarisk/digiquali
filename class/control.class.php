@@ -307,7 +307,6 @@ class Control extends SaturneObject
             }
 
             $questions = $sheet->fetchAllQuestions();
-
             if (!empty($questions)) {
                 foreach ($questions as $question) {
                     $controlLine->ref         = $controlLine->getNextNumRef();
@@ -324,7 +323,7 @@ class Control extends SaturneObject
                 }
             }
 
-            if ($this->context != 'createfromclone') {
+            if ($this->context['createfromclone'] != 'createfromclone') {
                 $objectsMetadata = saturne_get_objects_metadata();
                 foreach ($objectsMetadata as $objectMetadata) {
                     if (!empty(GETPOST($objectMetadata['post_name'])) && GETPOST($objectMetadata['post_name']) > 0) {
@@ -716,7 +715,7 @@ class Control extends SaturneObject
             $object->track_id = generate_random_id();
         }
 
-        $object->context = 'createfromclone';
+        $object->context['createfromclone'] = 'createfromclone';
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 
@@ -783,6 +782,8 @@ class Control extends SaturneObject
             $this->error  = $object->error;
             $this->errors = $object->errors;
         }
+
+        unset($object->context['createfromclone']);
 
         // End.
         if (!$error) {
@@ -1274,6 +1275,18 @@ class Control extends SaturneObject
 
         return $ret;
     }
+
+    /**
+     * Display control questions & answers
+     */
+    public function displayAnswers(ControlLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
+    {
+        global $langs;
+
+        $object = $this;
+
+        include DOL_DOCUMENT_ROOT . '/custom/digiquali/core/tpl/digiquali_answers.tpl.php';
+    }
 }
 
 /**
@@ -1444,14 +1457,14 @@ class ControlLine extends SaturneObject
     public int $fk_control;
 
     /**
-     * @var ?int|null Question ID
+     * @var int|null Question ID
      */
-    public int $fk_question;
+    public ?int $fk_question;
 
     /**
-     * @var int Question group ID
+     * @var int|null Question group ID
      */
-    public int $fk_question_group;
+    public ?int $fk_question_group = 0;
 
     /**
      * Constructor
