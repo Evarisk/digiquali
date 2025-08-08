@@ -91,7 +91,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
      */
     public function fillTagsLines(Odf $odfHandler, Translate $outputLangs, array $moreParam): int
     {
-        global $conf, $langs;
+        global $conf, $langs, $maxwidthmini, $maxheightmini, $maxwidthsmall, $maxheightsmall;
 
         $object = $moreParam['object'];
 
@@ -220,7 +220,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                 // Fill an array with photo path and ref of the answer for next loop.
                                 if (is_array($fileList) && !empty($fileList)) {
                                     foreach ($fileList as $singleFile) {
-                                        $fileSmall          = saturne_get_thumb_name($singleFile['name'], getDolGlobalString('DIGIQUALI_DOCUMENT_MEDIA_VIGNETTE_USED'));
+                                        $fileSmall          = saturne_get_thumb_name($singleFile['name']);
                                         $image              = $path . '/thumbs/' . $fileSmall;
                                         $photoArray[$image] = $questionAnswerLine->ref;
                                     }
@@ -303,16 +303,20 @@ class doc_controldocument_odt extends SaturneDocumentModel
             // Loop on previous photos array.
             if ($foundTagForLines) {
                 if (is_array($photoArray) && !empty($photoArray)) {
+                    $index    = 0;
                     foreach ($photoArray as $photoPath => $answerRef) {
                         $fileInfo = preg_split('/thumbs\//', $photoPath);
                         $name     = end($fileInfo);
-
+                        if (!file_exists($photoPath) && file_exists($fileList[$index]['fullname'])) {
+                            $photoPath = vignette($fileList[$index]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
+                        }
                         $tmpArray['answer_ref'] = ($previousRef == $answerRef) ? '' : $outputLangs->trans('Ref') . ' : ' . $answerRef;
                         $tmpArray['media_name'] = $name;
                         $tmpArray['photo']      = $photoPath;
 
                         $previousRef = $answerRef;
 
+                        $index++;
                         $this->setTmpArrayVars($tmpArray, $listLines, $outputLangs);
                     }
                 } else {
