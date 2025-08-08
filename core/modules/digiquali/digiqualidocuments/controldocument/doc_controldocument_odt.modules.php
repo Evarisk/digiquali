@@ -220,7 +220,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                 // Fill an array with photo path and ref of the answer for next loop.
                                 if (is_array($fileList) && !empty($fileList)) {
                                     foreach ($fileList as $singleFile) {
-                                        $fileSmall          = saturne_get_thumb_name($singleFile['name'], getDolGlobalString('DIGIQUALI_DOCUMENT_MEDIA_VIGNETTE_USED'));
+                                        $fileSmall          = saturne_get_thumb_name($singleFile['name']);
                                         $image              = $path . '/thumbs/' . $fileSmall;
                                         $photoArray[$image] = $questionAnswerLine->ref;
                                     }
