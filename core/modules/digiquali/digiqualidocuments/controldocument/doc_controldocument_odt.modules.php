@@ -308,6 +308,9 @@ class doc_controldocument_odt extends SaturneDocumentModel
                         $fileInfo = preg_split('/thumbs\//', $photoPath);
                         $name     = end($fileInfo);
                         if (!file_exists($photoPath) && file_exists($fileList[$index]['fullname'])) {
+                            if (!is_dir($path . '/thumbs/')) {
+                                mkdir($path . '/thumbs/', 0777, true);
+                            }
                             $photoPath = vignette($fileList[$index]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
                         }
                         $tmpArray['answer_ref'] = ($previousRef == $answerRef) ? '' : $outputLangs->trans('Ref') . ' : ' . $answerRef;
