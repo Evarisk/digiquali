@@ -216,9 +216,13 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                 }
 
                                 $path     = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/answer_photo/' . $question->ref;
+                                if (!is_dir($path . '/thumbs/')) {
+                                    mkdir($path . '/thumbs/', 0777, true);
+                                }
                                 $fileList = dol_dir_list($path, 'files');
                                 // Fill an array with photo path and ref of the answer for next loop.
                                 if (is_array($fileList) && !empty($fileList)) {
+                                    $listFile = $fileList;
                                     foreach ($fileList as $singleFile) {
                                         $fileSmall          = saturne_get_thumb_name($singleFile['name']);
                                         $image              = $path . '/thumbs/' . $fileSmall;
@@ -303,13 +307,13 @@ class doc_controldocument_odt extends SaturneDocumentModel
             // Loop on previous photos array.
             if ($foundTagForLines) {
                 if (is_array($photoArray) && !empty($photoArray)) {
-                    $index    = 0;
+                    $index = 0;
                     foreach ($photoArray as $photoPath => $answerRef) {
+                        if (!file_exists($photoPath) && file_exists($listFile[$index]['fullname'])) {
+                            $photoPath = vignette($listFile[$index]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
+                        }
                         $fileInfo = preg_split('/thumbs\//', $photoPath);
                         $name     = end($fileInfo);
-                        if (!file_exists($photoPath) && file_exists($fileList[$index]['fullname'])) {
-                            $photoPath = vignette($fileList[$index]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
-                        }
                         $tmpArray['answer_ref'] = ($previousRef == $answerRef) ? '' : $outputLangs->trans('Ref') . ' : ' . $answerRef;
                         $tmpArray['media_name'] = $name;
                         $tmpArray['photo']      = $photoPath;
