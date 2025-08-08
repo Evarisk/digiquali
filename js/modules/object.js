@@ -109,7 +109,7 @@ window.digiquali.object.selectAnswer = function() {
   let autoSave        = $(this).closest('.table-id-' + questionId).attr('data-autoSave');
   let answer          = '';
   let answerValue     = $(this).hasClass('answer') ? $(this).attr('value') : $(this).val();
-  let comment         = $(this).closest('.table-id-' + questionId).find('input[name="comment' + questionId + '"]').val();
+  let comment         = $(this).closest('.table-id-' + questionId).find('textarea[name="comment' + questionId + '"]').val();
 
   if ($(this).closest('.table-cell').hasClass('select-answer')) {
     if ($(this).hasClass('multiple-answers')) {
