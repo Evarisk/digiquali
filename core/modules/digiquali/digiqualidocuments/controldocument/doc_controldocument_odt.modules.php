@@ -222,7 +222,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                 $fileList = dol_dir_list($path, 'files');
                                 // Fill an array with photo path and ref of the answer for next loop.
                                 if (is_array($fileList) && !empty($fileList)) {
-                                    $listFile = $fileList;
+                                    $listFile[] = $fileList;
                                     foreach ($fileList as $singleFile) {
                                         $fileSmall          = saturne_get_thumb_name($singleFile['name']);
                                         $image              = $path . '/thumbs/' . $fileSmall;
@@ -309,8 +309,8 @@ class doc_controldocument_odt extends SaturneDocumentModel
                 if (is_array($photoArray) && !empty($photoArray)) {
                     $index = 0;
                     foreach ($photoArray as $photoPath => $answerRef) {
-                        if (!file_exists($photoPath) && file_exists($listFile[$index]['fullname'])) {
-                            $photoPath = vignette($listFile[$index]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
+                        if (!file_exists($photoPath) && file_exists($listFile[$index][0]['fullname'])) {
+                            $photoPath = vignette($listFile[$index][0]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
                         }
                         $fileInfo = preg_split('/thumbs\//', $photoPath);
                         $name     = end($fileInfo);
