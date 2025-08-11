@@ -216,13 +216,13 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                 }
 
                                 $path     = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/answer_photo/' . $question->ref;
+                                // If thumb directory does not exist, create a new one to stock thumbs photo
                                 if (!is_dir($path . '/thumbs/')) {
                                     mkdir($path . '/thumbs/', 0777, true);
                                 }
                                 $fileList = dol_dir_list($path, 'files');
                                 // Fill an array with photo path and ref of the answer for next loop.
                                 if (is_array($fileList) && !empty($fileList)) {
-                                    $listFile[] = $fileList;
                                     foreach ($fileList as $singleFile) {
                                         $fileSmall          = saturne_get_thumb_name($singleFile['name']);
                                         $image              = $path . '/thumbs/' . $fileSmall;
@@ -307,20 +307,20 @@ class doc_controldocument_odt extends SaturneDocumentModel
             // Loop on previous photos array.
             if ($foundTagForLines) {
                 if (is_array($photoArray) && !empty($photoArray)) {
-                    $index = 0;
                     foreach ($photoArray as $photoPath => $answerRef) {
-                        if (!file_exists($photoPath) && file_exists($listFile[$index][0]['fullname'])) {
-                            $photoPath = vignette($listFile[$index][0]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
+                        foreach ($fileList as $key => $file) {
+                            $file['ref']            = $answerRef;
+                            $tmpArray['answer_ref'] = !empty($file['ref']) ? $outputLangs->trans('Ref') . ' : ' . $file['ref'] : $langs('NonApplicable');
+                            // Check the non-existence of the thumb file and also the existence of the original file to regenerate the thumb for odt file
+                            if (!file_exists($photoPath) && file_exists($file[$key]['fullname'])) {
+                                $photoPath = vignette($file[$key]['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/');
+                            }
                         }
                         $fileInfo = preg_split('/thumbs\//', $photoPath);
                         $name     = end($fileInfo);
-                        $tmpArray['answer_ref'] = ($previousRef == $answerRef) ? '' : $outputLangs->trans('Ref') . ' : ' . $answerRef;
                         $tmpArray['media_name'] = $name;
                         $tmpArray['photo']      = $photoPath;
 
-                        $previousRef = $answerRef;
-
-                        $index++;
                         $this->setTmpArrayVars($tmpArray, $listLines, $outputLangs);
                     }
                 } else {
