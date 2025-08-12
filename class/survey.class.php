@@ -721,7 +721,7 @@ class Survey extends SaturneObject
                 $surveyTotalPoints += $questionGroupTotalPoints;
                 $surveyCorrectAnswersTotalPoints += $questionGroupCorrectAnswersTotalPoints;
 
-                if (!$this->isCorrectFromPoints($questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints)) {
+                if (!$questionGroup->isCorrectFromPoints($questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints)) {
                     $atLeastOneIncorrectSubGroup = true;
                 }
                 $atLeastOneIncorrectSubGroup = $atLeastOneIncorrectSubGroup || $questionGroupWithAtLeastOneIncorrectSubGroup;
@@ -761,11 +761,11 @@ class Survey extends SaturneObject
             $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
         }
 
-        if ($correctAnswersRate < $this->success_rate) {
-            return false;
+        if ($correctAnswersRate >= $this->success_rate) {
+            return true;
         }
 
-		return true;
+		return false;
 	}
 
     /**
@@ -778,7 +778,7 @@ class Survey extends SaturneObject
 	{
         global $langs;
 
-        [$numberOfCorrectAnswers, $numberOfQuestions, $correctPoints, $totalPoints] = $this->calculatePoints();
+        [$numberOfAnsweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints();
         $successRate = 0;
         if ($totalPoints > 0) {
             $successRate = round($correctPoints / $totalPoints * 100, 2);
