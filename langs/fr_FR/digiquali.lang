@@ -147,7 +147,7 @@ AnswerCorrectnessMinBound     = Valeur minimale de réponse correcte
 AnswerCorrectnessMaxBound     = Valeur maximale de réponse correcte
 QuestionMinBoundExceeded      = La valeur minimale de réponse correcte d'un pourcentage ne peut pas être inférieure à 0
 QuestionMaxBoundExceeded      = La valeur minimale de réponse correcte d'un pourcentage ne peut pas être supérieure à 100
-AddProject                    = Veuillez joindre un projet au contrôle pour utiliser les tâches
+AddProject                    = Veuillez définir un projet pour ce contrôle afin de pouvoir utiliser les tâches
 
 
 #
