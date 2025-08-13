@@ -68,7 +68,6 @@ window.digiquali.task.event = function initializeEvents() {
   //   window.saturne.object.ObjectFromModal.call(this, 'delete', 'task');
   // });
 
-  $(document).on('click', '.answer-task-create:not(.button-disable)', window.digiquali.task.createTask);
 
   $(document).on('change', '.question__action-check input[type="checkbox"]', window.digiquali.task.checkTask);
 
