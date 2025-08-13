@@ -90,7 +90,14 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                         <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
                         <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
                     </div>
-                <?php endif; ?>
+                <?php endif;
+                if (empty($object->project) && !empty($permissionToAddTask)) {
+                    print '<div class="wpeo-button button-square-50 wpeo-tooltip-event" aria-label="' . $langs->transnoentities('AddProject') . '" id="task-disable" style="background-color: #ececec; border-color: #ececec; color: rgba(0, 0, 0, 0.4) !important;">';
+                    print '    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="' . $objectLine->id . '" data-from-type="' . $objectLine->element . '"/>';
+                    print '    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>';
+                    print '</div>';
+                }
+                ?>
             </div>
             <?php if ($question->authorize_answer_photo > 0) : ?>
                 <div class="question__list-medias">
