@@ -16,7 +16,7 @@
  */
 
 /**
- * \file    digiquali.main.inc.php
+ * \file    digiquali.inc.php
  * \ingroup digiquali
  * \brief   File that defines environment for Saturne common functions
  */

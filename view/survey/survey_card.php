@@ -41,6 +41,7 @@ require_once __DIR__ . '/../../../saturne/class/saturnesignature.class.php';
 require_once __DIR__ . '/../../class/survey.class.php';
 require_once __DIR__ . '/../../class/sheet.class.php';
 require_once __DIR__ . '/../../class/question.class.php';
+require_once __DIR__ . '/../../class/questiongroup.class.php';
 require_once __DIR__ . '/../../class/answer.class.php';
 require_once __DIR__ . '/../../class/digiqualidocuments/surveydocument.class.php';
 require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
@@ -66,15 +67,16 @@ $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 
 // Initialize objects
 // Technical objets
-$object      = new Survey($db);
-$objectLine  = new SurveyLine($db);
-$document    = new SurveyDocument($db);
-$signatory   = new SaturneSignature($db, 'digiquali');
-$sheet       = new Sheet($db);
-$question    = new Question($db);
-$answer      = new Answer($db);
-$extraFields = new ExtraFields($db);
-$category    = new Categorie($db);
+$object        = new Survey($db);
+$objectLine    = new SurveyLine($db);
+$document      = new SurveyDocument($db);
+$signatory     = new SaturneSignature($db, 'digiquali');
+$sheet         = new Sheet($db);
+$question      = new Question($db);
+$answer        = new Answer($db);
+$questionGroup = new QuestionGroup($db);
+$extraFields   = new ExtraFields($db);
+$category      = new Categorie($db);
 
 // View objects
 $form = new Form($db);
@@ -222,9 +224,8 @@ if (empty($resHook)) {
 
 $title   = $langs->trans(ucfirst($object->element));
 $helpUrl = 'FR:Module_DigiQuali';
-$moreJS  = ['/saturne/js/includes/hammer.min.js'];
 
-saturne_header(1,'', $title, $helpUrl, '', 0, 0, $moreJS);
+saturne_header(1,'', $title, $helpUrl);
 
 // Part to create
 if ($action == 'create') {
@@ -342,12 +343,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     saturne_banner_tab($object, 'ref', '', 1, 'ref', 'ref', '', !empty($object->photo));
 
     $sheet->fetch($object->fk_sheet);
-    $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position');
-    $questionIds = $sheet->linkedObjectsIds['digiquali_question'];
+    $questions = $sheet->fetchAllQuestions();
 
     $questionCounter = 0;
-    if (!empty($questionIds)) {
-        $questionCounter = count($questionIds);
+    if (!empty($questions)) {
+        $questionCounter = count($questions);
     }
 
     $answerCounter = 0;
@@ -511,44 +511,29 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print saturne_show_medias_linked('digiquali', $pathPhotos, 'small', 0, 0, 0, 0, $onPhone ? 40 : 50, $onPhone ? 40 : 50, 0, 0, 0, 'survey/' . $object->ref . '/photos/', $object, 'photo', $object->status < Survey::STATUS_LOCKED, $permissiontodelete && $object->status < Survey::STATUS_LOCKED);
     print '</td></tr>';
 
-    $averagePercentageQuestions = 0;
-    $percentQuestionCounter     = 0;
-    foreach ($sheet->linkedObjects['digiquali_question'] as $questionLinked) {
-        if ($questionLinked->type !== 'Percentage') {
-            continue; // Skip non-percentage questions
-        }
-
-        $percentQuestionCounter++;
-        foreach ($object->lines as $line) {
-            if ($line->fk_question === $questionLinked->id) {
-                $averagePercentageQuestions += $line->answer;
-            }
-        }
+    print '<tr class="field_success_rate"><td class="titlefield fieldname_success_rate">';
+    print $form->editfieldkey('SuccessScore', 'success_rate', $object->success_rate, $object, $permissiontoadd && $object->status < Survey::STATUS_LOCKED, 'string', '', 0, 0,'id', $langs->trans('PercentageValue'));
+    print '</td><td class="valuefield fieldname_success_rate">';
+    if ($action == 'editsuccess_rate') {
+        print '<form action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" method="post">';
+        print '<input type="hidden" name="token" value="' . newToken() . '">';
+        print '<input type="hidden" name="action" value="setsuccess_rate">';
+        print '<table class="nobordernopadding centpercent">';
+        print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" step="0.01" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
+        print '</td><td class="left"><input type="submit" class="smallpaddingimp button" name="modify" value="' . $langs->trans('Modify') . '"><input type="submit" class="smallpaddingimp button button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '"></td></tr></tbody></table>';
+        print '</form>';
+    } else {
+        print (!empty($object->success_rate) ? price2num($object->success_rate, 2) : 0) . ' %';
     }
+    print '</td></tr>';
 
-    $averagePercentageQuestions = ($percentQuestionCounter > 0) ? ($averagePercentageQuestions / $percentQuestionCounter) : 0;
-
-    if ($percentQuestionCounter > 0) {
+    if ($object->status >= SURVEY::STATUS_LOCKED) {
+        $surveyResult = $object->getFormattedResults();
+    
         print '<tr class="field_success_rate"><td class="titlefield fieldname_success_rate">';
-        print $form->editfieldkey('SuccessScore', 'success_rate', $object->success_rate, $object, $permissiontoadd && $object->status < Survey::STATUS_LOCKED, 'string', '', 0, 0,'id', $langs->trans('PercentageValue'));
+        print $langs->trans('RateResult');
         print '</td><td class="valuefield fieldname_success_rate">';
-        if ($action == 'editsuccess_rate') {
-            print '<form action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" method="post">';
-            print '<input type="hidden" name="token" value="' . newToken() . '">';
-            print '<input type="hidden" name="action" value="setsuccess_rate">';
-            print '<table class="nobordernopadding centpercent">';
-            print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
-            print '</td><td class="left"><input type="submit" class="smallpaddingimp button" name="modify" value="' . $langs->trans('Modify') . '"><input type="submit" class="smallpaddingimp button button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '"></td></tr></tbody></table>';
-            print '</form>';
-        } else {
-            print (!empty($object->success_rate) ? price2num($object->success_rate, 2) : 0) . ' %';
-        }
-        print '</td></tr>';
-
-        print '<tr class="field_average"><td class="titlefield fieldname_average">';
-        print $langs->trans('AveragePercentageQuestions');
-        print '</td><td class="valuefield fieldname_average">';
-        print '<span class="badge badge-' . ($object->success_rate > $averagePercentageQuestions ? 'status8' : 'status4') . ' badge-status' . '">' . price2num($averagePercentageQuestions, 2) . ' %</div>';
+        print '<span class="badge badge-' . ($object->isCorrect() ? 'status4' : 'status8') . ' badge-status' . '">' . $surveyResult . '</div>';
         print '</td></tr>';
     }
 
@@ -562,11 +547,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     // @TODO pas opti
     $cantValidateSurvey = 0;
     $mandatoryArray     = json_decode($sheet->mandatory_questions, true);
-    if (is_array($mandatoryArray) && !empty($mandatoryArray) && is_array($questionIds) && !empty($questionIds)) {
-        foreach ($questionIds as $questionId) {
-            if (in_array($questionId, $mandatoryArray)) {
-                $resultQuestion = $question->fetch($questionId);
-                $resultAnswer   = $objectLine->fetchFromParentWithQuestion($object->id, $questionId);
+    if (is_array($mandatoryArray) && !empty($mandatoryArray) && is_array($questions) && !empty($questions)) {
+        foreach ($questions as $resultQuestion) {
+            if (in_array($resultQuestion->id, $mandatoryArray)) {
+                $resultAnswer   = $objectLine->fetchFromParentWithQuestion($object->id, $resultQuestion->id);
                 if (($resultAnswer > 0 && is_array($resultAnswer)) || !empty($objectLine)) {
                     $itemSurveyDet = !empty($resultAnswer) ? array_shift($resultAnswer) : $objectLine;
                     if ($resultQuestion > 0) {
@@ -673,10 +657,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
     // QUESTION LINES
     print '<div class="div-table-responsive-no-min questionLines" style="overflow-x: unset !important;">';
-
-    if (is_array($questionIds) && !empty($questionIds)) {
-        ksort($questionIds);
-    } ?>
+ ?>
 
     <div class="progress-info">
         <span class="badge badge-info" style="margin-right: 10px;"><?php print $answerCounter . '/' . $questionCounter; ?></span>
@@ -694,7 +675,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     <?php if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || $answerCounter != $questionCounter) {
         print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '');
         print '<div id="tablelines" class="question-answer-container">';
-        require_once __DIR__ . '/../../core/tpl/digiquali_answers.tpl.php';
+        $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
+        $object->displayAnswers($objectLine, $questionsAndGroups, false);
         print '</div>';
     }
 

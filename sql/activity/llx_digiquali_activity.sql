@@ -1,4 +1,4 @@
--- Copyright (C) 2024 EVARISK <technique@evarisk.com>
+-- Copyright (C) 2025 EVARISK <technique@evarisk.com>
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-CREATE TABLE llx_digiquali_survey(
+CREATE TABLE llx_digiquali_activity(
   rowid         integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
   ref           varchar(128) DEFAULT '(PROV)' NOT NULL,
   ref_ext       varchar(128),
@@ -22,14 +22,14 @@ CREATE TABLE llx_digiquali_survey(
   tms           timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   import_key    varchar(14),
   status        integer DEFAULT 1 NOT NULL,
-  note_public   text,
-  note_private  text,
-  type          varchar(128),
-  photo         text,
-  success_rate  double(24,8),
-  track_id      varchar(128) NOT NULL,
+  label         varchar(255) NOT NULL,
+  source        varchar(255),
+  source_from   varchar(255),
+  input_data    text,
+  output_data   text,
+  score         double(24,8),
+  target_score  double(24,8),
   fk_user_creat integer NOT NULL,
   fk_user_modif integer,
-  fk_sheet      integer NOT NULL,
-  projectid     integer
+  fk_element    integer NOT NULL
 ) ENGINE=innodb;

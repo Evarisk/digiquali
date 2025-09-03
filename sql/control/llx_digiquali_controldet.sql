@@ -14,20 +14,21 @@
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
 CREATE TABLE llx_digiquali_controldet(
-	rowid         integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
-	ref           varchar(128) DEFAULT '(PROV)' NOT NULL,
-	ref_ext       varchar(128),
-	entity        integer DEFAULT 1 NOT NULL,
-	date_creation datetime NOT NULL,
-    tms           timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    import_key    varchar(14),
-    status        integer DEFAULT 1 NOT NULL,
-	type          varchar(128),
-    answer        text,
-    answer_photo  text,
-    comment       text,
-	fk_user_creat integer NOT NULL,
-	fk_user_modif integer,
-	fk_control    integer NOT NULL,
-	fk_question   integer
+	rowid             integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	ref               varchar(128) DEFAULT '(PROV)' NOT NULL,
+	ref_ext           varchar(128),
+	entity            integer DEFAULT 1 NOT NULL,
+	date_creation     datetime NOT NULL,
+  tms               timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  import_key        varchar(14),
+  status            integer DEFAULT 1 NOT NULL,
+	type              varchar(128),
+  answer            text,
+  answer_photo      text,
+  comment           text,
+	fk_user_creat     integer NOT NULL,
+	fk_user_modif     integer,
+	fk_control        integer NOT NULL,
+	fk_question       integer,
+	fk_question_group integer DEFAULT 0 NOT NULL
 ) ENGINE=innodb;

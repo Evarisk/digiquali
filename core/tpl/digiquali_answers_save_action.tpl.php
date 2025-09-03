@@ -30,20 +30,23 @@
 
 if ($action == 'save') {
     $data = json_decode(file_get_contents('php://input'), true);
-
     $sheet->fetch($object->fk_sheet);
-    $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_' . $sheet->element);
-    if (!empty($sheet->linkedObjects['digiquali_question'])) {
-        foreach ($sheet->linkedObjects['digiquali_question'] as $question) {
+
+    $questions = $sheet->fetchAllQuestions();
+
+    if (!empty($questions)) {
+        foreach ($questions as $question) {
             if (!empty($object->lines)) {
                 foreach ($object->lines as $line) {
                     if ($line->fk_question === $question->id) {
+
                         // Save answer value
                         if ($data['autoSave'] && $question->id == $data['questionId']) {
                             $questionAnswer = $data['answer'];
                         } else {
                             $questionAnswer = GETPOST('answer' . $question->id);
                         }
+
                         if (!empty($questionAnswer)) {
                             $line->answer = $questionAnswer;
                         }

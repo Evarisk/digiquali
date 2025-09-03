@@ -1,6 +1,8 @@
 @import "variable/variable";
-@import "page/page";
 @import "element/element";
+@import "page/page";
+@import "page/sheet-stats";
+@import "modal/modal";
 
 .preview-photo {
   z-index: 2100 !important;

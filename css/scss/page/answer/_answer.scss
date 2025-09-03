@@ -1,3 +1,20 @@
+@mixin answer-correction {
+  position: relative;
+
+  &::after {
+    position: absolute;
+    font-size: 14px !important;
+    bottom: -32px;
+    left: calc(50% - 9px);
+  }
+  &.correct::after {
+    content: '✅';
+  }
+  &.incorrect::after {
+    content: '❌';
+  }
+}
+
 .page-public-card .question-answer-container-pwa,
 .question-answer-container {
   .question:not(.wpeo-button) {
@@ -133,6 +150,8 @@
         align-items: center;
         flex-direction: row;
 
+        @include answer-correction;
+
         .range-percent {
           position: absolute;
           transform: translateX(-50%);
@@ -224,7 +243,6 @@
           display: flex;
           align-items: center;
           white-space: nowrap;
-
           &.active {
             color: #fff !important;
           }
@@ -232,6 +250,8 @@
             cursor: pointer;
             transform: scale(1.08);
           }
+
+          @include answer-correction;
         }
         .answer.single-answer {
           border-radius: 50px !important;
@@ -256,6 +276,8 @@
         input {
           max-width: 160px;
         }
+
+        @include answer-correction;
       }
 
     }
@@ -400,6 +422,29 @@
           min-width: calc(80px + 0.5em);
         }
       }
+    }
+
+    &.correct {
+      border-color: $color__correct !important;
+      &::before {
+        background: $color__correct;
+      }
+    }
+    &.incorrect {
+      border-color: $color__incorrect !important;
+      &::before {
+        background: $color__incorrect;
+      }
+    }
+  }
+
+  .digiquali-question-group {
+    &.correct {
+      border-color: $color__correct;
+    }
+
+    &.incorrect {
+      border-color: $color__incorrect;
     }
   }
 

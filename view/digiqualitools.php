@@ -35,11 +35,12 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
 
 require_once __DIR__ . '/../class/answer.class.php';
 require_once __DIR__ . '/../class/question.class.php';
+require_once __DIR__ . '/../class/questiongroup.class.php';
 require_once __DIR__ . '/../class/sheet.class.php';
 require_once __DIR__ . '/../lib/digiquali.lib.php';
 
 // Global variables definitions
-global $conf, $db, $langs, $user;
+global $conf, $db, $entity, $langs, $user;
 
 saturne_load_langs(['exports']);
 
@@ -48,9 +49,10 @@ $action = GETPOST('action', 'alpha');
 
 // Initialize objects
 // Technical objets
-$answer   = new Answer($db);
-$question = new Question($db);
-$sheet    = new Sheet($db);
+$answer        = new Answer($db);
+$question      = new Question($db);
+$questionGroup = new QuestionGroup($db);
+$sheet         = new Sheet($db);
 
 $error      = 0;
 $now        = dol_now();
@@ -89,11 +91,14 @@ if ($action == 'data_migration_export_global' && $permissionToRead) {
 
 				$digiqualiExportArray['sheets'][$sheetSingle->id] = $sheetExportArray;
 
-                $sheetSingle->fetchObjectLinked($sheetSingle->id, 'digiquali_' . $sheetSingle->element, null, '', 'OR', 1, 'position', 0);
-				$questionsLinked = $sheetSingle->linkedObjectsIds['digiquali_question'];
-				if (is_array($questionsLinked) && !empty($questionsLinked)) {
-					foreach ($questionsLinked as $questionId) {
-						$digiqualiExportArray['element_element'][$sheetSingle->id][] = $questionId;
+                $questionsAndGroupsLinked = $sheetSingle->fetchQuestionsAndGroups();
+				if (is_array($questionsAndGroupsLinked) && !empty($questionsAndGroupsLinked)) {
+					foreach ($questionsAndGroupsLinked as $questionOrGroup) {
+                        if ($questionOrGroup->element == 'question') {
+                            $digiqualiExportArray['element_element_questions'][$sheetSingle->id][] = $questionOrGroup->id;
+                        } else if ($questionOrGroup->element == 'questiongroup') {
+                            $digiqualiExportArray['element_element_questiongroups'][$sheetSingle->id][] = $questionOrGroup->id;
+                        }
 					}
 				}
 			}
@@ -249,6 +254,64 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
 				}
 			}
 
+            if (is_array($digiqualiExportArray['questiongroups']) && !empty($digiqualiExportArray['questiongroups'])) {
+                foreach($digiqualiExportArray['questiongroups'] as $questionGroupSingle) {
+                    $previousQuestionGroup = new QuestionGroup($db);
+
+                    $questionGroup->status = $questionGroupSingle['status'];
+                    $questionGroup->label = $questionGroupSingle['label'];
+                    $questionGroup->description = $questionGroupSingle['description'];
+
+                    $questionGroupId = $questionGroup->create($user);
+
+                    if ($questionGroupId > 0) {
+                        $idCorrespondanceArray['questiongroup'][$questionGroupSingle['rowid']] = $questionGroupId;
+
+                        // Create questions for this question group
+                        if (is_array($questionGroupSingle['questions']) && !empty($questionGroupSingle['questions'])) {
+                            foreach ($questionGroupSingle['questions'] as $questionSingle) {
+                                $question->ref_ext                = $questionSingle['ref'];
+                                $question->type                   = $questionSingle['type'];
+                                $question->label                  = $questionSingle['label'];
+                                $question->description            = $questionSingle['description'];
+                                $question->show_photo             = $questionSingle['show_photo'];
+                                $question->authorize_answer_photo = $questionSingle['authorize_answer_photo'];
+                                $question->enter_comment          = $questionSingle['enter_comment'];
+                                $question->status                 = Question::STATUS_VALIDATED;
+                                $question->import_key             = $importKey;
+
+                                $newQuestionId = $question->create($user);
+                                if ($newQuestionId > 0) {
+                                    $questionGroup->addQuestion($newQuestionId);
+
+                                    if (array_key_exists('answers', $questionSingle) && !empty($questionSingle['answers'])) {
+                                        foreach ($questionSingle['answers'] as $answerSingle) {
+                                            $answer->ref_ext     = $answerSingle['ref'];
+                                            $answer->status      = $answerSingle['status'];
+                                            $answer->value       = $answerSingle['value'];
+                                            $answer->position    = $answerSingle['position'];
+                                            $answer->pictogram   = $answerSingle['pictogram'];
+                                            $answer->color       = $answerSingle['color'];
+                                            $answer->fk_question = $newQuestionId;
+                                            $answer->import_key  = $importKey;
+
+                                            $newAnswerId = $answer->create($user);
+
+                                            if ($newAnswerId <= 0) {
+                                                $error++;
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    $error++;
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+
             if (is_array($digiqualiExportArray['sheets']) && !empty($digiqualiExportArray['sheets'])) {
                 foreach ($digiqualiExportArray['sheets'] as $sheetSingle) {
 					$sheet->ref_ext             = $sheetSingle['ref'];
@@ -277,24 +340,37 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
 
                     if ($sheetId > 0) {
                         $idCorrespondanceArray['sheet'][$sheetSingle['rowid']] = $sheetId;
-                        if (is_array($digiqualiExportArray['element_element']) && !empty($digiqualiExportArray['element_element'])) {
-                            foreach ($digiqualiExportArray['element_element'] as $previousSheetId => $previousQuestionIdArray) {
+                        if (is_array($digiqualiExportArray['element_element_questions']) && !empty($digiqualiExportArray['element_element_questions'])) {
+                            foreach ($digiqualiExportArray['element_element_questions'] as $previousSheetId => $previousQuestionIdArray) {
                                 if (is_array($previousQuestionIdArray) && !empty($previousQuestionIdArray)) {
                                     foreach($previousQuestionIdArray as $previousQuestionId) {
                                         $newSheetId    = $idCorrespondanceArray['sheet'][$previousSheetId];
                                         $newQuestionId = $idCorrespondanceArray['question'][$previousQuestionId];
                                         $question->fetch($newQuestionId);
                                         $question->add_object_linked('digiquali_sheet', $newSheetId);
-
-                                        $sheet->fetch($newSheetId);
-                                        $sheet->fetchObjectLinked($newSheetId, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position', 0);
-                                        $questionIds   = $sheet->linkedObjectsIds['digiquali_question'];
-                                        $questionIds[] = $question->id;
-                                        $sheet->updateQuestionsPosition($questionIds);
                                     }
                                 }
                             }
                         }
+                        if (is_array($digiqualiExportArray['element_element_questiongroups']) && !empty($digiqualiExportArray['element_element_questiongroups'])) {
+                            foreach ($digiqualiExportArray['element_element_questiongroups'] as $previousSheetId => $previousQuestionGroupIdArray) {
+                                if (is_array($previousQuestionGroupIdArray) && !empty($previousQuestionGroupIdArray)) {
+                                    foreach($previousQuestionGroupIdArray as $previousQuestionGroupId) {
+                                        $newSheetId    = $idCorrespondanceArray['sheet'][$previousSheetId];
+                                        $newQuestionGroupId = $idCorrespondanceArray['questiongroup'][$previousQuestionGroupId];
+                                        $questionGroup->fetch($newQuestionGroupId);
+                                        $questionGroup->add_object_linked('digiquali_sheet', $newSheetId);
+
+
+                                    }
+                                }
+                            }
+                        }
+                        $sheet->fetch($sheetId);
+                        $sheet->fetchObjectLinked($sheetId, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position', 0);
+                        $questionGroupIds   = $sheet->linkedObjectsIds['digiquali_questiongroup'];
+                        $questionIds        = $sheet->linkedObjectsIds['digiquali_question'];
+                        $sheet->updateQuestionsAndGroupsPosition($questionIds, $questionGroupIds);
                     } else {
                         $error++;
                     }

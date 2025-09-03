@@ -36,6 +36,10 @@ function sheet_prepare_head(Sheet $object): array
     // Global variables definitions
     global $conf, $langs;
 
+    $head[1][0] = dol_buildpath('/digiquali/view/sheet/sheet_stats.php', 1) . '?id=' . $object->id;
+    $head[1][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-chart-bar pictofixedwidth"></i>' . $langs->trans('Statistics') : '<i class="fas fa-chart-bar"></i>';
+    $head[1][2] = 'stats';
+
     $head[2][0] = dol_buildpath('/digiquali/view/sheet/sheet_export.php', 1) . '?id=' . $object->id;
     $head[2][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-file-export pictofixedwidth"></i>' . $langs->trans('Export') : '<i class="fas fa-file-export"></i>';
     $head[2][2] = 'export';

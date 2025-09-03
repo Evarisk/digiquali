@@ -77,7 +77,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '21.1.0';
+		$this->version = '21.2.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -203,6 +203,7 @@ class modDigiQuali extends DolibarrModules
 
 			// CONST QUESTION
 			$i++ => ['DIGIQUALI_QUESTION_ADDON', 'chaine', 'mod_question_standard', '', 0, 'current'],
+			$i++ => ['DIGIQUALI_QUESTIONGROUP_ADDON', 'chaine', 'mod_questiongroup_standard', '', 0, 'current'],
             $i++ => ['DIGIQUALI_QUESTION_BACKWARD_COMPATIBILITY', 'integer', 1, '', 0, 'current'],
 
 			// CONST ANSWER
@@ -259,6 +260,18 @@ class modDigiQuali extends DolibarrModules
             // CONST SURVEY LINE
             $i++ => ['DIGIQUALI_SURVEYDET_ADDON', 'chaine', 'mod_surveydet_standard', '', 0, 'current'],
             $i++ => ['DIGIQUALI_SURVEYDET_AUTO_SAVE_ACTION', 'integer', 1, '', 0, 'current'],
+
+            // CONST PROCESS
+            $i++ => ['DIGIQUALI_PROCESS_ADDON', 'chaine', 'mod_process_standard', '', 0, 'current'],
+
+            // CONST SUBPROCESS
+            $i++ => ['DIGIQUALI_SUBPROCESS_ADDON', 'chaine', 'mod_subprocess_standard', '', 0, 'current'],
+
+            // CONST ACTIVITY
+            $i++ => ['DIGIQUALI_ACTIVITY_ADDON', 'chaine', 'mod_activity_standard', '', 0, 'current'],
+
+            // CONST RISKASSESSMENT
+            $i++ => ['DIGIQUALI_RISKASSESSMENT_ADDON', 'chaine', 'mod_riskassessment_standard', '', 0, 'current'],
 
 			// CONST MODULE
 			$i++ => ['DIGIQUALI_VERSION','chaine', $this->version, '', 0, 'current'],
@@ -441,6 +454,22 @@ class modDigiQuali extends DolibarrModules
 		$this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
 		$r++;
 
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1); // Permission id (must not be already used)
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects',$langs->transnoentities('QuestionGroup')); // Permission label
+        $this->rights[$r][4] = 'questiongroup'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
+        $this->rights[$r][5] = 'read'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1); // Permission id (must not be already used)
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('QuestionGroup')); // Permission label
+        $this->rights[$r][4] = 'questiongroup'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
+        $this->rights[$r][5] = 'write'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1); // Permission id (must not be already used)
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('QuestionGroup')); // Permission label
+        $this->rights[$r][4] = 'questiongroup'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
+        $this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
+        $r++;
+
 		/* SHEET PERMISSSIONS */
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1); // Permission id (must not be already used)
 		$this->rights[$r][1] = $langs->transnoentities('ReadObjects',$langs->transnoentities('Sheets')); // Permission label
@@ -475,7 +504,75 @@ class modDigiQuali extends DolibarrModules
         $this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->rights->digiquali->level1->level2)
         $r++;
 
-		/* ADMINPAGE PANEL ACCESS PERMISSIONS */
+        /* DIGIQUALI STANDDARD PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('DigiQualiStandards'));
+        $this->rights[$r][4] = 'digiqualistandard';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('DigiQualiStandards'));
+        $this->rights[$r][4] = 'digiqualistandard';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('DigiQualiStandards'));
+        $this->rights[$r][4] = 'digiqualistandard';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* DIGIQUALI ELEMENT PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('DigiQualiElements'));
+        $this->rights[$r][4] = 'digiqualielement';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('DigiQualiElements'));
+        $this->rights[$r][4] = 'digiqualielement';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('DigiQualiElements'));
+        $this->rights[$r][4] = 'digiqualielement';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* ACTIVITY PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('Activity')));
+        $this->rights[$r][4] = 'activity';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('Activity')));
+        $this->rights[$r][4] = 'activity';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('Activity')));
+        $this->rights[$r][4] = 'activity';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* RISKASSESSMENT PERMISSSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', dol_strtolower($langs->transnoentities('RiskAssessment')));
+        $this->rights[$r][4] = 'riskassessment';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', dol_strtolower($langs->transnoentities('RiskAssessment')));
+        $this->rights[$r][4] = 'riskassessment';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', dol_strtolower($langs->transnoentities('RiskAssessment')));
+        $this->rights[$r][4] = 'riskassessment';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* ADMINPAGE PANEL ACCESS PERMISSIONS */
 		$this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
 		$this->rights[$r][1] = $langs->transnoentities('ReadAdminPage', 'DigiQuali');
 		$this->rights[$r][4] = 'adminpage';
@@ -537,6 +634,37 @@ class modDigiQuali extends DolibarrModules
 			'target'   => '',
 			'user'     => 0,
 		];
+
+        // $this->menu[$r++] = [
+        //     'fk_menu'  => 'fk_mainmenu=digiquali',
+        //     'type'     => 'left',
+        //     'titre'    => $langs->transnoentities('QuestionGroup'),
+        //     'prefix'   => '<i class="fas fa-folder pictofixedwidth"></i>',
+        //     'mainmenu' => 'digiquali',
+        //     'leftmenu' => 'digiquali_questiongroup',
+        //     'url'      => '/digiquali/view/questiongroup/questiongroup_list.php',
+        //     'langs'    => 'digiquali@digiquali',
+        //     'position' => 1000 + $r,
+        //     'enabled'  => '$conf->digiquali->enabled && $user->rights->digiquali->questiongroup->read',
+        //     'perms'    => '$user->rights->digiquali->questiongroup->read',
+        //     'target'   => '',
+        //     'user'     => 0,
+        // ];
+
+        // $this->menu[$r++] = [
+        //     'fk_menu'  => 'fk_mainmenu=digiquali,fk_leftmenu=digiquali_questiongroup',
+        //     'type'     => 'left',
+        //     'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
+        //     'mainmenu' => 'digiquali',
+        //     'leftmenu' => 'digiquali_questiongrouptags',
+        //     'url'      => '/categories/index.php?type=question_group',
+        //     'langs'    => 'digiquali@digiquali',
+        //     'position' => 1000 + $r,
+        //     'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->questiongroup->read',
+        //     'perms'    => '$user->rights->digiquali->questiongroup->read',
+        //     'target'   => '',
+        //     'user'     => 0,
+        // ];
 
 		$this->menu[$r++] = [
 			'fk_menu'  => 'fk_mainmenu=digiquali',
@@ -629,6 +757,22 @@ class modDigiQuali extends DolibarrModules
             'perms'    => '$user->rights->digiquali->survey->read',
             'target'   => '',
             'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=digiquali',
+            'type'     => 'left',
+            'titre'    => $langs->trans('Mapping'),
+            'prefix'   => '<i class="fas fa-sitemap pictofixedwidth"></i>',
+            'mainmenu' => 'digiquali',
+            'leftmenu' => 'digiqualistandard',
+            'url'      => '/digiquali/view/digiqualistandard/digiqualistandard_card.php?module_name=digiquali',
+            'langs'    => 'digiquali@digiquali',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled("digiquali")',
+            'perms'    => 1, //'$user->hasRight("digiquali", "digiqualistandard", "read")',
+            'target'   => '',
+            'user'     => 0
         ];
 
 		$this->menu[$r++] = [
@@ -735,6 +879,41 @@ class modDigiQuali extends DolibarrModules
 		if ($result < 0) {
 			return -1;
 		} // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
+
+        if (getDolGlobalInt('DIGIQUALI_ACTIVE_STANDARD') == 0) {
+            require_once __DIR__ . '/../../class/digiqualistandard.class.php';
+
+            $digiqualiStandard = new DigiqualiStandard($this->db);
+
+            $digiqualiStandard->ref         = 'ISO9001';
+            $digiqualiStandard->description = $langs->transnoentities('ISO9001Description');
+
+            $digiqualiStandardId = $digiqualiStandard->create($user);
+            if ($digiqualiStandardId > 1) {
+//                require_once __DIR__ . '/../../class/digiqualielement.class.php';
+//
+//                $digiqualiElement = new DigiqualiElement($this->db);
+//
+//                $digiqualiElement->ref          = 'DQE-0001';
+//                $digiqualiElement->label        = $langs->transnoentities('DigiqualiElementLabelDefault');
+//                $digiqualiElement->description  = $langs->transnoentities('DigiqualiElementDescriptionDefault');
+//                $digiqualiElement->position     = 1;
+//                $digiqualiElement->element_type = DigiqualiElement::ELEMENT_TYPE_3;
+//                $digiqualiElement->fk_element   = null;
+//                $digiqualiElement->fk_standard  = $digiqualiStandardId;
+//
+//                $digiqualiElementId = $digiqualiElement->create($user);
+//                if ($digiqualiElementId > 0) {
+                    dolibarr_set_const($this->db, 'DIGIQUALI_ACTIVE_STANDARD', $digiqualiStandardId, 'integer', 0, '', $conf->entity);
+//                } else {
+//                    setEventMessages($digiqualiElement->error, $digiqualiElement->errors, 'errors');
+//                    return -1;
+//                }
+            } else {
+                setEventMessages($digiqualiStandard->error, $digiqualiStandard->errors, 'errors');
+                return -1;
+            }
+        }
 
     if (getDolGlobalInt('DIGIQUALI_CONTROL_BACKWARD_COMPATIBILITY') == 0) {
         require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';

@@ -1,0 +1,217 @@
+/**
+ * Sheet statistics page styles
+ */
+
+.sheet-stats-container {
+  margin-top: 20px;
+
+  .stats-section {
+    margin-bottom: 30px;
+
+    .stats-title {
+      background-color: #f8f8f8;
+      padding: 10px;
+      border-radius: 5px 5px 0 0;
+      font-weight: bold;
+      border-bottom: 2px solid #d35968;
+    }
+
+    .stats-content {
+      padding: 15px;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+    }
+  }
+
+  .stat-card {
+    display: inline-block;
+    min-width: 200px;
+    margin: 10px;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #d35968;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+
+  .question-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      background-color: #f8f8f8;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #d35968;
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f8f8;
+    }
+
+    tr:hover {
+      background-color: #f0f0f0;
+    }
+
+    .stat-bar-container {
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      height: 10px;
+      margin-top: 5px;
+
+      .stat-bar {
+        height: 10px;
+        background-color: #d35968;
+        border-radius: 10px;
+      }
+    }
+  }
+}
+
+
+.select-answer-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 1em;
+
+  .answer.static {
+    position: relative;
+    border: 4px solid #fff;
+    border-radius: 50px !important;
+    padding: 0.4em 0.8em;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    min-width: 50px;
+    transition: none;
+    box-shadow: 0 0 0 3px currentColor;
+    color: currentColor;
+    background: #fff;
+    pointer-events: none;
+
+    &.answer-icon {
+      width: 50px;
+      height: 50px;
+      padding: 0;
+      font-size: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .answer-stats-badge {
+      position: absolute;
+      top: -12px;
+      right: -6px;
+      background: #333;
+      color: #fff;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 5px;
+      border-radius: 12px;
+      min-width: 28px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+.answer-pie-container {
+  text-align: center;
+  vertical-align: middle;
+
+  .answer-pie-chart {
+    transform: rotate(-90deg);
+  }
+
+  circle {
+    transition: all 0.3s ease;
+  }
+}
+.select-answer-stats .answer.highlight-answer .answer-stats-badge {
+  scale: 1.2;
+  background: gold;
+  color: #333;
+}
+
+.percentage-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.percentage-bar-background {
+  background-color: #eee;
+  width: 120px;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.percentage-bar-fill {
+  height: 12px;
+  background-color: #57AD39;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.percentage-bar-label {
+  font-size: 16px;
+  color: #333;
+}
+
+.range-bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.range-average-indicator {
+  text-align: center;
+  background: #f4f4f4;
+  border-radius: 8px;
+  padding: 10px;
+  width: 80px;
+  font-family: sans-serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.range-average-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.range-average-value i {
+  margin-right: 4px;
+  color: #4CAF50;
+}
+
+.range-average-label {
+  font-size: 12px;
+  color: #666;
+}

@@ -264,9 +264,10 @@ class Survey extends SaturneObject
                 $this->setValueFrom('success_rate', $this->success_rate, '', '', 'text', '', $user);
             }
 
-            $sheet->fetchObjectLinked($this->fk_sheet, 'digiquali_' . $sheet->element);
-            if (!empty($sheet->linkedObjects['digiquali_question'])) {
-                foreach ($sheet->linkedObjects['digiquali_question'] as $question) {
+            $questions = $sheet->fetchAllQuestions();
+
+            if (!empty($questions)) {
+                foreach ($questions as $question) {
                     $surveyLine->ref                     = $surveyLine->getNextNumRef();
                     $surveyLine->entity                  = $this->entity;
                     $surveyLine->status                  = 1;
@@ -277,7 +278,7 @@ class Survey extends SaturneObject
                 }
             }
 
-            if ($this->context != 'createfromclone') {
+            if ($this->context['createfromclone'] != 'createfromclone') {
                 $objectsMetadata = saturne_get_objects_metadata();
                 foreach ($objectsMetadata as $objectMetadata) {
                     if (!empty(GETPOST($objectMetadata['post_name'])) && GETPOST($objectMetadata['post_name']) > 0) {
@@ -393,8 +394,11 @@ class Survey extends SaturneObject
         if (empty($options['photos'])) {
             $object->photo = '';
         }
+        if (property_exists($object, 'track_id')) {
+            $object->track_id = generate_random_id();
+        }
 
-        $object->context = 'createfromclone';
+        $object->context['createfromclone']  = 'createfromclone';
 
         $object->fetchObjectLinked('','', $object->id, 'digiquali_' . $object->element,  'OR', 1, 'sourcetype', 0);
 
@@ -447,6 +451,8 @@ class Survey extends SaturneObject
             $this->error  = $object->error;
             $this->errors = $object->errors;
         }
+
+        unset($object->context['createfromclone']);
 
         // End
         if (!$error) {
@@ -667,6 +673,137 @@ class Survey extends SaturneObject
 
         return $ret;
     }
+
+    /**
+     * Calculate the total number of points for correct answers and the total possible number of points
+     * (on the current survey)
+     *
+     * @return array
+     */
+    public function calculatePoints(): array
+    {
+        $numberOfAnsweredQuestions = 0;
+        $numberOfQuestions = 0;
+        $surveyTotalPoints = 0;
+        $surveyCorrectAnswersTotalPoints = 0;
+        $atLeastOneIncorrectSubGroup = false;
+
+        // Fetch all questions or groups direct children of sheet
+        $this->fetchObjectLinked($this->fk_sheet, 'digiquali_sheet');
+
+        // Compute questions points
+        if (isset($this->linkedObjectsIds['digiquali_question'])) {
+            foreach ($this->linkedObjectsIds['digiquali_question'] as $questionId) {
+                $question = new Question($this->db);
+                $question->fetch($questionId);
+
+                foreach ($this->lines as $questionAnswer) {
+                    if ($questionId == $questionAnswer->fk_question) {
+                        if ($question->checkAnswerIsCorrect($questionAnswer->answer)) {
+                            $surveyCorrectAnswersTotalPoints += $question->points;
+                        }
+                        if ($questionAnswer->answer !== '') {
+                            $numberOfAnsweredQuestions++;
+                        }
+                        $surveyTotalPoints += $question->points;
+                    }
+                }
+
+                $numberOfQuestions++;
+            }
+        }
+
+        // Compute groups points
+        if (isset($this->linkedObjectsIds['digiquali_questiongroup'])) {
+            foreach ($this->linkedObjectsIds['digiquali_questiongroup'] as $groupId) {
+                $questionGroup = new QuestionGroup($this->db);
+                $questionGroup->fetch($groupId);
+
+                [$subGroupNumberOfAnsweredQuestions, $subGroupNumberOfQuestions, $questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints, $questionGroupWithAtLeastOneIncorrectSubGroup] = $questionGroup->calculatePoints($this);
+
+                $numberOfAnsweredQuestions += $subGroupNumberOfAnsweredQuestions;
+                $numberOfQuestions += $subGroupNumberOfQuestions;
+                $surveyTotalPoints += $questionGroupTotalPoints;
+                $surveyCorrectAnswersTotalPoints += $questionGroupCorrectAnswersTotalPoints;
+
+                if (!$questionGroup->isCorrectFromPoints($questionGroupCorrectAnswersTotalPoints, $questionGroupTotalPoints)) {
+                    $atLeastOneIncorrectSubGroup = true;
+                }
+                $atLeastOneIncorrectSubGroup = $atLeastOneIncorrectSubGroup || $questionGroupWithAtLeastOneIncorrectSubGroup;
+            }
+        }
+
+        return [$numberOfAnsweredQuestions, $numberOfQuestions, $surveyCorrectAnswersTotalPoints, $surveyTotalPoints, $atLeastOneIncorrectSubGroup];
+    }
+
+    /**
+	 * To know if the rate of correct answers is bigger than the attempted success rate of the current survey
+     * and all the groups of the current survey are corrects.
+	 *
+	 * @return bool
+	 */
+	public function isCorrect(): bool
+	{
+        [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints();
+
+        if ($atLeastOneIncorrectSubGroup) {
+            return false;
+        }
+
+        return $this->isCorrectFromPoints($correctPoints, $totalPoints);
+	}
+
+    /**
+	 * To know if the rate of correct answers is bigger than the attempted success rate of the current survey
+     * and all the groups of the current survey are corrects.
+	 *
+	 * @return bool
+	 */
+	public function isCorrectFromPoints($correctPoints, $totalPoints): bool
+	{
+        $correctAnswersRate = 0;
+        if ($totalPoints > 0) {
+            $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+
+        if ($correctAnswersRate >= $this->success_rate) {
+            return true;
+        }
+
+		return false;
+	}
+
+    /**
+     * Return a formatted string to print survey score (in points)
+     * and success rate
+     *
+     * @return string
+	 */
+    public function getFormattedResults(): string
+	{
+        global $langs;
+
+        [$numberOfAnsweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $this->calculatePoints();
+        $successRate = 0;
+        if ($totalPoints > 0) {
+            $successRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+        $pointsResult = $correctPoints . ' / ' . $totalPoints . ' ' . strtolower(($totalPoints > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+        $successRateResult = $successRate . ' %';
+		return $successRateResult . ' (' . $pointsResult . ')';
+	}
+
+    /**
+     * Display survey questions & answers
+     */
+    public function displayAnswers(SurveyLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
+    {
+        global $langs;
+
+        $object = $this;
+
+        include DOL_DOCUMENT_ROOT . '/custom/digiquali/core/tpl/digiquali_answers.tpl.php';
+    }
 }
 
 /**
@@ -742,22 +879,22 @@ class SurveyLine extends SaturneObject
      * @var array Array with all fields and their property. Do not use it as a static var. It may be modified by constructor
      */
     public $fields = [
-        'rowid'         => ['type' => 'integer',      'label' => 'TechnicalID',      'enabled' => 1, 'position' => 1,   'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
-        'ref'           => ['type' => 'varchar(128)', 'label' => 'Ref',              'enabled' => 1, 'position' => 10,  'notnull' => 1, 'visible' => 1, 'noteditable' => 1, 'default' => '(PROV)', 'index' => 1, 'searchall' => 1, 'showoncombobox' => 1, 'validate' => 1, 'comment' => 'Reference of object'],
-        'ref_ext'       => ['type' => 'varchar(128)', 'label' => 'RefExt',           'enabled' => 1, 'position' => 20,  'notnull' => 0, 'visible' => 0],
-        'entity'        => ['type' => 'integer',      'label' => 'Entity',           'enabled' => 1, 'position' => 30,  'notnull' => 1, 'visible' => 0, 'index' => 1],
-        'date_creation' => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 40,  'notnull' => 1, 'visible' => 0],
-        'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 50,  'notnull' => 0, 'visible' => 0],
-        'import_key'    => ['type' => 'varchar(14)',  'label' => 'ImportId',         'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => 0, 'index' => 0],
-        'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'default' => 1],
-        'type'          => ['type' => 'varchar(128)', 'label' => 'Type',             'enabled' => 0, 'position' => 80,  'notnull' => 0, 'visible' => 0],
-        'answer'        => ['type' => 'text',         'label' => 'Answer',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
-        'answer_photo'  => ['type' => 'text',         'label' => 'AnswerPhoto',      'enabled' => 0, 'position' => 100, 'notnull' => 0, 'visible' => 0],
-        'comment'       => ['type' => 'text',         'label' => 'Comment',          'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0],
-        'fk_user_creat' => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserAuthor', 'picto' => 'user',                                'enabled' => 1, 'position' => 120, 'notnull' => 1, 'visible' => 0, 'foreignkey' => 'user.rowid'],
-        'fk_user_modif' => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0, 'foreignkey' => 'user.rowid'],
-        'fk_survey'     => ['type' => 'integer:Survey:digiquali/class/survey.class.php',     'label' => 'Survey',     'picto' => 'fontawesome_fa-marker_fas_#d35968',   'enabled' => 1, 'position' => 140,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
-        'fk_question'   => ['type' => 'integer:Question:digiquali/class/question.class.php', 'label' => 'Question',   'picto' => 'fontawesome_fa-question_fas_#d35968', 'enabled' => 1, 'position' => 150,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_question.rowid'],
+        'rowid'             => ['type' => 'integer',      'label' => 'TechnicalID',      'enabled' => 1, 'position' => 1,   'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
+        'ref'               => ['type' => 'varchar(128)', 'label' => 'Ref',              'enabled' => 1, 'position' => 10,  'notnull' => 1, 'visible' => 1, 'noteditable' => 1, 'default' => '(PROV)', 'index' => 1, 'searchall' => 1, 'showoncombobox' => 1, 'validate' => 1, 'comment' => 'Reference of object'],
+        'ref_ext'           => ['type' => 'varchar(128)', 'label' => 'RefExt',           'enabled' => 1, 'position' => 20,  'notnull' => 0, 'visible' => 0],
+        'entity'            => ['type' => 'integer',      'label' => 'Entity',           'enabled' => 1, 'position' => 30,  'notnull' => 1, 'visible' => 0, 'index' => 1],
+        'date_creation'     => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 40,  'notnull' => 1, 'visible' => 0],
+        'tms'               => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 50,  'notnull' => 0, 'visible' => 0],
+        'import_key'        => ['type' => 'varchar(14)',  'label' => 'ImportId',         'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => 0, 'index' => 0],
+        'status'            => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'default' => 1],
+        'type'              => ['type' => 'varchar(128)', 'label' => 'Type',             'enabled' => 0, 'position' => 80,  'notnull' => 0, 'visible' => 0],
+        'answer'            => ['type' => 'text',         'label' => 'Answer',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
+        'answer_photo'      => ['type' => 'text',         'label' => 'AnswerPhoto',      'enabled' => 0, 'position' => 100, 'notnull' => 0, 'visible' => 0],
+        'comment'           => ['type' => 'text',         'label' => 'Comment',          'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0],
+        'fk_user_creat'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserAuthor', 'picto' => 'user',                                'enabled' => 1, 'position' => 120, 'notnull' => 1, 'visible' => 0, 'foreignkey' => 'user.rowid'],
+        'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0, 'foreignkey' => 'user.rowid'],
+        'fk_survey'         => ['type' => 'integer:Survey:digiquali/class/survey.class.php',     'label' => 'Survey',     'picto' => 'fontawesome_fa-marker_fas_#d35968',   'enabled' => 1, 'position' => 140,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
+        'fk_question'       => ['type' => 'integer:Question:digiquali/class/question.class.php', 'label' => 'Question',   'picto' => 'fontawesome_fa-question_fas_#d35968', 'enabled' => 1, 'position' => 150,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_question.rowid'],
     ];
 
     /**

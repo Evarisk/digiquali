@@ -175,6 +175,52 @@ class ActionsDigiquali
     }
 
     /**
+     * Overloading the printMainArea function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printMainArea(array $parameters): int
+    {
+        global $langs;
+
+        if (preg_match('/digiqualiview|digiqualistandardagenda|digiqualielementdocument|digiqualielementagenda/', $parameters['context'])) {
+            require_once __DIR__ . '/../class/digiqualielement.class.php';
+
+            $digiQualiElement = new DigiQualiElement($this->db);
+
+            ob_start();
+            $moreParams = [
+                'moduleNameLowerCase'             => $digiQualiElement->module,
+                'objectClassName'                 => 'DigiQualiElement',
+                'objectElement'                   => $digiQualiElement->element,
+                'objectFields'                    => $digiQualiElement->fields,
+                'sideBarSecondaryNavigationTitle' => $langs->trans('DigiQualiElementNavigationTitle'),
+                'sideBarSecondaryTitle'           => $langs->trans('Mapping')
+            ];
+            saturne_more_left_menu($moreParams);
+            $this->resprints = ob_get_clean();
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the saturneCustomHeaderFunction function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function saturneCustomHeaderFunction(array $parameters): int
+    {
+        if (preg_match('/digiqualielementdocument|digiqualistandardagenda|digiqualielementagenda/', $parameters['context'])) {
+            $this->results = ['loadMediaGallery' => 1, 'moreCSSOnBody' => 'sidebar-secondary-opened'];
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
      * Overloading the formObjectOptions function : replacing the parent's function with the one below
      *
      * @param  array       $parameters Hook metadata (context, etc...)
@@ -581,7 +627,7 @@ class ActionsDigiquali
             $constArray['digiquali'] = [
                 'DisplayMedias' => [
                     'name'        => 'DisplayMediasSample',
-                    'description' => 'DisplayMediasSampleDescription',
+                    'description' => 'DisplayControlMediasSampleDescription',
                     'code'        => 'DIGIQUALI_CONTROL_DISPLAY_MEDIAS',
                 ],
                 'UseLargeSizeMedia' => [
@@ -918,7 +964,8 @@ class ActionsDigiquali
                 if ($parameters['key'] == 'average_percentage_questions') {
                     $out[$parameters['key']] = round($mean, 2) . ' %';
                 } elseif ($parameters['key'] == 'verdict_object') {
-                    $out[$parameters['key']] = '<span class="wpeo-button button-' . ($mean > $object->success_rate ? 'green' : 'red') . ' badge-status' . '">' . ($mean > $object->success_rate ? $langs->transnoentities('OK') : $langs->transnoentities('KO')) . '</span>';
+                    $isCorrect = $object->isCorrect();
+                    $out[$parameters['key']] = '<span class="wpeo-button button-' . ($isCorrect ? 'green' : 'red') . ' badge-status' . '">' . ($isCorrect ? $langs->transnoentities('OK') : $langs->transnoentities('KO')) . '</span>';
                 }
             }
 

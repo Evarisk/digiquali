@@ -29,5 +29,6 @@ CREATE TABLE llx_digiquali_surveydet(
   fk_user_creat integer NOT NULL,
   fk_user_modif integer,
   fk_survey     integer NOT NULL,
-  fk_question   integer
+  fk_question   integer,
+  fk_question_group integer DEFAULT 0 NOT NULL
 ) ENGINE=innodb;

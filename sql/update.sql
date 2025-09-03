@@ -134,3 +134,15 @@ ALTER TABLE llx_digiquali_question ADD json TEXT NULL AFTER photo_ko;
 -- 21.1.0
 UPDATE llx_element_element SET sourcetype = 'productlot' WHERE sourcetype = 'productbatch' AND targettype = 'digiquali_control';
 UPDATE llx_element_element SET sourcetype = 'productlot' WHERE sourcetype = 'productbatch' AND targettype = 'digiquali_survey';
+
+-- 21.2.0
+ALTER TABLE `llx_digiquali_controldet` ADD `fk_question_group` integer DEFAULT 0 NOT NULL AFTER `fk_question`;
+ALTER TABLE `llx_digiquali_surveydet` ADD `fk_question_group` integer DEFAULT 0 NOT NULL AFTER `fk_question`;
+UPDATE `llx_digiquali_controldet` SET `fk_question_group` = 0 WHERE `fk_question_group` IS NULL;
+UPDATE `llx_digiquali_surveydet` SET `fk_question_group` = 0 WHERE `fk_question_group` IS NULL;
+ALTER TABLE `llx_digiquali_answer` ADD `correct` BOOLEAN DEFAULT 0 NOT NULL AFTER `position`;
+ALTER TABLE `llx_digiquali_questiongroup` ADD `success_rate` double(24,8) DEFAULT 0 NOT NULL AFTER `description`;
+ALTER TABLE `llx_digiquali_question` ADD `points` FLOAT AFTER `description`;
+UPDATE `llx_digiquali_question` SET `points` = 0 WHERE `points` IS NULL AND `type` != 'Percentage';
+UPDATE `llx_digiquali_question` SET `points` = 1 WHERE `points` IS NULL AND `type` = 'Percentage';
+

@@ -28,88 +28,70 @@
  * Variables : $permissionToAddTask, $permissionToReadTask
  */
 
-if (is_array($sheet->linkedObjects['digiquali_question']) && !empty($sheet->linkedObjects['digiquali_question'])) {
-    foreach ($sheet->linkedObjects['digiquali_question'] as $question) {
-        $questionAnswer = '';
-        $comment        = '';
-        foreach ($object->lines as $line) {
-            if ($line->fk_question == $question->id) {
-                $objectLine     = $line;
-                $questionAnswer = $line->answer;
-                $comment        = $line->comment;
-                $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
-                break;
-            }
+foreach ($questionsAndGroups as $questionOrGroup) {
+    $questionAnswer = '';
+    $comment        = '';
+
+    $questionGroupId = 0;
+    if ($questionOrGroup->element == 'questiongroup') {
+        $questionGroupId = $questionOrGroup->id;
+
+        $questionGroup = new QuestionGroup($object->db);
+        $questionGroup->fetch($questionGroupId);
+
+        $isGroupCorrectCssClass = '';
+        $groupCssStyles = '';
+        $isGroupCorrect = null;
+        $showCorrection = ($object->status >= $object::STATUS_LOCKED && !$isFrontend);
+        if ($showCorrection) {
+            $isGroupCorrect = $questionGroup->isCorrect($object);
+            $isGroupCorrectCssClass = $isGroupCorrect ? ' correct' : ' incorrect';
         }
 
-        if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER or empty($questionAnswer)) : ?>
-            <div class="question table-id-<?php echo $question->id ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
-                <?php if ($question->show_photo > 0 && getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . '_DISPLAY_MEDIAS') && !empty($user->conf->DIGIQUALI_SHOW_OK_KO_PHOTOS)) { ?>
-                    <div class="question__header-medias">
-                        <div class="question__photo-ref-ok">
-                            <i class="question__photo-ref-icon fas fa-check"></i>
-                            <?php print saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/photo_ok', 'small', '', 0, 0, 0, 200, 200, 0, 0, 1, 'question/' . $question->ref . '/photo_ok', $question, 'photo_ok', 0, 0, 0, 1, 'photo-ok', 0); ?>
-                        </div>
-                        <div class="question__photo-ref-ko">
-                            <i class="question__photo-ref-icon fas fa-times"></i>
-                            <?php print saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/photo_ko', 'small', '', 0, 0, 0, 200, 200, 0, 0, 1, 'question/' . $question->ref . '/photo_ko', $question, 'photo_ko', 0, 0, 0, 1, 'photo-ko', 0); ?>
-                        </div>
-                    </div>
-                <?php } ?>
-                <div class="question__container">
-                    <div class="question__header">
-                        <div class="question__header-content">
-                            <div class="question-title"><?php echo $question->getNomUrl(1, '', 0, '', -1, 1); ?></div>
-                            <div class="question-description"><?php echo $question->description; ?></div>
-                        </div>
-                        <div class="question__header-answer">
-                            <?php print show_answer_from_question($question, $object, $questionAnswer); ?>
-                        </div>
-                    </div>
-                    <div class="question__footer">
-                        <?php if ($question->enter_comment > 0) : ?>
-                            <label class="question__footer-comment">
-                                <i class="far fa-comment-dots question-comment-icon"></i>
-                                <input class="question-textarea question-comment" name="comment<?php echo $question->id; ?>" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" value="<?php echo $comment; ?>" <?php echo ($object->status == $object::STATUS_VALIDATED ? 'disabled' : ''); ?>>
-                            </label>
-                        <?php endif; ?>
-                        <?php if ($question->authorize_answer_photo > 0) : ?>
-                            <div class="question__footer-linked-medias">
-                                <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
-                                    <?php if ($object->status == 0) : ?>
-                                        <input hidden multiple class="fast-upload<?php echo getDolGlobalInt('SATURNE_USE_FAST_UPLOAD_IMPROVEMENT') ? '-improvement' : ''; ?>" id="fast-upload-answer-photo<?php echo $question->id ?>" type="file" name="userfile[]" capture="environment" accept="image/*">
-                                        <input type="hidden" class="question-answer-photo" id="answer_photo_<?php echo $question->id ?>" name="answer_photo_<?php echo $question->id ?>" value=""/>
-                                        <input type="hidden" class="fast-upload-options" data-from-subtype="answer_photo_<?php echo $question->id ?>" data-from-subdir="answer_photo/<?php echo $question->ref ?>"/>
-                                        <label for="fast-upload-answer-photo<?php echo $question->id ?>">
-                                            <div class="wpeo-button button-square-50">
-                                                <i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>
-                                            </div>
-                                        </label>
-                                        <div class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="<?php echo $question->id ?>">
-                                            <input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="<?php echo $object->id ?>" data-from-type="<?php echo $object->element ?>" data-from-subtype="answer_photo_<?php echo $question->id ?>" data-from-subdir="answer_photo/<?php echo $question->ref ?>"/>
-                                            <i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                        <?php if (!empty($object->project) && !empty($permissionToAddTask)) : ?>
-                            <div class="wpeo-button button-square-50 add-action modal-open">
-                                <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
-                                <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <?php if ($question->authorize_answer_photo > 0) : ?>
-                        <div class="question__list-medias">
-                            <?php echo saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, $question, '', 0, $object->status == 0, 1); ?>
-                        </div>
-                    <?php endif;
-                    if (!empty($permissionToReadTask)) :
-                        require __DIR__ . '/answers/answers_task_view.tpl.php';
-                    endif; ?>
-                </div>
-            </div>
-        <?php endif;
+        $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
+
+        [$numberOfAnsweredQuestions, $numberOfQuestions] = $questionGroup->calculatePoints($object);
+
+        print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'" ' .$groupCssStyles. '>';
+        print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info" style="margin-left: 10px;" title="Nombre de questions répondues">' . $numberOfAnsweredQuestions . '/' . $numberOfQuestions . ' réponses aux questions</span></h3>';
+        if (!empty($questionGroup->description)) {
+            print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
+        }
+        if ($showCorrection) {
+            [$pointsResult, $rateResult] = $questionGroup->getFormattedSuccessPointsAndRates($object);
+            print '<p>' . $pointsResult . '</p>';
+            print '<p>' . $rateResult . '</p>';
+        }
+
+        if (is_array($groupQuestions) && !empty($groupQuestions)) {
+            print '<div class="group-questions">';
+            foreach ($groupQuestions as $question) {
+                $result = $objectLine->fetchFromParentWithQuestion($object->id, $question->id, $questionGroupId);
+                if (is_array($result) && !empty($result)) {
+                    $objectLine = array_shift($result);
+                    $questionAnswer = $objectLine->answer;
+                    $comment = $objectLine->comment;
+                    $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
+                }
+
+                $question = $question;
+                include __DIR__ . '/digiquali_question_single.tpl.php';
+            }
+            print '</div>';
+        }
+        $object->displayAnswers($objectLine, $questionGroup->fetchQuestionGroupsOrderedByPosition(), $isFrontend, ++$level);
+
+        print '</div>';
+    } else {
+        $result = $objectLine->fetchFromParentWithQuestion($object->id, $questionOrGroup->id, 0);
+        if (is_array($result) && !empty($result)) {
+            $objectLine = array_shift($result);
+            $questionAnswer = $objectLine->answer;
+            $comment = $objectLine->comment;
+            $objectLine->fetchObjectLinked($objectLine->id, $objectLine->element);
+        }
+        $question = $questionOrGroup;
+
+        include __DIR__ . '/digiquali_question_single.tpl.php';
     }
 }

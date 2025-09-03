@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 require_once __DIR__ . '/../../class/sheet.class.php';
 require_once __DIR__ . '/../../class/question.class.php';
+require_once __DIR__ . '/../../class/questiongroup.class.php';
 require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
 
 // Global variables definitions
@@ -57,10 +58,11 @@ $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');
 
 // Initialize technical objects
 // Technical objets
-$object      = new Sheet($db);
-$question    = new Question($db);
-$extrafields = new ExtraFields($db);
-$category    = new Categorie($db);
+$object        = new Sheet($db);
+$question      = new Question($db);
+$questionGroup = new QuestionGroup($db);
+$extrafields   = new ExtraFields($db);
+$category      = new Categorie($db);
 
 // View objects
 $form = new Form($db);
@@ -111,18 +113,59 @@ if (empty($reshook)) {
 		}
 	}
 
+    if ($action == 'addQuestionGroup') {
+        $questionGroupId = GETPOST('questionGroupId');
+        $targetQuestionGroupId = GETPOST('targetGroupId');
+        if ($questionGroupId > 0) {
+			$questionGroup->fetch($questionGroupId);
+
+			// Linked new group to its parent (it could be the model or another group of the model)
+			if ($targetQuestionGroupId == 0) {
+				$targetLinkedId = $id;
+				$targetElementType = $object->element;
+			} else {
+				$targetLinkedId = $targetQuestionGroupId;
+				$targetElementType = 'questiongroup';
+			}
+			$questionGroup->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
+
+            if ($targetQuestionGroupId > 0) {
+				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
+			} else {
+				$object->updateQuestionsAndGroupsPosition([], [], true);
+			}
+
+            $object->call_trigger('SHEET_ADDQUESTIONGROUP', $user);
+            setEventMessages($langs->trans('AddQuestionGroupLink', 1) . ' ' . $questionGroup->ref, []);
+            header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id'));
+            exit;
+        }
+    }
+
 	if ($action == 'addQuestion' && $permissiontoadd) {
 		$questionId = GETPOST('questionId');
 		if ($questionId > 0) {
 			$question->fetch($questionId);
-			$question->add_object_linked('digiquali_' . $object->element,$id);
 
-			$object->fetchObjectLinked($id, 'digiquali_' . $object->element, null, '', 'OR', 1, 'position', 0);
-            $questionIds   = $object->linkedObjectsIds['digiquali_question'];
-            $questionIds[] = $question->id;
-			$object->updateQuestionsPosition($questionIds);
+			// Add question to target group or to sheet
+			$targetQuestionGroupId = GETPOST('targetGroupId');
+			if ($targetQuestionGroupId == 0) {
+				$targetLinkedId = $id;
+				$targetElementType = $object->element;
+			} else {
+				$targetLinkedId = $targetQuestionGroupId;
+				$targetElementType = 'questiongroup';
+			}
 
-			$object->call_trigger('SHEET_ADDQUESTION', $user);
+			$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
+
+			if ($targetQuestionGroupId > 0) {
+				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
+			} else {
+				$object->updateQuestionsAndGroupsPosition([], [], true);
+			}
+
+            $object->call_trigger('SHEET_ADDQUESTION', $user);
 			setEventMessages($langs->trans('AddQuestionLink', 1) . ' ' . $question->ref, []);
 			header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id'));
 			exit;
@@ -135,14 +178,45 @@ if (empty($reshook)) {
 	if ($action == 'unlinkQuestion' && $permissiontoadd) {
 		$questionId = GETPOST('questionId');
 		$question->fetch($questionId);
-		$question->element = 'digiquali_'.$question->element;
-		$question->deleteObjectLinked($id, 'digiquali_' . $object->element);
+
+		$question->fetchObjectLinked();
+
+		$linkedObjectsIds = $question->linkedObjectsIds;
+		if (isset($linkedObjectsIds['digiquali_questiongroup'])) {
+			$sourceId = array_shift($linkedObjectsIds['digiquali_questiongroup']);
+			$sourceType = 'digiquali_questiongroup';
+		}
+		if (isset($linkedObjectsIds['digiquali_sheet'])) {
+			$sourceId = array_shift($linkedObjectsIds['digiquali_sheet']);
+			$sourceType = 'digiquali_sheet';
+		}
+
+		$question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question');
 
 		setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, array());
 
 		header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id') . '&page_y=' . GETPOST('page_y'));
 		exit;
 	}
+
+    if ($action == 'unlinkQuestionGroup' && $permissiontoadd) {
+        $questionGroupId = GETPOST('questionGroupId');
+        $questionGroup->fetch($questionGroupId);
+
+
+		$parentGroupId = $questionGroup->getParentGroupId();
+		if ($parentGroupId == 0) {
+			$sourceElementType = 'sheet';
+		} else {
+			$sourceElementType = $questionGroup->element;
+		}
+		$questionGroup->deleteObjectLinked($parentGroupId, 'digiquali_' . $sourceElementType, $questionGroup->id, 'digiquali_questiongroup');
+
+        setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, array());
+
+        header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id') . '&page_y=' . GETPOST('page_y'));
+        exit;
+    }
 
 	if ($action == 'add' && $permissiontoadd && !$cancel) {
 		if (is_array(GETPOST('linked_object')) && !empty(GETPOST('linked_object'))) {
@@ -183,9 +257,46 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'moveLine' && $permissiontoadd) {
-		$idsArray = json_decode(file_get_contents('php://input'), true);
-		if (is_array($idsArray['order']) && !empty($idsArray['order'])) {
-		    $object->updateQuestionsPosition($idsArray['order']);
+		$newPositionsArray = json_decode(file_get_contents('php://input'), true);
+
+		$groupId = GETPOST('groupId', 'int');
+		$movedItemId = GETPOST('movedItemId', 'alphanohtml');
+		$movedItemType = GETPOST('movedItemType', 'alphanohtml');
+
+		if ($movedItemId > 0) {
+			if ($movedItemType == 'question') {
+				$question = new Question($object->db);
+				if ($question->fetch($movedItemId)) {
+					$question->element = 'digiquali_question';
+					$question->updateObjectLinked($groupId, ($groupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet'));
+				}
+			}
+			if ($movedItemType == 'questiongroup') {
+				$questionGroup = new QuestionGroup($object->db);
+				if ($questionGroup->fetch($movedItemId)) {
+					$question->element = 'digiquali_questiongroup';
+					$question->updateObjectLinked($groupId, ($groupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet'));
+				}
+			}
+		}
+
+		if ($groupId >= 0) {
+			$questionPositions = [];
+			foreach ($newPositionsArray['question_positions'] as $singleQuestionPosition) {
+				$questionPositions[$singleQuestionPosition['position']] = $singleQuestionPosition['id'];
+			}
+			$questionGroupPositions = [];
+			foreach ($newPositionsArray['questiongroup_positions'] as $singleQuestionGroupPosition) {
+				$questionGroupPositions[$singleQuestionGroupPosition['position']] = $singleQuestionGroupPosition['id'];
+			}
+			if ($groupId == 0) {
+				$object->updateQuestionsAndGroupsPosition($questionPositions, $questionGroupPositions);
+			} else {
+				$group = new QuestionGroup($object->db);
+				$group->fetch($groupId);
+				$group->updateQuestionsPositions($questionPositions);
+				$group->updateQuestionGroupsPositions($questionGroupPositions);
+			}
 		}
 	}
 
@@ -323,11 +434,10 @@ if (empty($reshook)) {
 
 $title    = $langs->trans('Sheet');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/saturne/js/includes/hammer.min.js'];
 
 $objectsMetadata = saturne_get_objects_metadata();
 
-saturne_header(1,'', $title, $help_url, '', 0, 0, $moreJS);
+saturne_header(1,'', $title, $help_url);
 
 // Part to create
 if ($action == 'create') {
@@ -447,7 +557,7 @@ if (($id || $ref) && $action == 'edit') {
     //FK Element
 	$elementLinked = json_decode($object->element_linked);
 
-	foreach ($elementArray as $key => $element) {
+	foreach ($objectsMetadata as $key => $element) {
 		if (!empty($element['conf'])) {
 			print '<tr><td class="">' . img_picto('', $element['picto'], 'class="paddingrightonly"') . $langs->trans($element['langs']) . '</td><td>';
 			if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
@@ -492,6 +602,10 @@ if (($id || $ref) && $action == 'edit') {
 
 // Part to show record
 if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'create'))) {
+	if ($object->displayTree()) {
+		print $object->getQuestionAndGroupsTree();
+	}
+    print '<div id="cardContent" class="' . ($object->displayTree() ? 'margin-for-tree' : '') . '">';
 	$res = $object->fetch_optionals();
 
 	saturne_get_fiche_head($object, 'card', $title);
@@ -549,7 +663,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="setsuccess_rate">';
         print '<table class="nobordernopadding centpercent">';
-        print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
+        print '<tbody><tr><td><input type="number" id="success_rate" name="success_rate" step="0.01" min="0" max="100" onkeyup=window.saturne.utils.enforceMinMax(this) value="' . $object->success_rate . '">';
         print '</td><td class="left"><input type="submit" class="smallpaddingimp button" name="modify" value="' . $langs->trans('Modify') . '"><input type="submit" class="smallpaddingimp button button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '"></td></tr></tbody></table>';
         print '</form>';
     } else {
@@ -570,7 +684,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	$elementLinked = json_decode($object->element_linked);
 
 	//FK Element
-	foreach ($elementArray as $key => $element) {
+	foreach ($objectsMetadata as $key => $element) {
 		if ($elementLinked->$key > 0) {
 			if (!empty($element['conf'])) {
 				print '<tr><td class="">' . img_picto('', $element['picto'], 'class="paddingrightonly"') . $langs->trans($element['langs']) . '</td><td>';
@@ -610,15 +724,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	print '<div class="clearboth"></div>';
 
-	$object->fetchObjectLinked($id, 'digiquali_' . $object->element, null, '', 'OR', 1, 'position');
-	$questionIds = $object->linkedObjectsIds['digiquali_question'];
+	print '<div id="dialog-moved-error" title="' . $langs->trans('Error') . '">';
+	print '<p>';
+	print $langs->trans("LineMovedOutsideParentError");
+	print '</p>';
+	print '</div>';
 
-    $questionCounter = 0;
-    if (!empty($questionIds)) {
-        $questionCounter = count($questionIds);
-    }
+    $questionsAndGroups = $object->fetchQuestionsAndGroups();
 
-    // Buttons for actions
+
+
+	// Buttons for actions
 	if ($action != 'presend' && $action != 'editline') {
 		print '<div class="tabsAction">';
 		$parameters = [];
@@ -665,110 +781,44 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print '</div>';
 	}
 
-	// QUESTIONS LINES
-	print '<div class="div-table-responsive-no-min">';
-	print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '', 0, 'questionList');
-	print '<table id="tablelines" class="centpercent noborder noshadow">'; ?>
-	<script>
-		$(document).ready(function(){
-			$(".move-line").css("background-image",'url(<?php echo DOL_URL_ROOT.'/theme/'.$conf->theme.'/img/grip.png'; ?>)');
-			$(".move-line").css("background-repeat","no-repeat");
-			$(".move-line").css("background-position","center center");
-		});
-	</script>
-	<?php
-	// Lines
-	print '<thead><tr class="liste_titre">';
-	print '<td class="maxwidth300 widthcentpercentminusx">' . $langs->trans('Ref') . '</td>';
-	print '<td>' . $langs->trans('Label') . '</td>';
-	print '<td>' . $langs->trans('Description') . '</td>';
-	print '<td>' . $langs->trans('QuestionType') . '</td>';
-  	print '<td class="center">' . $langs->trans('Mandatory') . '</td>';
-	print '<td class="center">' . $langs->trans('PhotoOk') . '</td>';
-	print '<td class="center">' . $langs->trans('PhotoKo') . '</td>';
-	print '<td class="center">' . $langs->trans('Status') . '</td>';
-	print '<td class="center">' . $langs->trans('Action') . '</td>';
-	print '<td class="center"></td>';
-	print '</tr></thead>';
+    if (is_array($questionsAndGroups) && !empty($questionsAndGroups)) {
+        $questionCounter = count($questionsAndGroups);
+    } else {
+        $questionCounter = 0;
+    }
 
-	if (is_array($questionIds) && !empty($questionIds)) {
-		foreach ($questionIds as $questionId) {
-			$item = $question;
-			$item->fetch($questionId);
+// QUESTIONS LINES
+    print '<div class="div-table-responsive-no-min">';
+    print load_fiche_titre($langs->trans("LinkedQuestionsList", $questionCounter), '', '', 0, 'questionList');
+    print '<table id="tablelines" class="centpercent noborder noshadow">'; ?>
+    <script>
+        $(document).ready(function(){
+            $(".sheet-move-line").css("background-image",'url(<?php echo DOL_URL_ROOT.'/theme/'.$conf->theme.'/img/grip.png'; ?>)');
+            $(".sheet-move-line").css("background-repeat","no-repeat");
+            $(".sheet-move-line").css("background-position","center center");
+        });
+    </script>
+    <?php
+// Lines
+    print '<thead><tr class="liste_titre">';
+    print '<td class="maxwidth300 widthcentpercentminusx">' . $langs->trans('Ref') . '</td>';
+    print '<td>' . $langs->trans('Label') . '</td>';
+    print '<td>' . $langs->trans('Description') . '</td>';
+    print '<td>' . $langs->trans('QuestionType') . '</td>';
+    print '<td class="center">' . $langs->trans('Mandatory') . '</td>';
+    print '<td class="center">' . $langs->trans('PhotoOk') . '</td>';
+    print '<td class="center">' . $langs->trans('PhotoKo') . '</td>';
+    print '<td class="center">' . $langs->trans('Status') . '</td>';
+    print '<td class="center">' . $langs->trans('Action') . '</td>';
+    print '<td class="center"></td>';
+    print '</tr></thead>';
+    print '<tbody>';
 
-			print '<tr id="' . $item->id . '" class="line-row oddeven">';
-			print '<td>';
-			print $item->getNomUrl(1);
-			print '</td>';
+    $object->displayGroupsAndQuestions($questionsAndGroups);
 
-			print '<td>';
-			print $item->label;
-			print '</td>';
-
-			print '<td>';
-			print $item->description;
-			print '</td>';
-
-			print '<td>';
-			print $langs->transnoentities($item->type);
-			print '</td>';
-
-			// Mandatory -- Rendre obligatoire
-			$mandatoryArray = json_decode($object->mandatory_questions, true);
-
-			print '<td class="center">';
-			print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '">';
-			print '<input type="hidden" name="token" value="' . newToken() . '">';
-			print '<input type="hidden" name="action" value="set_mandatory">';
-			print '<input type="hidden" name="questionId" value="' . $item->id . '">';
-			print '<input type="hidden" name="questionRef" value="' . $item->ref . '">';
-			print '<input type="checkbox" onchange="submit();" id="mandatory" name="mandatory" value="' . $item->id . '"' . (in_array($item->id, $mandatoryArray) ? ' checked ' : '') . '" ' . ($object->status < Sheet::STATUS_LOCKED ? '>' : 'disabled>');
-			print '</form>';
-			print '</td>';
-
-			print '<td class="center">';
-			print saturne_show_medias_linked('digiquali',$conf->digiquali->multidir_output[$conf->entity] . '/question/' . $item->ref . '/photo_ok',1,'',0,0,0,50,50,0,0,0,'question/' . $item->ref . '/photo_ok',$item,'photo_ok',0,0,1,1);
-			print '</td>';
-            print '<td class="center">';
-			print saturne_show_medias_linked('digiquali',$conf->digiquali->multidir_output[$conf->entity] . '/question/' . $item->ref . '/photo_ko',1,'',0,0,0,50,50,0,0,0,'question/' . $item->ref . '/photo_ko',$item,'photo_ko',0,0,1,1);
-			print '</td>';
-
-			print '<td class="center">';
-			print $item->getLibStatut(5);
-			print '</td>';
-
-			print '<td class="center">';
-			if ($object->status < $object::STATUS_LOCKED) {
-				print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=unlinkQuestion&questionId=' . $item->id . '">';
-				print img_delete();
-				print '</a>';
-			}
-			print '</td>';
-
-			if ($object->status < $object::STATUS_LOCKED) {
-				print '<td class="move-line ui-sortable-handle">';
-			} else {
-				print '<td>';
-			}
-			print '</td></tr>';
-		}
-	}
-
-	if ($object->status < $object::STATUS_LOCKED) {
-		print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
-		print '<input type="hidden" name="token" value="' . newToken() . '">';
-		print '<input type="hidden" name="action" value="addQuestion">';
-		print '<input type="hidden" name="id" value="' . $id . '">';
-
-		print '<tr class="add-line"><td class="maxwidth300 widthcentpercentminusx">';
-		print img_picto('', $question->picto, 'class="pictofixedwidth"') . $question->selectQuestionList(0, 'questionId', 's.status = ' . Question::STATUS_LOCKED, '1', 0, 0, array(), '', 0, 0, 'disabled maxwidth300 widthcentpercentminusx', '', false, $questionIds);
-		print '</td>';
-		print '<td>';
-		print '<input type="submit" id="actionButtonAdd" class="button wpeo-button" name="add" value="' . $langs->trans("Add") . '">';
-        print '</td><td colspan="8">';
-		print '</td></tr>';
-		print '</form>';
-	}
+	$isAddFormsVisible = true;
+	$groupId = 0; // root of the model
+	include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_addforms.tpl.php';
 
 	print '</table>';
 	print '</div>';

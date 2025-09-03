@@ -67,7 +67,9 @@ window.digiquali.object.event = function() {
   $(document).on( 'keyup', '.question-comment', window.digiquali.object.showCommentUnsaved);
   $(document).on( 'change', '.question-answer', window.digiquali.object.changeStatusQuestion);
   $(document).on( 'click', '.answer:not(.disable)', window.digiquali.object.changeStatusQuestion);
-  $(document).on('input', '.question-answer[type="range"]', window.digiquali.object.rangePercent);
+  $(document).on('input', '.question-answer[type="range"]', function () {
+    window.digiquali.object.rangePercent.call(this, false);
+  });
 };
 
 /**
@@ -107,7 +109,8 @@ window.digiquali.object.selectAnswer = function() {
   let autoSave        = $(this).closest('.table-id-' + questionId).attr('data-autoSave');
   let answer          = '';
   let answerValue     = $(this).hasClass('answer') ? $(this).attr('value') : $(this).val();
-  let comment         = $(this).closest('.table-id-' + questionId).find('#comment' + questionId).val();
+  let comment         = $(this).closest('.table-id-' + questionId).find('textarea[name="comment' + questionId + '"]').val();
+
   if ($(this).closest('.table-cell').hasClass('select-answer')) {
     if ($(this).hasClass('multiple-answers')) {
       $(this).closest('span').toggleClass('active');
@@ -141,6 +144,7 @@ window.digiquali.object.selectAnswer = function() {
 
 window.digiquali.object.changeStatusQuestion = function() {
   $(this).closest('.question').addClass('question-complete');
+  window.digiquali.object.updateButtonsStatus();
 };
 
 /**
@@ -193,21 +197,19 @@ window.digiquali.object.updateButtonsStatus = function() {
 window.digiquali.object.saveAnswer = function(questionId, answer, comment) {
   let token          = window.saturne.toolbox.getToken();
   let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
-  window.saturne.loader.display($('.table-id-' + questionId));
 
   $.ajax({
     url: document.URL + querySeparator + 'action=save&token=' + token,
     type: 'POST',
+    contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
       autoSave: true,
       questionId: questionId,
       answer: answer,
       comment: comment
     }),
-    processData: false,
-    contentType: false,
     success: function(resp) {
-      $('.fiche').replaceWith($(resp).find('.fiche'));
+      $('.progress-info').replaceWith($(resp).find('.progress-info'));
       $('#dialog-confirm-actionButtonValidate>.confirmmessage').replaceWith($(resp).find('#dialog-confirm-actionButtonValidate>.confirmmessage'));
     },
     error: function() {}
@@ -222,7 +224,7 @@ window.digiquali.object.saveAnswer = function(questionId, answer, comment) {
  *
  * @return {void}
  */
-window.digiquali.object.rangePercent = function() {
+window.digiquali.object.rangePercent = function(fromInit) {
   const mobile      = window.saturne.toolbox.isPhone();
   const slider      = $(this);
   const value       = parseFloat(slider.val());
@@ -232,6 +234,9 @@ window.digiquali.object.rangePercent = function() {
   const sliderPos   = slider.position().left;
   const sliderTop   = slider.position().top;
   var thumbWidth    = mobile ? 36 : 70;
+  let questionId   = slider.closest('.table-id').attr('data-questionId');
+  let publicInterface = $(this).closest('.table-id-' + questionId).attr('data-publicInterface');
+  let autoSave        = $(this).closest('.table-id-' + questionId).attr('data-autoSave');
 
   slider.parent().find('.range-percent').remove();
 
@@ -255,6 +260,15 @@ window.digiquali.object.rangePercent = function() {
   slider.attr('value', rangePercentValue);
 
   slider.parent().append(rangePercent);
+
+  if (!fromInit) {
+    if (!publicInterface && autoSave == 1 && !$(this).hasClass('multiple-answers')) {
+      window.digiquali.object.saveAnswer(questionId, rangePercent, comment);
+    } else {
+      window.digiquali.object.updateButtonsStatus();
+    }
+  }
+
 }
 
 /**
@@ -266,6 +280,6 @@ window.digiquali.object.rangePercent = function() {
  */
 window.digiquali.object.placePercents = function() {
   $('.question-answer[type="range"]').each(function() {
-    window.digiquali.object.rangePercent.call(this);
+    window.digiquali.object.rangePercent.call(this, true);
   });
 }

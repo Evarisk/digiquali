@@ -91,7 +91,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
      */
     public function fillTagsLines(Odf $odfHandler, Translate $outputLangs, array $moreParam): int
     {
-        global $conf, $langs;
+        global $conf, $langs, $maxwidthmini, $maxheightmini, $maxwidthsmall, $maxheightsmall;
 
         $object = $moreParam['object'];
 
@@ -121,22 +121,57 @@ class doc_controldocument_odt extends SaturneDocumentModel
 
                 if (!empty($object)) {
                     $sheet = new Sheet($this->db);
+                    $questionGroup = new QuestionGroup($this->db);
 
-                    $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_sheet', null, '', 'OR', 1, 'position', 0);
-                    $questionIds = $sheet->linkedObjectsIds;
+                    $sheet->fetch($object->fk_sheet);
+                    $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
 
-                    if (is_array($questionIds['digiquali_question']) && !empty($questionIds['digiquali_question'])) {
+                    foreach($questionsAndGroups as $questionOrGroup) {
+                        if ($questionOrGroup->element == 'questiongroup') {
+                            $questionGroup->fetch($questionOrGroup->id);
+                            $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
+                            if (is_array($groupQuestions) && !empty($groupQuestions)) {
+                                foreach($groupQuestions as $groupQuestion) {
+                                    $questionIds[] = [$questionOrGroup->id => $groupQuestion->id];
+                                }
+                            }
+
+                        } else {
+                            $questionIds[] = [0 => $questionOrGroup->id];
+                        }
+                    }
+
+
+                    if (is_array($questionIds) && !empty($questionIds)) {
                         $controldet = new ControlLine($this->db);
                         $question   = new Question($this->db);
                         $answer     = new Answer($this->db);
-                        foreach ($questionIds['digiquali_question'] as $questionId) {
-                            $question->fetch($questionId);
+                        foreach ($questionIds as $questionData) {
 
-                            $controldets = $controldet->fetchFromParentWithQuestion($object->id, $questionId);
+                            $questionGroupId = key($questionData);
+                            $questionId      = current($questionData);
+
+                            if ($questionGroupId > 0) {
+                                $questionGroup->fetch($questionGroupId);
+                                $tmpArray['group_label'] = $questionGroup->label . ' - ';
+                            } else {
+                                $tmpArray['group_label'] = ' ';
+                            }
+
+                            $question->fetch($questionId);
+                            $controldets = $controldet->fetchFromParentWithQuestion($object->id, $questionId, $questionGroupId);
 
                             $tmpArray['ref']         = $question->ref;
                             $tmpArray['label']       = $question->label;
-                            $tmpArray['description'] = strip_tags($question->description);
+                            $tmpArray['description'] = $question->description;
+                            foreach (['photo_ko', 'photo_ok'] as $photoType) {
+                                if (!empty($question->$photoType)) {
+                                    $path      = $conf->digiquali->multidir_output[$conf->entity] . '/question/' . $question->ref . '/' . $photoType;
+                                    $fileSmall = saturne_get_thumb_name($question->$photoType);
+                                    $image     = $path . '/thumbs/' . $fileSmall;
+                                    $tmpArray[$photoType] = $image;
+                                }
+                            }
 
                             if (is_array($controldets) && !empty($controldets)) {
                                 $questionAnswerLine     = array_shift($controldets);
@@ -180,12 +215,17 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                         $tmpArray['answer'] = '';
                                 }
 
-                                $path     = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/answer_photo/' . $question->ref;
+                                $path = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/answer_photo/' . $question->ref;
+                                // If thumb directory does not exist, create a new one to stock thumbs photo
+                                if (!is_dir($path . '/thumbs/')) {
+                                    mkdir($path . '/thumbs/', 0777, true);
+                                }
                                 $fileList = dol_dir_list($path, 'files');
                                 // Fill an array with photo path and ref of the answer for next loop.
                                 if (is_array($fileList) && !empty($fileList)) {
+                                    $listFiles[] = $fileList;
                                     foreach ($fileList as $singleFile) {
-                                        $fileSmall          = saturne_get_thumb_name($singleFile['name'], getDolGlobalString('DIGIQUALI_DOCUMENT_MEDIA_VIGNETTE_USED'));
+                                        $fileSmall          = saturne_get_thumb_name($singleFile['name']);
                                         $image              = $path . '/thumbs/' . $fileSmall;
                                         $photoArray[$image] = $questionAnswerLine->ref;
                                     }
@@ -201,7 +241,6 @@ class doc_controldocument_odt extends SaturneDocumentModel
                     }
                 }
             }
-
             // Get equipment.
             $foundTagForLines = 1;
             try {
@@ -265,21 +304,32 @@ class doc_controldocument_odt extends SaturneDocumentModel
                 $listLines = '';
                 dol_syslog($e->getMessage());
             }
-
             // Loop on previous photos array.
             if ($foundTagForLines) {
                 if (is_array($photoArray) && !empty($photoArray)) {
                     foreach ($photoArray as $photoPath => $answerRef) {
-                        $fileInfo = preg_split('/thumbs\//', $photoPath);
-                        $name     = end($fileInfo);
-
-                        $tmpArray['answer_ref'] = ($previousRef == $answerRef) ? '' : $outputLangs->trans('Ref') . ' : ' . $answerRef;
-                        $tmpArray['media_name'] = $name;
-                        $tmpArray['photo']      = $photoPath;
-
-                        $previousRef = $answerRef;
-
-                        $this->setTmpArrayVars($tmpArray, $listLines, $outputLangs);
+                        // Check the non-existence of the thumb file to delete from photopath to avoid problem during re generation of thumb
+                        if (!file_exists($photoPath)) {
+                            unset($photoPath); // We remove it from the list if in reality it does not exist
+                        }
+                        $ref[]    = $answerRef;
+                        $photos[] = $photoPath;
+                    }
+                    $key = 0;
+                    foreach ($listFiles as $listFile) {
+                        foreach ($listFile as $file) {
+                            // Check the non-existence of the thumb file and also the existence of the original file to generate a new thumb
+                            if (!file_exists($photos[$key]) && file_exists($file['fullname'])) {
+                                $photos[$key] = vignette($file['fullname'], $maxwidthsmall, $maxheightsmall, '_small', 50, $path . '/thumbs/'); // Create a new thumb in the thumb folder if file does not exist
+                            }
+                            $fileInfo               = preg_split('/thumbs\//', $photos[$key]);
+                            $name                   = end($fileInfo);
+                            $tmpArray['answer_ref'] = !empty($ref[$key]) ? $outputLangs->trans('Ref') . ' : ' . $ref[$key] : $langs('NonApplicable');
+                            $tmpArray['media_name'] = $name;
+                            $tmpArray['photo']      = $photos[$key];
+                            $this->setTmpArrayVars($tmpArray, $listLines, $outputLangs);
+                            $key++;
+                        }
                     }
                 } else {
                     $tmpArray['answer_ref'] = ' ';

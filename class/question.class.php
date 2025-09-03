@@ -23,6 +23,7 @@
 
 // Load Saturne libraries.
 require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+require_once __DIR__ . '/answer.class.php';
 
 /**
  * Class for Question.
@@ -109,7 +110,7 @@ class Question extends SaturneObject
      */
 	public $fields = [
         'rowid'                  => ['type' => 'integer',      'label' => 'TechnicalID',          'enabled' => 1, 'position' => 1,   'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
-        'ref'                    => ['type' => 'varchar(128)', 'label' => 'Ref',                  'enabled' => 1, 'position' => 10,  'notnull' => 1, 'visible' => 4, 'noteditable' => 1, 'default' => '(PROV)', 'index' => 1, 'searchall' => 1, 'showoncombobox' => 1, 'validate' => 1, 'comment' => 'Reference of object'],
+        'ref'                    => ['type' => 'varchar(128)', 'label' => 'Ref',                  'enabled' => 1, 'position' => 10,  'notnull' => 1, 'visible' => 4, 'noteditable' => 1, 'default' => '', 'index' => 1, 'searchall' => 1, 'showoncombobox' => 1, 'validate' => 1, 'comment' => 'Reference of object'],
         'ref_ext'                => ['type' => 'varchar(128)', 'label' => 'RefExt',               'enabled' => 1, 'position' => 20,  'notnull' => 0, 'visible' => 0],
         'entity'                 => ['type' => 'integer',      'label' => 'Entity',               'enabled' => 1, 'position' => 30,  'notnull' => 1, 'visible' => 0, 'index' => 1],
         'date_creation'          => ['type' => 'datetime',     'label' => 'DateCreation',         'enabled' => 1, 'position' => 40,  'notnull' => 1, 'visible' => 2],
@@ -118,7 +119,8 @@ class Question extends SaturneObject
         'status'                 => ['type' => 'smallint',     'label' => 'Status',               'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 5, 'index' => 1, 'searchmulti' => 1, 'default' => 0, 'arrayofkeyval' => [1 => 'InProgress', 2 => 'Locked', 3 => 'Archived'], 'css' => 'minwidth200'],
 		'type'                   => ['type' => 'varchar(128)', 'label' => 'Type',                 'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1],
 		'label'                  => ['type' => 'varchar(255)', 'label' => 'Label',                'enabled' => 1, 'position' => 11,  'notnull' => 1, 'visible' => 1, 'searchall' => 1, 'css' => 'minwidth200', 'showoncombobox' => 1],
-		'description'            => ['type' => 'html',         'label' => 'Description',          'enabled' => 1, 'position' => 12, 'notnull' => 0, 'visible' => 1],
+		'description'            => ['type' => 'html',         'label' => 'Description',          'enabled' => 1, 'position' => 12, 'notnull' => 0,  'visible' => 1, 'csslist' => 'tdoverflowmax300'],
+		'points'            	 => ['type' => 'real',	       'label' => 'NumberOfPoints',       'enabled' => 1, 'position' => 13,  'notnull' => 0, 'visible' => 1, 'default' => 1, 'bounds' => ['min' => 0], 'validate' => 1],
 		'show_photo'             => ['type' => 'boolean',      'label' => 'ShowPhoto',            'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0],
 		'authorize_answer_photo' => ['type' => 'boolean',      'label' => 'AuthorizeAnswerPhoto', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => 0],
 		'enter_comment'          => ['type' => 'boolean',      'label' => 'EnterComment',         'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0],
@@ -172,7 +174,53 @@ class Question extends SaturneObject
     /**
      * @var string Type
      */
-    public string $type;
+    public string $type = '';
+
+	public const TYPE_UNIQUE_CHOICE = 'UniqueChoice';
+	public const TYPE_MULTIPLE_CHOICES = 'MultipleChoices';
+	public const TYPE_TEXT = 'Text';
+	public const TYPE_PERCENTAGE = 'Percentage';
+	public const TYPE_RANGE = 'Range';
+	public const TYPE_OK_KO = 'OkKo';
+	public const TYPE_OK_KO_TOFIX_NA = 'OkKoToFixNonApplicable';
+
+    public const QUESTION_TYPES = [
+		self::TYPE_UNIQUE_CHOICE => [
+			'default_points' => 1,
+			'correctable' => true,
+			'only_one_correct_answer' => true,
+			'answers_enable_actions' => true,
+		],
+		self::TYPE_MULTIPLE_CHOICES => [
+			'default_points' => 1,
+			'correctable' => true,
+			'answers_enable_actions' => true,
+		],
+		self::TYPE_TEXT => [
+			'default_points' => 0,
+			'correctable' => false,
+		],
+		self::TYPE_PERCENTAGE => [
+			'default_points' => 0,
+			'correctable' => true,
+			'bounds' => true,
+		],
+		self::TYPE_RANGE => [
+			'default_points' => 0,
+			'correctable' => true,
+			'bounds' => true,
+		],
+		self::TYPE_OK_KO => [
+			'default_points' => 1,
+			'correctable' => true,
+			'only_one_correct_answer' => true,
+		],
+		self::TYPE_OK_KO_TOFIX_NA => [
+			'default_points' => 1,
+			'correctable' => true,
+			'only_one_correct_answer' => true,
+		],
+	];
 
     /**
      * @var string Label
@@ -183,6 +231,11 @@ class Question extends SaturneObject
      * @var string|null Description
      */
     public ?string $description;
+
+    /**
+     * @var float Points
+     */
+    public float $points;
 
     /**
      * @var bool|null Show photo
@@ -246,7 +299,25 @@ class Question extends SaturneObject
         $this->ref      = $this->getNextNumRef();
 		$this->status   = $this->status ?: 1;
 
-        return parent::create($user, $notrigger);
+        $result = parent::create($user, $notrigger);
+
+        if ($result > 0) {
+            if (GETPOST('question_group_id') > 0) {
+                $questionGroup = new QuestionGroup($this->db);
+                $questionGroup->fetch(GETPOST('question_group_id'));
+                $questionGroup->addQuestion($this->id);
+            } else if (GETPOST('sheet_id') > 0) {
+               $sheet = new Sheet($this->db);
+               $sheet->fetch(GETPOST('sheet_id'));
+               $this->add_object_linked('digiquali_' . $sheet->element, GETPOST('sheet_id'));
+
+               $sheet->updateQuestionsAndGroupsPosition([], [], true);
+
+               $sheet->call_trigger('SHEET_ADDQUESTION', $user);
+           }
+        }
+
+        return $result;
     }
 
 	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
@@ -495,6 +566,7 @@ class Question extends SaturneObject
 	 * @return       string      HTML string with
 	 * @throws Exception
 	 */
+	// TODO remove this method and replace with saturne_fetch_all_object_type + voir questiongroup card (multiselect_array)
 	public function selectQuestionList($selected = '', $htmlname = 'socid', $filter = '', $showempty = '1', $showtype = 0, $forcecombo = 0, $events = array(), $filterkey = '', $outputmode = 0, $limit = 0, $morecss = 'minwidth100', $moreparam = '', $multiple = false, $alreadyAdded = array())
 	{
 		$out      = '';
@@ -513,11 +585,14 @@ class Question extends SaturneObject
 		// On recherche les societes
 		$sql  = "SELECT *";
 		$sql .= " FROM " . MAIN_DB_PREFIX . "digiquali_question as s";
-
 		$sql              .= " WHERE s.entity IN (" . getEntity($this->table_element) . ")";
+		// TODO REVIEW not possible to put this in $filter param because of testSqlAndScriptInject which return empty string
+		$sql              .= " AND s.rowid NOT IN (";
+		$sql              .= "	SELECT fk_target FROM llx_element_element WHERE targettype = 'digiquali_question'";
+		$sql			  .= ")";
 		if ($filter) $sql .= " AND (" . $filter . ")";
 
-		$sql .= $this->db->order("rowid", "ASC");
+		$sql .= $this->db->order("s.rowid", "ASC");
 		$sql .= $this->db->plimit($limit, 0);
 
 		// Build output string
@@ -535,6 +610,11 @@ class Question extends SaturneObject
 			$num                  = $this->db->num_rows($resql);
 			$i                    = 0;
 
+            if ($showempty)
+            {
+                if ($showempty === '1') $out .= '<option value="0" selected>'. dol_escape_htmltag('&nbsp;') . '</option>';
+                else $out .= '<option value="0"></option>';
+            }
 			if ($num) {
 				while ($i < $num) {
 					$obj   = $this->db->fetch_object($resql);
@@ -620,4 +700,225 @@ class Question extends SaturneObject
 
 		return $ret;
 	}
+
+	/**
+	 * Return the list of positions of all correct answers for this question
+	 *
+	 * @return array
+	 */
+	public function getAllCorrectAnswers(): array
+	{
+		// Depending question type :
+		// - For UniqueChoice/MultipleChoices/OkKo/OkKoToFixNonApplicable : search correct answers for this question in llx_answer
+		$answer = new Answer($this->db);
+		$correctAnswers = $answer->fetchAll('', '', 0, 0, ['fk_question' => $this->id, 'correct' => 1, 'status' => 1]);
+
+		if (is_array($correctAnswers)) {
+			$retAnswersPositions = [];
+			foreach ($correctAnswers as $correctAnswer) {
+				$retAnswersPositions[] = $correctAnswer->position;
+			}
+			return $retAnswersPositions;
+		}
+
+		return [];
+	}
+
+	/**
+	 * To know if all the answers given for the question are correct or not
+	 *
+	 * @param mixed $answerValue
+	 *
+	 * @return int Return -1 if at least one answer is false, 0 for question of type text, 1 if all answers are correct
+	 */
+	public function checkAnswerIsCorrect($answerValue): int
+	{
+		$retValue = 1;
+		if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
+			$retValue = $this->isAnswerInQuestionRange($answerValue) ? 1 : -1;
+		} else if (in_array($this->type, [self::TYPE_OK_KO, self::TYPE_OK_KO_TOFIX_NA, self::TYPE_UNIQUE_CHOICE, self::TYPE_MULTIPLE_CHOICES])) {
+			$correctAnswers = $this->getAllCorrectAnswers();
+
+			if (is_array($correctAnswers)) {
+				$listOfAnswersPositions = explode(',', $answerValue);
+				foreach ($listOfAnswersPositions as $answerItemPosition) {
+					if (!in_array($answerItemPosition, $correctAnswers)) {
+						$retValue = -1;
+						break;
+					}
+				}
+			}
+		} else {
+			$retValue = 0;
+		}
+
+		return $retValue;
+	}
+
+	/**
+	 * To know if the answer value is included in the min/max range defined for the question
+	 *
+	 * @return bool
+	 */
+	public function isAnswerInQuestionRange($answerValue): bool
+	{
+		$questionJson = json_decode($this->json, true);
+		$questionConfig = $questionJson['config'] ?? [];
+
+		$minAnswerValue = $questionConfig[$this->type]['answer-min-value'] ?? null;
+		$maxAnswerValue = $questionConfig[$this->type]['answer-max-value'] ?? null;
+		$hasMinAnswerValue = isset($minAnswerValue);
+		$hasMaxAnswerValue = isset($maxAnswerValue);
+		$hasMinAndMaxValues = $hasMinAnswerValue && $hasMaxAnswerValue;
+
+		if ($hasMinAndMaxValues) {
+			return $answerValue >= $minAnswerValue && $answerValue <= $maxAnswerValue;
+		} else if ($hasMaxAnswerValue) {
+			return $answerValue <= $maxAnswerValue;
+		} else if ($hasMinAnswerValue) {
+			return $answerValue >= $minAnswerValue;
+		}
+
+		return false;
+	}
+
+	/**
+	 * To know if the question can have bounds or not, depending its type
+	 *
+	 * @return bool
+	 */
+	public function canHaveBounds(): bool
+	{
+		return self::QUESTION_TYPES[$this->type]['bounds'] ?? false;
+	}
+
+	/**
+	 * To know if the answers of the question can be modified (add, update, delete)
+	 *
+	 * @return bool
+	 */
+	public function isAnswersActionsEnabled(): bool
+	{
+		return self::QUESTION_TYPES[$this->type]['answers_enable_actions'] ?? false;
+	}
+
+	/**
+	 * To know if the question has a correction or not, depending its type
+	 *
+	 * @return bool
+	 */
+	public function isCorrectable(): bool
+	{
+		return self::QUESTION_TYPES[$this->type]['correctable'] ?? false;
+	}
+
+	/**
+	 * To know if the question has at least one answer which is set as a correct answer
+	 *
+	 * @return bool
+	 */
+	public function hasAtLeastOneCorrectAnswer(int $answerIdToCheck = 0): bool
+	{
+		if ($this->mustHaveOnlyOneCorrectAnswer()) {
+			$answer = new Answer($this->db);
+			$answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $this->id, 'status' => 1, 'correct' => 1]);
+
+			return (is_array($answerList) && count($answerList) > 0 && !in_array($answerIdToCheck, array_keys($answerList)));
+		}
+		return false;
+	}
+
+	/**
+	 * To know if the question must have only one correct answer or not
+	 *
+	 * @return bool
+	 */
+	public function mustHaveOnlyOneCorrectAnswer(): bool
+	{
+		return self::QUESTION_TYPES[$this->type]['only_one_correct_answer'] ?? false;
+	}
+
+	/**
+	 * To get the default number of points of the current question, depending its type
+	 *
+	 * @return integer Number of points
+	 */
+	public function getDefaultPoints(): int
+	{
+		return self::QUESTION_TYPES[$this->type]['default_points'] ?? 0;
+	}
+
+	/**
+	 * List number of points associated to each question type
+	 *
+	 * @return array ['UniqueChoice' => 2, etc...]
+	 */
+	public static function getAllDefaultPoints(): array
+	{
+		return array_map(function($questionTypeConfig) {
+			return ($questionTypeConfig['default_points'] ?? 0);
+		}, self::QUESTION_TYPES);
+	}
+
+	/**
+	 * List of question types which can have bounds
+	 *
+	 * @return array ['Percentage', etc...]
+	 */
+	public static function getQuestionTypesWithBounds(): array
+	{
+		$questionTypesWithBounds = [];
+		foreach (self::QUESTION_TYPES as $questionTypeKey => $questionTypeValue) {
+			if (isset($questionTypeValue['bounds'])) {
+				$questionTypesWithBounds[] = $questionTypeKey;
+			}
+		}
+		return $questionTypesWithBounds;
+	}
+
+	/**
+	 * Return a formatted string to print question score (in points)
+	 * like : 0 / 3 points
+	 *
+	 * @param int $questionWithCorrectAnswer (values are those returned by Question::checkAnswerIsCorrect())
+	 *
+	 * @return string
+	 */
+	public function formatSingleQuestionScore(int $questionWithCorrectAnswer): string
+	{
+		global $langs;
+
+		return (($questionWithCorrectAnswer >= 0) ? $this->points : 0) . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+	}
+
+	/**
+     * Get id of the parent group
+     *
+     * @return int
+     */
+    public function getParentGroupId()
+    {
+        $this->fetchObjectLinked(null, 'digiquali_questiongroup', $this->id, 'digiquali_question', 'OR', '', 'position');
+
+        if (isset($this->linkedObjectsIds['digiquali_questiongroup'])) {
+            return array_shift($this->linkedObjectsIds['digiquali_questiongroup']);
+        }
+		// 0 => sheet root
+        return 0;
+    }
+
+	/**
+     * Display the question in the sheet card
+	 *
+	 * @param Sheet $sheetObject The sheet of the question
+	 * @param string $positionPath The path of the question based on positions
+	 * @param string $tdOffsetStyle Additional CSS styles to put on question
+	 *
+     */
+    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '')
+    {
+		global $langs;
+		$question = $this;
+		include DOL_DOCUMENT_ROOT . '/custom/digiquali/view/sheet/sheet_question.tpl.php';
+    }
 }
