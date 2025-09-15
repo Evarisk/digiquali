@@ -375,7 +375,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
 
         if (!empty($object->photo)) {
             $path       = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/photos';
-            $thumb_name = saturne_get_thumb_name($object->photo, 'mini');
+            $thumb_name = saturne_get_thumb_name($object->photo, 'small');
             $image      = $path . '/thumbs/' . $thumb_name;
             $tmpArray['photoDefault'] = $image;
         } else {
