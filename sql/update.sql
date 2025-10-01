@@ -146,3 +146,5 @@ ALTER TABLE `llx_digiquali_question` ADD `points` FLOAT AFTER `description`;
 UPDATE `llx_digiquali_question` SET `points` = 0 WHERE `points` IS NULL AND `type` != 'Percentage';
 UPDATE `llx_digiquali_question` SET `points` = 1 WHERE `points` IS NULL AND `type` = 'Percentage';
 
+-- 22.0.0
+ALTER TABLE llx_digiquali_survey CHANGE fk_user_creat fk_user_creat INT(11) NULL;
