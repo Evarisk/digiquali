@@ -233,9 +233,9 @@ class Question extends SaturneObject
     public ?string $description;
 
     /**
-     * @var float Points
+     * @var float|null Points
      */
-    public float $points;
+    public ?float $points;
 
     /**
      * @var bool|null Show photo
