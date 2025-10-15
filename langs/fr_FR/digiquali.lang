@@ -269,6 +269,7 @@ ControlVerdictSelected                         = Le verdict a déjà été défi
 ControlMustBeValidatedToSetVerdict             = Le contrôle doit être validé pour définir le verdict
 ControlMustBeValidatedToGenerated              = Le contrôle doit être validé pour générer la fiche de contrôle
 SetOK/KO                                       = Apte/Inapte
+ControlObject                                  = Objet contrôlé
 Batch                                          = Lot/Série
 BatchLinked                                    = Lot/Série contrôlé
 VerdictControl                                 = Choix du verdict
@@ -451,6 +452,7 @@ NoObjectLineAnswersPhoto                = Pas de photos sur les réponses du %s
 # Data - Donnée
 ControlDocument                         = Fiche de Contrôle
 Controldocument                         = Fiche de Contrôle
+ControlDocumentPDF                      = Fiche de Contrôle PDF
 ControlDocumentsMin                     = fiches de contôle
 ControlDocumentDisplayMedias            = Afficher les médias dans la fiche de contrôle
 ControlDocumentDisplayMediasDescription = Afficher les médias des questions dans la fiche de contrôle ODT
@@ -631,3 +633,15 @@ NoControlsLinked = Aucun contrôle lié à cette fiche
 
 FieldMaxValue = Le champ '%s' doit être inférieure ou égale à %s
 FieldMinValue = Le champ '%s' doit être supérieure ou égale à %s
+
+#
+# Control Document PDF
+#
+
+Role                   = Rôle
+Equipement             = Equipement
+EstimatedLife          = Durée de vie restante
+ControlEquipementList  = Liste des équipements et moyens de contrôle
+Sheet                  = Modèle de contrôle
+ControlObservationList = Liste des points contrôlés, observations et réponse(s) à la question
+LinkedContactsControl  = Contact(s) associés au contrôle

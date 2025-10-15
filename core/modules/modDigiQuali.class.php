@@ -845,10 +845,11 @@ class modDigiQuali extends DolibarrModules
 
 		delDocumentModel('controldocument_odt', 'controldocument');
         delDocumentModel('surveydocument_odt', 'surveydocument');
-		delDocumentModel('calypso_controldocument', 'controldocument');
+        delDocumentModel('control_document', 'controldocument');
 
 		addDocumentModel('controldocument_odt', 'controldocument', 'ODT templates', 'DIGIQUALI_CONTROLDOCUMENT_ADDON_ODT_PATH');
 		addDocumentModel('surveydocument_odt', 'surveydocument', 'ODT templates', 'DIGIQUALI_SURVEYDOCUMENT_ADDON_ODT_PATH');
+        addDocumentModel('control_document', 'controldocument', $langs->transnoentities('ControlDocumentPDF'));
 
 		if (!empty($conf->global->DIGIQUALI_SHEET_TAGS_SET) && empty($conf->global->DIGIQUALI_SHEET_DEFAULT_TAG)) {
 			global $user, $langs;
