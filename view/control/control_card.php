@@ -241,6 +241,15 @@ if (empty($resHook)) {
         }
     }
 
+    if ($action == 'builddoc' && GETPOST('model') == 'control_document') {
+        require_once __DIR__ . './../../class/digiqualidocuments/controldocument.class.php';
+        $document = new ControlDocument($db);
+
+        $moduleNameLowerCase      = 'digiquali';
+        $moreParams['modulePart'] = 'digiquali';
+        require __DIR__ . '/../../../saturne/core/tpl/documents/documents_action.tpl.php';
+    }
+
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_save_action.tpl.php';
 
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_task_action.tpl.php';
