@@ -110,7 +110,7 @@ class pdf_controldocument extends SaturneDocumentModel
      */
     public function write_file($objectDocument, $outputlangs, $srcTemplatePath = '', $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = array()): int
     {
-        global $conf, $langs, $user, $hookmanager, $action;
+        global $conf, $langs, $user, $hookmanager, $action, $db;
 
         $langs->load("main");
         $langs->load("digiquali@digiquali");
@@ -274,6 +274,24 @@ class pdf_controldocument extends SaturneDocumentModel
             $hTitle     = $pdf->getStringHeight($widthTitle, $question->label . "\nDescription : " . $question->description);
             $hRefAnswer = $pdf->getStringHeight($widthRefAnswer, $question->ref_answer);
             $hComment   = $pdf->getStringHeight($widthObservation, $question->comment);
+
+            $answerObj = new Answer($db);
+            $res       = $answerObj->fetchAll('', '', 0, 0, ['customsql' => 'fk_question = ' . $question->id]);
+            $answerString    = '';
+            if (!empty($res)) {
+                $values  = [];
+                $answers = [];
+                foreach ($res as $answerItem) {
+                    $values[$answerItem->position] = $answerItem->value;
+                }
+                foreach (explode(',', $answer[$controlLine]) as $answerUnique) {
+                    $answers[] = $values[trim($answerUnique)];
+                }
+                $answerString = implode(', ', $answers);
+            } else {
+                $answerString = $question->answer;
+            }
+
             $hAnswer    = $pdf->getStringHeight($widthAnswer, $question->answer);
             $h          = max($hRef, $hTitle, $hRefAnswer, $hComment, $hAnswer);
             $x          = $pdf->GetX();
@@ -284,7 +302,7 @@ class pdf_controldocument extends SaturneDocumentModel
             $pdf->MultiCell($widthTitle, $h, strip_tags($question->label) . "\nDescription : " . html_entity_decode(strip_tags($question->description), ENT_QUOTES | ENT_HTML5, 'UTF-8'), 1, 'C', false, 0, $x + $widthQuestion, $y, true, 0, false, true, $h, 'M');
             $pdf->MultiCell($widthRefAnswer, $h, strip_tags($answerRef[$controlLine]), 1, 'C', false, 0, $x + $widthQuestion + $widthTitle, $y, true, 0, false, true, $h, 'M');
             $pdf->MultiCell($widthObservation, $h, strip_tags($object->lines[$controlLine]->comment), 1, 'C', false, 0, $x + $widthQuestion + $widthTitle + $widthRefAnswer, $y, true, 0, false, true, $h, 'M');
-            $pdf->MultiCell($widthAnswer, $h, strip_tags($answer[$controlLine]), 1, 'C', false, 1, $x + $widthQuestion + $widthTitle + $widthRefAnswer + $widthObservation, $y, true, 0, false, true, $h, 'M');
+            $pdf->MultiCell($widthAnswer, $h, strip_tags($answerString), 1, 'C', false, 1, $x + $widthQuestion + $widthTitle + $widthRefAnswer + $widthObservation, $y, true, 0, false, true, $h, 'M');
             $controlLine++;
         }
 
