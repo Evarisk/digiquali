@@ -192,6 +192,7 @@ if (empty($reshook)) {
 		}
 
 		$question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question');
+		$object->call_trigger('SHEET_UNLINKQUESTION', $user);
 
 		setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, array());
 
@@ -211,6 +212,7 @@ if (empty($reshook)) {
 			$sourceElementType = $questionGroup->element;
 		}
 		$questionGroup->deleteObjectLinked($parentGroupId, 'digiquali_' . $sourceElementType, $questionGroup->id, 'digiquali_questiongroup');
+		$object->call_trigger('SHEET_UNLINKQUESTIONGROUP', $user);
 
         setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, array());
 

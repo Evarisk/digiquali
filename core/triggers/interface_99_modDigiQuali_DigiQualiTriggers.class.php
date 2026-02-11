@@ -95,7 +95,7 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
 
         $objects      = ['QUESTION', 'SHEET', 'CONTROL', 'SURVEY', 'QUESTIONGROUP'];
         $triggerTypes = ['CREATE', 'MODIFY', 'DELETE', 'VALIDATE', 'LOCK', 'ARCHIVE'];
-        $extraActions = ['CONTROL_UNVALIDATE', 'SURVEY_UNVALIDATE', 'CONTROL_SENTBYMAIL', 'SURVEY_SENTBYMAIL', 'CONTROL_SAVEANSWER', 'SURVEY_SAVEANSWER', 'SHEET_ADDQUESTION', 'SHEET_ADDQUESTIONGROUP', 'QUESTIONGROUP_ADDQUESTION'];
+        $extraActions = ['CONTROL_UNVALIDATE', 'SURVEY_UNVALIDATE', 'CONTROL_SENTBYMAIL', 'SURVEY_SENTBYMAIL', 'CONTROL_SAVEANSWER', 'SURVEY_SAVEANSWER', 'SHEET_ADDQUESTION', 'SHEET_ADDQUESTIONGROUP', 'QUESTIONGROUP_ADDQUESTION', 'SHEET_UNLINKQUESTION', 'SHEET_UNLINKQUESTIONGROUP'];
 
         $actions = array_merge(
             array_merge(...array_map(fn($s) => array_map(fn($p) => "{$p}_{$s}", $objects), $triggerTypes)),

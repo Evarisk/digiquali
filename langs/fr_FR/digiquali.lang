@@ -157,16 +157,18 @@ NoQuestion                    = Aucune question
 #
 
 # Data - Donnée
-QuestionGroup                 = Groupe de questions
-Questiongroup                 = Groupe de questions
-QuestionGroups                = Groupes de questions
-NewQuestionGroup              = Nouveau groupe de questions
-QuestiongroupList             = Liste des groupes de questions
-RemoveQuestionFromGroup       = Question retirée du groupe
-RemoveQuestionGroupLink       = Groupe de questions retiré du modèle :
-TheQuestiongroup              = groupe de questions
-ObjectAddquestionTrigger      = Question ajoutée
-ObjectAddquestiongroupTrigger = Groupe de questions ajouté
+QuestionGroup                    = Groupe de questions
+Questiongroup                    = Groupe de questions
+QuestionGroups                   = Groupes de questions
+NewQuestionGroup                 = Nouveau groupe de questions
+QuestiongroupList                = Liste des groupes de questions
+RemoveQuestionFromGroup          = Question retirée du groupe
+RemoveQuestionGroupLink          = Groupe de questions retiré du modèle :
+TheQuestiongroup                 = groupe de questions
+ObjectAddquestionTrigger         = Question ajoutée
+ObjectAddquestiongroupTrigger    = Groupe de questions ajouté
+ObjectUnlinkquestionTrigger      = Question retiré
+ObjectUnlinkquestiongroupTrigger = Groupe de questions retiré
 
 
 #
