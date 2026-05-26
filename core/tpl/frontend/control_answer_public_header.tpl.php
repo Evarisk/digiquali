@@ -38,7 +38,7 @@ $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElement
             <div class="public-answer-header__thumbnail"><?php echo $linkedObjectInfoArray['images']; ?></div>
         <?php else : ?>
             <div class="public-answer-header__thumbnail public-answer-header__thumbnail--placeholder">
-                <i class="fas fa-box"></i>
+                <?php echo img_picto('', $linkableElements[$linkedObject->element]['picto'] ?? 'generic'); ?>
             </div>
         <?php endif; ?>
         <div class="public-answer-header__info">
