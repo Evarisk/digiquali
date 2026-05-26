@@ -113,7 +113,7 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
     $out['linkedObject']['links'] = [];
     $out['linkedObject']['files'] = $filteredEcmFilesLine;
     $out['linkedObject']['title']        = $langs->transnoentities($linkableElement['langs']);
-    $out['linkedObject']['name_field']   = $linkedObject->getNomUrl(1, !$permissionToRead ? 'nolink' : '', 1);
+    $out['linkedObject']['name_field']   = $linkedObject->getNomUrl(1, !$permissionToRead ? 'nolink' : '');
 
     $link->fetchAll($out['linkedObject']['links'], $linkedObject->element, $linkedObject->id);
 
