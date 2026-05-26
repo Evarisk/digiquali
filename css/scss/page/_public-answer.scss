@@ -31,6 +31,18 @@
       object-fit: cover;
       border-radius: 8px;
     }
+
+    &--placeholder {
+      width: 80px;
+      height: 80px;
+      background: rgba($color__public-secondary, 0.12);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $color__public-secondary;
+      font-size: 2em;
+    }
   }
 
   &__info {

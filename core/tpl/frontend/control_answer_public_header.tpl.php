@@ -34,7 +34,13 @@ $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElement
 
 <div class="public-answer-header">
     <div class="public-answer-header__object">
-        <div class="public-answer-header__thumbnail"><?php echo $linkedObjectInfoArray['images']; ?></div>
+        <?php if (!empty($linkedObjectInfoArray['images']) && strpos($linkedObjectInfoArray['images'], 'nophoto') === false) : ?>
+            <div class="public-answer-header__thumbnail"><?php echo $linkedObjectInfoArray['images']; ?></div>
+        <?php else : ?>
+            <div class="public-answer-header__thumbnail public-answer-header__thumbnail--placeholder">
+                <i class="fas fa-box"></i>
+            </div>
+        <?php endif; ?>
         <div class="public-answer-header__info">
             <div class="public-answer-header__type"><?php echo $linkedObjectInfoArray['linkedObject']['title']; ?></div>
             <div class="public-answer-header__name"><?php echo $linkedObjectInfoArray['linkedObject']['name_field']; ?></div>
