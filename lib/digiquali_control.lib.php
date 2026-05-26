@@ -178,7 +178,7 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
     }
 
     $out['images'] = $out['linkedObject']['images'];
-    if (strpos($out['parentLinkedObject']['images'], 'nophoto') === false) {
+    if (!empty($out['parentLinkedObject']['images']) && strpos($out['parentLinkedObject']['images'], 'nophoto') === false) {
         $out['images'] = $out['parentLinkedObject']['images'];
     }
 
