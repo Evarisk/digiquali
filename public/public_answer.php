@@ -69,6 +69,8 @@ require_once __DIR__ . '/../class/questiongroup.class.php';
 require_once __DIR__ . '/../class/answer.class.php';
 require_once __DIR__ . '/../lib/digiquali_sheet.lib.php';
 require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
+require_once __DIR__ . '/../lib/digiquali_control.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $moduleNameLowerCase, $langs, $user;
@@ -115,6 +117,14 @@ $conf->setEntityValues($db, $entity);
 
 // Load object
 $object->fetch(0, '', ' AND track_id = ' . "'" . $trackID . "'");
+
+$linkableElements = saturne_get_objects_metadata();
+$object->fetchObjectLinked('', '', '', 'digiquali_control');
+$linkedObjectType = key($object->linkedObjects);
+$linkedObject     = (is_array($object->linkedObjects[$linkedObjectType] ?? null) && !empty($object->linkedObjects[$linkedObjectType]))
+    ? current($object->linkedObjects[$linkedObjectType])
+    : null;
+
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
     $signatory->fetch(0, '', ' AND status >= ' . SaturneSignature::STATUS_REGISTERED . ' AND object_type= ' . "'" . $object->element . "'" . ' AND fk_object = ' . "'" . $object->id . "'");
 }
@@ -157,6 +167,10 @@ print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?action=save&id='
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="public_interface" value="true">';
 print '<input type="hidden" name="action" value="save">';
+
+if (!empty($linkedObject)) {
+    require __DIR__ . '/../core/tpl/frontend/control_answer_public_header.tpl.php';
+}
 
 print '<div class="question-answer-container question-answer-container-pwa public-card__container" data-public-interface="true" style="max-width: 1000px; margin-bottom: 4em;">';
 $substitutionArray = getCommonSubstitutionArray($langs, 0, null, $object);
