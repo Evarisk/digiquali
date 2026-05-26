@@ -171,11 +171,10 @@ print '<input type="hidden" name="action" value="save">';
 $sheet->fetch($object->fk_sheet);
 $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
 
+print '<div class="question-answer-container question-answer-container-pwa public-card__container" data-public-interface="true" style="max-width: 1000px; margin-bottom: 4em;">';
 if (!empty($linkedObject)) {
     require __DIR__ . '/../core/tpl/frontend/control_answer_public_header.tpl.php';
 }
-
-print '<div class="question-answer-container question-answer-container-pwa public-card__container" data-public-interface="true" style="max-width: 1000px; margin-bottom: 4em;">';
 $substitutionArray = getCommonSubstitutionArray($langs, 0, null, $object);
 complete_substitutions_array($substitutionArray, $langs, $object);
 $answerPublicInterfaceTitle = make_substitutions($langs->transnoentities($conf->global->DIGIQUALI_ANSWER_PUBLIC_INTERFACE_TITLE), $substitutionArray);
