@@ -44,6 +44,12 @@ $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElement
         <div class="public-answer-header__info">
             <div class="public-answer-header__type"><?php echo $linkedObjectInfoArray['linkedObject']['title']; ?></div>
             <div class="public-answer-header__name"><?php echo $linkedObjectInfoArray['linkedObject']['name_field']; ?></div>
+            <?php if (!empty($linkedObjectInfoArray['linkedObject']['label'])) : ?>
+                <div class="public-answer-header__label"><?php echo $linkedObjectInfoArray['linkedObject']['label']; ?></div>
+            <?php endif; ?>
+            <?php if (!empty($linkedObjectInfoArray['linkedObject']['description'])) : ?>
+                <div class="public-answer-header__description"><?php echo $linkedObjectInfoArray['linkedObject']['description']; ?></div>
+            <?php endif; ?>
             <?php if (!empty($linkedObjectInfoArray['parentLinkedObject']['title'])) : ?>
                 <div class="public-answer-header__type"><?php echo $linkedObjectInfoArray['parentLinkedObject']['title']; ?></div>
                 <div class="public-answer-header__name"><?php echo $linkedObjectInfoArray['parentLinkedObject']['name_field']; ?></div>

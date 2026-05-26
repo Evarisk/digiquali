@@ -87,4 +87,20 @@
       color: inherit;
     }
   }
+
+  &__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: $color__public-primary;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  &__description {
+    font-size: 13px;
+    color: #888;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    margin-top: 0.1em;
+  }
 }
