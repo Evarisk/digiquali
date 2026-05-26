@@ -168,6 +168,9 @@ print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="public_interface" value="true">';
 print '<input type="hidden" name="action" value="save">';
 
+$sheet->fetch($object->fk_sheet);
+$questionsAndGroups = $sheet->fetchQuestionsAndGroups();
+
 if (!empty($linkedObject)) {
     require __DIR__ . '/../core/tpl/frontend/control_answer_public_header.tpl.php';
 }
@@ -180,9 +183,6 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_SHOW_TITLE')) {
     print '<h2 class="page-title center">' . (dol_strlen($answerPublicInterfaceTitle) > 0 ? $answerPublicInterfaceTitle : $langs->transnoentities('AnswerPublicInterface')) . '</h2>';
 }
 $publicInterface = true;
-
-$sheet->fetch($object->fk_sheet);
-$questionsAndGroups = $sheet->fetchQuestionsAndGroups();
 
 $isFrontend = true;
 $object->displayAnswers($objectLine, $questionsAndGroups, $isFrontend);
