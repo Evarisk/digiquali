@@ -178,6 +178,11 @@ class Question extends SaturneObject
     public int $version = 0;
 
     /**
+     * @var string|null Base ref kept while getNomUrl temporarily appends the version to the displayed ref, so the tooltip can show the base ref.
+     */
+    private ?string $refWithoutVersion = null;
+
+    /**
      * @var string Type
      */
     public string $type = '';
@@ -464,12 +469,38 @@ class Question extends SaturneObject
 	 */
 	public function getNomUrl(int $withPicto = 0, string $option = '', int $noToolTip = 0, string $moreCSS = '', int $saveLastSearchValue = -1, int $addLabel = 0): string
 	{
-		$originalRef = $this->ref;
-		$this->ref   = $originalRef . '-' . ((int) $this->version);
-		$result      = parent::getNomUrl($withPicto, $option, $noToolTip, $moreCSS, $saveLastSearchValue, $addLabel);
-		$this->ref   = $originalRef;
+		$originalRef             = $this->ref;
+		$this->refWithoutVersion = $originalRef;
+		$this->ref               = $originalRef . '-' . ((int) $this->version);
+		$result                  = parent::getNomUrl($withPicto, $option, $noToolTip, $moreCSS, $saveLastSearchValue, $addLabel);
+		$this->ref               = $originalRef;
+		$this->refWithoutVersion = null;
 
 		return $result;
+	}
+
+	/**
+	 * Add the question version to the hover tooltip, keeping the base ref on the ref line (getNomUrl appends the version to the displayed ref).
+	 *
+	 * @param  array $params Params to construct tooltip data
+	 * @return array         Tooltip data (one entry per displayed line)
+	 */
+	public function getTooltipContentArray($params): array
+	{
+		global $langs;
+
+		$datas = parent::getTooltipContentArray($params);
+
+		if (isset($datas['optimize'])) {
+			return $datas;
+		}
+
+		if ($this->refWithoutVersion !== null && isset($datas['ref'])) {
+			$datas['ref'] = '<br><b>' . $langs->trans('Ref') . ' : </b> ' . $this->refWithoutVersion;
+		}
+		$datas['version'] = '<br><b>' . $langs->trans('Version') . ' : </b> ' . ((int) $this->version);
+
+		return $datas;
 	}
 
 	/**
