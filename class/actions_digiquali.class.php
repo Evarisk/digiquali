@@ -923,6 +923,11 @@ class ActionsDigiquali
                 $out[$parameters['key']] = $object->showOutputField($parameters['val'], $parameters['key'], $langs->trans($object->{$parameters['key']}), '');
             }
 
+            // Append the version to the ref so each question version is identifiable in the list (REF-VERSION).
+            if ($parameters['key'] == 'ref') {
+                $out[$parameters['key']] = $object->showOutputField($parameters['val'], $parameters['key'], $object->ref, '') . '-' . ((int) $object->version);
+            }
+
             $this->results = $out;
         }
 
