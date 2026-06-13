@@ -451,6 +451,28 @@ class Question extends SaturneObject
 	}
 
 	/**
+	 * Return a link to the question card, appending the version to the displayed ref (REF-VERSION) so the
+	 * different versions sharing the same ref are distinguishable wherever the question link is shown.
+	 *
+	 * @param  int    $withPicto           Add picto into link (0 = no picto, 1 = picto + label, 2 = only picto)
+	 * @param  string $option              Where the link points to ('nolink' to render a span instead of an anchor)
+	 * @param  int    $noToolTip           1 = disable tooltip
+	 * @param  string $moreCSS             Add more css on link
+	 * @param  int    $saveLastSearchValue -1 = auto, 0 = do not save, 1 = save
+	 * @param  int    $addLabel            0 = no label, 1 = label, > 1 = label truncated to this length
+	 * @return string                      HTML link to the question card
+	 */
+	public function getNomUrl(int $withPicto = 0, string $option = '', int $noToolTip = 0, string $moreCSS = '', int $saveLastSearchValue = -1, int $addLabel = 0): string
+	{
+		$originalRef = $this->ref;
+		$this->ref   = $originalRef . '-' . ((int) $this->version);
+		$result      = parent::getNomUrl($withPicto, $option, $noToolTip, $moreCSS, $saveLastSearchValue, $addLabel);
+		$this->ref   = $originalRef;
+
+		return $result;
+	}
+
+	/**
 	 * Clone an object into another one
 	 *
 	 * @param  User      $user    User that creates

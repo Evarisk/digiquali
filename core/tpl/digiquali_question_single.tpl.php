@@ -51,7 +51,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
             <div class="question__header">
                 <div class="question__header-content">
                     <div class="question-title">
-                        <span class="question-ref"><?php echo $question->getNomUrl(1, '', 0, '', -1, 1); ?><?php echo '-' . ((int) $question->version); ?></span>
+                        <span class="question-ref"><?php echo $question->getNomUrl(1, '', 0, '', -1, 1); ?></span>
                         <span class="question-type"><?php echo $langs->trans($question->type); ?></span>
                     </div>
                     <div class="question-description"><?php echo $question->description; ?></div>
