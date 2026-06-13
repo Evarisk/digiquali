@@ -53,9 +53,16 @@ if ($action == 'save') {
     $sheet->fetch($object->fk_sheet);
     $questions = $sheet->fetchAllQuestions();
 
+    // Resolve each sheet question to this control's own (possibly versioned) question, so the posted
+    // answerXXX / commentXXX fields and the matched control line use the control's question id.
+    $controlQuestionsByRef = method_exists($object, 'getLineQuestionsByRef') ? $object->getLineQuestionsByRef() : [];
+
     if (!empty($questions)) {
         $controlLineObj = new ControlLine($db);
         foreach ($questions as $question) {
+            if (isset($controlQuestionsByRef[$question->ref])) {
+                $question = $controlQuestionsByRef[$question->ref];
+            }
             // If AutoSave, ONLY process the specific question to save time
             if ($isAutoSave) {
                 if (!isset($data['questionId']) || $question->id != $data['questionId']) {

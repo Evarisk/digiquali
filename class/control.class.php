@@ -747,6 +747,41 @@ class Control extends SaturneObject
     }
 
     /**
+     * Build the questions actually referenced by this control's lines, keyed by question ref.
+     *
+     * A control may reference its own (versioned) clones of the sheet questions: when a control is
+     * cloned, its questions are cloned too (same ref, version + 1) and its lines re-pointed to the
+     * clones. Display and answer saving must therefore resolve each sheet question to the control's
+     * own version through this map, falling back to the sheet question when no line matches the ref.
+     *
+     * @return Question[] Map ref => Question of the questions referenced by this control's lines.
+     * @throws Exception
+     */
+    public function getLineQuestionsByRef(): array
+    {
+        require_once __DIR__ . '/question.class.php';
+
+        if (!is_array($this->lines)) {
+            $this->fetchLines();
+        }
+
+        $questionsByRef = [];
+        if (is_array($this->lines)) {
+            foreach ($this->lines as $line) {
+                if (empty($line->fk_question)) {
+                    continue;
+                }
+                $question = new Question($this->db);
+                if ($question->fetch($line->fk_question) > 0) {
+                    $questionsByRef[$question->ref] = $question;
+                }
+            }
+        }
+
+        return $questionsByRef;
+    }
+
+    /**
      * Return the label of the verdict.
      *
      * @param  int     $mode 0 = long label, 1 = short label, 2 = Picto + short label, 3 = Picto, 4 = Picto + long label, 5 = Short label + Picto, 6 = Long label + Picto.
