@@ -494,7 +494,9 @@ class Question extends SaturneObject
 			$object->date_creation = dol_now();
 		}
 		if (property_exists($object, 'status')) {
-			$object->status = 1;
+			// A freshly versioned question must stay open and editable, never inherit a Locked/Archived status from the source.
+			// STATUS_VALIDATED is DigiQuali's editable "En cours" state: the Modify action requires exactly this status (Draft/0 disables it, Locked/2 is read-only).
+			$object->status = self::STATUS_VALIDATED;
 		}
 
 		// Create clone
