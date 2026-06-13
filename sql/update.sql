@@ -163,3 +163,10 @@ INSERT INTO llx_c_question_type (rowid, entity, ref, label, description, active,
 -- 23.1.0
 ALTER TABLE llx_digiquali_riskassessment ADD fk_parent integer DEFAULT 0 NOT NULL AFTER fk_activity;
 UPDATE llx_digiquali_riskassessment SET fk_parent = 0 WHERE fk_parent IS NULL;
+
+-- 23.2.0
+ALTER TABLE llx_digiquali_question ADD version integer DEFAULT 0 NOT NULL AFTER status;
+UPDATE llx_digiquali_question SET version = 0 WHERE version IS NULL;
+ALTER TABLE llx_digiquali_question DROP INDEX uk_digiquali_question_ref;
+ALTER TABLE llx_digiquali_question DROP INDEX uk_dolismq_question_ref;
+ALTER TABLE llx_digiquali_question ADD UNIQUE INDEX uk_digiquali_question_ref (ref, version, entity);

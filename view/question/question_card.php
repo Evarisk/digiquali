@@ -1307,6 +1307,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print $langs->transnoentities($object->type);
 	print '</td></tr>';
 
+	// Version -- Version (incrémentée à chaque clone)
+	print '<tr><td class="titlefield">';
+	print $langs->trans("QuestionVersion");
+	print '</td>';
+	print '<td>';
+	print (int) $object->version;
+	print '</td></tr>';
+
 	// Points -- Nombre de points
 	print '<tr><td class="valignmiddle">'.$langs->trans("NumberOfPoints").'</td><td>';
 	print $object->points;

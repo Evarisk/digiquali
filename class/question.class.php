@@ -117,6 +117,7 @@ class Question extends SaturneObject
         'tms'                    => ['type' => 'timestamp',    'label' => 'DateModification',     'enabled' => 1, 'position' => 50,  'notnull' => 0, 'visible' => -2],
         'import_key'             => ['type' => 'varchar(14)',  'label' => 'ImportId',             'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => -2, 'index' => 0],
         'status'                 => ['type' => 'smallint',     'label' => 'Status',               'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 5, 'index' => 1, 'searchmulti' => 1, 'default' => 0, 'arrayofkeyval' => [1 => 'InProgress', 2 => 'Locked', 3 => 'Archived'], 'css' => 'minwidth125'],
+        'version'                => ['type' => 'integer',      'label' => 'Version',              'enabled' => 1, 'position' => 75,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => 0],
         'type'                   => ['type' => 'varchar(128)', 'label' => 'Type',                 'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1],
         'label'                  => ['type' => 'varchar(255)', 'label' => 'Label',                'enabled' => 1, 'position' => 11,  'notnull' => 1, 'visible' => 1, 'searchall' => 1, 'css' => 'tdoverflowmax200', 'showoncombobox' => 1],
         'description'            => ['type' => 'html',         'label' => 'Description',          'enabled' => 1, 'position' => 12,  'notnull' => 0, 'visible' => 1, 'css' => 'tdoverflowmax200'],
@@ -170,6 +171,11 @@ class Question extends SaturneObject
      * @var int Status
      */
     public $status;
+
+    /**
+     * @var int Version (incremented on each clone, 0 by default). Clones keep the same ref and are differentiated by this version.
+     */
+    public int $version = 0;
 
     /**
      * @var string Type
@@ -308,7 +314,10 @@ class Question extends SaturneObject
      */
     public function create(User $user, int $noTrigger = 0): int
     {
-        $this->ref      = $this->getNextNumRef();
+        // On clone, keep the ref set by createFromClone (clones share the source ref and are differentiated by their version)
+        if (($this->context['createfromclone'] ?? '') !== 'createfromclone') {
+            $this->ref = $this->getNextNumRef();
+        }
 		$this->status   = $this->status ?: 1;
 
         $result = parent::create($user, $noTrigger);
@@ -416,6 +425,32 @@ class Question extends SaturneObject
     }
 
 	/**
+	 * Get the next available version for a given ref (highest existing version + 1).
+	 * Used when cloning a question: clones keep the source ref and are differentiated by their version.
+	 *
+	 * @param  string $ref    Reference shared by all versions of the question
+	 * @param  int    $entity Entity to look into
+	 * @return int            Next version number (0 if no question exists yet for this ref)
+	 */
+	public function getNextVersionForRef(string $ref, int $entity): int
+	{
+		$sql  = 'SELECT MAX(version) AS max_version FROM ' . MAIN_DB_PREFIX . $this->table_element;
+		$sql .= " WHERE ref = '" . $this->db->escape($ref) . "'";
+		$sql .= ' AND entity = ' . $entity;
+
+		$resql = $this->db->query($sql);
+		if ($resql) {
+			$obj = $this->db->fetch_object($resql);
+			$this->db->free($resql);
+			if ($obj !== null && $obj->max_version !== null) {
+				return (int) $obj->max_version + 1;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
 	 * Clone an object into another one
 	 *
 	 * @param  User      $user    User that creates
@@ -446,9 +481,9 @@ class Question extends SaturneObject
 
 		$oldRef = $object->ref;
 
-		// Clear fields
-		if (property_exists($object, 'ref')) {
-			$object->ref = $this->getNextNumRef();
+		// Keep the source ref and only bump the version: clones of a question share its ref, the version makes the (ref, version, entity) couple unique
+		if (property_exists($object, 'version')) {
+			$object->version = $this->getNextVersionForRef($object->ref, (int) $object->entity);
 		}
 		if (!empty($options['label'])) {
 			if (property_exists($object, 'label')) {
@@ -478,7 +513,9 @@ class Question extends SaturneObject
 					$object->setCategories($categoryIds);
 				}
 			}
-			if (!empty($options['photos'])) {
+			// Photos are stored under a directory named by the question ref. Since clones keep the source ref, they already share the same photo
+			// directory: copying would be a no-op at best and a self-copy (file copied onto itself) at worst, so only copy when the ref actually differs.
+			if (!empty($options['photos']) && $oldRef !== $object->ref) {
 				$dirFiles = $conf->digiquali->multidir_output[$object->entity ?? 1] . '/question/';
 				$oldDirFiles = $dirFiles . $oldRef;
 				$newDirFiles = $dirFiles . $object->ref;

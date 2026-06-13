@@ -16,5 +16,5 @@
 ALTER TABLE llx_digiquali_question ADD INDEX idx_digiquali_question_rowid (rowid);
 ALTER TABLE llx_digiquali_question ADD INDEX idx_digiquali_question_ref (ref);
 ALTER TABLE llx_digiquali_question ADD INDEX idx_digiquali_question_status (status);
-ALTER TABLE llx_digiquali_question ADD UNIQUE INDEX uk_digiquali_question_ref (ref, entity);
+ALTER TABLE llx_digiquali_question ADD UNIQUE INDEX uk_digiquali_question_ref (ref, version, entity);
 ALTER TABLE llx_digiquali_question ADD CONSTRAINT llx_digiquali_question_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);

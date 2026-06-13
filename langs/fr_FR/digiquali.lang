@@ -116,6 +116,7 @@ ErrorQuestionUsedInSheet      = La question %s ne peut pas être supprimée, ell
 ErrorNoQuestionSelected       = Aucune question sélectionnée
 AddQuestionIntoCategory       = Assigner cette catégorie à la question
 QuestionType                  = Type de question
+QuestionVersion               = Version
 AnswersList                   = Liste des réponses possibles
 MultipleChoices               = Choix multiples
 Text                          = Texte
