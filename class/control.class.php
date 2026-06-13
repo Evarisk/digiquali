@@ -649,6 +649,33 @@ class Control extends SaturneObject
             $objectFromClone = new self($this->db);
             $objectFromClone->fetch($controlID);
 
+            // Version the questions of the cloned control. create() rebuilt the control lines from the sheet, so they still point to the source
+            // questions: clone each referenced question (the clone keeps the source ref and only bumps its version, keeping (ref, version, entity)
+            // unique) and re-point the line to its freshly cloned question. A question shared by several lines is cloned only once.
+            require_once __DIR__ . '/question.class.php';
+
+            $controlLine        = new ControlLine($this->db);
+            $clonedControlLines = $controlLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_control = ' . ((int) $controlID)]);
+            if (is_array($clonedControlLines) && !empty($clonedControlLines)) {
+                $clonedQuestionIds = [];
+                foreach ($clonedControlLines as $clonedControlLine) {
+                    if (empty($clonedControlLine->fk_question)) {
+                        continue;
+                    }
+                    if (!isset($clonedQuestionIds[$clonedControlLine->fk_question])) {
+                        $question      = new Question($this->db);
+                        $newQuestionId = $question->createFromClone($user, (int) $clonedControlLine->fk_question, []);
+                        if ($newQuestionId > 0) {
+                            $clonedQuestionIds[$clonedControlLine->fk_question] = $newQuestionId;
+                        }
+                    }
+                    if (!empty($clonedQuestionIds[$clonedControlLine->fk_question])) {
+                        $clonedControlLine->fk_question = $clonedQuestionIds[$clonedControlLine->fk_question];
+                        $clonedControlLine->update($user);
+                    }
+                }
+            }
+
             // Categories.
             $cat = new Categorie($this->db);
             $categories = $cat->containing($fromID, 'control');
