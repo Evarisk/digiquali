@@ -28,13 +28,6 @@
  * Variables : $permissionToAddTask, $permissionToReadTask
  */
 
-// Resolve sheet questions to this control's own (possibly versioned) questions, keyed by ref.
-// A cloned control references its own question versions through its lines; fall back to the sheet
-// question when no line matches the ref (normal controls and other objects are unaffected).
-if (!isset($controlQuestionsByRef) || !is_array($controlQuestionsByRef)) {
-    $controlQuestionsByRef = method_exists($object, 'getLineQuestionsByRef') ? $object->getLineQuestionsByRef() : [];
-}
-
 foreach ($questionsAndGroups as $questionOrGroup) {
     if (!isset($objectLineClass) && is_object($objectLine)) {
         $objectLineClass = get_class($objectLine);
@@ -77,9 +70,6 @@ foreach ($questionsAndGroups as $questionOrGroup) {
         if (is_array($groupQuestions) && !empty($groupQuestions)) {
             print '<div class="group-questions">';
             foreach ($groupQuestions as $question) {
-                if (isset($controlQuestionsByRef[$question->ref])) {
-                    $question = $controlQuestionsByRef[$question->ref];
-                }
                 $tmpObjectLine = new $objectLineClass($object->db);
                 $result = $tmpObjectLine->fetchFromParentWithQuestion($object->id, $question->id);
                 if (is_array($result) && !empty($result)) {
@@ -100,9 +90,6 @@ foreach ($questionsAndGroups as $questionOrGroup) {
 
         print '</div>';
     } else {
-        if (isset($controlQuestionsByRef[$questionOrGroup->ref])) {
-            $questionOrGroup = $controlQuestionsByRef[$questionOrGroup->ref];
-        }
         $tmpObjectLine = new $objectLineClass($object->db);
         $result = $tmpObjectLine->fetchFromParentWithQuestion($object->id, $questionOrGroup->id);
         if (is_array($result) && !empty($result)) {

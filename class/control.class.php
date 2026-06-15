@@ -649,33 +649,6 @@ class Control extends SaturneObject
             $objectFromClone = new self($this->db);
             $objectFromClone->fetch($controlID);
 
-            // Version the questions of the cloned control. create() rebuilt the control lines from the sheet, so they still point to the source
-            // questions: clone each referenced question (the clone keeps the source ref and only bumps its version, keeping (ref, version, entity)
-            // unique) and re-point the line to its freshly cloned question. A question shared by several lines is cloned only once.
-            require_once __DIR__ . '/question.class.php';
-
-            $controlLine        = new ControlLine($this->db);
-            $clonedControlLines = $controlLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_control = ' . ((int) $controlID)]);
-            if (is_array($clonedControlLines) && !empty($clonedControlLines)) {
-                $clonedQuestionIds = [];
-                foreach ($clonedControlLines as $clonedControlLine) {
-                    if (empty($clonedControlLine->fk_question)) {
-                        continue;
-                    }
-                    if (!isset($clonedQuestionIds[$clonedControlLine->fk_question])) {
-                        $question      = new Question($this->db);
-                        $newQuestionId = $question->createFromClone($user, (int) $clonedControlLine->fk_question, []);
-                        if ($newQuestionId > 0) {
-                            $clonedQuestionIds[$clonedControlLine->fk_question] = $newQuestionId;
-                        }
-                    }
-                    if (!empty($clonedQuestionIds[$clonedControlLine->fk_question])) {
-                        $clonedControlLine->fk_question = $clonedQuestionIds[$clonedControlLine->fk_question];
-                        $clonedControlLine->update($user);
-                    }
-                }
-            }
-
             // Categories.
             $cat = new Categorie($this->db);
             $categories = $cat->containing($fromID, 'control');
@@ -744,41 +717,6 @@ class Control extends SaturneObject
             $this->db->rollback();
             return -1;
         }
-    }
-
-    /**
-     * Build the questions actually referenced by this control's lines, keyed by question ref.
-     *
-     * A control may reference its own (versioned) clones of the sheet questions: when a control is
-     * cloned, its questions are cloned too (same ref, version + 1) and its lines re-pointed to the
-     * clones. Display and answer saving must therefore resolve each sheet question to the control's
-     * own version through this map, falling back to the sheet question when no line matches the ref.
-     *
-     * @return Question[] Map ref => Question of the questions referenced by this control's lines.
-     * @throws Exception
-     */
-    public function getLineQuestionsByRef(): array
-    {
-        require_once __DIR__ . '/question.class.php';
-
-        if (!is_array($this->lines)) {
-            $this->fetchLines();
-        }
-
-        $questionsByRef = [];
-        if (is_array($this->lines)) {
-            foreach ($this->lines as $line) {
-                if (empty($line->fk_question)) {
-                    continue;
-                }
-                $question = new Question($this->db);
-                if ($question->fetch($line->fk_question) > 0) {
-                    $questionsByRef[$question->ref] = $question;
-                }
-            }
-        }
-
-        return $questionsByRef;
     }
 
     /**
