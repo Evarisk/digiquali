@@ -695,3 +695,10 @@ NF        = NF
 NFSysteme = Système
 NFPoste   = Poste
 NFProduit = Produit
+
+#
+# PWA (frontend mobile)
+#
+
+MobileApp    = Application mobile
+LastControls = Derniers contrôles
