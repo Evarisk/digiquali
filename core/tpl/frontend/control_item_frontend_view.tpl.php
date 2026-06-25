@@ -30,7 +30,12 @@ $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElement
 $controlInfoArray = get_control_infos($linkedObject); ?>
 
 <div class="public-card__header">
-    <?php foreach ($controlInfoArray['control'] as $controlInfo) : ?>
+    <?php if (empty($controlInfoArray['control'])) : ?>
+        <div class="public-card__empty">
+            <i class="fas fa-clipboard-list"></i>
+            <span><?php echo $langs->transnoentities('NoControlAvailable'); ?></span>
+        </div>
+    <?php else : foreach ($controlInfoArray['control'] as $controlInfo) : ?>
         <div class="card has-margin">
             <div class="card-thumbnail"><?php echo $controlInfo['image']; ?></div>
             <div class="card-container">
@@ -60,5 +65,5 @@ $controlInfoArray = get_control_infos($linkedObject); ?>
                 <div class="information-label"><?php echo $controlInfo['verdict']; ?></div>
             </div>
         </div>
-    <?php endforeach; ?>
+    <?php endforeach; endif; ?>
 </div>

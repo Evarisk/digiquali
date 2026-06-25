@@ -29,6 +29,12 @@
 $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElements); ?>
 
 <div class="public-control-documentation">
+    <?php if (empty($linkedObjectInfoArray['files']) && empty($linkedObjectInfoArray['links'])) : ?>
+        <div class="public-card__empty">
+            <i class="fas fa-folder-open"></i>
+            <span><?php echo $langs->transnoentities('NoDocumentationAvailable'); ?></span>
+        </div>
+    <?php endif; ?>
     <?php foreach ($linkedObjectInfoArray['files'] as $fileName) { ?>
         <div class="card has-margin">
             <div class="card-thumbnail size-min" style="background: #3E41FF;">

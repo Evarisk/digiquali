@@ -18,3 +18,5 @@
 #
 
 ControlDocumentPDF                      = Control Sheet PDF with photo
+NoControlAvailable                      = No control recorded yet
+NoDocumentationAvailable                = No documentation available
