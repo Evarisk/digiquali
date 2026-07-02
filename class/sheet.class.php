@@ -204,7 +204,7 @@ class Sheet extends SaturneObject
     /**
      * @var float|null Success rate
      */
-    public ?float $success_rate;
+    public ?float $success_rate = null;
 
     /**
      * @var string Mandatory questions.
@@ -224,7 +224,7 @@ class Sheet extends SaturneObject
     /**
      * @var string|null Default control tags JSON.
      */
-    public ?string $default_control_tags;
+    public ?string $default_control_tags = null;
 
     /**
      * @var int User ID.
