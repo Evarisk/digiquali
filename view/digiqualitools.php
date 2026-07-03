@@ -395,6 +395,26 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
 
             if (is_array($digiqualiExportArray['sheets'] ?? null) && !empty($digiqualiExportArray['sheets'])) {
                 foreach ($digiqualiExportArray['sheets'] as $sheetSingle) {
+                    // A sheet must define at least one "objet à contrôler" (element_linked); without it,
+                    // no control can ever be created from the imported model. The creation form already
+                    // blocks this (NoLinkedObjectSelected), so the import must reject it too instead of
+                    // silently letting an unusable model enter the system.
+                    $linkedObjects         = json_decode($sheetSingle['element_linked'] ?? '', true);
+                    $hasControllableObject = false;
+                    if (is_array($linkedObjects)) {
+                        foreach ($linkedObjects as $isObjectLinked) {
+                            if (!empty($isObjectLinked)) {
+                                $hasControllableObject = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!$hasControllableObject) {
+                        $error++;
+                        $dqLog('✗ Trame « ' . dol_trunc($sheetSingle['label'] ?? '', 60) . ' » ignorée : aucun objet à contrôler défini', 'error');
+                        continue;
+                    }
+
 					$sheet->ref_ext             = $sheetSingle['ref'];
                     $sheet->type                = $sheetSingle['type'];
                     $sheet->label               = $sheetSingle['label'];
