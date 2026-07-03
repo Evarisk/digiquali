@@ -111,6 +111,14 @@ if ($action == 'save') {
                 }
             }
         }
+
+        // The lines above are saved through their own ControlLine/SurveyLine instances, so the
+        // $object->lines loaded at the top of the page is now stale. Reload it so every counter
+        // recomputed further down (answered-questions progress bar, per-group answer counters and
+        // statistics) reflects the answer that was just saved, including questions inside groups.
+        if ($object->id > 0) {
+            $object->fetchLines();
+        }
     }
 
     if (GETPOSTISSET('public_interface')) {
