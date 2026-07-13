@@ -900,8 +900,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
             $percentQuestionCounter++;
             foreach ($object->lines as $line) {
-                if ($line->fk_question === $questionLinked->id) {
-                    $averagePercentageQuestions += $line->answer;
+                // An unanswered line holds an empty string (Control::create), which is a fatal in PHP 8: 0 + '' is a TypeError
+                if ($line->fk_question === $questionLinked->id && is_numeric($line->answer)) {
+                    $averagePercentageQuestions += (float) $line->answer;
                 }
             }
         }
