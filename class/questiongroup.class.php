@@ -60,6 +60,12 @@ class QuestionGroup extends SaturneObject
      */
     public string $picto = 'fontawesome_fa-folder_fas_#d35968';
 
+    /**
+     * @var array<int,int> Source question ID => cloned question ID, filled by createFromClone (nested groups included).
+     *                     Lets the caller remap anything referencing question IDs, e.g. Sheet::mandatory_questions.
+     */
+    public array $clonedQuestionIds = [];
+
     public const STATUS_DELETED   = -1;
     public const STATUS_DRAFT     = 0;
     public const STATUS_VALIDATED = 1;
@@ -388,11 +394,16 @@ class QuestionGroup extends SaturneObject
                     $clonedQuestion = new Question($this->db);
                     $clonedQuestion->id = $clonedQuestion->createFromClone($user, $previousQuestion->id, []);
                     $clonedQuestion->add_object_linked('digiquali_' . $object->element, $object->id);
+
+                    $this->clonedQuestionIds[(int) $previousQuestion->id] = (int) $clonedQuestion->id;
                 } else {
                     $previousQuestionGroup = $previousQuestionOrGroup;
                     $clonedQuestionGroup = new QuestionGroup($this->db);
                     $clonedQuestionGroup->id = $clonedQuestionGroup->createFromClone($user, $previousQuestionGroup->id, []);
                     $clonedQuestionGroup->add_object_linked('digiquali_' . $object->element, $object->id);
+
+                    // Questions nested deeper in the tree must reach the caller too
+                    $this->clonedQuestionIds += $clonedQuestionGroup->clonedQuestionIds;
                 }
                 $sheet->updateQuestionsAndGroupsPosition(null, null, true, $object->id, 'digiquali_questiongroup');
             }
