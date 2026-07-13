@@ -356,6 +356,7 @@ class Sheet extends SaturneObject
 
             $questionIds = [];
             $questionGroupIds = [];
+            $clonedQuestionIds = [];
 
             if (is_array($questionAndGroups) && !empty($questionAndGroups)) {
                 foreach ($questionAndGroups as $position => $questionOrGroup) {
@@ -365,15 +366,20 @@ class Sheet extends SaturneObject
                         $clonedQuestion->id = $clonedQuestion->createFromClone($user, $questionOrGroup->id, []);
                         $clonedQuestion->add_object_linked('digiquali_' . $object->element, $sheetID);
                         $questionIds[$position+1] = $clonedQuestion->id;
+
+                        $clonedQuestionIds[(int) $questionOrGroup->id] = (int) $clonedQuestion->id;
                     } else {
                         $clonedQuestionGroup = new QuestionGroup($this->db);
                         $clonedQuestionGroup->id = $clonedQuestionGroup->createFromClone($user, $questionOrGroup->id, []);
                         $clonedQuestionGroup->add_object_linked('digiquali_' . $object->element, $sheetID);
                         $questionGroupIds[$position+1] = $clonedQuestionGroup->id;
+
+                        $clonedQuestionIds += $clonedQuestionGroup->clonedQuestionIds;
                     }
                 }
                 $object->updateQuestionsAndGroupsPosition($questionIds, $questionGroupIds);
 
+                $object->remapMandatoryQuestions($clonedQuestionIds, $user);
             }
         } else {
             $error++;
@@ -391,6 +397,38 @@ class Sheet extends SaturneObject
             $this->db->rollback();
             return -1;
         }
+    }
+
+    /**
+     * Rewrite mandatory_questions onto another set of questions.
+     *
+     * mandatory_questions stores raw question IDs. Cloning a sheet re-creates its questions with
+     * fresh IDs, so the copied JSON would still point at the source's questions: every mandatory
+     * flag would silently be lost. The import does the same remapping (view/digiqualitools.php).
+     *
+     * @param  array<int,int> $clonedQuestionIds Source question ID => new question ID
+     * @param  User           $user              User doing the update
+     * @return int<-1,1>                         < 0 if KO, > 0 if OK
+     */
+    public function remapMandatoryQuestions(array $clonedQuestionIds, User $user): int
+    {
+        $mandatoryQuestions = json_decode($this->mandatory_questions ?? '', true);
+
+        if (!is_array($mandatoryQuestions) || empty($mandatoryQuestions)) {
+            return 1;
+        }
+
+        $remappedQuestions = [];
+        foreach ($mandatoryQuestions as $mandatoryQuestionId) {
+            // IDs have been stored as int and as string over time, cast before looking them up
+            if (!empty($clonedQuestionIds[(int) $mandatoryQuestionId])) {
+                $remappedQuestions[] = $clonedQuestionIds[(int) $mandatoryQuestionId];
+            }
+        }
+
+        $this->mandatory_questions = !empty($remappedQuestions) ? json_encode($remappedQuestions) : '{}';
+
+        return $this->setValueFrom('mandatory_questions', $this->mandatory_questions, '', null, '', '', $user);
     }
 
 	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
