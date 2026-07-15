@@ -18,6 +18,44 @@ window.digiquali.sheet.init = function() {
     window.digiquali.sheet.event();
     window.digiquali.sheet.displayOpenedGroups();
     window.digiquali.sheet.initMandatoryAll();
+    window.digiquali.sheet.initLinkedObjectSelect();
+};
+
+/**
+ * Enhance the "controlled objects" select (create/edit form) with select2 so the object
+ * picto shows both in the dropdown list and on the selected value(s).
+ * Dolibarr renders the <select> with addjscombo=0 (no built-in select2), so this is the
+ * only initialization and both templateResult and templateSelection decode the option data-html.
+ *
+ * @since   21.3.0
+ * @version 21.3.0
+ *
+ * @return {void}
+ */
+window.digiquali.sheet.initLinkedObjectSelect = function() {
+    var $select = $('#linked_object');
+    if ($select.length === 0 || typeof $.fn.select2 === 'undefined') {
+        return;
+    }
+
+    var renderOption = function(item) {
+        if (!item.id || item.id === '-1') {
+            return item.text;
+        }
+        var dataHtml = $(item.element).attr('data-html');
+        if (dataHtml && typeof htmlEntityDecodeJs === 'function') {
+            return $('<span>' + htmlEntityDecodeJs(dataHtml) + '</span>');
+        }
+        return item.text;
+    };
+
+    $select.select2({
+        templateResult: renderOption,
+        templateSelection: renderOption,
+        escapeMarkup: function(markup) { return markup; },
+        width: 'resolve',
+        placeholder: { id: '-1', text: $select.data('placeholder') || '' }
+    });
 };
 
 /**

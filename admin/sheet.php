@@ -204,6 +204,11 @@ $constArray[$moduleNameLowerCase] = [
 		'description' => 'UniqueLinkedElementDescription',
 		'code'        => 'DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT',
 	],
+	'SheetLinkedObjectSelect2' => [
+		'name'        => 'SheetLinkedObjectSelect2',
+		'description' => 'SheetLinkedObjectSelect2Description',
+		'code'        => 'DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2',
+	],
 ];
 
 //@todo add only wanted keys
