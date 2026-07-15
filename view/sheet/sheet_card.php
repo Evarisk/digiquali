@@ -152,36 +152,49 @@ if (empty($reshook)) {
     }
 
 	if ($action == 'addQuestion' && $permissiontoadd) {
-		$questionId = GETPOST('questionId');
-		if ($questionId > 0) {
-			$question->fetch($questionId);
+		$questionIds = GETPOST('questionId', 'array');
+		$isAjax      = GETPOSTINT('ajax');
 
-			// Add question to target group or to sheet
-			$targetQuestionGroupId = GETPOST('targetGroupId');
+		if (is_array($questionIds) && !empty($questionIds)) {
+			// Add questions to target group or to sheet root
+			$targetQuestionGroupId = GETPOSTINT('targetGroupId');
 			if ($targetQuestionGroupId == 0) {
-				$targetLinkedId = $id;
+				$targetLinkedId    = $id;
 				$targetElementType = $object->element;
 			} else {
-				$targetLinkedId = $targetQuestionGroupId;
+				$targetLinkedId    = $targetQuestionGroupId;
 				$targetElementType = 'questiongroup';
 			}
 
-			$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
+			$addedRefs = [];
+			foreach ($questionIds as $questionId) {
+				if ($questionId > 0 && $question->fetch($questionId) > 0) {
+					$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
 
-			if ($targetQuestionGroupId > 0) {
-				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
-			} else {
-				$object->updateQuestionsAndGroupsPosition([], [], true);
+					// Reindex after each add so every new question gets its own sequential position
+					if ($targetQuestionGroupId > 0) {
+						$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
+					} else {
+						$object->updateQuestionsAndGroupsPosition([], [], true);
+					}
+
+					$addedRefs[] = $question->ref;
+				}
 			}
 
-            $object->call_trigger('SHEET_ADDQUESTION', $user);
-			setEventMessages($langs->trans('AddQuestionLink', 1) . ' ' . $question->ref, []);
-			header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id'));
-			exit;
-		} else {
+			if (!empty($addedRefs)) {
+				$object->call_trigger('SHEET_ADDQUESTION', $user);
+				setEventMessages($langs->trans('AddQuestionLink', count($addedRefs)) . ' ' . implode(', ', $addedRefs), []);
+			}
+
+			if (empty($isAjax)) {
+				header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . $id);
+				exit;
+			}
+			// Ajax: do not redirect, fall through to re-render the refreshed sheet card
+		} elseif (empty($isAjax)) {
 			setEventMessages($langs->trans('ErrorNoQuestionSelected'), null, 'errors');
 		}
-
 	}
 
 	if ($action == 'unlinkQuestion' && $permissiontoadd) {
