@@ -241,8 +241,14 @@ if (empty($reshook)) {
     }
 
 	if ($action == 'add' && $permissiontoadd && !$cancel) {
-		if (is_array(GETPOST('linked_object')) && !empty(GETPOST('linked_object'))) {
-			foreach (GETPOST('linked_object') as $linked_object_type) {
+		// linked_object comes as an array (multiselect) or a scalar (single select in unique mode)
+		$linkedObjectsPost = GETPOST('linked_object', 'array');
+		if (empty($linkedObjectsPost) && dol_strlen(GETPOST('linked_object', 'alphanohtml')) > 0) {
+			$linkedObjectsPost = [GETPOST('linked_object', 'alphanohtml')];
+		}
+		$showArray = [];
+		if (!empty($linkedObjectsPost)) {
+			foreach ($linkedObjectsPost as $linked_object_type) {
 				$showArray[$linked_object_type] = 1;
 			}
 		} else {
@@ -266,9 +272,14 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'update' && $permissiontoadd) {
+		// linked_object comes as an array (multiselect) or a scalar (single select in unique mode)
+		$linkedObjectsPost = GETPOST('linked_object', 'array');
+		if (empty($linkedObjectsPost) && dol_strlen(GETPOST('linked_object', 'alphanohtml')) > 0) {
+			$linkedObjectsPost = [GETPOST('linked_object', 'alphanohtml')];
+		}
 		$showArray = [];
-		if (is_array(GETPOST('linked_object')) && !empty(GETPOST('linked_object'))) {
-			foreach (GETPOST('linked_object') as $linked_object_type) {
+		if (!empty($linkedObjectsPost)) {
+			foreach ($linkedObjectsPost as $linked_object_type) {
 				$showArray[$linked_object_type] = 1;
 			}
 		}
@@ -560,26 +571,59 @@ if ($action == 'create') {
     $sheetAdminUrl = dol_buildpath('custom/digiquali/admin/sheet.php', 1);
     print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b> <a href="' . $sheetAdminUrl . '" target="_blank"><span class="opacitymedium">(' . $langs->trans('ConfigureYourObjectsHere') . ')</span></a></td></tr>';
 
-    $nbLinkableElements = 0;
-    foreach ($objectsMetadata as $objectType => $objectMetadata) {
-        if (empty($objectMetadata['conf'])) {
-            continue;
+    if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
+        // Compact dropdown (select2) rendering, opt-in via admin config
+        $linkableElementOptions = [];
+        foreach ($objectsMetadata as $objectType => $objectMetadata) {
+            if (empty($objectMetadata['conf'])) {
+                continue;
+            }
+            $objectLabel = $langs->trans($objectMetadata['langs']);
+            $linkableElementOptions[$objectType] = [
+                'id'        => $objectType,
+                'label'     => $objectLabel,
+                'data-html' => img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth"') . $objectLabel,
+            ];
         }
 
-        print '<tr><td class="">' . img_picto('', $objectMetadata['picto'], 'class="paddingrightonly"') . $langs->trans($objectMetadata['langs']) . '</td><td>';
-        $linkedObjects = empty(GETPOST('linked_object')) ? [] : GETPOST('linked_object');
-        if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
-            print '<input type="radio" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
+        if (!empty($linkableElementOptions)) {
+            $selectedLinkedObjects   = GETPOST('linked_object', 'array');
+            // addjscombo = 0: skip Dolibarr's select2 init, we enhance it ourselves so the picto shows both in the list and on the selection
+            $linkedObjectPlaceholder = 'data-placeholder="' . dol_escape_htmltag($langs->transnoentities('NoLinkedObjectSelected')) . '"';
+            print '<tr><td colspan="2">';
+            if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+                print $form->selectarray('linked_object', $linkableElementOptions, (!empty($selectedLinkedObjects) ? reset($selectedLinkedObjects) : ''), 1, 0, 0, $linkedObjectPlaceholder, 0, 0, 0, '', 'minwidth300 maxwidth500 widthcentpercentminusx', 0);
+            } else {
+                print $form->multiselectArray('linked_object', $linkableElementOptions, $selectedLinkedObjects, 0, 0, 'minwidth300 maxwidth500 widthcentpercentminusx', 0, 0, $linkedObjectPlaceholder, '', '', 0);
+            }
+            print '</td></tr>';
         } else {
-            print '<input type="checkbox" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
+            $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+            print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
         }
-        print '</td></tr>';
-        $nbLinkableElements++;
-    }
+    } else {
+        // Default rendering: one row per controllable object type
+        $nbLinkableElements = 0;
+        foreach ($objectsMetadata as $objectType => $objectMetadata) {
+            if (empty($objectMetadata['conf'])) {
+                continue;
+            }
 
-    if ($nbLinkableElements == 0) {
-        $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
-        print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
+            print '<tr><td class="">' . img_picto('', $objectMetadata['picto'], 'class="paddingrightonly"') . $langs->trans($objectMetadata['langs']) . '</td><td>';
+            $linkedObjects = empty(GETPOST('linked_object')) ? [] : GETPOST('linked_object');
+            if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+                print '<input type="radio" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
+            } else {
+                print '<input type="checkbox" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
+            }
+            print '</td></tr>';
+            $nbLinkableElements++;
+        }
+
+        if ($nbLinkableElements == 0) {
+            $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+            print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
+        }
     }
 
 
@@ -687,17 +731,53 @@ if (($id || $ref) && $action == 'edit') {
 
 	$elementLinked = json_decode($object->element_linked ?? '{}') ?? new stdClass();
 
-	foreach ($objectsMetadata as $key => $element) {
-		if (empty($element['conf'])) {
-			continue;
+	if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
+		// Compact dropdown (select2) rendering, opt-in via admin config
+		$linkableElementOptions = [];
+		$selectedLinkedObjects  = [];
+		foreach ($objectsMetadata as $key => $element) {
+			if (empty($element['conf'])) {
+				continue;
+			}
+			$objectLabel = $langs->trans($element['langs']);
+			$linkableElementOptions[$key] = [
+				'id'        => $key,
+				'label'     => $objectLabel,
+				'data-html' => img_picto('', $element['picto'], 'class="pictofixedwidth"') . $objectLabel,
+			];
+			if (!empty($elementLinked->$key)) {
+				$selectedLinkedObjects[] = $key;
+			}
 		}
-		print '<tr><td class="">' . img_picto('', $element['picto'], 'class="paddingrightonly"') . $langs->trans($element['langs']) . '</td><td>';
-		if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
-			print '<input type="radio" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? ' checked=checked' : '').'>';
-		} else {
-			print '<input type="checkbox" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? ' checked=checked' : '').'>';
+
+		if (!empty($linkableElementOptions)) {
+			if (GETPOSTISSET('linked_object')) {
+				$selectedLinkedObjects = GETPOST('linked_object', 'array');
+			}
+			// addjscombo = 0: skip Dolibarr's select2 init, we enhance it ourselves so the picto shows both in the list and on the selection
+			$linkedObjectPlaceholder = 'data-placeholder="' . dol_escape_htmltag($langs->transnoentities('NoLinkedObjectSelected')) . '"';
+			print '<tr><td colspan="2">';
+			if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+				print $form->selectarray('linked_object', $linkableElementOptions, (!empty($selectedLinkedObjects) ? reset($selectedLinkedObjects) : ''), 1, 0, 0, $linkedObjectPlaceholder, 0, 0, 0, '', 'minwidth300 maxwidth500 widthcentpercentminusx', 0);
+			} else {
+				print $form->multiselectArray('linked_object', $linkableElementOptions, $selectedLinkedObjects, 0, 0, 'minwidth300 maxwidth500 widthcentpercentminusx', 0, 0, $linkedObjectPlaceholder, '', '', 0);
+			}
+			print '</td></tr>';
 		}
-		print '</td></tr>';
+	} else {
+		// Default rendering: one row per controllable object type
+		foreach ($objectsMetadata as $key => $element) {
+			if (empty($element['conf'])) {
+				continue;
+			}
+			print '<tr><td class="">' . img_picto('', $element['picto'], 'class="paddingrightonly"') . $langs->trans($element['langs']) . '</td><td>';
+			if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+				print '<input type="radio" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? ' checked=checked' : '').'>';
+			} else {
+				print '<input type="checkbox" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? ' checked=checked' : '').'>';
+			}
+			print '</td></tr>';
+		}
 	}
 
 
