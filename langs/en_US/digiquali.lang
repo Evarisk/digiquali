@@ -18,3 +18,9 @@
 #
 
 ControlDocumentPDF                      = Control Sheet PDF with photo
+
+#
+# Public control
+#
+
+NoDocumentation                         = No linked document
