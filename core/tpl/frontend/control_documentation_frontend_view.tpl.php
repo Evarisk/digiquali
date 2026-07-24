@@ -61,5 +61,9 @@ $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElement
                 </a>
             </div>
         </div>
-    <?php } ?>
+    <?php }
+
+    if (empty($linkedObjectInfoArray['files']) && empty($linkedObjectInfoArray['links'])) : ?>
+        <div class="documentation-empty"><?php echo $langs->transnoentities('NoDocumentation'); ?></div>
+    <?php endif; ?>
 </div>
