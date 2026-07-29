@@ -110,13 +110,16 @@ foreach($objectsMetadata as $objectMetadata) {
 
     if (empty($fromType) || $fromType == $objectMetadata['link_name']) {
         $object->fields[$objectMetadata['post_name']] = [
-            'type'        => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
-            'label'       => $langs->trans($objectMetadata['langs']),
-            'enabled'     => 1,
-            'position'    => $objectPosition,
-            'visible'     => 2,
-            'csslist'     => 'minwidth150 maxwidth200',
-            'disablesort' => 1
+            'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
+            'label'      => $langs->trans($objectMetadata['langs']),
+            'enabled'    => 1,
+            'position'   => $objectPosition,
+            'visible'    => 2,
+            'csslist'    => 'minwidth150 maxwidth200',
+            // Sort on the aliases the printFieldListSelect hook builds from llx_element_element, not on a
+            // t.<key> column that does not exist. The empty flag comes first so the controls without any
+            // linked element stay at the bottom in both directions
+            'otheralias' => 'sortempty_' . $objectMetadata['post_name'] . ',sortvalue_'
         ];
 
         $objectPosition++;
@@ -138,11 +141,16 @@ if (is_array($signatoriesInDictionary) && !empty($signatoriesInDictionary)) {
     }
 }
 
+// Computed columns are built by the saturnePrintFieldListLoopObject hook, not selected from the control
+// table, so they must declare disablesort: the invalid-sortfield guard of
+// objectfields_list_build_sql_select would silently discard the ORDER BY they advertise.
+// days_remaining_before_next_control is the exception: printFieldListSelect adds it as a real SELECT
+// alias, and its empty otheralias makes the title sort on that alias instead of t.<key>
 $object->fields['days_remaining_before_next_control'] = ['label' => 'DaysBeforeNextControl',      'enabled' => 1, 'position' => 66,  'visible' => 2, 'csslist' => 'center', 'otheralias' => ''];
-$object->fields['question_answered']                  = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
-$object->fields['last_status_date']                   = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx'];
-$object->fields['society_attendants']                 = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx', 'disablesort' => 1];
-$object->fields['average_percentage_questions']       = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
+$object->fields['question_answered']                  = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['last_status_date']                   = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['society_attendants']                 = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx',        'disablesort' => 1];
+$object->fields['average_percentage_questions']       = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
 
 $excludeFields = array_merge($excludeFields, ['days_remaining_before_next_control', 'question_answered', 'last_status_date', 'society_attendants', 'average_percentage_questions']);
 

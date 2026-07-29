@@ -96,10 +96,11 @@ if (!$sortorder) {
 }
 
 // Definition of custom fields for columns
-$nbLinkableElements = 0;
-$objectPosition     = 21;
-$excludeFields      = [];
-$objectsMetadata    = saturne_get_objects_metadata();
+$nbLinkableElements             = 0;
+$objectPosition                 = 21;
+$excludeFields                  = [];
+$objectsMetadata                = saturne_get_objects_metadata();
+$conf->cache['objectsMetadata'] = $objectsMetadata; // Read back by the saturnePrintFieldListLoopObject hook to render the linked element columns
 foreach($objectsMetadata as $objectMetadata) {
     if ($objectMetadata['conf'] == 0) {
         continue;
@@ -107,14 +108,17 @@ foreach($objectsMetadata as $objectMetadata) {
 
     if (empty($fromType) || $fromType == $objectMetadata['link_name']) {
         $object->fields[$objectMetadata['post_name']] = [
-            'type'        => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
-            'label'       => $langs->trans($objectMetadata['langs']),
-            'enabled'     => 1,
-            'position'    => $objectPosition,
-            'visible'     => 2,
-            'disablesort' => 1
+            'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
+            'label'      => $langs->trans($objectMetadata['langs']),
+            'enabled'    => 1,
+            'position'   => $objectPosition,
+            'visible'    => 2,
+            'csslist'    => 'minwidth150 maxwidth200',
+            // Sort on the aliases the printFieldListSelect hook builds from llx_element_element, not on a
+            // t.<key> column that does not exist. The empty flag comes first so the surveys without any
+            // linked element stay at the bottom in both directions
+            'otheralias' => 'sortempty_' . $objectMetadata['post_name'] . ',sortvalue_'
         ];
-        //@TODO minwidth100 maxwidth125 widthcentpercentminusxx css
 
         $objectPosition++;
         $nbLinkableElements++;
@@ -127,16 +131,21 @@ $conf->cache['signatoriesInDictionary'] = $signatoriesInDictionary;
 if (is_array($signatoriesInDictionary) && !empty($signatoriesInDictionary)) {
     $customFieldsPosition = 111;
     foreach ($signatoriesInDictionary as $signatoryInDictionary) {
-        $object->fields[$signatoryInDictionary->ref] = ['label' => $signatoryInDictionary->ref, 'enabled' => 1, 'position' => $customFieldsPosition++, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx right'];
+        // Signatory role columns are computed from the signatures, they have no t.<ref> column in the
+        // survey table: offering a sort link would let saturne silently drop the ORDER BY (disablesort)
+        $object->fields[$signatoryInDictionary->ref] = ['label' => $signatoryInDictionary->ref, 'enabled' => 1, 'position' => $customFieldsPosition++, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx right', 'disablesort' => 1];
         $excludeFields[]                             = $signatoryInDictionary->ref;
     }
 }
 
-$object->fields['question_answered']            = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
-$object->fields['last_status_date']             = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx'];
-$object->fields['society_attendants']           = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx'];
-$object->fields['average_percentage_questions'] = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
-$object->fields['verdict_object']               = ['label' => 'VerdictObject',              'enabled' => 1, 'position' => 200, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
+// Computed columns: their value is built by the saturnePrintFieldListLoopObject hook, not selected from
+// the survey table. They must declare disablesort, otherwise the title offers a sort link that the
+// invalid-sortfield guard of objectfields_list_build_sql_select silently discards
+$object->fields['question_answered']            = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['last_status_date']             = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['society_attendants']           = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx',        'disablesort' => 1];
+$object->fields['average_percentage_questions'] = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['verdict_object']               = ['label' => 'VerdictObject',              'enabled' => 1, 'position' => 200, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
 
 $excludeFields = array_merge($excludeFields, ['question_answered', 'last_status_date', 'society_attendants', 'average_percentage_questions', 'verdict_object']);
 

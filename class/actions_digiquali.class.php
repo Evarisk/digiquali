@@ -329,12 +329,15 @@ class ActionsDigiquali
     /**
      * Overloading the saturnePrintFieldListLoopObject function : replacing the parent's function with the one below
      *
-     * @param  array $parameters Hook metadata (context, etc...)
-     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     * @param  array       $parameters Hook metadata (context, etc...)
+     * @param  object|null $object     Current object
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function printFieldListSelect(array $parameters): int
+    public function printFieldListSelect(array $parameters, ?object $object = null): int
     {
+        global $sortfield, $sortorder;
+
         if (preg_match('/\bsheetlist\b/', $parameters['context'])) {
             $sql = ',COUNT(ee.fk_target) AS nb_question';
             $this->resprints = $sql;
@@ -345,7 +348,86 @@ class ActionsDigiquali
             $this->resprints = $sql;
         }
 
+        if (preg_match('/surveylist|controllist/', $parameters['context']) && $object instanceof CommonObject) {
+            $this->resprints .= $this->getLinkedElementSortSelect($object, (string) $sortfield, (string) $sortorder);
+        }
+
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Build the SELECT expressions that let a control / survey list be sorted on a linked element column.
+     *
+     * Those columns (contract, project, product, etc.) hold values coming from llx_element_element, not
+     * from the listed object's own table, so ordering on them requires a correlated subquery returning
+     * the linked object's name. Two aliases are produced per sorted column:
+     *  - sortvalue_<post_name> the linked object name, the actual sort criteria
+     *  - sortempty_<post_name> a flag keeping the rows without any linked element at the bottom
+     * They are deliberately prefixed: an alias named after the field itself would land in $object-><key>
+     * through setVarsFromFetchObj and feed a ref string to a column declared as integer:<Class>.
+     * The flag polarity follows the requested direction, because the generic list applies one and the
+     * same direction to every sort token: sorting "is empty" ascending, or "is not empty" descending,
+     * both push the empty rows last.
+     *
+     * The expressions are emitted only for the column currently sorted on, so a list displayed without
+     * sorting on a linked element keeps exactly the query it had before.
+     *
+     * @param  CommonObject $object    Listed object (control or survey)
+     * @param  string       $sortfield Requested sort field(s), comma separated
+     * @param  string       $sortorder Requested sort order(s), comma separated
+     * @return string                  SQL to append to the SELECT, empty when no linked element is sorted on
+     * @throws Exception
+     */
+    protected function getLinkedElementSortSelect(CommonObject $object, string $sortfield, string $sortorder): string
+    {
+        global $conf;
+
+        if (empty($sortfield)) {
+            return '';
+        }
+
+        if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
+            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
+        }
+
+        $sortedFields = array_map('trim', explode(',', $sortfield));
+        // The direction is repeated for every token by saturne_get_title_field_of_list, so the first one
+        // is the direction the empty flag will be sorted with
+        $isDescending = (bool) preg_match('/^desc/i', trim((string) (explode(',', $sortorder)[0] ?? '')));
+
+        $out      = '';
+        $rendered = [];
+        foreach ($conf->cache['objectsMetadata'] as $objectMetadata) {
+            if ($objectMetadata['conf'] == 0 || !in_array('sortvalue_' . $objectMetadata['post_name'], $sortedFields, true)) {
+                continue;
+            }
+            if (empty($objectMetadata['table_element']) || empty($objectMetadata['name_field'])) {
+                continue;
+            }
+            // 'contrat' is registered as an alias of 'contract' and carries the same post_name
+            if (isset($rendered[$objectMetadata['post_name']])) {
+                continue;
+            }
+            $rendered[$objectMetadata['post_name']] = 1;
+
+            $nameFields = array_map('trim', explode(',', $objectMetadata['name_field']));
+            $nameSelect = count($nameFields) > 1
+                ? 'CONCAT_WS(\' \', lnk.' . implode(', lnk.', $nameFields) . ')'
+                : 'lnk.' . $nameFields[0];
+
+            $subQuery  = '(SELECT ' . $nameSelect . ' FROM ' . $this->db->prefix() . $objectMetadata['table_element'] . ' AS lnk';
+            $subQuery .= ' INNER JOIN ' . $this->db->prefix() . 'element_element AS eesort ON (eesort.fk_source = lnk.rowid)';
+            $subQuery .= ' WHERE eesort.fk_target = t.rowid';
+            $subQuery .= ' AND eesort.targettype = \'' . $this->db->escape($object->module . '_' . $object->element) . '\'';
+            $subQuery .= ' AND eesort.sourcetype = \'' . $this->db->escape($objectMetadata['link_name']) . '\'';
+            $subQuery .= ' ORDER BY ' . $nameSelect . ' LIMIT 1)';
+
+            $out .= ', ' . $subQuery . ' AS sortvalue_' . $objectMetadata['post_name'];
+            $out .= ', (' . $subQuery . ($isDescending ? ' IS NOT NULL' : ' IS NULL') . ') AS sortempty_' . $objectMetadata['post_name'];
+        }
+
+        return $out;
     }
 
     /**
@@ -886,7 +968,9 @@ class ActionsDigiquali
             $sheet     = new Sheet($this->db);
 
             $object->fetchLines();
-            $object->fetchObjectLinked('', '', $object->id, 'digiquali_control');
+            // This hook serves both the control and the survey list, so the target type must follow the
+            // current object: a hard-coded 'digiquali_control' finds no link at all for a survey
+            $object->fetchObjectLinked('', '', $object->id, 'digiquali_' . $object->element);
 
             // A failed fetch() leaves the object as it was, so an unfetched sheet must not reach the cache
             if ($sheet->fetch($object->fk_sheet) > 0) {
@@ -977,16 +1061,24 @@ class ActionsDigiquali
                 $out[$parameters['key']] = isset($conf->cache['sheet']) ? $conf->cache['sheet']->getNomUrl(1, '', 0, 'maxwidth200onsmartphone maxwidth300', -1, 1) : '';
             }
 
-            if (!empty($object->linkedObjects)) {
-                $linkedObjectType = key($object->linkedObjects);
-                $objectsMetadata  = $conf->cache['objectsMetadata'];
+            // Linked element columns (contract, project, product, etc.) are fed by llx_element_element.
+            // Every linked type must be scanned: an object linked to both a contract and a project has
+            // to fill both columns, not only the one of the first type returned by fetchObjectLinked()
+            $objectsMetadata = $conf->cache['objectsMetadata'] ?? [];
+            if (!empty($object->linkedObjects) && is_array($objectsMetadata)) {
                 foreach ($objectsMetadata as $objectMetadata) {
-                    if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+                    if ($objectMetadata['conf'] == 0 || $parameters['key'] != $objectMetadata['post_name']) {
                         continue;
                     }
-                    if ($parameters['key'] == $objectMetadata['post_name']) {
-                        $out[$parameters['key']] = $object->linkedObjects[$objectMetadata['link_name']][key($object->linkedObjects[$objectMetadata['link_name']])]->getNomUrl(1);
+                    $linkedObjects = $object->linkedObjects[$objectMetadata['link_name']] ?? [];
+                    if (empty($linkedObjects)) {
+                        continue;
                     }
+                    $links = [];
+                    foreach ($linkedObjects as $linkedObject) {
+                        $links[] = $linkedObject->getNomUrl(1);
+                    }
+                    $out[$parameters['key']] = implode('<br>', $links);
                 }
             }
 
