@@ -981,6 +981,16 @@ if ($action == 'create') {
 	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$points.'">';
 	print '</td></tr>';
 
+	// Grading Policy
+	print '<tr><td>'.$langs->trans("GradingPolicy").'</td><td>';
+	$gradingPolicies = [
+		'proportional' => $langs->trans('Proportional'),
+		'all_or_nothing' => $langs->trans('AllOrNothing'),
+		'option_weighted' => $langs->trans('OptionWeighted'),
+	];
+	print $form->selectarray('grading_policy', $gradingPolicies, GETPOST('grading_policy') ?: 'proportional', 0, 0, 0, '', 1, 0, 0, '', 'minwidth100', 1);
+	print '</td></tr>';
+
     // Step for percentage question type default hidden
     print '<tr class="' . (GETPOST('type') == 'Percentage' ? '' : 'hidden') . '" id="percentage-question-step"><td class="fieldrequired"><label for="step">' . $langs->transnoentities('PercentageQuestionStep') . '</label></td><td>';
     print '<input type="number" name="step" id="step" min="2" value="' . (!empty(GETPOSTINT('step')) ? GETPOSTINT('step') : 2) . '">';
@@ -1127,6 +1137,16 @@ if (($id || $ref) && $action == 'edit') {
 	// Points -- Nombre de points
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
 	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$object->points.'">';
+	print '</td></tr>';
+
+	// Grading Policy
+	print '<tr><td>'.$langs->trans("GradingPolicy").'</td><td>';
+	$gradingPolicies = [
+		'proportional' => $langs->trans('Proportional'),
+		'all_or_nothing' => $langs->trans('AllOrNothing'),
+		'option_weighted' => $langs->trans('OptionWeighted'),
+	];
+	print $form->selectarray('grading_policy', $gradingPolicies, (GETPOST('grading_policy') !== '' ? GETPOST('grading_policy') : ($object->grading_policy ?: 'proportional')), 0, 0, 0, '', 1, 0, 0, '', 'minwidth100', 1);
 	print '</td></tr>';
 
     // Step for percentage question type default hidden
