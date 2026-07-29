@@ -745,7 +745,7 @@ class Question extends SaturneObject
 				$earned = (float)$this->points;
 			} elseif ($this->type == self::TYPE_PERCENTAGE) {
 				$answerValNum = (float)$answerValue;
-				$earned = round($answerValNum / 100, 2);
+				$earned = round(($answerValNum / 100) * (float)$this->points, 2);
 			}
 		} else if (in_array($this->type, [self::TYPE_OK_KO, self::TYPE_OK_KO_TOFIX_NA, self::TYPE_MARQUE_NF, self::TYPE_UNIQUE_CHOICE, self::TYPE_MULTIPLE_CHOICES])) {
 			$correctAnswers = $this->getAllCorrectAnswers();
