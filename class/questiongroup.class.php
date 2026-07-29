@@ -701,7 +701,7 @@ class QuestionGroup extends SaturneObject
         $questionsAndGroups = $this->fetchQuestionsAndGroups();
 
         print '<tr id="group-' . $this->id . '" class="line-row-group question-group" data-id="' . $this->id . '" data-parent-id="' . $this->getParentGroupId() . '" data-position-path="' . $positionPath . '">';
-        print '<td colspan="8">';
+        print '<td colspan="10">';
         print '<div class="group-header" onclick="window.digiquali.sheet.toggleGroup(' . $this->id . ')" style="margin-left: calc(2rem * ' . $subLevel . ');">';
         print '<span class="group-title">' . $this->getNomUrl(1) . ' - ' . $this->label . ' (' . $numberOfQuestions . ' question' . ($numberOfQuestions > 1 ? 's' : '').')</span>';
         print '<span class="toggle-icon">+</span>';
