@@ -121,7 +121,7 @@ class Question extends SaturneObject
         'label'                  => ['type' => 'varchar(255)', 'label' => 'Label',                'enabled' => 1, 'position' => 11,  'notnull' => 1, 'visible' => 1, 'searchall' => 1, 'css' => 'tdoverflowmax200', 'showoncombobox' => 1],
         'description'            => ['type' => 'html',         'label' => 'Description',          'enabled' => 1, 'position' => 12,  'notnull' => 0, 'visible' => 1, 'css' => 'tdoverflowmax200'],
         'points'            	 => ['type' => 'real',	       'label' => 'NumberOfPoints',       'enabled' => 1, 'position' => 13,  'notnull' => 0, 'visible' => 1, 'default' => 1, 'bounds' => ['min' => 0], 'validate' => 1],
-        'grading_policy'         => ['type' => 'varchar(128)', 'label' => 'GradingPolicy',        'enabled' => 1, 'position' => 14,  'notnull' => 0, 'visible' => 1, 'default' => 'proportional', 'arrayofkeyval' => ['proportional' => 'Proportional', 'all_or_nothing' => 'AllOrNothing', 'option_weighted' => 'OptionWeighted']],
+        'grading_policy'         => ['type' => 'varchar(128)', 'label' => 'GradingPolicy',        'enabled' => 1, 'position' => 14,  'notnull' => 0, 'visible' => 1, 'default' => 'proportional', 'arrayofkeyval' => ['' => 'Proportional', 'proportional' => 'Proportional', 'all_or_nothing' => 'AllOrNothing', 'option_weighted' => 'OptionWeighted']],
         'show_photo'             => ['type' => 'boolean',      'label' => 'ShowPhoto',            'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => -2],
         'authorize_answer_photo' => ['type' => 'boolean',      'label' => 'AuthorizeAnswerPhoto', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => -2],
         'enter_comment'          => ['type' => 'boolean',      'label' => 'EnterComment',         'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => -2],
@@ -743,7 +743,7 @@ class Question extends SaturneObject
 		if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
 			if ($this->isAnswerInQuestionRange($answerValue)) {
 				$earned = (float)$this->points;
-			} elseif ($this->type == self::TYPE_PERCENTAGE) {
+			} elseif ($this->type == self::TYPE_PERCENTAGE && (empty($this->grading_policy) || $this->grading_policy === 'proportional')) {
 				$answerValNum = (float)$answerValue;
 				$earned = round(($answerValNum / 100) * (float)$this->points, 2);
 			}
