@@ -708,3 +708,11 @@ NF        = NF
 NFSysteme = Système
 NFPoste   = Poste
 NFProduit = Produit
+
+# Grading Policy
+GradingPolicy = Politique de notation
+Proportional = Proportionnelle
+AllOrNothing = Tout ou rien
+OptionWeighted = Pondérée par option
+WeightPercent = Pondération (%)
+

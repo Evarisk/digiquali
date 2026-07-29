@@ -24,3 +24,11 @@ ControlDocumentPDF                      = Control Sheet PDF with photo
 #
 
 NoDocumentation                         = No linked document
+
+# Grading Policy
+GradingPolicy = Grading Policy
+Proportional = Proportional
+AllOrNothing = All or Nothing
+OptionWeighted = Option Weighted
+WeightPercent = Weight (%)
+
