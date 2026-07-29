@@ -177,3 +177,11 @@ ALTER TABLE llx_digiquali_survey ADD score_percentage DOUBLE(24,8) NULL AFTER su
 -- were invisible in the control and survey list columns. Only DigiQuali rows are realigned:
 -- DigiRisk (preventionplan, firepermit) and DoliMeet (audit) keep that role.
 UPDATE llx_saturne_object_signature SET role = 'Attendant' WHERE module_name = 'digiquali' AND object_type IN ('control', 'survey') AND role = 'ExtSocietyAttendant';
+
+-- 23.4.0
+ALTER TABLE llx_digiquali_question ADD grading_policy VARCHAR(128) AFTER points;
+ALTER TABLE llx_digiquali_answer ADD weight_percent FLOAT AFTER correct;
+ALTER TABLE llx_digiquali_controldet ADD earned_points FLOAT AFTER comment;
+ALTER TABLE llx_digiquali_controldet ADD score_rate FLOAT AFTER earned_points;
+ALTER TABLE llx_digiquali_surveydet ADD earned_points FLOAT AFTER comment;
+ALTER TABLE llx_digiquali_surveydet ADD score_rate FLOAT AFTER earned_points;

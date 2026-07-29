@@ -319,6 +319,12 @@ if (empty($reshook)) {
             } else {
 				unset($objectConfig['config'][$object->type]['answer-max-value']);
 			}
+            $answerDefaultValue = (GETPOSTISSET('answer-default-value') && GETPOST('answer-default-value') !== '') ? GETPOSTFLOAT('answer-default-value') : null;
+            if (isset($answerDefaultValue)) {
+                $objectConfig['config'][$object->type]['answer-default-value'] = $answerDefaultValue;
+            } else {
+				unset($objectConfig['config'][$object->type]['answer-default-value']);
+			}
 
 			$result = $object->create($user);
 			if ($result > 0) {
@@ -489,6 +495,12 @@ if (empty($reshook)) {
 			$objectConfig['config'][$questionType]['answer-max-value'] = $answerMaxValue;
 		} else {
 			unset($objectConfig['config'][$questionType]['answer-max-value']);
+		}
+		$answerDefaultValue = (GETPOSTISSET('answer-default-value') && GETPOST('answer-default-value') !== '') ? GETPOSTFLOAT('answer-default-value') : null;
+		if (isset($answerDefaultValue)) {
+			$objectConfig['config'][$questionType]['answer-default-value'] = $answerDefaultValue;
+		} else {
+			unset($objectConfig['config'][$questionType]['answer-default-value']);
 		}
 
 		$object->json = json_encode($objectConfig);
@@ -778,6 +790,7 @@ if (empty($reshook)) {
 		$answerColor = GETPOST('answerColor');
 		$answerPicto = GETPOST('answerPicto');
 		$answerCorrect = boolval(GETPOST('answerCorrect'));
+		$answerWeight = GETPOST('answerWeight');
 
 		if ($answerCorrect === true && $object->hasAtLeastOneCorrectAnswer()) {
 			setEventMessages($langs->trans('QuestionWithOneCorrectAnswer'), [], 'errors');
@@ -798,6 +811,7 @@ if (empty($reshook)) {
 			$answer->color = $answerColor;
 			$answer->pictogram = $answerPicto;
 			$answer->correct = $answerCorrect;
+			$answer->weight_percent = ($answerWeight !== '') ? price2num($answerWeight) : null;
 			$answer->fk_question = $id;
 
 			$result = $answer->create($user);
@@ -820,6 +834,7 @@ if (empty($reshook)) {
 		$answerPicto = GETPOST('answerPicto');
 		$answerId    = GETPOST('answerId');
 		$answerCorrect = GETPOST('answerCorrect') === 'on';
+		$answerWeight = GETPOST('answerWeight');
 
 		$answer->fetch($answerId);
 		if (empty($answerValue)) {
@@ -842,6 +857,7 @@ if (empty($reshook)) {
 			$answer->color = $answerColor;
 			$answer->pictogram = $answerPicto;
 			$answer->correct = $answerCorrect;
+			$answer->weight_percent = ($answerWeight !== '') ? price2num($answerWeight) : null;
 
 			$result = $answer->update($user);
 
@@ -975,6 +991,16 @@ if ($action == 'create') {
 	}
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
 	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$points.'">';
+	print '</td></tr>';
+
+	// Grading Policy
+	print '<tr><td>'.$langs->trans("GradingPolicy").'</td><td>';
+	$gradingPolicies = [
+		'proportional' => $langs->trans('Proportional'),
+		'all_or_nothing' => $langs->trans('AllOrNothing'),
+		'option_weighted' => $langs->trans('OptionWeighted'),
+	];
+	print $form->selectarray('grading_policy', $gradingPolicies, GETPOST('grading_policy') ?: 'proportional', 0, 0, 0, '', 1, 0, 0, '', 'minwidth100', 1);
 	print '</td></tr>';
 
     // Step for percentage question type default hidden
@@ -1123,6 +1149,16 @@ if (($id || $ref) && $action == 'edit') {
 	// Points -- Nombre de points
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
 	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$object->points.'">';
+	print '</td></tr>';
+
+	// Grading Policy
+	print '<tr><td>'.$langs->trans("GradingPolicy").'</td><td>';
+	$gradingPolicies = [
+		'proportional' => $langs->trans('Proportional'),
+		'all_or_nothing' => $langs->trans('AllOrNothing'),
+		'option_weighted' => $langs->trans('OptionWeighted'),
+	];
+	print $form->selectarray('grading_policy', $gradingPolicies, (GETPOST('grading_policy') !== '' ? GETPOST('grading_policy') : ($object->grading_policy ?: 'proportional')), 0, 0, 0, '', 1, 0, 0, '', 'minwidth100', 1);
 	print '</td></tr>';
 
     // Step for percentage question type default hidden
@@ -1469,7 +1505,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print '<td class="center">' . $langs->trans('Picto') . '</td>';
 		print '<td class="center">' . $langs->trans('Color') . '</td>';
 		print '<td class="center">' . $langs->trans('ExpectedAnswer') . '</td>';
-		if ($object->isAnswersActionsEnabled()) {
+		print '<td class="center">' . $langs->trans('WeightPercent') . '</td>';
+		if ($object->status < Question::STATUS_LOCKED) {
 			print '<td class="center">' . $langs->trans('Action') . '</td>';
 		}
 		print '<td class="center"></td>';
@@ -1490,12 +1527,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					print '</td>';
 
 					print '<td>';
-					print '<input name="answerValue" value="'. (GETPOST('answerValue') ?: $answerSingle->value) .'">';
+					print '<input name="answerValue" value="'. (GETPOST('answerValue') ?: $answerSingle->value) .'" ' . (!$object->isAnswersActionsEnabled() ? 'readonly' : '') . '>';
 					print '</td>';
 
 					// Pictogram -- Pictogram
 					print '<td class="center">';
-					print answer_pictos_dropdown(GETPOST('answerPicto') ?: $answerSingle->pictogram);
+					if ($object->isAnswersActionsEnabled()) {
+						print answer_pictos_dropdown(GETPOST('answerPicto') ?: $answerSingle->pictogram);
+					} else {
+						print $pictosArray[$answerSingle->pictogram]['picto_source'];
+						print '<input type="hidden" name="answerPicto" value="' . $answerSingle->pictogram . '">';
+					}
 					print '</td>';
 
 					print '<td class="center">';
@@ -1506,9 +1548,15 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 						print '<td class="center">';
 						print '<input type="checkbox" name="answerCorrect"' . ($answerSingle->correct === true ? ' checked' : ''). '>';
 						print '</td>';
+					} else {
+						print '<td class="center"></td>'; // preserve alignment
 					}
 
-					if ($object->isAnswersActionsEnabled()) {
+					print '<td class="center">';
+					print '<input name="answerWeight" class="answer-weight-input" size="5" value="' . (GETPOST('answerWeight') !== '' ? GETPOST('answerWeight') : $answerSingle->weight_percent) . '"> %';
+					print '</td>';
+
+					if ($object->status < Question::STATUS_LOCKED) {
 						print '<td class="center">';
 						print $form->buttonsSaveCancel();
 						print '</td>';
@@ -1542,28 +1590,36 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					print '</span>';
 					print '</td>';
 
-					print '<td class="center">';
-					print '<input type="checkbox"' . ($answerSingle->correct === true ? ' checked' : '') . ' disabled>';
+					if ($object->isCorrectable()) {
+						print '<td class="center">';
+						print '<input type="checkbox"' . ($answerSingle->correct === true ? ' checked' : '') . ' disabled>';
+						print '</td>';
+					} else {
+						print '<td class="center"></td>'; // preserve alignment
+					}
 
-					print '</span>';
+					print '<td class="center weight-value">';
+					print ($answerSingle->weight_percent !== null && $answerSingle->weight_percent !== '') ? $answerSingle->weight_percent . ' %' : '';
 					print '</td>';
 
 					print '<td class="center">';
-					if ($object->status < Question::STATUS_LOCKED && ($object->type != 'OkKo' && $object->type != 'OkKoToFixNonApplicable' && $object->type != 'MarqueNF')) {
+					if ($object->status < Question::STATUS_LOCKED) {
 						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=editAnswer&answerId=' . $answerSingle->id . '#answerList">';
 						print '<div class="wpeo-button button-grey">';
 						print img_edit();
 						print '</div>';
 						print '</a>';
 
-						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=deleteAnswer&answerId=' . $answerSingle->id . '&token='. newToken() .'">';
-						print '<div class="wpeo-button button-grey" style="margin-left: 10px">';
-						print img_delete();
-						print '</div>';
-						print '</a>';
+						if ($object->isAnswersActionsEnabled()) {
+							print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=deleteAnswer&answerId=' . $answerSingle->id . '&token='. newToken() .'">';
+							print '<div class="wpeo-button button-grey" style="margin-left: 10px">';
+							print img_delete();
+							print '</div>';
+							print '</a>';
+						}
 						print '</td>';
 						print '<td class="move-line ui-sortable-handle">';
-					} else if ($object->isAnswersActionsEnabled()) {
+					} else {
 						print '</td>';
 						print '<td>';
 					}
@@ -1573,7 +1629,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			}
 		}
 
-		if ($object->status < QUESTION::STATUS_LOCKED && ($object->type != 'OkKo' && $object->type != 'OkKoToFixNonApplicable' && $object->type != 'MarqueNF')) {
+		if ($object->status < Question::STATUS_LOCKED && $object->isAnswersActionsEnabled()) {
 			print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
 			print '<input type="hidden" name="token" value="' . newToken() . '">';
 			print '<input type="hidden" name="action" value="addAnswer">';
@@ -1603,7 +1659,13 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 				print '<td class="center">';
 				print '<input type="checkbox" name="answerCorrect">';
 				print '</td>';
+			} else {
+				print '<td class="center"></td>'; // preserve alignment
 			}
+
+			print '<td class="center">';
+			print '<input name="answerWeight" size="5" value="' . GETPOST('answerWeight') . '"> %';
+			print '</td>';
 
 			print '<td class="center">';
 			print '<input type="submit" class="button wpeo-button" value="' . $langs->trans("Add") . '">';
@@ -1612,10 +1674,65 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			print '</td>';
 			print '</tr>';
 
+			print '<tr class="liste_titre">';
+			print '<td colspan="5" class="right"><strong>' . $langs->trans('Total') . ' / Restant :</strong></td>';
+			print '<td class="center"><strong id="total_weight">0</strong> % / <strong id="remaining_weight">100</strong> %</td>';
+			print '<td colspan="2"></td>';
+			print '</tr>';
+
 			print '</table>';
 			print '</form>';
 			print '</div>';
 		}
+?>
+<script>
+$(document).ready(function() {
+    function updateWeights(propose) {
+        var total = 0;
+        $('.weight-value').each(function() {
+            var val = parseFloat($(this).text().replace('%', '').trim());
+            if (!isNaN(val)) total += val;
+        });
+        $('.answer-weight-input').each(function() {
+            var val = parseFloat($(this).val().trim());
+            if (!isNaN(val)) total += val;
+        });
+
+        var remaining = 100 - total;
+        
+        if (propose) {
+            $('.answer-weight-input').filter(function() { return $(this).val().trim() === ''; }).each(function() {
+                if (remaining > 0) {
+                    $(this).val(remaining);
+                    total += remaining;
+                    remaining = 0;
+                } else {
+                    $(this).val(0);
+                }
+            });
+        }
+
+        $('#total_weight').text(total);
+        $('#remaining_weight').text(remaining);
+        
+        if (remaining < 0) {
+            $('#remaining_weight').css('color', 'red');
+            $('input[type="submit"][value="<?php echo $langs->trans("Add"); ?>"]').prop('disabled', true);
+            $('input[type="submit"][value="<?php echo $langs->trans("Save"); ?>"]').prop('disabled', true);
+        } else {
+            $('#remaining_weight').css('color', 'inherit');
+            $('input[type="submit"][value="<?php echo $langs->trans("Add"); ?>"]').prop('disabled', false);
+            $('input[type="submit"][value="<?php echo $langs->trans("Save"); ?>"]').prop('disabled', false);
+        }
+    }
+    
+    updateWeights(true);
+    $(document).on('input', '.answer-weight-input', function() {
+        updateWeights(false);
+    });
+});
+</script>
+<?php
 	}
 	print dol_get_fiche_end();
 

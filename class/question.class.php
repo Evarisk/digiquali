@@ -121,6 +121,7 @@ class Question extends SaturneObject
         'label'                  => ['type' => 'varchar(255)', 'label' => 'Label',                'enabled' => 1, 'position' => 11,  'notnull' => 1, 'visible' => 1, 'searchall' => 1, 'css' => 'tdoverflowmax200', 'showoncombobox' => 1],
         'description'            => ['type' => 'html',         'label' => 'Description',          'enabled' => 1, 'position' => 12,  'notnull' => 0, 'visible' => 1, 'css' => 'tdoverflowmax200'],
         'points'            	 => ['type' => 'real',	       'label' => 'NumberOfPoints',       'enabled' => 1, 'position' => 13,  'notnull' => 0, 'visible' => 1, 'default' => 1, 'bounds' => ['min' => 0], 'validate' => 1],
+        'grading_policy'         => ['type' => 'varchar(128)', 'label' => 'GradingPolicy',        'enabled' => 1, 'position' => 14,  'notnull' => 0, 'visible' => 1, 'default' => 'proportional', 'arrayofkeyval' => ['' => 'Proportional', 'proportional' => 'Proportional', 'all_or_nothing' => 'AllOrNothing', 'option_weighted' => 'OptionWeighted']],
         'show_photo'             => ['type' => 'boolean',      'label' => 'ShowPhoto',            'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => -2],
         'authorize_answer_photo' => ['type' => 'boolean',      'label' => 'AuthorizeAnswerPhoto', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => -2],
         'enter_comment'          => ['type' => 'boolean',      'label' => 'EnterComment',         'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => -2],
@@ -247,7 +248,12 @@ class Question extends SaturneObject
     /**
      * @var float|null Points
      */
-    public ?float $points;
+    public ?float $points = null;
+
+    /**
+     * @var string|null Grading policy
+     */
+    public ?string $grading_policy = null;
 
     /**
      * @var bool|null Show photo
@@ -731,6 +737,49 @@ class Question extends SaturneObject
 	 *
 	 * @return int Return -1 if at least one answer is false, 0 for question of type text, 1 if all answers are correct
 	 */
+	public function calculateEarnedPoints($answerValue): float
+	{
+		$earned = 0.0;
+		if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
+            $isProportional = ($this->grading_policy === 'proportional' || (empty($this->grading_policy) && $this->type == self::TYPE_PERCENTAGE));
+
+            if ($isProportional && $this->type == self::TYPE_PERCENTAGE) {
+                $answerValNum = (float)$answerValue;
+                $earned = round(($answerValNum / 100) * (float)$this->points, 2);
+            } else {
+                if ($this->isAnswerInQuestionRange($answerValue)) {
+                    $earned = (float)$this->points;
+                }
+            }
+		} else if (in_array($this->type, [self::TYPE_OK_KO, self::TYPE_OK_KO_TOFIX_NA, self::TYPE_MARQUE_NF, self::TYPE_UNIQUE_CHOICE, self::TYPE_MULTIPLE_CHOICES])) {
+			$correctAnswers = $this->getAllCorrectAnswers();
+			$listOfAnswersPositions = explode(',', $answerValue);
+
+			if ($this->grading_policy === 'proportional') {
+				$totalCorrectExpected = is_array($correctAnswers) ? count($correctAnswers) : 0;
+				if ($totalCorrectExpected > 0) {
+					$correctSelected = 0;
+					foreach ($listOfAnswersPositions as $answerItemPosition) {
+						if ($answerItemPosition === '') continue;
+						if (in_array($answerItemPosition, $correctAnswers)) {
+							$correctSelected++;
+						}
+					}
+					// Proportional ratio: correctly selected / total expected. 
+					// Using correctSelected directly as asked: "(Nombre de bonnes réponses sélectionnées / Nombre total de réponses correctes)"
+					$earned = ($correctSelected / $totalCorrectExpected) * (float)$this->points;
+				}
+			} else {
+				// all_or_nothing (strict)
+				if ($this->checkAnswerIsCorrect($answerValue) >= 0) {
+					$earned = (float)$this->points;
+				}
+			}
+		}
+
+		return $earned;
+	}
+
 	public function checkAnswerIsCorrect($answerValue): int
 	{
 		$retValue = 1;
@@ -889,11 +938,20 @@ class Question extends SaturneObject
 	{
 		global $langs;
 
-		if ($this->type == $this::TYPE_PERCENTAGE) {
-			return ($answer != '' ? round(($answer / 100) * $this->points, 2) : 0) . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+		if ($answer != '') {
+			$earned = $this->calculateEarnedPoints($answer);
+		} else {
+			if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
+				$questionConfig = json_decode($this->json, true)['config'] ?? [];
+				$defaultValue = $questionConfig[$this->type]['answer-default-value'] ?? 100;
+				$earned = $this->calculateEarnedPoints($defaultValue);
+			} else {
+				$earned = 0;
+			}
 		}
-
-		return (($questionWithCorrectAnswer >= 0) ? $this->points : 0) . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+		$earned = round((float)$earned, 2);
+		
+		return $earned . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
 	}
 
 	/**

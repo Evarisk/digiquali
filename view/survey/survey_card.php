@@ -368,8 +368,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             $questionConfirmInfo .= '<br><b>' . $langs->trans('BewareQuestionsAnswered', $questionCounter - $answerCounter) . '</b>';
         }
 
+        [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $object->calculatePoints();
+        $correctAnswersRate = 0;
+        if ($totalPoints > 0) {
+            $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+        $isPassed = $object->isCorrectFromPoints($correctPoints, $totalPoints) && !$atLeastOneIncorrectSubGroup;
+
+        $questionConfirmInfo .= '<br><br><table style="width: 100%; font-weight: bold;">';
+        $questionConfirmInfo .= '<tr><td style="padding-bottom: 5px;">' . $langs->trans('SuccessScore') . '</td><td style="padding-bottom: 5px;">: ' . $object->success_rate . ' %</td></tr>';
+        $questionConfirmInfo .= '<tr><td style="padding-bottom: 5px;">' . $langs->trans('ObtainedScore') . '</td><td style="padding-bottom: 5px;">: ' . $correctAnswersRate . ' %</td></tr>';
+        $questionConfirmInfo .= '<tr><td style="padding-bottom: 5px; color: ' . ($isPassed ? '#28a745' : '#dc3545') . ';">' . $langs->trans('Result') . '</td><td style="padding-bottom: 5px; color: ' . ($isPassed ? '#28a745' : '#dc3545') . ';">: ' . ($isPassed ? 'OK' : 'KO') . '</td></tr>';
+        $questionConfirmInfo .= '</table>';
+
         $questionConfirmInfo .= '<br><br><b>' . $langs->trans('ConfirmValidateSurvey') . '</b>';
-        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('ValidateObject', $langs->transnoentities('The' . ucfirst($object->element))), $questionConfirmInfo, 'confirm_validate', '', 'yes', 'actionButtonValidate', 250);
+        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('ValidateObject', $langs->transnoentities('The' . ucfirst($object->element))), $questionConfirmInfo, 'confirm_validate', '', 'yes', 'actionButtonValidate', 350, 600);
     }
 
     // Draft confirmation
@@ -527,15 +540,16 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     }
     print '</td></tr>';
 
-    if ($object->status >= SURVEY::STATUS_LOCKED) {
-        $surveyResult = $object->getFormattedResults();
-    
-        print '<tr class="field_success_rate"><td class="titlefield fieldname_success_rate">';
-        print $langs->trans('RateResult');
-        print '</td><td class="valuefield fieldname_success_rate">';
-        print '<span class="badge badge-' . ($object->isCorrect() ? 'status4' : 'status8') . ' badge-status' . '">' . $surveyResult . '</div>';
-        print '</td></tr>';
+    [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $object->calculatePoints();
+    $correctAnswersRate = 0;
+    if ($totalPoints > 0) {
+        $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
     }
+    print '<tr class="field_obtained_score"><td class="titlefield fieldname_obtained_score">';
+    print $langs->trans('ObtainedScore');
+    print '</td><td class="valuefield fieldname_obtained_score">';
+    print '<span id="survey-obtained-score">' . $correctAnswersRate . ' % (' . $correctPoints . ' / ' . $totalPoints . ' points)</span>';
+    print '</td></tr>';
 
     // Other attributes. Fields from hook formObjectOptions and Extrafields
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';

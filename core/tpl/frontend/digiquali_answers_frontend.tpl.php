@@ -40,7 +40,7 @@ if (is_array($questions) && !empty($questions)) {
         }
         if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER or empty($questionAnswer)) {
             ?>
-            <div class="question table-id-<?php echo $question->id ?> <?php echo ($objectLine->status == Answer::STATUS_VALIDATED && !empty($questionAnswer) ? ' question-complete' : ''); ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
+            <div class="question table-id-<?php echo $question->id ?> <?php echo ($objectLine->status == Answer::STATUS_VALIDATED && !empty($questionAnswer) ? ' question-complete' : ''); ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>" data-type="<?php echo dol_escape_htmltag($question->type); ?>" data-points="<?php echo (float)$question->points; ?>" data-grading-policy="<?php echo dol_escape_htmltag($question->grading_policy); ?>" data-min="<?php echo dol_escape_htmltag($question->question_answer_min_value); ?>" data-max="<?php echo dol_escape_htmltag($question->question_answer_max_value); ?>" data-correct-answers="<?php echo dol_escape_htmltag($question->correct_answers); ?>">
                 <?php if ($question->show_photo > 0 && getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . '_DISPLAY_MEDIAS')) : ?>
                     <div class="question__header-medias">
                         <div class="question__photo-ref-ok">
@@ -59,6 +59,7 @@ if (is_array($questions) && !empty($questions)) {
                         <div class="question__header-content">
                             <div class="question-title"><?php print $question->label; ?></div>
                             <div class="question-description"><?php print $question->description; ?></div>
+                            <div class="question-points"><strong><?php echo $langs->trans('Scoring'); ?> : </strong><span class="score-value"><?php echo $question->formatSingleQuestionScore(-1, $questionAnswer ?? '') ?></span></div>
                         </div>
 
                         <div class="question__header-answer">
