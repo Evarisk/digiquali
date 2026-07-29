@@ -1474,7 +1474,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print '<td class="center">' . $langs->trans('Color') . '</td>';
 		print '<td class="center">' . $langs->trans('ExpectedAnswer') . '</td>';
 		print '<td class="center">' . $langs->trans('WeightPercent') . '</td>';
-		if ($object->isAnswersActionsEnabled()) {
+		if ($object->status < Question::STATUS_LOCKED) {
 			print '<td class="center">' . $langs->trans('Action') . '</td>';
 		}
 		print '<td class="center"></td>';
@@ -1495,12 +1495,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					print '</td>';
 
 					print '<td>';
-					print '<input name="answerValue" value="'. (GETPOST('answerValue') ?: $answerSingle->value) .'">';
+					print '<input name="answerValue" value="'. (GETPOST('answerValue') ?: $answerSingle->value) .'" ' . (!$object->isAnswersActionsEnabled() ? 'readonly' : '') . '>';
 					print '</td>';
 
 					// Pictogram -- Pictogram
 					print '<td class="center">';
-					print answer_pictos_dropdown(GETPOST('answerPicto') ?: $answerSingle->pictogram);
+					if ($object->isAnswersActionsEnabled()) {
+						print answer_pictos_dropdown(GETPOST('answerPicto') ?: $answerSingle->pictogram);
+					} else {
+						print $pictosArray[$answerSingle->pictogram]['picto_source'];
+						print '<input type="hidden" name="answerPicto" value="' . $answerSingle->pictogram . '">';
+					}
 					print '</td>';
 
 					print '<td class="center">';
@@ -1516,10 +1521,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					}
 
 					print '<td class="center">';
-					print '<input name="answerWeight" size="5" value="' . (GETPOST('answerWeight') !== '' ? GETPOST('answerWeight') : $answerSingle->weight_percent) . '"> %';
+					print '<input name="answerWeight" class="answer-weight-input" size="5" value="' . (GETPOST('answerWeight') !== '' ? GETPOST('answerWeight') : $answerSingle->weight_percent) . '"> %';
 					print '</td>';
 
-					if ($object->isAnswersActionsEnabled()) {
+					if ($object->status < Question::STATUS_LOCKED) {
 						print '<td class="center">';
 						print $form->buttonsSaveCancel();
 						print '</td>';
@@ -1561,26 +1566,28 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 						print '<td class="center"></td>'; // preserve alignment
 					}
 
-					print '<td class="center">';
+					print '<td class="center weight-value">';
 					print ($answerSingle->weight_percent !== null && $answerSingle->weight_percent !== '') ? $answerSingle->weight_percent . ' %' : '';
 					print '</td>';
 
 					print '<td class="center">';
-					if ($object->status < Question::STATUS_LOCKED && ($object->type != 'OkKo' && $object->type != 'OkKoToFixNonApplicable' && $object->type != 'MarqueNF')) {
+					if ($object->status < Question::STATUS_LOCKED) {
 						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=editAnswer&answerId=' . $answerSingle->id . '#answerList">';
 						print '<div class="wpeo-button button-grey">';
 						print img_edit();
 						print '</div>';
 						print '</a>';
 
-						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=deleteAnswer&answerId=' . $answerSingle->id . '&token='. newToken() .'">';
-						print '<div class="wpeo-button button-grey" style="margin-left: 10px">';
-						print img_delete();
-						print '</div>';
-						print '</a>';
+						if ($object->isAnswersActionsEnabled()) {
+							print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=deleteAnswer&answerId=' . $answerSingle->id . '&token='. newToken() .'">';
+							print '<div class="wpeo-button button-grey" style="margin-left: 10px">';
+							print img_delete();
+							print '</div>';
+							print '</a>';
+						}
 						print '</td>';
 						print '<td class="move-line ui-sortable-handle">';
-					} else if ($object->isAnswersActionsEnabled()) {
+					} else {
 						print '</td>';
 						print '<td>';
 					}
@@ -1590,7 +1597,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			}
 		}
 
-		if ($object->status < QUESTION::STATUS_LOCKED && ($object->type != 'OkKo' && $object->type != 'OkKoToFixNonApplicable' && $object->type != 'MarqueNF')) {
+		if ($object->status < Question::STATUS_LOCKED && $object->isAnswersActionsEnabled()) {
 			print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
 			print '<input type="hidden" name="token" value="' . newToken() . '">';
 			print '<input type="hidden" name="action" value="addAnswer">';
@@ -1635,10 +1642,50 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			print '</td>';
 			print '</tr>';
 
+			print '<tr class="liste_titre">';
+			print '<td colspan="5" class="right"><strong>' . $langs->trans('Total') . ' / Restant :</strong></td>';
+			print '<td class="center"><strong id="total_weight">0</strong> % / <strong id="remaining_weight">100</strong> %</td>';
+			print '<td colspan="2"></td>';
+			print '</tr>';
+
 			print '</table>';
 			print '</form>';
 			print '</div>';
 		}
+?>
+<script>
+$(document).ready(function() {
+    function updateWeights() {
+        var total = 0;
+        $('.weight-value').each(function() {
+            var val = parseFloat($(this).text().replace('%', '').trim());
+            if (!isNaN(val)) total += val;
+        });
+        $('.answer-weight-input').each(function() {
+            var val = parseFloat($(this).val().trim());
+            if (!isNaN(val)) total += val;
+        });
+
+        $('#total_weight').text(total);
+        var remaining = 100 - total;
+        $('#remaining_weight').text(remaining);
+        
+        if (remaining < 0) {
+            $('#remaining_weight').css('color', 'red');
+            $('input[type="submit"][value="<?php echo $langs->trans("Add"); ?>"]').prop('disabled', true);
+            $('input[type="submit"][value="<?php echo $langs->trans("Save"); ?>"]').prop('disabled', true);
+        } else {
+            $('#remaining_weight').css('color', 'inherit');
+            $('input[type="submit"][value="<?php echo $langs->trans("Add"); ?>"]').prop('disabled', false);
+            $('input[type="submit"][value="<?php echo $langs->trans("Save"); ?>"]').prop('disabled', false);
+        }
+    }
+    
+    updateWeights();
+    $(document).on('input', '.answer-weight-input', updateWeights);
+});
+</script>
+<?php
 	}
 	print dol_get_fiche_end();
 
