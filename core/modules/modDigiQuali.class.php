@@ -320,6 +320,10 @@ class modDigiQuali extends DolibarrModules
         $objectsMetadata = saturne_get_objects_metadata();
 
         foreach($objectsMetadata as $objectType => $objectMetadata) {
+            // Legacy alias keys point to an entry already handled, declaring them would duplicate its tabs and hooks
+            if (!empty($objectMetadata['alias_of'])) {
+                continue;
+            }
             if (preg_match('/_/', $objectType)) {
                 $splittedElementType = explode('_', $objectType);
                 $moduleName = $splittedElementType[0];
