@@ -172,3 +172,8 @@ ALTER TABLE llx_digiquali_sheet ADD COLUMN default_control_tags TEXT;
 -- 23.3.0
 ALTER TABLE llx_digiquali_control ADD score_percentage DOUBLE(24,8) NULL AFTER success_rate;
 ALTER TABLE llx_digiquali_survey ADD score_percentage DOUBLE(24,8) NULL AFTER success_rate;
+
+-- The legacy DoliSMQ role 'ExtSocietyAttendant' is in no attendants dictionary, so those signatories
+-- were invisible in the control and survey list columns. Only DigiQuali rows are realigned:
+-- DigiRisk (preventionplan, firepermit) and DoliMeet (audit) keep that role.
+UPDATE llx_saturne_object_signature SET role = 'Attendant' WHERE module_name = 'digiquali' AND object_type IN ('control', 'survey') AND role = 'ExtSocietyAttendant';
