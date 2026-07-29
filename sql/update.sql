@@ -168,3 +168,7 @@ UPDATE llx_digiquali_riskassessment SET fk_parent = 0 WHERE fk_parent IS NULL;
 ALTER TABLE llx_digiquali_sheet ADD COLUMN show_project SMALLINT DEFAULT 1;
 ALTER TABLE llx_digiquali_sheet ADD COLUMN show_tags SMALLINT DEFAULT 1;
 ALTER TABLE llx_digiquali_sheet ADD COLUMN default_control_tags TEXT;
+
+-- 23.3.0
+ALTER TABLE llx_digiquali_control ADD score_percentage DOUBLE(24,8) NULL AFTER success_rate;
+ALTER TABLE llx_digiquali_survey ADD score_percentage DOUBLE(24,8) NULL AFTER success_rate;
