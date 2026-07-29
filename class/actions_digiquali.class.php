@@ -431,6 +431,99 @@ class ActionsDigiquali
     }
 
     /**
+     * Return the ids of the objects the generic list is about to display.
+     *
+     * $sqlForList is the snapshot the saturne list exposes for aggregate hooks: the whole filtered query,
+     * before sorting and pagination. Wrapping it as a subquery, with the very order and limit the list
+     * applies, yields exactly the rows of the current page - including when the sort references an alias
+     * that only exists inside that query.
+     *
+     * @return int[] Ids of the page, empty when the list variables are out of reach
+     */
+    protected function getListPageObjectIds(): array
+    {
+        global $limit, $offset, $sortfield, $sortorder, $sqlForList;
+
+        if (empty($sqlForList)) {
+            return [];
+        }
+
+        $sql  = 'SELECT listpage.rowid FROM (' . $sqlForList;
+        $sql .= $this->db->order($sortfield, $sortorder);
+        $sql .= (!empty($limit) ? $this->db->plimit($limit + 1, $offset) : '');
+        $sql .= ') AS listpage';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return [];
+        }
+
+        $ids = [];
+        while ($obj = $this->db->fetch_object($resql)) {
+            $ids[] = (int) $obj->rowid;
+        }
+        $this->db->free($resql);
+
+        return $ids;
+    }
+
+    /**
+     * Load, for a whole page of listed objects, the date of the last agenda event of each status change.
+     *
+     * The last_status_date column used to call ActionComm::getActions() once per status and per row, so
+     * one hundred queries for a page of twenty-five. Each of them orders by datep and takes the first
+     * row, and MySQL resolves part of them with an index_merge intersection on idx_actioncomm_entity -
+     * an index every row matches - which costs 30ms instead of 0.3ms. One query scoped to the ids of the
+     * page replaces them all and always uses idx_actioncomm_fk_element.
+     *
+     * Rows are read in ascending datep order and each one overwrites the previous entry of its key, so
+     * the value kept is the one of the greatest datep: the same record getActions() returned.
+     *
+     * @param  CommonObject $object Listed object (control or survey), giving the agenda element type
+     * @param  int[]        $ids    Ids to load
+     * @return array<int, array<string, int>> Timestamps indexed by object id, then by agenda code
+     */
+    protected function loadLastStatusDates(CommonObject $object, array $ids): array
+    {
+        $ids = array_filter(array_map('intval', $ids));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $codes = [];
+        foreach (['VALIDATE', 'UNVALIDATE', 'LOCK', 'ARCHIVE'] as $code) {
+            $codes[] = '\'AC_' . dol_strtoupper($object->element) . '_' . $code . '\'';
+        }
+
+        $sql  = 'SELECT fk_element, code, datec FROM ' . $this->db->prefix() . 'actioncomm';
+        $sql .= ' WHERE entity IN (' . getEntity('agenda') . ')';
+        $sql .= ' AND elementtype = \'' . $this->db->escape($object->element . '@' . $object->module) . '\'';
+        $sql .= ' AND code IN (' . implode(', ', $codes) . ')';
+        $sql .= ' AND fk_element IN (' . implode(', ', $ids) . ')';
+        $sql .= ' ORDER BY datep ASC';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return [];
+        }
+
+        $lastStatusDates = [];
+        while ($obj = $this->db->fetch_object($resql)) {
+            $lastStatusDates[(int) $obj->fk_element][$obj->code] = $this->db->jdate($obj->datec);
+        }
+        $this->db->free($resql);
+
+        // Ids without any agenda event must still count as loaded, otherwise the caller reloads them one by one
+        foreach ($ids as $id) {
+            if (!isset($lastStatusDates[$id])) {
+                $lastStatusDates[$id] = [];
+            }
+        }
+
+        return $lastStatusDates;
+    }
+
+    /**
      * Overloading the printFieldListFrom function : replacing the parent's function with the one below
      *
      * @param  array       $parameters Hook metadata (context, etc...)
@@ -1114,15 +1207,20 @@ class ActionsDigiquali
             }
 
             if ($parameters['key'] == 'last_status_date') {
-                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-
-                $actionComm = new ActionComm($this->db);
+                if (!isset($conf->cache['lastStatusDatesIds'])) {
+                    $conf->cache['lastStatusDatesIds'] = $this->getListPageObjectIds();
+                    $conf->cache['lastStatusDates']    = $this->loadLastStatusDates($object, $conf->cache['lastStatusDatesIds']);
+                }
+                if (!in_array($object->id, $conf->cache['lastStatusDatesIds'], true)) {
+                    // The page ids could not be determined, so load this row alone rather than show nothing
+                    $conf->cache['lastStatusDatesIds'][] = $object->id;
+                    $conf->cache['lastStatusDates']     += $this->loadLastStatusDates($object, [$object->id]);
+                }
 
                 $out[$parameters['key']] = '';
                 $actionCommCode          = ['VALIDATE' => 'ValidationDate', 'UNVALIDATE' => 'ReopeningDate', 'LOCK' => 'LockingDate', 'ARCHIVE' => 'ArchivingDate'];
                 foreach ($actionCommCode as $code => $date) {
-                    $lastAction     = $actionComm->getActions(0, $object->id, $object->element . '@' . $object->module, ' AND a.code = "AC_' . dol_strtoupper($object->element) . '_' . $code . '"', 'a.datep', 'DESC', 1);
-                    $lastActionDate = (!empty($lastAction) && isset($lastAction[0]->datec)) ? $lastAction[0]->datec : 0;
+                    $lastActionDate = $conf->cache['lastStatusDates'][$object->id]['AC_' . dol_strtoupper($object->element) . '_' . $code] ?? 0;
                     if ($lastActionDate > 0) {
                         $out[$parameters['key']] .= $langs->trans($date) . '<br>' . dol_print_date($lastActionDate, 'dayhour') . '<br>';
                     }
