@@ -196,6 +196,9 @@ $permissiontodelete = $user->hasRight($object->module, $object->element, 'delete
 // Security check
 saturne_check_access($permissiontoread, $object);
 
+// Enable the "Validate" mass action offered by the saturne list templates
+$enableMassValidate = 1;
+
 /*
  * Actions
  */
