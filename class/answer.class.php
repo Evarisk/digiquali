@@ -116,6 +116,7 @@ class Answer extends SaturneObject
         'value'         => ['type' => 'text',         'label' => 'Value',            'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1],
         'position'      => ['type' => 'integer',      'label' => 'Position',         'enabled' => 1, 'position' => 90,  'notnull' => 1, 'visible' => 0],
         'correct'       => ['type' => 'boolean',      'label' => 'AnswerCorrectness','enabled' => 1, 'position' => 95,  'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'weight_percent'=> ['type' => 'real',         'label' => 'WeightPercent',    'enabled' => 1, 'position' => 96,  'notnull' => 0, 'visible' => 0],
         'color'         => ['type' => 'varchar(255)', 'label' => 'Color',            'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 0],
         'pictogram'     => ['type' => 'varchar(255)', 'label' => 'Pictogram',        'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 1],
         'fk_question'   => ['type' => 'integer',      'label' => 'FkQuestion',       'enabled' => 1, 'position' => 120, 'notnull' => 1, 'visible' => 0, 'index' => 1, 'foreignkey' => 'digiquali_question.rowid'],
@@ -177,6 +178,11 @@ class Answer extends SaturneObject
      * @var bool Correct.
      */
     public bool $correct = false;
+
+    /**
+     * @var float|null Weight percent.
+     */
+    public ?float $weight_percent;
 
     /**
      * @var string Color.

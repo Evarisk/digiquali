@@ -94,6 +94,16 @@ if ($action == 'save') {
                 }
             }
 
+            // Calculate and set the score on the line
+            if ($line->answer !== null) {
+                $line->earned_points = $question->calculateEarnedPoints($line->answer);
+                if ($question->points > 0) {
+                    $line->score_rate = $line->earned_points / (float)$question->points;
+                } else {
+                    $line->score_rate = 0;
+                }
+            }
+
             if ($lineExists) {
                 if ($line->id > 0) {
                     $res = $line->update($user);

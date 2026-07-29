@@ -26,6 +26,8 @@ CREATE TABLE llx_digiquali_surveydet(
   answer        text,
   answer_photo  text,
   comment       text,
+  earned_points float,
+  score_rate    float,
   fk_user_creat integer NOT NULL,
   fk_user_modif integer,
   fk_survey     integer NOT NULL,

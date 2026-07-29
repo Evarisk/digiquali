@@ -1312,6 +1312,8 @@ class ControlLine extends SaturneObject
         'answer'            => ['type' => 'text',         'label' => 'Answer',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => -1],
         'answer_photo'      => ['type' => 'text',         'label' => 'AnswerPhoto',      'enabled' => 0, 'position' => 100, 'notnull' => 0, 'visible' => -1],
         'comment'           => ['type' => 'text',         'label' => 'Comment',          'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => -1],
+        'earned_points'     => ['type' => 'real',         'label' => 'EarnedPoints',     'enabled' => 1, 'position' => 111, 'notnull' => 0, 'visible' => -1],
+        'score_rate'        => ['type' => 'real',         'label' => 'ScoreRate',        'enabled' => 1, 'position' => 112, 'notnull' => 0, 'visible' => -1],
         'fk_user_creat'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserAuthor', 'picto' => 'user',                                'enabled' => 1, 'position' => 70, 'notnull' => 1, 'visible' => -1, 'foreignkey' => 'user.rowid'],
         'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 75, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_control'        => ['type' => 'integer:control:digiquali/class/control.class.php',    'label' => 'Control',    'picto' => 'fontawesome_fa-tasks_fas_#d35968',    'enabled' => 1, 'position' => 2,  'notnull' => 1, 'visible' => -1, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
@@ -1377,6 +1379,16 @@ class ControlLine extends SaturneObject
      * @var string|null Comment
      */
     public ?string $comment = '';
+
+    /**
+     * @var float|null Earned points
+     */
+    public ?float $earned_points;
+
+    /**
+     * @var float|null Score rate
+     */
+    public ?float $score_rate;
 
     /**
      * @var int User ID
