@@ -317,25 +317,25 @@ class modDigiQuali extends DolibarrModules
 		$this->tabs   = [];
 		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
-        $objectsMetadata = saturne_get_objects_metadata();
+        // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
+        $linkableObjects    = saturne_filter_linkable_objects(saturne_get_objects_metadata(), ['digiquali_']);
+        $enabledObjectTypes = saturne_get_enabled_linked_object_types($linkableObjects, 'DIGIQUALI_SHEET_LINK_');
 
-        foreach($objectsMetadata as $objectType => $objectMetadata) {
-            // Legacy alias keys point to an entry already handled, declaring them would duplicate its tabs and hooks
-            if (!empty($objectMetadata['alias_of'])) {
-                continue;
-            }
+        foreach ($enabledObjectTypes as $objectType) {
+            $objectMetadata = $linkableObjects[$objectType];
+
             if (preg_match('/_/', $objectType)) {
                 $splittedElementType = explode('_', $objectType);
                 $moduleName = $splittedElementType[0];
                 $objectName = dol_strtolower($objectMetadata['class_name']);
-                $objectType = $objectName . '@' . $moduleName;
+                $tabType    = $objectName . '@' . $moduleName;
             } else {
-                $objectType = $objectMetadata['tab_type'];
+                $tabType = $objectMetadata['tab_type'];
             }
             if ($objectMetadata['link_name'] !== 'propal') {
-                $this->tabs[] = ['data' => $objectType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
             }
-            $this->tabs[] = ['data' => $objectType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
 
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_list'];
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_card'];
