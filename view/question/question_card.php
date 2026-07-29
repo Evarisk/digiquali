@@ -778,6 +778,7 @@ if (empty($reshook)) {
 		$answerColor = GETPOST('answerColor');
 		$answerPicto = GETPOST('answerPicto');
 		$answerCorrect = boolval(GETPOST('answerCorrect'));
+		$answerWeight = GETPOST('answerWeight');
 
 		if ($answerCorrect === true && $object->hasAtLeastOneCorrectAnswer()) {
 			setEventMessages($langs->trans('QuestionWithOneCorrectAnswer'), [], 'errors');
@@ -798,6 +799,7 @@ if (empty($reshook)) {
 			$answer->color = $answerColor;
 			$answer->pictogram = $answerPicto;
 			$answer->correct = $answerCorrect;
+			$answer->weight_percent = ($answerWeight !== '') ? price2num($answerWeight) : null;
 			$answer->fk_question = $id;
 
 			$result = $answer->create($user);
@@ -820,6 +822,7 @@ if (empty($reshook)) {
 		$answerPicto = GETPOST('answerPicto');
 		$answerId    = GETPOST('answerId');
 		$answerCorrect = GETPOST('answerCorrect') === 'on';
+		$answerWeight = GETPOST('answerWeight');
 
 		$answer->fetch($answerId);
 		if (empty($answerValue)) {
@@ -842,6 +845,7 @@ if (empty($reshook)) {
 			$answer->color = $answerColor;
 			$answer->pictogram = $answerPicto;
 			$answer->correct = $answerCorrect;
+			$answer->weight_percent = ($answerWeight !== '') ? price2num($answerWeight) : null;
 
 			$result = $answer->update($user);
 
@@ -1469,6 +1473,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		print '<td class="center">' . $langs->trans('Picto') . '</td>';
 		print '<td class="center">' . $langs->trans('Color') . '</td>';
 		print '<td class="center">' . $langs->trans('ExpectedAnswer') . '</td>';
+		print '<td class="center">' . $langs->trans('WeightPercent') . '</td>';
 		if ($object->isAnswersActionsEnabled()) {
 			print '<td class="center">' . $langs->trans('Action') . '</td>';
 		}
@@ -1506,7 +1511,13 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 						print '<td class="center">';
 						print '<input type="checkbox" name="answerCorrect"' . ($answerSingle->correct === true ? ' checked' : ''). '>';
 						print '</td>';
+					} else {
+						print '<td class="center"></td>'; // preserve alignment
 					}
+
+					print '<td class="center">';
+					print '<input name="answerWeight" size="5" value="' . (GETPOST('answerWeight') !== '' ? GETPOST('answerWeight') : $answerSingle->weight_percent) . '"> %';
+					print '</td>';
 
 					if ($object->isAnswersActionsEnabled()) {
 						print '<td class="center">';
@@ -1542,10 +1553,16 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 					print '</span>';
 					print '</td>';
 
-					print '<td class="center">';
-					print '<input type="checkbox"' . ($answerSingle->correct === true ? ' checked' : '') . ' disabled>';
+					if ($object->isCorrectable()) {
+						print '<td class="center">';
+						print '<input type="checkbox"' . ($answerSingle->correct === true ? ' checked' : '') . ' disabled>';
+						print '</td>';
+					} else {
+						print '<td class="center"></td>'; // preserve alignment
+					}
 
-					print '</span>';
+					print '<td class="center">';
+					print ($answerSingle->weight_percent !== null && $answerSingle->weight_percent !== '') ? $answerSingle->weight_percent . ' %' : '';
 					print '</td>';
 
 					print '<td class="center">';
@@ -1603,7 +1620,13 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 				print '<td class="center">';
 				print '<input type="checkbox" name="answerCorrect">';
 				print '</td>';
+			} else {
+				print '<td class="center"></td>'; // preserve alignment
 			}
+
+			print '<td class="center">';
+			print '<input name="answerWeight" size="5" value="' . GETPOST('answerWeight') . '"> %';
+			print '</td>';
 
 			print '<td class="center">';
 			print '<input type="submit" class="button wpeo-button" value="' . $langs->trans("Add") . '">';
