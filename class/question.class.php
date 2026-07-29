@@ -248,12 +248,12 @@ class Question extends SaturneObject
     /**
      * @var float|null Points
      */
-    public ?float $points;
+    public ?float $points = null;
 
     /**
      * @var string|null Grading policy
      */
-    public ?string $grading_policy;
+    public ?string $grading_policy = null;
 
     /**
      * @var bool|null Show photo

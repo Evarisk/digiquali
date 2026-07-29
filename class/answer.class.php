@@ -182,7 +182,7 @@ class Answer extends SaturneObject
     /**
      * @var float|null Weight percent.
      */
-    public ?float $weight_percent;
+    public ?float $weight_percent = null;
 
     /**
      * @var string Color.
