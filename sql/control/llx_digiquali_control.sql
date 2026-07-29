@@ -32,6 +32,7 @@ CREATE TABLE llx_digiquali_control(
     control_date       datetime,
     next_control_date  datetime,
     success_rate       double(24,8),
+    score_percentage   double(24,8),
     fk_user_creat      integer NOT NULL,
     fk_user_modif      integer,
     fk_sheet           integer NOT NULL,
