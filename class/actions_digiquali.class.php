@@ -888,9 +888,13 @@ class ActionsDigiquali
             $object->fetchLines();
             $object->fetchObjectLinked('', '', $object->id, 'digiquali_control');
 
-            $sheet->fetch($object->fk_sheet);
-            $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position');
-            $conf->cache['sheet'] = $sheet;
+            // A failed fetch() leaves the object as it was, so an unfetched sheet must not reach the cache
+            if ($sheet->fetch($object->fk_sheet) > 0) {
+                $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position');
+                $conf->cache['sheet'] = $sheet;
+            } else {
+                $conf->cache['sheet'] = null;
+            }
 
             $filter      = ['customsql' => 'fk_object = ' . $object->id . ' AND status > 0 AND object_type = "' . $object->element . '"'];
             $signatories = $signatory->fetchAll('', 'role', 0, 0, $filter);
@@ -969,7 +973,7 @@ class ActionsDigiquali
             $out = [];
 
             if ($parameters['key'] == 'fk_sheet') {
-                $out[$parameters['key']] = $conf->cache['sheet']->getNomUrl(1, '', 0, 'maxwidth200onsmartphone maxwidth300', -1, 1);
+                $out[$parameters['key']] = isset($conf->cache['sheet']) ? $conf->cache['sheet']->getNomUrl(1, '', 0, 'maxwidth200onsmartphone maxwidth300', -1, 1) : '';
             }
 
             if (!empty($object->linkedObjects)) {
@@ -1000,7 +1004,7 @@ class ActionsDigiquali
 
             if ($parameters['key'] == 'question_answered') {
                 $NbQuestion  = 0;
-                $questionIds = $conf->cache['sheet']->linkedObjectsIds['digiquali_question'] ?? [];
+                $questionIds = isset($conf->cache['sheet']) ? ($conf->cache['sheet']->linkedObjectsIds['digiquali_question'] ?? []) : [];
                 if (is_array($questionIds) && !empty($questionIds)) {
                     $NbQuestion = count($questionIds);
                     $NbAnswer   = 0;
@@ -1033,7 +1037,7 @@ class ActionsDigiquali
             }
 
             if ($parameters['key'] == 'average_percentage_questions' || $parameters['key'] == 'verdict_object') {
-                $questions = $conf->cache['sheet']->linkedObjects['digiquali_question'];
+                $questions = isset($conf->cache['sheet']) ? ($conf->cache['sheet']->linkedObjects['digiquali_question'] ?? []) : [];
                 if (is_array($questions) && !empty($questions)) {
                     $questions = array_column($questions, null, 'id');
                 }
@@ -1041,8 +1045,8 @@ class ActionsDigiquali
                 $answers = [];
                 if (is_array($object->lines) && !empty($object->lines)) {
                     foreach ($object->lines as $objectLine) {
-                        if ($questions[$objectLine->fk_question]->type !== 'Percentage') {
-                            continue; // Skip non-percentage questions
+                        if (!isset($questions[$objectLine->fk_question]) || $questions[$objectLine->fk_question]->type !== 'Percentage') {
+                            continue; // Skip questions the sheet no longer carries, and non-percentage ones
                         }
                         $answers[] = $objectLine->answer;
                     }
