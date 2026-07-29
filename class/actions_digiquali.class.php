@@ -905,6 +905,7 @@ class ActionsDigiquali
             $conf->cache['thirdparty']  = [];
             if (is_array($signatories) && !empty($signatories)) {
                 foreach ($signatories as $signatory) {
+                    $contact = null; // An unresolved contact must not leak from the previous signatory
                     // fetch user or contact depending on the element type of the signatory
                     if ($signatory->element_type == 'user') {
                         $userTmp = new User($this->db);
@@ -1048,7 +1049,10 @@ class ActionsDigiquali
                         if (!isset($questions[$objectLine->fk_question]) || $questions[$objectLine->fk_question]->type !== 'Percentage') {
                             continue; // Skip questions the sheet no longer carries, and non-percentage ones
                         }
-                        $answers[] = $objectLine->answer;
+                        if (!is_numeric($objectLine->answer)) {
+                            continue; // An unanswered question holds '', which array_sum() cannot add
+                        }
+                        $answers[] = (float) $objectLine->answer;
                     }
                 }
 
@@ -1080,7 +1084,6 @@ class ActionsDigiquali
                                 }
                                 switch ($signatory->attendance) {
                                     case 1:
-                                        break;
                                         $cssButton = '#0d8aff';
                                         $userIcon  = 'fa-user-clock';
                                         break;
@@ -1093,15 +1096,22 @@ class ActionsDigiquali
                                         $userIcon  = 'fa-user';
                                         break;
                                 }
-                                if (is_array($users[$signatory->role]) && !empty($users[$signatory->role][$signatory->id])) {
-                                    $out[$parameters['key']] .= $users[$signatory->role][$signatory->id]->getNomUrl(1, '', 0, 0, 24, 1);
-                                } elseif (is_array($contacts[$signatory->role]) && !empty($contacts[$signatory->role][$signatory->id])) {
-                                    $out[$parameters['key']] .= $contacts[$signatory->role][$signatory->id]->getNomUrl(1);
+                                // Only the roles holding a signatory are cached, so both lookups can miss
+                                $roleUsers    = $users[$signatory->role] ?? [];
+                                $roleContacts = $contacts[$signatory->role] ?? [];
+
+                                $signatoryName = '';
+                                if (!empty($roleUsers[$signatory->id])) {
+                                    $signatoryName = $roleUsers[$signatory->id]->getNomUrl(1, '', 0, 0, 24, 1);
+                                } elseif (!empty($roleContacts[$signatory->id])) {
+                                    $signatoryName = $roleContacts[$signatory->id]->getNomUrl(1);
                                 }
-                                if ((is_array($users[$signatory->role]) && !empty($users[$signatory->role])) || (is_array($contacts[$signatory->role]) && !empty($contacts[$signatory->role]))) {
-                                    $out[$parameters['key']] .= ' - ' . $signatory->getLibStatut(3);
-                                    $out[$parameters['key']] .= ' - <i class="fas ' . $userIcon . '" style="color: ' . $cssButton . '"></i><br>';
+                                if (dol_strlen($signatoryName) == 0) {
+                                    continue; // Neither the user nor the contact could be loaded
                                 }
+
+                                $out[$parameters['key']] .= $signatoryName . ' - ' . $signatory->getLibStatut(3);
+                                $out[$parameters['key']] .= ' - <i class="fas ' . $userIcon . '" style="color: ' . $cssButton . '"></i><br>';
                             }
                         }
                     }
@@ -1111,6 +1121,7 @@ class ActionsDigiquali
             if ($parameters['key'] == 'society_attendants') {
                 $thirdparties = $conf->cache['thirdparty'];
                 if (is_array($thirdparties) && !empty($thirdparties)) {
+                    $out[$parameters['key']]  = '';
                     $alreadyAddedThirdParties = [];
                     foreach ($thirdparties as $thirdparty) {
                         if (!empty($thirdparty->id) && !in_array($thirdparty->id, $alreadyAddedThirdParties)) {
