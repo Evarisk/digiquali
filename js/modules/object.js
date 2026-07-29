@@ -201,46 +201,54 @@ window.digiquali.object.updateButtonsStatus = function() {
  * @param  {string} comment    Comment value
  * @return {void}
  */
+window.digiquali.object.saveTimeouts = window.digiquali.object.saveTimeouts || {};
+
 window.digiquali.object.saveAnswer = function(questionId, answer, comment) {
   let token          = window.saturne.toolbox.getToken();
   let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
   let answerVal      = Array.isArray(answer) ? answer.join(',') : answer;
 
-  $.ajax({
-    url: document.URL + querySeparator + 'action=save',
-    type: 'POST',
-    data: {
-      token: token,
-      autoSave: 'true',
-      questionId: questionId,
-      answer: answerVal,
-      comment: comment
-    },
-    success: function(resp) {
-      let $resp = $(resp);
-      $('.progress-info').replaceWith($resp.find('.progress-info'));
-      $('#dialog-confirm-actionButtonValidate>.confirmmessage').replaceWith($resp.find('#dialog-confirm-actionButtonValidate>.confirmmessage'));
-      // Refresh the per-group answered-question counters in real time so that questions inside
-      // groups (and nested sub-groups) are reflected immediately, on both backend and public interfaces.
-      $('.group-answer-counter').each(function() {
-        let groupId       = $(this).attr('data-group-id');
-        let $freshCounter = $resp.find('.group-answer-counter[data-group-id="' + groupId + '"]');
-        if ($freshCounter.length) {
-          $(this).text($freshCounter.first().text());
+  if (window.digiquali.object.saveTimeouts[questionId]) {
+    clearTimeout(window.digiquali.object.saveTimeouts[questionId]);
+  }
+
+  window.digiquali.object.saveTimeouts[questionId] = setTimeout(function() {
+    $.ajax({
+      url: document.URL + querySeparator + 'action=save',
+      type: 'POST',
+      data: {
+        token: token,
+        autoSave: 'true',
+        questionId: questionId,
+        answer: answerVal,
+        comment: comment
+      },
+      success: function(resp) {
+        let $resp = $(resp);
+        $('.progress-info').replaceWith($resp.find('.progress-info'));
+        $('#dialog-confirm-actionButtonValidate>.confirmmessage').replaceWith($resp.find('#dialog-confirm-actionButtonValidate>.confirmmessage'));
+        // Refresh the per-group answered-question counters in real time so that questions inside
+        // groups (and nested sub-groups) are reflected immediately, on both backend and public interfaces.
+        $('.group-answer-counter').each(function() {
+          let groupId       = $(this).attr('data-group-id');
+          let $freshCounter = $resp.find('.group-answer-counter[data-group-id="' + groupId + '"]');
+          if ($freshCounter.length) {
+            $(this).text($freshCounter.first().text());
+          }
+        });
+        // Remove the red unsaved warning from the comment box that was saved
+        let $commentArea = $('.question-comment[name="comment' + questionId + '"]');
+        if ($commentArea.length) {
+            $commentArea.removeClass('show-comment-unsaved-message');
+            $commentArea.next('p').remove();
         }
-      });
-      // Remove the red unsaved warning from the comment box that was saved
-      let $commentArea = $('.question-comment[name="comment' + questionId + '"]');
-      if ($commentArea.length) {
-          $commentArea.removeClass('show-comment-unsaved-message');
-          $commentArea.next('p').remove();
+        $.jnotify('Sauvegarde réussie', 'success', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
+      },
+      error: function() {
+        $.jnotify('Erreur de sauvegarde', 'error', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
       }
-      $.jnotify('Sauvegarde réussie', 'success', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
-    },
-    error: function() {
-      $.jnotify('Erreur de sauvegarde', 'error', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
-    }
-  });
+    });
+  }, 1000);
 };
 
 /**
