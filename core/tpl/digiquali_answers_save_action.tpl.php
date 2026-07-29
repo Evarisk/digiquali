@@ -54,7 +54,9 @@ if ($action == 'save') {
     $questions = $sheet->fetchAllQuestions();
 
     if (!empty($questions)) {
-        $controlLineObj = new ControlLine($db);
+        $lineClass = get_class($objectLine);
+        $fkField = ($object->element === 'survey') ? 'fk_survey' : 'fk_control';
+        
         foreach ($questions as $question) {
             // If AutoSave, ONLY process the specific question to save time
             if ($isAutoSave) {
@@ -63,7 +65,7 @@ if ($action == 'save') {
                 }
             }
 
-            $line = new ControlLine($db);
+            $line = new $lineClass($db);
             $resLines = $line->fetchFromParentWithQuestion($object->id, $question->id);
             
             $lineExists = false;
@@ -73,7 +75,7 @@ if ($action == 'save') {
                 $lineExists = true;
             } else {
                 // Init new line properties manually if it doesn't exist
-                $line->fk_control = $object->id;
+                $line->$fkField = $object->id;
                 $line->fk_question = $question->id;
                 $line->status = 1;
             }
@@ -112,7 +114,7 @@ if ($action == 'save') {
                     }
                 }
             } else {
-                if ($line->fk_control > 0 && $line->fk_question > 0) {
+                if ($line->$fkField > 0 && $line->fk_question > 0) {
                     $line->date_creation = dol_now();
                     $res = $line->create($user);
                     if ($res < 0) {

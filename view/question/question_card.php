@@ -319,6 +319,12 @@ if (empty($reshook)) {
             } else {
 				unset($objectConfig['config'][$object->type]['answer-max-value']);
 			}
+            $answerDefaultValue = (GETPOSTISSET('answer-default-value') && GETPOST('answer-default-value') !== '') ? GETPOSTFLOAT('answer-default-value') : null;
+            if (isset($answerDefaultValue)) {
+                $objectConfig['config'][$object->type]['answer-default-value'] = $answerDefaultValue;
+            } else {
+				unset($objectConfig['config'][$object->type]['answer-default-value']);
+			}
 
 			$result = $object->create($user);
 			if ($result > 0) {
@@ -489,6 +495,12 @@ if (empty($reshook)) {
 			$objectConfig['config'][$questionType]['answer-max-value'] = $answerMaxValue;
 		} else {
 			unset($objectConfig['config'][$questionType]['answer-max-value']);
+		}
+		$answerDefaultValue = (GETPOSTISSET('answer-default-value') && GETPOST('answer-default-value') !== '') ? GETPOSTFLOAT('answer-default-value') : null;
+		if (isset($answerDefaultValue)) {
+			$objectConfig['config'][$questionType]['answer-default-value'] = $answerDefaultValue;
+		} else {
+			unset($objectConfig['config'][$questionType]['answer-default-value']);
 		}
 
 		$object->json = json_encode($objectConfig);

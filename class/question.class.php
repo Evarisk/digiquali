@@ -741,12 +741,16 @@ class Question extends SaturneObject
 	{
 		$earned = 0.0;
 		if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
-			if ($this->isAnswerInQuestionRange($answerValue)) {
-				$earned = (float)$this->points;
-			} elseif ($this->type == self::TYPE_PERCENTAGE && (empty($this->grading_policy) || $this->grading_policy === 'proportional')) {
-				$answerValNum = (float)$answerValue;
-				$earned = round(($answerValNum / 100) * (float)$this->points, 2);
-			}
+            $isProportional = ($this->grading_policy === 'proportional' || (empty($this->grading_policy) && $this->type == self::TYPE_PERCENTAGE));
+
+            if ($isProportional && $this->type == self::TYPE_PERCENTAGE) {
+                $answerValNum = (float)$answerValue;
+                $earned = round(($answerValNum / 100) * (float)$this->points, 2);
+            } else {
+                if ($this->isAnswerInQuestionRange($answerValue)) {
+                    $earned = (float)$this->points;
+                }
+            }
 		} else if (in_array($this->type, [self::TYPE_OK_KO, self::TYPE_OK_KO_TOFIX_NA, self::TYPE_MARQUE_NF, self::TYPE_UNIQUE_CHOICE, self::TYPE_MULTIPLE_CHOICES])) {
 			$correctAnswers = $this->getAllCorrectAnswers();
 			$listOfAnswersPositions = explode(',', $answerValue);
@@ -934,11 +938,20 @@ class Question extends SaturneObject
 	{
 		global $langs;
 
-		if ($this->type == $this::TYPE_PERCENTAGE) {
-			return ($answer != '' ? round(($answer / 100) * $this->points, 2) : 0) . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+		if ($answer != '') {
+			$earned = $this->calculateEarnedPoints($answer);
+		} else {
+			if (in_array($this->type, [self::TYPE_PERCENTAGE, self::TYPE_RANGE])) {
+				$questionConfig = json_decode($this->json, true)['config'] ?? [];
+				$defaultValue = $questionConfig[$this->type]['answer-default-value'] ?? 100;
+				$earned = $this->calculateEarnedPoints($defaultValue);
+			} else {
+				$earned = 0;
+			}
 		}
-
-		return (($questionWithCorrectAnswer >= 0) ? $this->points : 0) . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
+		$earned = round((float)$earned, 2);
+		
+		return $earned . ' / ' . $this->points . ' ' . strtolower(($this->points > 1 ? $langs->trans('Points') : $langs->trans('Point')));
 	}
 
 	/**

@@ -716,3 +716,11 @@ AllOrNothing = Tout ou rien
 OptionWeighted = Pondérée par option
 WeightPercent = Pondération (%)
 
+Scoring = Notation
+TestPassed=Test réussi
+TestFailed=Test échoué
+ObtainedScore=Score obtenu
+Result=Résultat
+DefaultValue=Valeur par défaut
+
+
