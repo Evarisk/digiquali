@@ -1655,7 +1655,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 ?>
 <script>
 $(document).ready(function() {
-    function updateWeights() {
+    function updateWeights(propose) {
         var total = 0;
         $('.weight-value').each(function() {
             var val = parseFloat($(this).text().replace('%', '').trim());
@@ -1666,8 +1666,21 @@ $(document).ready(function() {
             if (!isNaN(val)) total += val;
         });
 
-        $('#total_weight').text(total);
         var remaining = 100 - total;
+        
+        if (propose) {
+            $('.answer-weight-input').filter(function() { return $(this).val().trim() === ''; }).each(function() {
+                if (remaining > 0) {
+                    $(this).val(remaining);
+                    total += remaining;
+                    remaining = 0;
+                } else {
+                    $(this).val(0);
+                }
+            });
+        }
+
+        $('#total_weight').text(total);
         $('#remaining_weight').text(remaining);
         
         if (remaining < 0) {
@@ -1681,8 +1694,10 @@ $(document).ready(function() {
         }
     }
     
-    updateWeights();
-    $(document).on('input', '.answer-weight-input', updateWeights);
+    updateWeights(true);
+    $(document).on('input', '.answer-weight-input', function() {
+        updateWeights(false);
+    });
 });
 </script>
 <?php
