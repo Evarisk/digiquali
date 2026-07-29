@@ -304,49 +304,6 @@ class Survey extends SaturneObject
     }
 
     /**
-     * Return if a survey can be deleted
-     *
-     * @return int 0 < if KO, > 0 if OK
-     */
-    public function is_erasable(): int
-    {
-        return $this->isLinkedToOtherObjects();
-    }
-
-    /**
-     * Return if a survey is linked to another object
-     *
-     * @return int 0 < if KO, > 0 if OK
-     */
-    public function isLinkedToOtherObjects(): int
-    {
-        // Links between objects are stored in table element_element
-        $sql = 'SELECT rowid, fk_source, sourcetype, fk_target, targettype';
-        $sql .= ' FROM '.MAIN_DB_PREFIX . 'element_element';
-        $sql .= ' WHERE fk_target = ' . $this->id;
-        $sql .= " AND targettype = '" . $this->table_element . "'";
-
-        $resql = $this->db->query($sql);
-        if ($resql) {
-            $nbObjectsLinked = 0;
-            $num = $this->db->num_rows($resql);
-            $i = 0;
-            while ($i < $num) {
-                $nbObjectsLinked++;
-                $i++;
-            }
-            if ($nbObjectsLinked > 0) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else {
-            dol_print_error($this->db);
-            return -1;
-        }
-    }
-
-    /**
      * Clone an object into another one
      *
      * @param  User      $user    User that creates
