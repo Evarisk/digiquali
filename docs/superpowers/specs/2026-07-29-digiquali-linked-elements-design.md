@@ -177,19 +177,26 @@ donc avant que le backward n'ait écrit la moindre constante. Le backward doit �
 **avant** l'appel à `$this->_init()`, et la reconstruction des onglets et hooks doit intervenir
 **après** lui, sur un descripteur réinstancié — sinon `_init()` réinsère l'ancien jeu complet.
 
-Résultat attendu sur la base de développement de référence :
+Résultat mesuré sur la base de développement de référence :
 
-- **conservés** : product, productlot, project, thirdparty, ticket, user, contact, contract,
-  dolimeet_trainsess ;
-- **purgés** : environ 17 objets, 25 extrafields, 45 onglets, 24 hooks.
+- **conservés** : product, productlot, project, thirdparty, ticket, user, contact, contract ;
+- **purgés** : 24 extrafields (33 → 9) et 47 onglets (63 → 16), hooks ramenés de ~30 à 28
+  (12 hooks de base du module + 8 objets × 2).
 
 ### Règles de périmètre
 
-- Les objets DigiQuali (`link_name` commençant par `digiquali_`) ne sont jamais liables : absents du
-  tableau, jamais d'extrafield, d'onglet ni de hook. Cela supprime d'entrée `qc_frequency` sur
-  `digiquali_control`, `digiquali_question` et `digiquali_survey`.
+- **Ensemble géré et ensemble liable sont distincts.** L'ensemble *liable* — ce que la page propose —
+  exclut les objets DigiQuali (`link_name` commençant par `digiquali_`). L'ensemble *géré* — sur lequel
+  la synchro des extrafields itère — ne les exclut pas : n'étant jamais activables, leur `qc_frequency`
+  est supprimé. Sans cette distinction, `digiquali_control`, `digiquali_question` et `digiquali_survey`
+  garderaient indéfiniment un extrafield hérité.
 - Déduplication par `table_element` avant toute écriture, pour absorber les entrées alias
   (`contrat`/`contract`, `project_task`/`task`).
+- **Les objets absents de la métadonnée ne sont pas touchés.** DoliMeet n'implémente pas
+  `saturneExtendGetObjectsMetadata` : `dolimeet_trainsess` n'est donc pas un objet liable, et la
+  constante `DIGIQUALI_SHEET_LINK_DOLIMEET_TRAINSESS` comme les extrafields sur `dolimeet_session` sont
+  des résidus d'une version antérieure. Ils sont délibérément **laissés intacts** : un module peut être
+  temporairement désactivé, et supprimer ses colonnes détruirait des données.
 
 ## Gestion des erreurs
 
@@ -204,7 +211,19 @@ Résultat attendu sur la base de développement de référence :
 ## Vérification
 
 Les tests PHPUnit de saturne tournent sur un bootstrap sans base de données ; la vérification est donc
-manuelle et outillée :
+manuelle et outillée.
+
+Trois contraintes d'environnement, découvertes à l'implémentation :
+
+- `DOL_DOCUMENT_ROOT` est déduit du chemin du bootstrap (quatre niveaux au-dessus de
+  `tests/phpunit`). La suite ne passe donc que depuis `htdocs/custom/saturne`, pas depuis un worktree
+  situé ailleurs.
+- Le navigateur charge `js/saturne.min.js`, pas les sources : tester le module JS en local impose de
+  rejouer `gulp js_backend`. Le fichier minifié ne doit jamais être commité, la CI le régénère.
+- Un script CLI qui charge `main.inc.php` doit définir `NOSCANPHPSELFFORINJECTION` : en ligne de
+  commande `$_SERVER['PHP_SELF']` vaut le chemin absolu du script, que le WAF de Dolibarr rejette.
+
+Étapes :
 
 1. Script d'inspection SQL joué avant et après (extrafields, `MAIN_MODULE_DIGIQUALI_TABS_*`,
    `MAIN_MODULE_DIGIQUALI_HOOKS`, constantes `DIGIQUALI_SHEET_LINK_*`, volumétrie `element_element`).

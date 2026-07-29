@@ -772,9 +772,22 @@ $report = saturne_sync_linked_object_extrafields($definitions, $linkableObjects,
 print_r($report);
 ```
 
-Lancer le script. Attendu : au premier appel, `added` contient `qc_frequency @ bom` et `deleted` contient toutes les autres tables ; au second appel, `added` et `deleted` sont vides et `errors` vaut 0 — c'est la preuve d'idempotence.
+**AVERTISSEMENT — ne pas exécuter tel quel sur une base porteuse de données.**
 
-**Ce script modifie la base.** Le rejouer ensuite avec la liste réelle des objets activés, ou restaurer l'état par la synchro complète de la Task 7, avant de passer à la suite.
+Supprimer un extrafield exécute un `DROP COLUMN` : les valeurs sont perdues définitivement. Restaurer
+la *liste* des tables ne restaure pas leur *contenu*. Lors de la première exécution de ce plan, cette
+étape a détruit 13 valeurs `qc_frequency` sur la base de développement (product 3, product_lot 5,
+projet 2, societe 1, ticket 2), sans possibilité de récupération faute de sauvegarde et de binlog.
+
+Deux façons sûres de vérifier l'idempotence :
+
+- **Sur un objet sans données.** Choisir un type d'objet dont l'extrafield est vide — le vérifier
+  d'abord avec `saturne_get_linked_object_usage()` — et ne faire porter le test que sur celui-là.
+- **Avec sauvegarde préalable.** `mysqldump` des tables `*_extrafields` concernées avant l'exécution,
+  restauration après.
+
+Attendu : au premier appel, `added` contient l'objet activé et `deleted` les autres ; au second appel,
+`added` et `deleted` sont vides et `errors` vaut 0 — c'est la preuve d'idempotence.
 
 - [ ] **Step 3 : vérifier PHPCS**
 
