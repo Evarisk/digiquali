@@ -723,4 +723,12 @@ ObtainedScore=Score obtenu
 Result=Résultat
 DefaultValue=Valeur par défaut
 
+LinkProject_task=Activer le lien avec les tâches du projet
+LinkProject_taskDescription=Permet la liaison entre les tâches de projet et les modèles
+LinkContrat=Activer le lien avec les contrats
+LinkContratDescription=Permet la liaison entre les contrats et les modèles
+LinkCall_list=Activer le lien avec les appels
+LinkCall_listDescription=Permet la liaison entre les listes d'appels et les modèles
+
+
 
