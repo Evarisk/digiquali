@@ -1232,7 +1232,8 @@ class Control extends SaturneObject
      */
     public function displayAnswers(ControlLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
     {
-        global $conf, $langs;
+        // $user is required by the included template, which reads the per-user display preferences
+        global $conf, $langs, $user;
 
         $object = $this;
 
