@@ -422,6 +422,9 @@ function get_task_infos(Task $task): array
         $out['task']['time'] = convertSecondToTime($task->timespent_total_duration) . ' / ' . convertSecondToTime($task->planned_workload);
     }
 
+    // Always defined, so that consumers can iterate without checking the key on a task with no time spent
+    $out['task']['timespent'] = [];
+
     $task->fetchTimeSpentOnTask();
     if (is_array($task->lines) && !empty($task->lines)) {
         foreach ($task->lines as $timespent) {
