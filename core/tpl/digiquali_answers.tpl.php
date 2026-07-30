@@ -28,6 +28,10 @@
  * Variables : $permissionToAddTask, $permissionToReadTask
  */
 
+// Nesting depth of the question groups. Set by Control/Survey::displayAnswers(),
+// but the template is also included directly from the card pages
+$level = $level ?? 0;
+
 foreach ($questionsAndGroups as $questionOrGroup) {
     if (!isset($objectLineClass) && is_object($objectLine)) {
         $objectLineClass = get_class($objectLine);
@@ -59,7 +63,9 @@ foreach ($questionsAndGroups as $questionOrGroup) {
         print '<div class="digiquali-question-group' . $isGroupCorrectCssClass . '" id="'. $questionGroup->id .'" ' .$groupCssStyles. '>';
         print '<h3>' . img_picto('', $questionGroup->picto) . '&nbsp; ' . htmlspecialchars($questionGroup->label) . ' <span class="badge badge-info group-answer-counter" data-group-id="' . $questionGroup->id . '" style="margin-left: 10px;" title="Nombre de questions répondues">' . $numberOfAnsweredQuestions . '/' . $numberOfQuestions . ' réponses aux questions</span></h3>';
         if (!empty($questionGroup->description)) {
-            print '<p class="group-description">' . nl2br(htmlspecialchars($questionGroup->description)) . '</p>';
+            // The description is edited with DolEditor, so it is already stored HTML encoded :
+            // escaping it again turns "l&#39;audit" into a visible "l&#39;audit"
+            print '<p class="group-description">' . dol_htmlentitiesbr($questionGroup->description) . '</p>';
         }
         if ($showCorrection) {
             [$pointsResult, $rateResult] = $questionGroup->getFormattedSuccessPointsAndRates($object);

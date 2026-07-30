@@ -752,6 +752,7 @@ class QuestionGroup extends SaturneObject
         $numberOfQuestions = 0;
         $questionGroupTotalPoints = 0;
         $questionGroupCorrectAnswersTotalPoints = 0;
+        $atLeastOneIncorrectSubGroup = false;
 
         $this->fetchObjectLinked($this->id, 'digiquali_questiongroup');
 
