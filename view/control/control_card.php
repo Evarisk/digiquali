@@ -672,7 +672,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
     $object->fetchObjectLinked('', '', $object->id, 'digiquali_control');
 
-    $linkedObjectType = key($object->linkedObjects);
+    // linkedObjects is empty when the control has no link, or when the linked object belongs to a
+    // module that has been disabled since : fetchObjectLinked() silently drops those types.
+    $linkedObjectType = !empty($object->linkedObjects) ? key($object->linkedObjects) : '';
 
     // Build the full list of question IDs of the sheet, including questions nested inside (sub-)groups.
     // fetchAllQuestions() walks the question groups recursively, so deeply nested questions are counted too.
@@ -756,11 +758,16 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     // Clone confirmation
     if (($action == 'clone' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // Define confirmation messages
-        $objectMetadata = $objectsMetadata[$linkedObjectType];
-        $linkedObject   = $object->linkedObjects[$objectMetadata['link_name']][key($object->linkedObjects[$objectMetadata['link_name']])];
+        // Without a loadable linked object the clone label falls back on the control reference.
+        $objectMetadata   = !empty($linkedObjectType) ? ($objectsMetadata[$linkedObjectType] ?? []) : [];
+        $linkedObjectName = $object->ref;
+        if (!empty($objectMetadata['link_name']) && !empty($object->linkedObjects[$objectMetadata['link_name']])) {
+            $linkedObject     = current($object->linkedObjects[$objectMetadata['link_name']]);
+            $linkedObjectName = $linkedObject->{$objectMetadata['name_field']};
+        }
 
         $formQuestionClone = [
-            ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObject->{$objectMetadata['name_field']}, 'size' => 24],
+            ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObjectName, 'size' => 24],
             ['type' => 'checkbox', 'name' => 'clone_attendants',         'label' => $langs->trans('CloneAttendants'),        'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_photos',             'label' => $langs->trans('ClonePhotos'),            'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_control_equipments', 'label' => $langs->trans('CloneControlEquipments'), 'value' => 1]

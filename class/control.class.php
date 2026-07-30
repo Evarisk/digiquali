@@ -475,8 +475,11 @@ class Control extends SaturneObject
 
         $qcFrequency = 0;
         $this->fetchObjectLinked('', '', '', $this->module . '_' . $this->element);
-        $linkedObjectType = key($this->linkedObjects);
-        $linkedObject     = current($this->linkedObjects[$linkedObjectType]);
+
+        // linkedObjects is empty when the control has no link, or when the linked object belongs to a
+        // module that has been disabled since : fetchObjectLinked() silently drops those types.
+        $linkedObjectType = !empty($this->linkedObjects) ? key($this->linkedObjects) : '';
+        $linkedObject     = !empty($linkedObjectType) ? current($this->linkedObjects[$linkedObjectType]) : null;
         if ($this->verdict == 1 && !empty($linkedObject->array_options['options_qc_frequency'])) {
             $qcFrequency = $linkedObject->array_options['options_qc_frequency'];
         } elseif ($this->verdict == 2) {
@@ -491,7 +494,8 @@ class Control extends SaturneObject
             }
         }
 
-        if (!empty($this->next_control_date)) {
+        // The reminder is about the linked object : without one there is nothing to remind about.
+        if (!empty($this->next_control_date) && !empty($linkedObject)) {
             // Get object metadata infos on current linked object
             $objectMetadataInfos = [];
             $objectsMetadata     = saturne_get_objects_metadata();
@@ -1137,10 +1141,23 @@ class Control extends SaturneObject
             require_once __DIR__ . '/sheet.class.php';
 
             $objectsMetadata = saturne_get_objects_metadata();
+
+            // linkedObjects is keyed by link_name, the metadata by object type : they differ for
+            // thirdparty/societe, contact/socpeople and task/project_task, hence this lookup table.
+            $metadataByLinkName = [];
+            foreach ($objectsMetadata as $objectMetadata) {
+                if (!empty($objectMetadata['link_name'])) {
+                    $metadataByLinkName[$objectMetadata['link_name']] = $objectMetadata;
+                }
+            }
+
             foreach ($controls as $control) {
                 $control->fetchObjectLinked('', '', $control->id, 'digiquali_control');
-                $linkedObjectType = key($control->linkedObjects);
-                if (!isset($control->linkedObjects) && $objectsMetadata[$linkedObjectType]['conf'] < 0) {
+
+                // A control with no link, or whose linked object belongs to a disabled module, has
+                // nothing to show in the LinkedObject column : skip it instead of dereferencing null.
+                $linkedObjectType = !empty($control->linkedObjects) ? key($control->linkedObjects) : '';
+                if (empty($linkedObjectType) || empty($metadataByLinkName[$linkedObjectType]['conf'])) {
                     continue;
                 }
 
