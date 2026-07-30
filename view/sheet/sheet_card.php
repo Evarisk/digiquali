@@ -261,6 +261,9 @@ if (empty($reshook)) {
 		$object->element_linked = json_encode($showArray);
 
 		$object->default_control_tags = json_encode(GETPOST('default_control_tags', 'array'));
+		// The generic add/update include re-reads this 'text' field with GETPOST(..., 'nohtml'),
+		// which warns on the array posted by the multiselect : hand it the encoded value
+		$_POST['default_control_tags'] = $object->default_control_tags;
 		$_POST['show_project'] = GETPOST('ctrl_show_project');
 		$_POST['show_tags'] = GETPOST('ctrl_show_tags');
 
@@ -286,6 +289,9 @@ if (empty($reshook)) {
 		$object->element_linked = json_encode($showArray);
 
 		$object->default_control_tags = json_encode(GETPOST('default_control_tags', 'array'));
+		// The generic add/update include re-reads this 'text' field with GETPOST(..., 'nohtml'),
+		// which warns on the array posted by the multiselect : hand it the encoded value
+		$_POST['default_control_tags'] = $object->default_control_tags;
 		$_POST['show_project'] = GETPOST('ctrl_show_project');
 		$_POST['show_tags'] = GETPOST('ctrl_show_tags');
 

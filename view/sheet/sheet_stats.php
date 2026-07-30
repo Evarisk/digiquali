@@ -135,7 +135,9 @@ if (!empty($questions) && !empty($controls)) {
             $possibleAnswers = $answer->fetchAll('ASC', 'position', 0, 0,  ['customsql' => 't.status > ' . Answer::STATUS_DELETED . ' AND t.fk_question = ' . $question->id]);
             if (!empty($possibleAnswers)) {
                 foreach ($possibleAnswers as $possibleAnswer) {
-                    $questionAnswerStats[$question->id][$possibleAnswer->id] = [
+                    // Object lines store the answer position, not the answer id, and every reader
+                    // of $questionAnswerStats below indexes it by position : seed it the same way
+                    $questionAnswerStats[$question->id][$possibleAnswer->position] = [
                         'nb_answers' => 0,
                     ];
                 }
@@ -156,8 +158,11 @@ if (!empty($questions) && !empty($controls)) {
             $questionLinked = new Question($db);
             $questionLinked->fetch($controlAnswer->fk_question);
             if (in_array($questionLinked->type, ['UniqueChoice', 'OkKo', 'OkKoToFixNonApplicable', 'MultipleChoices'])) {
-                if ($controlAnswer->answer > 0) {
-                    $questionAnswerStats[$controlAnswer->fk_question][$controlAnswer->answer]['nb_answers'] += 1;
+                // MultipleChoices stores every selected position in a single comma separated string
+                foreach (explode(',', (string) $controlAnswer->answer) as $answerPosition) {
+                    if ($answerPosition > 0 && isset($questionAnswerStats[$controlAnswer->fk_question][$answerPosition])) {
+                        $questionAnswerStats[$controlAnswer->fk_question][$answerPosition]['nb_answers'] += 1;
+                    }
                 }
             } else if ($questionLinked->type == 'Percentage') {
                 $questionAnswerStats[$controlAnswer->fk_question][$i] = [
