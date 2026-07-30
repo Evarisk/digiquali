@@ -232,18 +232,26 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
             }
 
             $digiqualiExportArray = null;
+            $jsonFileName = '';
             if ($result > 0) {
                 $zip    = new ZipArchive;
                 $zipRes = $zip->open($fileDir . $safeZipName);
                 if ($zipRes === true) {
                     $zip->extractTo($fileDir);
+                    for ($i = 0; $i < $zip->numFiles; $i++) {
+                        $stat = $zip->statIndex($i);
+                        if (preg_match('/\.json$/i', $stat['name'])) {
+                            $jsonFileName = $stat['name'];
+                            break;
+                        }
+                    }
                     $zip->close();
                     $dqLog('Archive ZIP extraite', 'success');
                 } else {
                     $dqLog('Impossible d\'ouvrir l\'archive ZIP "' . $safeZipName . '" (code ' . $zipRes . ')', 'error');
                 }
 
-                $fileName = preg_replace('/\.zip$/i', '.json', $safeZipName);
+                $fileName = !empty($jsonFileName) ? $jsonFileName : preg_replace('/\.zip$/i', '.json', $safeZipName);
                 if (dol_is_file($fileDir . $fileName)) {
                     $json                 = file_get_contents($fileDir . $fileName);
                     $digiqualiExportArray = json_decode($json, true);
