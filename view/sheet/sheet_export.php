@@ -182,7 +182,10 @@ if (empty($resHook)) {
         }
 
         $fileDir    = $upload_dir . '/temp/';
-        $exportName = str_replace(' ', '_', (!empty($object->label) ? $object->label : $object->ref));
+        $exportName = (!empty($object->label) ? $object->label : $object->ref);
+        $exportName = dol_string_unaccent($exportName);
+        $exportName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $exportName);
+        $exportName = preg_replace('/_+/', '_', $exportName);
         $fileName   = dol_sanitizeFileName(dol_print_date(dol_now(), 'dayhourlog', 'tzuser') . '_' . dol_strtolower($exportName) . '_export');
         $fullName   = $fileDir . $fileName . '.json';
 
