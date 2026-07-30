@@ -1262,7 +1262,7 @@ class pdf_controldocument extends SaturneDocumentModel
         }
         $linkedObject = null;
         foreach ($objectsMetadata as $objectMetadata) {
-            if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+            if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
                 continue;
             }
             if (!empty($control->linkedObjects[$objectMetadata['link_name']])) {

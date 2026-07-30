@@ -488,7 +488,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     $object->fetchObjectLinked('', '', $object->id, 'digiquali_survey');
     $linkedObjectType = key($object->linkedObjects);
     foreach($objectsMetadata as $objectMetadata) {
-        if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+        if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
             continue;
         }
 

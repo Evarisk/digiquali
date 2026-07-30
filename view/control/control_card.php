@@ -864,7 +864,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     }
 
     foreach ($objectsMetadata as $objectMetadata) {
-        if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+        if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
             continue;
         }
 

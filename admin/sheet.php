@@ -38,6 +38,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 // Load DigiQuali libraries.
 require_once __DIR__ . '/../lib/digiquali.lib.php';
 require_once __DIR__ . '/../lib/digiquali_sheet.lib.php';
+require_once __DIR__ . '/../lib/digiquali_linked_object.lib.php';
 require_once __DIR__ . '/../class/sheet.class.php';
 
 // Global variables definitions.
@@ -85,6 +86,47 @@ require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.p
 
 // Extrafields actions.
 require DOL_DOCUMENT_ROOT.'/core/actions_extrafields.inc.php';
+
+// Linked objects actions.
+if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links']) && $user->admin) {
+    $db->begin();
+
+    if ($action == 'toggle_link') {
+        $objectType = GETPOST('objecttype', 'aZ09');
+        $value      = GETPOSTINT('value');
+
+        $linkableObjects = digiquali_get_linkable_objects();
+        if (isset($linkableObjects[$objectType])) {
+            $constName = DIGIQUALI_LINKED_OBJECT_CONST_PREFIX . strtoupper($objectType);
+            dolibarr_set_const($db, $constName, $value, 'integer', 0, '', $conf->entity);
+        }
+    } elseif ($action == 'toggle_all_links') {
+        $value = GETPOSTINT('value');
+
+        foreach (array_keys(digiquali_get_linkable_objects()) as $objectType) {
+            $constName = DIGIQUALI_LINKED_OBJECT_CONST_PREFIX . strtoupper($objectType);
+            dolibarr_set_const($db, $constName, $value, 'integer', 0, '', $conf->entity);
+        }
+    }
+
+    // clean_unused_links has no branch of its own : realigning on the constants is its whole job.
+    $report = digiquali_sync_linked_objects();
+
+    if ($report['errors'] > 0) {
+        $db->rollback();
+        setEventMessages($langs->trans('LinkedObjectSyncError'), [], 'errors');
+    } else {
+        $db->commit();
+
+        $addedCount   = count($report['added']);
+        $deletedCount = count($report['deleted']);
+
+        setEventMessage($langs->trans('LinkedObjectSyncDone', $report['tabs'], $report['hooks'], $addedCount, $deletedCount));
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
 
 // Generate default categories
 if ($action == 'generateCategories') {
@@ -211,11 +253,15 @@ $constArray[$moduleNameLowerCase] = [
 	],
 ];
 
-//@todo add only wanted keys
-$objectsMetadata                  = saturne_get_objects_metadata();
-$constArray[$moduleNameLowerCase] = array_merge($constArray[$moduleNameLowerCase], $objectsMetadata);
-
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+
+// Linkable elements, driven by the DIGIQUALI_SHEET_LINK_* constants.
+$linkableObjects            = digiquali_get_linkable_objects();
+$enabledObjectTypes         = digiquali_get_enabled_linked_object_types();
+$linkedObjectExtraFieldName = 'qc_frequency';
+$linkedObjectUsage          = digiquali_get_linked_object_usage();
+
+require_once __DIR__ . '/../../saturne/core/tpl/admin/object/linked_object_view.tpl.php';
 
 // Generate categories.
 print load_fiche_titre($langs->trans('SheetCategories'), '', '', 0, 'sheetCategories');

@@ -46,5 +46,15 @@ LinkContratDescription=Allows linking between contracts and templates
 LinkCall_list=Enable link with calls
 LinkCall_listDescription=Allows linking between call lists and templates
 
-
-
+# Linkable elements
+LinkableElements                        = Linkable elements
+LinkedObjectUsage                       = Usage
+LinkedObjectUsageDetail                 = %d link(s), %d control frequency value(s)
+NoLinkedObjectUsage                     = Not used
+DisableLinkConfirm                      = The link with "%s" is about to be disabled. %d control frequency value(s) will be permanently deleted. Confirm?
+EnableAllLinksConfirm                   = Every link is about to be enabled: extrafields, tabs and hooks will be created on all available objects. Confirm?
+DisableAllLinksConfirm                  = Every link is about to be disabled: extrafields will be deleted and their values lost. Confirm?
+CleanUnusedLinks                        = Clean unused links
+CleanUnusedLinksConfirm                 = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
+LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
+LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
