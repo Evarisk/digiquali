@@ -232,7 +232,7 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
             }
 
             $digiqualiExportArray = null;
-            $jsonFileName = '';
+            $jsonString = '';
             if ($result > 0) {
                 $zip    = new ZipArchive;
                 $zipRes = $zip->open($fileDir . $safeZipName);
@@ -241,7 +241,7 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
                     for ($i = 0; $i < $zip->numFiles; $i++) {
                         $stat = $zip->statIndex($i);
                         if (preg_match('/\.json$/i', $stat['name'])) {
-                            $jsonFileName = $stat['name'];
+                            $jsonString = $zip->getFromIndex($i);
                             break;
                         }
                     }
@@ -251,10 +251,8 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
                     $dqLog('Impossible d\'ouvrir l\'archive ZIP "' . $safeZipName . '" (code ' . $zipRes . ')', 'error');
                 }
 
-                $fileName = !empty($jsonFileName) ? $jsonFileName : preg_replace('/\.zip$/i', '.json', $safeZipName);
-                if (dol_is_file($fileDir . $fileName)) {
-                    $json                 = file_get_contents($fileDir . $fileName);
-                    $digiqualiExportArray = json_decode($json, true);
+                if (!empty($jsonString)) {
+                    $digiqualiExportArray = json_decode($jsonString, true);
                     if (!is_array($digiqualiExportArray)) {
                         $digiqualiExportArray = null;
                         $dqLog('Fichier JSON illisible ou invalide (' . json_last_error_msg() . ')', 'error');
