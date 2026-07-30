@@ -343,8 +343,18 @@ function get_parent_linked_object_qc_frequency(CommonObject $linkedObject, array
         $objectsMetadata = saturne_get_objects_metadata();
     }
 
-    $qcFrequency    = 0;
-    $objectMetadata = $objectsMetadata[$linkedObject->element];
+    $qcFrequency = 0;
+
+    // $linkedObject->element holds the link name, the metadata is keyed by object type : they differ
+    // for thirdparty/societe, contact/socpeople and task/project_task, hence this lookup.
+    $objectMetadata = [];
+    foreach ($objectsMetadata as $objectsMetadataEntry) {
+        if (($objectsMetadataEntry['link_name'] ?? '') === $linkedObject->element) {
+            $objectMetadata = $objectsMetadataEntry;
+            break;
+        }
+    }
+
     if (isset($objectMetadata['fk_parent'])) {
         $parentLinkedObject = null;
         foreach ($objectsMetadata as $objectMetadata) {
