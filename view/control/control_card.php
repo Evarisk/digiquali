@@ -536,7 +536,7 @@ if ($action == 'create') {
     }
 
     if ($source == 'pwa') {
-        $object->fields['fk_user_controller']['type']  = 'integer:User:user/class/user.class.php';
+        $object->fields['fk_user_controller']['type']  = 'integer:User:user/class/user.class.php:0:(t.statut:=:1)';
         $object->fields['fk_user_controller']['label'] = img_picto('', 'fontawesome_fa-user_fas_#79633f_2em', 'class="pictofixedwidth"');
         $object->fields['fk_user_controller']['picto'] = '';
         $object->fields['projectid']['type']           = 'integer:Project:projet/class/project.class.php';
