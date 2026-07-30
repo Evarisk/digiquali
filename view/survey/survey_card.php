@@ -638,9 +638,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             // Send email
             $displayButton = $onPhone ? '<i class="fas fa-envelope fa-2x"></i>' : '<i class="fas fa-envelope"></i>' . ' ' . $langs->trans('SendMail') . ' ';
             if ($object->status != Survey::STATUS_LOCKED) {
+                // dol_most_recent_file() returns null while no document has been generated yet
                 $fileParams = dol_most_recent_file($upload_dir . '/' . $object->element . 'document' . '/' . $object->ref);
-                $file       = $fileParams['fullname'];
-                if (file_exists($file) && !strstr($fileParams['name'], 'specimen')) {
+                if (!empty($fileParams) && file_exists($fileParams['fullname']) && !strstr($fileParams['name'], 'specimen')) {
                     $forceBuildDoc = 0;
                 } else {
                     $forceBuildDoc = 1;
@@ -679,14 +679,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             <div class="progress progress-bar-success" style="width:<?php print ($questionCounter > 0 ? ($answerCounter/$questionCounter) * 100 : 0) . '%'; ?>;" title="<?php print ($questionCounter > 0 ? $answerCounter . '/' . $questionCounter : 0); ?>"></div>
         </div>
         <?php if ($answerCounter != $questionCounter) {
-            print $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER ? img_picto($langs->trans('Enabled'), 'switch_on', 'class="show-only-questions-with-no-answer marginrightonly"') : img_picto($langs->trans('Disabled'), 'switch_off', 'class="show-only-questions-with-no-answer marginrightonly"');
-            print $form->textwithpicto($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'));
+            // The user preference does not exist until the toggle has been used at least once
+            $showOnlyWithNoAnswer = !empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER);
+
+            print $showOnlyWithNoAnswer ? img_picto($langs->trans('Enabled'), 'switch_on', 'class="show-only-questions-with-no-answer marginrightonly"') : img_picto($langs->trans('Disabled'), 'switch_off', 'class="show-only-questions-with-no-answer marginrightonly"');
+            print $form->textwithpicto($showOnlyWithNoAnswer ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'));
         } else {
             $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER = 0;
         } ?>
     </div>
 
-    <?php if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || $answerCounter != $questionCounter) {
+    <?php if (empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || $answerCounter != $questionCounter) {
         print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '');
         print '<div id="tablelines" class="question-answer-container">';
         $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
