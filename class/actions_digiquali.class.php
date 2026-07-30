@@ -399,7 +399,7 @@ class ActionsDigiquali
         $out      = '';
         $rendered = [];
         foreach ($conf->cache['objectsMetadata'] as $objectMetadata) {
-            if ($objectMetadata['conf'] == 0 || !in_array('sortvalue_' . $objectMetadata['post_name'], $sortedFields, true)) {
+            if (empty($objectMetadata['conf']) || !in_array('sortvalue_' . $objectMetadata['post_name'], $sortedFields, true)) {
                 continue;
             }
             if (empty($objectMetadata['table_element']) || empty($objectMetadata['name_field'])) {
@@ -570,7 +570,7 @@ class ActionsDigiquali
             }
             $objectsMetadata = $conf->cache['objectsMetadata'];
             foreach ($objectsMetadata as $objectMetadata) {
-                if ($objectMetadata['conf'] == 0) {
+                if (empty($objectMetadata['conf'])) {
                     continue;
                 }
                 if ($objectMetadata['post_name'] == $parameters['key'] && (int) $parameters['val'] > 0) {
@@ -1160,7 +1160,7 @@ class ActionsDigiquali
             $objectsMetadata = $conf->cache['objectsMetadata'] ?? [];
             if (!empty($object->linkedObjects) && is_array($objectsMetadata)) {
                 foreach ($objectsMetadata as $objectMetadata) {
-                    if ($objectMetadata['conf'] == 0 || $parameters['key'] != $objectMetadata['post_name']) {
+                    if (empty($objectMetadata['conf']) || $parameters['key'] != $objectMetadata['post_name']) {
                         continue;
                     }
                     $linkedObjects = $object->linkedObjects[$objectMetadata['link_name']] ?? [];

@@ -102,7 +102,9 @@ $excludeFields                  = [];
 $objectsMetadata                = saturne_get_objects_metadata();
 $conf->cache['objectsMetadata'] = $objectsMetadata; // Read back by the saturnePrintFieldListLoopObject hook to render the linked element columns
 foreach($objectsMetadata as $objectMetadata) {
-    if ($objectMetadata['conf'] == 0) {
+    // conf holds the raw constant value : absent or empty means the link is off. A == 0 test would
+    // let those through, since PHP 8 compares '' to 0 as strings
+    if (empty($objectMetadata['conf'])) {
         continue;
     }
 
