@@ -70,6 +70,12 @@ foreach ($questionsAndGroups as $questionOrGroup) {
         if (is_array($groupQuestions) && !empty($groupQuestions)) {
             print '<div class="group-questions">';
             foreach ($groupQuestions as $question) {
+                // Reset on every iteration : without this an unanswered question inherits the answer
+                // and the comment of the previous one, which both displays them and hides the question
+                // from the "only questions with no answer" filter
+                $questionAnswer = '';
+                $comment        = '';
+
                 $tmpObjectLine = new $objectLineClass($object->db);
                 $result = $tmpObjectLine->fetchFromParentWithQuestion($object->id, $question->id);
                 if (is_array($result) && !empty($result)) {

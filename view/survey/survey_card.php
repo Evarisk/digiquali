@@ -191,13 +191,12 @@ if (empty($resHook)) {
     }
 
     if ($action == 'show_only_questions_with_no_answer') {
+        // saturne.utils.toggleSetting() posts {<data-toggle-key>: value}, so the key is the action name
         $data = json_decode(file_get_contents('php://input'), true);
-
-        $showOnlyQuestionsWithNoAnswer = $data['showOnlyQuestionsWithNoAnswer'];
-
-        $tabParam['DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER'] = $showOnlyQuestionsWithNoAnswer;
-
-        dol_set_user_param($db, $conf, $user, $tabParam);
+        if (isset($data[$action])) {
+            $tabParam['DIGIQUALI_' . dol_strtoupper($action)] = $data[$action];
+            dol_set_user_param($db, $conf, $user, $tabParam);
+        }
     }
 
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_save_action.tpl.php';
@@ -682,8 +681,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             // The user preference does not exist until the toggle has been used at least once
             $showOnlyWithNoAnswer = !empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER);
 
-            print $showOnlyWithNoAnswer ? img_picto($langs->trans('Enabled'), 'switch_on', 'class="show-only-questions-with-no-answer marginrightonly"') : img_picto($langs->trans('Disabled'), 'switch_off', 'class="show-only-questions-with-no-answer marginrightonly"');
-            print $form->textwithpicto($showOnlyWithNoAnswer ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'));
+            // The generic handler of control.js binds on data-toggle-action, not on a class
+            $toggleAttributes  = 'data-toggle-action="show_only_questions_with_no_answer"';
+            $toggleAttributes .= ' data-toggle-key="show_only_questions_with_no_answer"';
+            $toggleAttributes .= ' data-update-targets=".progress-info,.question-answer-container"';
+            $toggleAttributes .= ' class="show-only-questions-with-no-answer marginrightonly"';
+
+            print img_picto($langs->trans($showOnlyWithNoAnswer ? 'Enabled' : 'Disabled'), $showOnlyWithNoAnswer ? 'switch_on' : 'switch_off', $toggleAttributes);
+            print $form->textwithpicto($showOnlyWithNoAnswer ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'), 1, 'help', 'marginrightonly');
         } else {
             $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER = 0;
         } ?>
