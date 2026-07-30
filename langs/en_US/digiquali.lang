@@ -25,6 +25,10 @@ ControlDocumentPDF                      = Control Sheet PDF with photo
 
 NoDocumentation                         = No linked document
 
+# Deletion errors
+ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
+ErrorQuestionGroupUsedInSheet           = Question group %s cannot be deleted, it is used in one or more templates.
+
 # Grading Policy
 GradingPolicy = Grading Policy
 Proportional = Proportional
