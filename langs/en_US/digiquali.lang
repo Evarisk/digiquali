@@ -39,4 +39,12 @@ ObtainedScore=Obtained score
 Result=Result
 DefaultValue=Default value
 
+LinkProject_task=Enable link with project tasks
+LinkProject_taskDescription=Allows linking between project tasks and templates
+LinkContrat=Enable link with contracts
+LinkContratDescription=Allows linking between contracts and templates
+LinkCall_list=Enable link with calls
+LinkCall_listDescription=Allows linking between call lists and templates
+
+
 
