@@ -674,6 +674,11 @@ class ActionsDigiquali
     {
         global $conf, $extrafields, $langs, $object;
 
+        // The hook also runs on the lists that declare no object of their own, and there is nothing to decorate there
+        if (!is_object($object)) {
+            return 0;
+        }
+
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
             require_once __DIR__ . '/../../saturne/lib/object.lib.php';
             $objectsMetadata = saturne_get_objects_metadata();
