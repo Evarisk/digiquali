@@ -85,6 +85,10 @@ function digiquali_get_managed_objects(): array
 {
     global $conf;
 
+    if (!function_exists('saturne_get_objects_metadata') || !function_exists('saturne_filter_linkable_objects')) {
+        return [];
+    }
+
     if (empty($conf->cache['digiqualiObjectsMetadata'])) {
         $conf->cache['digiqualiObjectsMetadata'] = saturne_get_objects_metadata();
     }
@@ -100,6 +104,10 @@ function digiquali_get_managed_objects(): array
 function digiquali_get_linkable_objects(): array
 {
     global $conf;
+
+    if (!function_exists('saturne_get_objects_metadata') || !function_exists('saturne_filter_linkable_objects')) {
+        return [];
+    }
 
     if (empty($conf->cache['digiqualiObjectsMetadata'])) {
         $conf->cache['digiqualiObjectsMetadata'] = saturne_get_objects_metadata();
@@ -119,7 +127,11 @@ function digiquali_get_enabled_linked_object_types(): array
 {
     $linkableObjects = digiquali_get_linkable_objects();
 
-    return saturne_get_enabled_linked_object_types($linkableObjects, DIGIQUALI_LINKED_OBJECT_CONST_PREFIX);
+    if (function_exists('saturne_get_enabled_linked_object_types')) {
+        return saturne_get_enabled_linked_object_types($linkableObjects, DIGIQUALI_LINKED_OBJECT_CONST_PREFIX);
+    }
+    
+    return [];
 }
 
 /**
@@ -129,11 +141,15 @@ function digiquali_get_enabled_linked_object_types(): array
  */
 function digiquali_get_linked_object_usage(): array
 {
-    return saturne_get_linked_object_usage(
-        digiquali_get_linkable_objects(),
-        ['qc_frequency'],
-        explode(',', DIGIQUALI_LINKED_OBJECT_ELEMENT_TYPES)
-    );
+    if (function_exists('saturne_get_linked_object_usage')) {
+        return saturne_get_linked_object_usage(
+            digiquali_get_linkable_objects(),
+            ['qc_frequency'],
+            explode(',', DIGIQUALI_LINKED_OBJECT_ELEMENT_TYPES)
+        );
+    }
+    
+    return [];
 }
 
 /**
@@ -148,13 +164,19 @@ function digiquali_sync_linked_objects(): array
 {
     $enabledObjectTypes = digiquali_get_enabled_linked_object_types();
 
-    $extraFieldReport = saturne_sync_linked_object_extrafields(
-        digiquali_get_linked_object_extrafield_definitions(),
-        digiquali_get_managed_objects(),
-        $enabledObjectTypes
-    );
+    $extraFieldReport = ['added' => [], 'deleted' => [], 'errors' => 0];
+    if (function_exists('saturne_sync_linked_object_extrafields')) {
+        $extraFieldReport = saturne_sync_linked_object_extrafields(
+            digiquali_get_linked_object_extrafield_definitions(),
+            digiquali_get_managed_objects(),
+            $enabledObjectTypes
+        );
+    }
 
-    $registrationReport = saturne_refresh_module_registrations('digiquali', 'modDigiQuali');
+    $registrationReport = ['tabs' => 0, 'hooks' => 0, 'errors' => 0];
+    if (function_exists('saturne_refresh_module_registrations')) {
+        $registrationReport = saturne_refresh_module_registrations('digiquali', 'modDigiQuali');
+    }
 
     return [
         'tabs'    => $registrationReport['tabs'],
