@@ -22,8 +22,8 @@
  * \brief   Library files with functions for DigiQuali linked objects
  */
 
-require_once __DIR__ . '/../../saturne/lib/object.lib.php';
-require_once __DIR__ . '/../../saturne/lib/linked_object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
+dol_include_once('/saturne/lib/linked_object.lib.php');
 
 // Configuration constant prefix driving every link of the module.
 define('DIGIQUALI_LINKED_OBJECT_CONST_PREFIX', 'DIGIQUALI_SHEET_LINK_');
