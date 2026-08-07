@@ -319,8 +319,18 @@ class modDigiQuali extends DolibarrModules
 		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
         // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
-        $linkableObjects    = saturne_filter_linkable_objects(saturne_get_objects_metadata(), ['digiquali_']);
-        $enabledObjectTypes = saturne_get_enabled_linked_object_types($linkableObjects, 'DIGIQUALI_SHEET_LINK_');
+        dol_include_once('/saturne/lib/object.lib.php');
+        dol_include_once('/saturne/lib/linked_object.lib.php');
+        
+        $linkableObjects    = [];
+        if (function_exists('saturne_get_objects_metadata') && function_exists('saturne_filter_linkable_objects')) {
+            $linkableObjects = saturne_filter_linkable_objects(saturne_get_objects_metadata(), ['digiquali_']);
+        }
+        
+        $enabledObjectTypes = [];
+        if (function_exists('saturne_get_enabled_linked_object_types')) {
+            $enabledObjectTypes = saturne_get_enabled_linked_object_types($linkableObjects, 'DIGIQUALI_SHEET_LINK_');
+        }
 
         foreach ($enabledObjectTypes as $objectType) {
             $objectMetadata = $linkableObjects[$objectType];
