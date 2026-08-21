@@ -1197,13 +1197,13 @@ class pdf_controldocument extends SaturneDocumentModel
     /**
      * Write the PDF file to disk
      *
-     * @param  object     $objectDocument  Document object
-     * @param  Translate  $outputLangs     Lang object
-     * @param  string     $srcTemplatePath Template path (unused)
-     * @param  int        $hidedetails
-     * @param  int        $hidedesc
-     * @param  int        $hideref
-     * @param  array|null $moreparams
+     * @param Object $objectDocument Object to generate (ex: control)
+     * @param Translate $outputLangs Lang object
+     * @param string $srcTemplatePath
+     * @param int $hidedetails
+     * @param int $hidedesc
+     * @param int $hideref
+     * @param null|array $moreparams
      * @return int                         1=OK, <0=KO
      */
     public function write_file($objectDocument, $outputLangs, $srcTemplatePath = '', $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = array()): int
@@ -1226,7 +1226,7 @@ class pdf_controldocument extends SaturneDocumentModel
             $moreparams['user'] = $user;
         }
         $file = $this->buildDocumentFilename($objectDocument, $outputLangs, $control, $moreparams);
-        if ($file < 0) {
+        if (is_int($file) && $file < 0) {
             $this->error = $langs->transnoentities('ErrorFileNameCanNotBeBuilt');
             return -1;
         }
