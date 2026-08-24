@@ -112,7 +112,7 @@ foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');
     }
-    if (in_array($val['type'], ['date', 'datetime', 'timestamp'])) {
+    if (isset($val['type']) && in_array($val['type'], ['date', 'datetime', 'timestamp'])) {
         $search[$key . '_dtstart'] = dol_mktime(0, 0, 0, GETPOSTINT('search_' . $key . '_dtstartmonth'), GETPOSTINT('search_' . $key . '_dtstartday'), GETPOSTINT('search_' . $key . '_dtstartyear'));
         $search[$key . '_dtend']   = dol_mktime(23, 59, 59, GETPOSTINT('search_' . $key . '_dtendmonth'), GETPOSTINT('search_' . $key . '_dtendday'), GETPOSTINT('search_' . $key . '_dtendyear'));
     }
@@ -196,7 +196,6 @@ if (empty($resHook)) {
     $objectlabel = 'ControlLine';
     $uploaddir   = $conf->digiquali->dir_output;
 
-    $langs->tab_translate['ErrorRecordHasChildren'] = $langs->tab_translate['ErrorControlLineUsedInSheet'];
     require_once DOL_DOCUMENT_ROOT . '/core/actions_massactions.inc.php';
 
     if (($massaction == 'lock' || ($action == 'lock' && $confirm == 'yes')) && $permissiontoadd) {

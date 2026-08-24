@@ -28,6 +28,7 @@ NoDocumentation                         = No linked document
 # Deletion errors
 ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
 ErrorQuestionGroupUsedInSheet           = Question group %s cannot be deleted, it is used in one or more templates.
+ErrorSheetUsedInControl                 = Template %s cannot be deleted, it is used in one or more controls/surveys.
 
 # Grading Policy
 GradingPolicy = Grading Policy
