@@ -107,7 +107,7 @@ if ($rights['controls']) {
         print '<div class="pwa-empty"><i class="fas fa-clipboard-check"></i><p>' . $langs->trans('NoRecordFound') . '</p></div>';
     } else {
         foreach ($recentControls as $control) {
-            print digiquali_pwa_render_card($control, '/custom/digiquali/view/control/control_card.php', false);
+            print digiquali_pwa_render_card($control, '/custom/digiquali/view/frontend/pwa_answer.php', false, 'object_type=control');
         }
     }
     print '</div>';

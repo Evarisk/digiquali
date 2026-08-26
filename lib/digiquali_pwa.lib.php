@@ -47,14 +47,17 @@ function digiquali_pwa_nav_get_items(): array
  *
  * Keys are the stable slugs used by the bottom nav and the AJAX search endpoint.
  *
- * @return array<string,array{class:string,card:string,right:string,icon:string}>
+ * Controls and surveys open the mobile answer wizard rather than their back-office card,
+ * which is not usable on a phone. Sheets are consultation only and keep their card.
+ *
+ * @return array<string,array{class:string,card:string,card_params:string,right:string,icon:string}>
  */
 function digiquali_pwa_get_object_types(): array
 {
     return [
-        'sheets'   => ['class' => 'Sheet',   'card' => '/custom/digiquali/view/sheet/sheet_card.php',     'right' => 'sheet',   'icon' => 'fa-clipboard-list'],
-        'controls' => ['class' => 'Control', 'card' => '/custom/digiquali/view/control/control_card.php', 'right' => 'control', 'icon' => 'fa-clipboard-check'],
-        'surveys'  => ['class' => 'Survey',  'card' => '/custom/digiquali/view/survey/survey_card.php',   'right' => 'survey',  'icon' => 'fa-list-ol'],
+        'sheets'   => ['class' => 'Sheet',   'card' => '/custom/digiquali/view/sheet/sheet_card.php',       'card_params' => '',                     'right' => 'sheet',   'icon' => 'fa-clipboard-list'],
+        'controls' => ['class' => 'Control', 'card' => '/custom/digiquali/view/frontend/pwa_answer.php',    'card_params' => 'object_type=control',  'right' => 'control', 'icon' => 'fa-clipboard-check'],
+        'surveys'  => ['class' => 'Survey',  'card' => '/custom/digiquali/view/frontend/pwa_answer.php',    'card_params' => 'object_type=survey',   'right' => 'survey',  'icon' => 'fa-list-ol'],
     ];
 }
 
@@ -180,13 +183,14 @@ function digiquali_pwa_get_card_fields(object $object): array
  * @param  object $object     Loaded object to render.
  * @param  string $cardPage   Relative path to the object card page (for the link).
  * @param  bool   $filterable When true, adds data attributes used by the client-side search filter.
+ * @param  string $cardParams Extra query string appended to the link (e.g. 'object_type=control').
  * @return string             Card HTML (an <a> block).
  */
-function digiquali_pwa_render_card(object $object, string $cardPage, bool $filterable = false): string
+function digiquali_pwa_render_card(object $object, string $cardPage, bool $filterable = false, string $cardParams = ''): string
 {
     global $langs;
 
-    $cardUrl    = dol_buildpath($cardPage, 1) . '?id=' . $object->id;
+    $cardUrl    = dol_buildpath($cardPage, 1) . '?id=' . $object->id . (!empty($cardParams) ? '&' . $cardParams : '');
     $title      = !empty($object->label) ? $object->label : $object->ref;
     $hasRef     = !empty($object->ref) && $object->ref !== $title;
     $statusHtml = $object->getLibStatut(5);
@@ -245,10 +249,11 @@ function digiquali_pwa_render_card(object $object, string $cardPage, bool $filte
  * @param  string $className Object class name (must already be loaded).
  * @param  string $cardPage  Relative path to the object card page.
  * @param  string $search    Raw search string.
- * @param  string $emptyIcon FontAwesome icon for the empty state.
- * @return string            Cards HTML, or the empty-state HTML when nothing matches.
+ * @param  string $emptyIcon  FontAwesome icon for the empty state.
+ * @param  string $cardParams Extra query string appended to every card link.
+ * @return string             Cards HTML, or the empty-state HTML when nothing matches.
  */
-function digiquali_pwa_render_list_items(string $className, string $cardPage, string $search, string $emptyIcon = 'fa-clipboard-list'): string
+function digiquali_pwa_render_list_items(string $className, string $cardPage, string $search, string $emptyIcon = 'fa-clipboard-list', string $cardParams = ''): string
 {
     global $db, $langs;
 
@@ -343,7 +348,7 @@ function digiquali_pwa_render_list_items(string $className, string $cardPage, st
 
     $out = '';
     foreach ($objects as $object) {
-        $out .= digiquali_pwa_render_card($object, $cardPage, false);
+        $out .= digiquali_pwa_render_card($object, $cardPage, false, $cardParams);
     }
 
     return $out;

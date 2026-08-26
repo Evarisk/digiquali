@@ -63,3 +63,21 @@ CleanUnusedLinks                        = Clean unused links
 CleanUnusedLinksConfirm                 = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
 LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
 LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
+
+#
+# Answer wizard (mobile)
+#
+
+AnswerWizardStart          = Start
+AnswerWizardResume         = Resume
+AnswerWizardPrevious       = Previous
+AnswerWizardNext           = Next
+AnswerWizardFinish         = Finish
+AnswerWizardStepOf         = Step %s/%s
+AnswerWizardSteps          = Steps
+AnswerWizardOtherQuestions = Other questions
+AnswerWizardQuestionsPack  = Questions %s/%s
+AnswerWizardSummary        = Summary
+AnswerWizardAllAnswered    = Every question has an answer
+AnswerWizardRemaining      = %s unanswered question(s)
+AnswerWizardIntroQuestions = %s questions across %s steps

@@ -69,4 +69,4 @@ require_once __DIR__ . '/../class/' . strtolower($listCfg['class']) . '.class.ph
 
 top_httphead('text/html');
 
-print digiquali_pwa_render_list_items($listCfg['class'], $listCfg['card'], $search, $listCfg['icon']);
+print digiquali_pwa_render_list_items($listCfg['class'], $listCfg['card'], $search, $listCfg['icon'], $listCfg['card_params']);

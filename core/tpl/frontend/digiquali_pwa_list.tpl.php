@@ -52,7 +52,7 @@ $ajaxUrl = dol_buildpath('/custom/digiquali/ajax/pwa_search.php', 1);
     <div class="pwa-list" data-pwa-list>
         <?php
         if ($listCfg) {
-            echo digiquali_pwa_render_list_items($listCfg['class'], $listCfg['card'], $pwaListSearch, $listCfg['icon']);
+            echo digiquali_pwa_render_list_items($listCfg['class'], $listCfg['card'], $pwaListSearch, $listCfg['icon'], $listCfg['card_params']);
         }
         ?>
     </div>
