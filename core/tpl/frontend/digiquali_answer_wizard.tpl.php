@@ -141,17 +141,20 @@ $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep
                  data-screen-index="<?php echo $wizardSummaryIndex; ?>"
                  data-screen-type="summary"
                  data-step-label="<?php echo dol_escape_htmltag($langs->transnoentities('AnswerWizardSummary')); ?>">
-            <div class="answer-wizard__summary-status">
-                <?php
-                $wizardRemaining = $wizardProgress['total'] - $wizardProgress['answered'];
-                if ($wizardRemaining > 0) {
-                    print '<i class="fas fa-exclamation-circle answer-wizard__summary-icon answer-wizard__summary-icon--warning"></i>';
-                    print '<span class="answer-wizard__summary-remaining">' . $langs->trans('AnswerWizardRemaining', $wizardRemaining) . '</span>';
-                } else {
-                    print '<i class="fas fa-check-circle answer-wizard__summary-icon answer-wizard__summary-icon--ok"></i>';
-                    print '<span>' . $langs->trans('AnswerWizardAllAnswered') . '</span>';
-                }
-                ?>
+            <?php
+            // Counters are recomputed client-side: the user answers without reloading, so a
+            // server-rendered summary would already be stale by the time it is displayed.
+            $wizardRemaining = $wizardProgress['total'] - $wizardProgress['answered'];
+            ?>
+            <div class="answer-wizard__summary-status"
+                 data-state="<?php echo $wizardRemaining > 0 ? 'remaining' : 'complete'; ?>"
+                 data-remaining-pattern="<?php echo dol_escape_htmltag($langs->transnoentities('AnswerWizardRemaining', '%COUNT%')); ?>"
+                 data-all-answered-label="<?php echo dol_escape_htmltag($langs->transnoentities('AnswerWizardAllAnswered')); ?>">
+                <i class="fas fa-exclamation-circle answer-wizard__summary-icon answer-wizard__summary-icon--warning"></i>
+                <i class="fas fa-check-circle answer-wizard__summary-icon answer-wizard__summary-icon--ok"></i>
+                <span class="answer-wizard__summary-text">
+                    <?php echo $wizardRemaining > 0 ? $langs->trans('AnswerWizardRemaining', $wizardRemaining) : $langs->trans('AnswerWizardAllAnswered'); ?>
+                </span>
             </div>
 
             <ul class="answer-wizard__summary-list">

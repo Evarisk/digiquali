@@ -10,6 +10,10 @@
   max-width: 900px;
   box-sizing: border-box;
 
+  // Corollary of the max-width: on a wide screen the host page does not always center us
+  // (the public card does, the PWA page does not)
+  margin-inline: auto;
+
   // Without JS every screen stays visible: the page degrades to the plain scrolling list
   &.is-ready {
     .answer-wizard__screen {
@@ -49,6 +53,11 @@
       padding-bottom: 4px;
       border-bottom: none;
       box-shadow: none;
+    }
+
+    // Every question is visible right above: listing them again as "missing" is noise
+    .answer-wizard__summary-list {
+      display: none;
     }
   }
 }
@@ -298,6 +307,7 @@
 
 .answer-wizard__summary-icon {
   font-size: 20px;
+  display: none;
 
   &--ok {
     color: $color__green;
@@ -305,6 +315,13 @@
 
   &--warning {
     color: $color__yellow;
+  }
+}
+
+.answer-wizard__summary-status {
+  &[data-state="remaining"] .answer-wizard__summary-icon--warning,
+  &[data-state="complete"] .answer-wizard__summary-icon--ok {
+    display: inline;
   }
 }
 

@@ -307,6 +307,46 @@ window.digiquali.answerWizard.refreshProgress = function() {
   const percent = total > 0 ? Math.round(answered * 100 / total) : 0;
   $wizard.find('.answer-wizard__progress-bar').css('width', percent + '%');
   $wizard.attr('data-answered-questions', answered);
+
+  window.digiquali.answerWizard.refreshSummary(total - answered);
+};
+
+/**
+ * Refresh the summary screen from the current state of the questions.
+ *
+ * The summary is rendered server-side on page load, but answers are given without
+ * reloading: left alone it would still list questions the user has just answered.
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @param  {int} remaining Number of questions still unanswered
+ * @return {void}
+ */
+window.digiquali.answerWizard.refreshSummary = function(remaining) {
+  const $wizard = $('.answer-wizard');
+
+  $wizard.find('.answer-wizard__summary-item[data-goto-question]').each(function() {
+    const $item     = $(this);
+    const $question = $wizard.find('.question.table-id-' + $item.attr('data-goto-question'));
+
+    if ($question.length) {
+      $item.toggle(!window.digiquali.answerWizard.isQuestionAnswered($question));
+    }
+  });
+
+  const $status = $wizard.find('.answer-wizard__summary-status');
+  if (!$status.length) {
+    return;
+  }
+
+  if (remaining > 0) {
+    $status.attr('data-state', 'remaining');
+    $status.find('.answer-wizard__summary-text').text(($status.attr('data-remaining-pattern') || '').replace('%COUNT%', remaining));
+  } else {
+    $status.attr('data-state', 'complete');
+    $status.find('.answer-wizard__summary-text').text($status.attr('data-all-answered-label') || '');
+  }
 };
 
 /**
