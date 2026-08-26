@@ -87,6 +87,15 @@ if ($action == 'save' && !empty($permissionToWrite)) {
     // Handles both the per-answer autosave and the full form submit. It never validates the
     // object: that only happens when $_POST['public_interface'] is set, which this page never sends.
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_save_action.tpl.php';
+
+    // $isAutoSave is set by the template above. A real submit means the user is done: without
+    // this the page would simply redraw itself, which looks like the button did nothing since
+    // the answers were already saved as they were given.
+    if (empty($isAutoSave)) {
+        setEventMessages($langs->trans('AnswerSaved'), []);
+        header('Location: ' . dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa');
+        exit;
+    }
 }
 
 if (!empty($permissionToWrite)) {
