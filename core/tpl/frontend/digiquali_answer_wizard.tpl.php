@@ -46,8 +46,14 @@ if (!isset($wizardSteps)) {
 $wizardProgress = digiquali_answer_wizard_get_progress($wizardSteps);
 $wizardIsDraft  = ($object->status == $object::STATUS_DRAFT);
 $wizardNamed    = (count(array_filter($wizardSteps, function ($step) { return !empty($step['label']); })) > 0);
+
+// Questions sitting outside any group have no title of their own. Left empty, the sticky bar
+// would show nothing until the first group scrolls in, and the name would seem to pop out of
+// nowhere. They fall back to the sheet name, so the bar always states where the user is.
+$wizardDefaultLabel = $sheet->label ?: $object->ref;
 ?>
 <div class="answer-wizard<?php echo $wizardIsDraft ? '' : ' answer-wizard--readonly'; ?><?php echo $wizardNamed ? '' : ' answer-wizard--unnamed'; ?><?php echo !empty($wizardExtraClass) ? ' ' . dol_escape_htmltag($wizardExtraClass) : ''; ?>"
+     data-default-label="<?php echo dol_escape_htmltag($wizardDefaultLabel); ?>"
      data-total-questions="<?php echo $wizardProgress['total']; ?>"
      data-answered-questions="<?php echo $wizardProgress['answered']; ?>">
 
@@ -76,7 +82,7 @@ $wizardNamed    = (count(array_filter($wizardSteps, function ($step) { return !e
     <?php foreach ($wizardSteps as $wizardStep) { ?>
         <section class="answer-wizard__step"
                  data-step-key="<?php echo dol_escape_htmltag($wizardStep['key']); ?>"
-                 data-step-label="<?php echo dol_escape_htmltag($wizardStep['label']); ?>"
+                 data-step-label="<?php echo dol_escape_htmltag(!empty($wizardStep['label']) ? $wizardStep['label'] : $wizardDefaultLabel); ?>"
                  data-step-total="<?php echo $wizardStep['total']; ?>">
             <?php if (!empty($wizardStep['label'])) { ?>
                 <header class="answer-wizard__step-header">
@@ -167,7 +173,7 @@ $wizardNamed    = (count(array_filter($wizardSteps, function ($step) { return !e
                     <?php foreach ($wizardSteps as $wizardStep) { ?>
                         <li class="answer-wizard__picker-item" data-goto-step="<?php echo dol_escape_htmltag($wizardStep['key']); ?>">
                             <span class="answer-wizard__picker-item-label">
-                                <?php echo dol_escape_htmltag(!empty($wizardStep['label']) ? $wizardStep['label'] : $langs->transnoentities('Questions')); ?>
+                                <?php echo dol_escape_htmltag(!empty($wizardStep['label']) ? $wizardStep['label'] : $wizardDefaultLabel); ?>
                             </span>
                             <span class="answer-wizard__picker-item-count" data-step-key="<?php echo dol_escape_htmltag($wizardStep['key']); ?>">
                                 <?php echo $wizardStep['answered'] . '/' . $wizardStep['total']; ?>

@@ -96,7 +96,10 @@ window.digiquali.answerWizard.refreshCurrentGroup = function() {
   }
 
   const barBottom = $wizard.find('.answer-wizard__bar').offset().top + $wizard.find('.answer-wizard__bar').outerHeight();
-  let label = '';
+
+  // Above the first section (the object header) no section has scrolled past yet: keep the
+  // sheet name rather than leaving the bar blank
+  let label = $wizard.attr('data-default-label') || '';
 
   $wizard.find('.answer-wizard__step').each(function() {
     const $step = $(this);
