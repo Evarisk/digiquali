@@ -130,6 +130,8 @@ $conf->dol_hide_leftmenu = 1;
 
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-answer');
 
+// Installed as an app there is no browser back button, so the header carries the way out
+$pwaHeaderBackUrl    = dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
 $pwaHeaderCenterHtml = '<div class="pwa-header-indicator"><i class="fas fa-clipboard-check"></i> ' . dol_escape_htmltag($object->ref) . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_header.tpl.php';
 

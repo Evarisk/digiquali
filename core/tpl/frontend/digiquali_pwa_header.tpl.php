@@ -43,16 +43,25 @@ $homeUrl    = dol_buildpath('/custom/digiquali/view/frontend/pwa_home.php?source
 $profileUrl = dol_buildpath('/user/virtualcard.php', 1) . '?id=' . $user->id;
 ?>
 <header id="id-top" class="pwa-header">
-    <a href="<?php echo $homeUrl; ?>" class="pwa-header-logo">
-        <?php
-        if (!empty($logoFile)) {
-            $logoUrl = DOL_URL_ROOT . '/viewimage.php?cache=1&modulepart=mycompany&file=' . urlencode($logoFile);
-            print '<img src="' . $logoUrl . '" alt="' . dol_escape_htmltag($mysoc->name) . '">';
-        } else {
-            print '<i class="fas fa-clipboard-check pwa-header-logo-fallback"></i>';
-        }
-        ?>
-    </a>
+    <?php
+    // An installed PWA has no browser back button: a detail page must carry its own way out,
+    // so $pwaHeaderBackUrl replaces the logo with a back arrow.
+    if (!empty($pwaHeaderBackUrl)) { ?>
+        <a href="<?php echo dol_escape_htmltag($pwaHeaderBackUrl); ?>" class="pwa-header-back" aria-label="<?php echo dol_escape_htmltag($langs->trans('BackToList')); ?>">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    <?php } else { ?>
+        <a href="<?php echo $homeUrl; ?>" class="pwa-header-logo">
+            <?php
+            if (!empty($logoFile)) {
+                $logoUrl = DOL_URL_ROOT . '/viewimage.php?cache=1&modulepart=mycompany&file=' . urlencode($logoFile);
+                print '<img src="' . $logoUrl . '" alt="' . dol_escape_htmltag($mysoc->name) . '">';
+            } else {
+                print '<i class="fas fa-clipboard-check pwa-header-logo-fallback"></i>';
+            }
+            ?>
+        </a>
+    <?php } ?>
 
     <div class="pwa-header-center">
         <?php

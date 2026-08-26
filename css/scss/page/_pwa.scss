@@ -65,6 +65,21 @@ body.template-pwa {
   }
 }
 
+/* Detail pages swap the logo for a back arrow: an installed PWA has no browser back button */
+.pwa-header-back {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: $pwa-bg;
+  color: $color__primary;
+  font-size: 17px;
+  text-decoration: none;
+}
+
 .pwa-header-center {
   display: flex;
   flex: 1;
