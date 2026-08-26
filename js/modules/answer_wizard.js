@@ -47,10 +47,15 @@ window.digiquali.answerWizard.init = function() {
     return;
   }
 
-  $wizard.addClass('is-ready');
-
   window.digiquali.answerWizard.event();
-  window.digiquali.answerWizard.showScreen(parseInt($wizard.attr('data-current-screen'), 10) || 0, false);
+
+  // Single-screen mode keeps every section stacked and visible: no "is-ready", no navigation.
+  // Only the progress bar and the save indicator stay live.
+  if (!$wizard.hasClass('answer-wizard--single')) {
+    $wizard.addClass('is-ready');
+    window.digiquali.answerWizard.showScreen(parseInt($wizard.attr('data-current-screen'), 10) || 0, false);
+  }
+
   window.digiquali.answerWizard.refreshProgress();
 };
 
@@ -147,8 +152,12 @@ window.digiquali.answerWizard.refreshChrome = function() {
   $wizard.find('.answer-wizard__step-counter-text').text(counter);
   $wizard.find('.answer-wizard__back').prop('hidden', current === 0);
 
+  // Say where the button leads: from the last step it opens the summary, not another step
   const $next = $wizard.find('.answer-wizard__next');
   $next.prop('hidden', current === summaryIndex);
+  $next.find('.answer-wizard__next-label').text(
+    (current + 1 === summaryIndex) ? ($next.attr('data-label-summary') || '') : ($next.attr('data-label-next') || '')
+  );
   $wizard.find('.answer-wizard__previous').prop('hidden', current === 0);
 
   $wizard.find('.answer-wizard__picker-item').removeClass('is-current')

@@ -33,6 +33,24 @@
   &--pwa {
     --answer-wizard-top: 60px;
   }
+
+  // One step only: nothing to navigate, the header keeps just the progress bar
+  &--single {
+    --answer-wizard-footer-height: 0px;
+
+    .answer-wizard__back,
+    .answer-wizard__step-counter,
+    .answer-wizard__step-label {
+      display: none;
+    }
+
+    .answer-wizard__header {
+      padding-top: 0;
+      padding-bottom: 4px;
+      border-bottom: none;
+      box-shadow: none;
+    }
+  }
 }
 
 .answer-wizard__summary-actions {
@@ -434,6 +452,14 @@
     pointer-events: none;
     color: inherit;
     text-decoration: none;
+  }
+
+  // No media may overflow the card, whatever size the host page or Saturne gives it
+  img,
+  .linked-medias img,
+  .saturne-media-block img {
+    max-width: 100%;
+    height: auto;
   }
 
   .question-points:empty {

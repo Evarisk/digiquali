@@ -89,14 +89,22 @@ if ($action == 'save' && !empty($permissionToWrite)) {
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_save_action.tpl.php';
 }
 
+if (!empty($permissionToWrite)) {
+    // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block.
+    // It replays the HTML of the response to refresh itself, so this must not redirect.
+    require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+}
+
 /*
  * View
  */
 
 $title    = $langs->trans('Answers') . ' - ' . $object->ref;
 $help_url = 'FR:Module_DigiQuali';
+// llxHeader() does not load the Saturne assets on its own, and the media block needs both its
+// JS and its CSS: without saturne.min.css the linked photos render unconstrained.
 $moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/digiquali/js/digiquali.min.js'];
-$moreCSS  = ['/custom/digiquali/css/digiquali.min.css'];
+$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/digiquali/css/digiquali.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -136,6 +144,9 @@ require __DIR__ . '/../../core/tpl/frontend/digiquali_answer_wizard.tpl.php';
 
 print '</div>';
 print '</form>';
+
+// Required by the media block: without it, picking a photo silently does nothing
+require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
 
 llxFooter();
 $db->close();

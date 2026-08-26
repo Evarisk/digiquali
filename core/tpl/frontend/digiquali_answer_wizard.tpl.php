@@ -42,8 +42,13 @@ $wizardProgress  = digiquali_answer_wizard_get_progress($wizardSteps);
 $wizardFirstStep = digiquali_answer_wizard_get_first_incomplete_step($wizardSteps);
 $wizardIsDraft   = ($object->status == $object::STATUS_DRAFT);
 $wizardStepCount = count($wizardSteps);
-$wizardHasIntro  = !empty($wizardIntroHtml);
 $wizardStarted   = ($wizardProgress['answered'] > 0);
+
+// A sheet that fits in a single step needs no wizard at all: stepping through an intro and a
+// summary to answer one question is pure ceremony. Everything is then stacked on one screen,
+// which is also the no-JS fallback.
+$wizardIsSingleScreen = ($wizardStepCount <= 1);
+$wizardHasIntro       = (!empty($wizardIntroHtml) && !$wizardIsSingleScreen);
 
 // Screens are numbered in a single sequence so the navigation stays trivial:
 // 0 = intro (optional), then one screen per step, then the summary
@@ -51,7 +56,7 @@ $wizardStepOffset   = $wizardHasIntro ? 1 : 0;
 $wizardSummaryIndex = $wizardStepOffset + $wizardStepCount;
 $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep;
 ?>
-<div class="answer-wizard<?php echo $wizardIsDraft ? '' : ' answer-wizard--readonly'; ?><?php echo !empty($wizardExtraClass) ? ' ' . dol_escape_htmltag($wizardExtraClass) : ''; ?>"
+<div class="answer-wizard<?php echo $wizardIsDraft ? '' : ' answer-wizard--readonly'; ?><?php echo $wizardIsSingleScreen ? ' answer-wizard--single' : ''; ?><?php echo !empty($wizardExtraClass) ? ' ' . dol_escape_htmltag($wizardExtraClass) : ''; ?>"
      data-current-screen="<?php echo $wizardStartIndex; ?>"
      data-step-offset="<?php echo $wizardStepOffset; ?>"
      data-step-count="<?php echo $wizardStepCount; ?>"
@@ -111,6 +116,12 @@ $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep
                      data-step-label="<?php echo dol_escape_htmltag($wizardStep['label']); ?>"
                      data-step-total="<?php echo $wizardStep['total']; ?>">
                 <?php
+                // Single-screen mode has no intro screen: the object header goes on top of the questions
+                if ($wizardIsSingleScreen && !empty($wizardIntroHtml)) {
+                    print $wizardIntroHtml;
+                }
+                ?>
+                <?php
                 // Only a real group deserves a title in the content: it carries a name and a
                 // description. A pack of ungrouped questions is already named by the header counter.
                 if ($wizardStep['type'] == 'group') { ?>
@@ -169,14 +180,16 @@ $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep
         </section>
     </div>
 
-    <?php if ($wizardIsDraft) { ?>
+    <?php if ($wizardIsDraft && !$wizardIsSingleScreen) { ?>
         <nav class="answer-wizard__footer">
             <button type="button" class="answer-wizard__button answer-wizard__button--ghost answer-wizard__previous">
                 <i class="fas fa-chevron-left"></i>
                 <?php echo $langs->trans('AnswerWizardPrevious'); ?>
             </button>
-            <button type="button" class="answer-wizard__button answer-wizard__button--primary answer-wizard__next">
-                <?php echo $langs->trans('AnswerWizardNext'); ?>
+            <button type="button" class="answer-wizard__button answer-wizard__button--primary answer-wizard__next"
+                    data-label-next="<?php echo dol_escape_htmltag($langs->transnoentities('AnswerWizardNext')); ?>"
+                    data-label-summary="<?php echo dol_escape_htmltag($langs->transnoentities('AnswerWizardSummary')); ?>">
+                <span class="answer-wizard__next-label"><?php echo $langs->trans('AnswerWizardNext'); ?></span>
                 <i class="fas fa-chevron-right"></i>
             </button>
         </nav>
