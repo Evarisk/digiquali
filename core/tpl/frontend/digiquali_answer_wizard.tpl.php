@@ -81,14 +81,16 @@ $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep
                 <i class="fas fa-chevron-down"></i>
             </button>
         </div>
-        <div class="answer-wizard__save-state" data-state="idle">
-            <i class="fas fa-check answer-wizard__save-icon answer-wizard__save-icon--saved"></i>
-            <i class="fas fa-circle-notch fa-spin answer-wizard__save-icon answer-wizard__save-icon--saving"></i>
-            <i class="fas fa-exclamation-triangle answer-wizard__save-icon answer-wizard__save-icon--error"></i>
-        </div>
         <div class="answer-wizard__progress">
             <div class="answer-wizard__progress-bar" data-percent="<?php echo $wizardProgress['percent']; ?>"></div>
         </div>
+    </div>
+
+    <?php // Outside the header: a single-step sheet has no header but still saves as you go ?>
+    <div class="answer-wizard__save-state" data-state="idle">
+        <i class="fas fa-check answer-wizard__save-icon answer-wizard__save-icon--saved"></i>
+        <i class="fas fa-circle-notch fa-spin answer-wizard__save-icon answer-wizard__save-icon--saving"></i>
+        <i class="fas fa-exclamation-triangle answer-wizard__save-icon answer-wizard__save-icon--error"></i>
     </div>
 
     <div class="answer-wizard__screens">

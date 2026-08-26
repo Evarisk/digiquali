@@ -38,21 +38,14 @@
     --answer-wizard-top: 60px;
   }
 
-  // One step only: nothing to navigate, the header keeps just the progress bar
+  // One step only: no navigation, no step title, no step counter. What would remain of the
+  // header is a progress bar floating alone under an empty white band, so drop it entirely:
+  // every question is on screen, progress is read directly from the questions.
   &--single {
     --answer-wizard-footer-height: 0px;
 
-    .answer-wizard__back,
-    .answer-wizard__step-counter,
-    .answer-wizard__step-label {
-      display: none;
-    }
-
     .answer-wizard__header {
-      padding-top: 0;
-      padding-bottom: 4px;
-      border-bottom: none;
-      box-shadow: none;
+      display: none;
     }
 
     // Every question is visible right above: listing them again as "missing" is noise
@@ -137,11 +130,24 @@
   }
 }
 
+// Floating save badge: invisible while idle, so it only shows up when something is saved
 .answer-wizard__save-state {
-  flex-shrink: 0;
-  width: 24px;
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--answer-wizard-footer-height) + 12px + env(safe-area-inset-bottom));
+  z-index: 25;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(27, 100, 168, 0.25);
   text-align: center;
   font-size: 14px;
+
+  &[data-state="idle"] {
+    display: none;
+  }
 
   .answer-wizard__save-icon {
     display: none;
@@ -482,6 +488,12 @@
   .question-points:empty {
     display: none;
   }
+}
+
+// The PWA shell reserves room at the bottom for the nav bar, which the answer screen does not
+// display: without this the page ends on 64px of dead space.
+body.pwa-answer {
+  padding-bottom: 0 !important;
 }
 
 // The media gallery modal is printed in the flow of the answer pages, and its search input
