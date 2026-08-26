@@ -1,0 +1,115 @@
+// Diagnostic console popup for the data-migration import (view/digiqualitools.php).
+// Markup: core/tpl/digiquali_import_console.tpl.php — behaviour: js/modules/tools.js.
+
+.digiquali-console {
+  position: fixed;
+  bottom: 0;
+  right: 24px;
+  width: 660px;
+  max-width: calc(100vw - 48px);
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-family: 'Consolas', 'Courier New', monospace;
+  z-index: 9999;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, .5);
+
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 14px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &-heading {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  &-title {
+    color: #58a6ff;
+    font-weight: 700;
+    font-size: .82em;
+    letter-spacing: .5px;
+    white-space: nowrap;
+  }
+
+  &-sub {
+    color: #6e7681;
+    font-size: .76em;
+    margin-left: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-ok  { color: #3fb950; }
+  &-err { color: #f85149; }
+
+  &-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: .76em;
+    color: #8b949e;
+    flex-shrink: 0;
+
+    button {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+      font-size: 1em;
+
+      &:hover { color: #c9d1d9; }
+    }
+  }
+
+  &-sep { color: #30363d; }
+
+  &-body {
+    height: 260px;
+    overflow-y: auto;
+    padding: 8px 14px;
+    scroll-behavior: smooth;
+    display: none;
+  }
+
+  &.is-open .digiquali-console-body { display: block; }
+
+  &-line {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 2px;
+    font-size: .76em;
+    line-height: 1.5;
+  }
+
+  &-time {
+    color: #484f58;
+    min-width: 56px;
+    flex-shrink: 0;
+  }
+
+  &-pfx {
+    color: #58a6ff;
+    flex-shrink: 0;
+  }
+}
+
+// Log line levels (first letter of level: success / error / warn / info)
+.digiquali-log-s { color: #3fb950; }
+.digiquali-log-e { color: #f85149; }
+.digiquali-log-w { color: #d29922; }
+.digiquali-log-i { color: #c9d1d9; }

@@ -72,7 +72,7 @@ function control_prepare_head(Control $object): array
  */
 function get_linked_object_infos(CommonObject $linkedObject, array $linkableElements): array
 {
-    global $conf, $db, $langs, $user;
+    global $conf, $db, $hookmanager, $langs, $user;
 
     // Load Dolibarr libraries
     require_once DOL_DOCUMENT_ROOT . '/core/class/link.class.php';
@@ -84,14 +84,19 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
     $permissionToRead = $user->hasRight('produit', 'lire');
 
-    $linkableElement = $linkableElements[$linkedObject->element];
+    $linkableElement = $linkableElements[$linkedObject->element] ?? [];
 
-    // TODO: see if we can remove this if
-    $modulePart = $linkedObject->element;
-    if ($linkedObject->element == 'product') {
-        $modulePart = 'produit';
-    }
-    $out['linkedObject']['images'] = saturne_show_medias_linked($modulePart, $conf->{$linkedObject->element}->multidir_output[$conf->entity] . '/' . $linkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $linkedObject->ref . '/', $linkedObject, 'photo', 0, 0,0, 1);
+    // Some elements don't share their name with their modulepart nor with their $conf key (product => produit / $conf->product, productlot => product_batch / $conf->productbatch)
+    $elementMapping = [
+        'product'    => ['modulePart' => 'produit', 'confKey' => 'product'],
+        'productlot' => ['modulePart' => 'product_batch', 'confKey' => 'productbatch']
+    ];
+
+    $modulePart = $elementMapping[$linkedObject->element]['modulePart'] ?? $linkedObject->element;
+    $confKey    = $elementMapping[$linkedObject->element]['confKey'] ?? $linkedObject->element;
+    $uploadDir  = $conf->$confKey->multidir_output[$conf->entity] ?? '';
+
+    $out['linkedObject']['images'] = dol_strlen($uploadDir) > 0 ? saturne_show_medias_linked($modulePart, $uploadDir . '/' . $linkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $linkedObject->ref . '/', $linkedObject, 'photo', 0, 0,0, 1) : '';
     if ($linkedObject->element == 'productlot') {
         $linkedObject->element = 'product_lot';
     }
@@ -112,8 +117,15 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
     $out['linkedObject']['links'] = [];
     $out['linkedObject']['files'] = $filteredEcmFilesLine;
-    $out['linkedObject']['title']      = $langs->transnoentities($linkableElement['langs']);
-    $out['linkedObject']['name_field'] = $linkedObject->getNomUrl(1, !$permissionToRead ? 'nolink' : '');
+    $out['linkedObject']['title']      = $langs->transnoentities(!empty($linkableElement['langs']) ? $linkableElement['langs'] : dol_ucfirst($linkedObject->element));
+    if (method_exists($linkedObject, 'getNomUrl')) {
+        $out['linkedObject']['name_field'] = $linkedObject->getNomUrl(1, !$permissionToRead ? 'nolink' : '');
+    } else {
+        // Some linked objects (e.g. productbatch) don't implement getNomUrl(): fall back to picto + name
+        $picto = !empty($linkableElement['picto']) ? img_picto('', $linkableElement['picto'], 'class="pictofixedwidth"') : '';
+        $name  = !empty($linkedObject->ref) ? $linkedObject->ref : (!empty($linkedObject->label) ? $linkedObject->label : ($linkedObject->batch ?? ''));
+        $out['linkedObject']['name_field'] = $picto . dol_escape_htmltag($name);
+    }
 
     // Per-element label and description field mapping
     $elementFieldsMap = [
@@ -144,13 +156,18 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
         $file->name_field = $out['linkedObject']['name_field'];
     }
 
+    $out['linkedObject']['qc_frequency'] = '';
+
     $qcFrequency = get_parent_linked_object_qc_frequency($linkedObject, $linkableElements);
     if ($qcFrequency > 0 && getDolGlobalInt('DIGIQUALI_SHOW_QC_FREQUENCY_PUBLIC_INTERFACE')) {
         $out['linkedObject']['qc_frequency'] = '<i class="objet-icon fas fa-history"></i>' . $qcFrequency;
     }
 
-    $out['parentLinkedObject']['files']  = [];
-    $out['parentLinkedObject']['links']  = [];
+    $out['parentLinkedObject']['files']      = [];
+    $out['parentLinkedObject']['links']      = [];
+    $out['parentLinkedObject']['images']     = '';
+    $out['parentLinkedObject']['title']      = '';
+    $out['parentLinkedObject']['name_field'] = '';
     if (isset($linkableElement['fk_parent']) && getDolGlobalInt('DIGIQUALI_SHOW_PARENT_LINKED_OBJECT_ON_PUBLIC_INTERFACE')) {
         $linkedObjectParentData = [];
         foreach ($linkableElements as $value) {
@@ -167,13 +184,11 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
             $parentLinkedObject->fetch($linkedObject->{$linkableElement['fk_parent']});
 
-            // TODO: see if we can remove this if
-            $modulePart = $parentLinkedObject->element;
-            if ($parentLinkedObject->element == 'product') {
-                $modulePart = 'produit';
-            }
+            $parentModulePart = $elementMapping[$parentLinkedObject->element]['modulePart'] ?? $parentLinkedObject->element;
+            $parentConfKey    = $elementMapping[$parentLinkedObject->element]['confKey'] ?? $parentLinkedObject->element;
+            $parentUploadDir  = $conf->$parentConfKey->multidir_output[$conf->entity] ?? '';
 
-            $out['parentLinkedObject']['images']     = saturne_show_medias_linked($modulePart, $conf->{$parentLinkedObject->element}->multidir_output[$conf->entity] . '/' . $parentLinkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $parentLinkedObject->ref . '/', $parentLinkedObject, 'photo', 0, 0,0, 1);
+            $out['parentLinkedObject']['images']     = dol_strlen($parentUploadDir) > 0 ? saturne_show_medias_linked($parentModulePart, $parentUploadDir . '/' . $parentLinkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $parentLinkedObject->ref . '/', $parentLinkedObject, 'photo', 0, 0,0, 1) : '';
             $out['parentLinkedObject']['title']      = $langs->transnoentities($linkedObjectParentData['langs']);
             $out['parentLinkedObject']['name_field'] = $permissionToRead ? $parentLinkedObject->getNomUrl(1, '', 0, -1, 1) : img_picto('', $linkedObjectParentData['picto'], 'class="pictofixedwidth"') . $parentLinkedObject->{$linkedObjectParentData['name_field']};
 
@@ -204,6 +219,14 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
     $out['files']  = array_merge($out['linkedObject']['files'], $out['parentLinkedObject']['files']);
     $out['links']  = array_merge($out['linkedObject']['links'], $out['parentLinkedObject']['links']);
+
+    // Let other modules append the shared files and links of their own objects bound to the linked object
+    $parameters = ['linkableElements' => $linkableElements, 'linkedObjectInfoArray' => $out];
+    $resHook    = $hookmanager->executeHooks('digiqualiLinkedObjectDocumentation', $parameters, $linkedObject);
+    if ($resHook >= 0) {
+        $out['files'] = array_merge($out['files'], $hookmanager->resArray['files'] ?? []);
+        $out['links'] = array_merge($out['links'], $hookmanager->resArray['links'] ?? []);
+    }
 
     return $out;
 }
@@ -320,8 +343,18 @@ function get_parent_linked_object_qc_frequency(CommonObject $linkedObject, array
         $objectsMetadata = saturne_get_objects_metadata();
     }
 
-    $qcFrequency    = 0;
-    $objectMetadata = $objectsMetadata[$linkedObject->element];
+    $qcFrequency = 0;
+
+    // $linkedObject->element holds the link name, the metadata is keyed by object type : they differ
+    // for thirdparty/societe, contact/socpeople and task/project_task, hence this lookup.
+    $objectMetadata = [];
+    foreach ($objectsMetadata as $objectsMetadataEntry) {
+        if (($objectsMetadataEntry['link_name'] ?? '') === $linkedObject->element) {
+            $objectMetadata = $objectsMetadataEntry;
+            break;
+        }
+    }
+
     if (isset($objectMetadata['fk_parent'])) {
         $parentLinkedObject = null;
         foreach ($objectsMetadata as $objectMetadata) {
@@ -363,12 +396,16 @@ function get_task_infos(Task $task): array
     $userTmp->fetch($task->fk_user_creat);
     $out['task']['author'] = $userTmp->getNomUrl(1);
 
-    $out['task']['assigned'] = [];
+    $out['task']['assigned']         = [];
+    $out['task']['assigned_user_id'] = 0;
     $assignedContacts = $task->liste_contact(-1, 'internal', 0, 'TASKEXECUTIVE');
     if (is_array($assignedContacts)) {
         foreach ($assignedContacts as $assignedContact) {
             $userTmp->fetch($assignedContact['id']);
             $out['task']['assigned'][] = $userTmp->getNomUrl(1);
+            if (empty($out['task']['assigned_user_id'])) {
+                $out['task']['assigned_user_id'] = $assignedContact['id'];
+            }
         }
     }
 
@@ -384,6 +421,9 @@ function get_task_infos(Task $task): array
     if ($task->timespent_total_duration > 0 && $task->planned_workload > 0) {
         $out['task']['time'] = convertSecondToTime($task->timespent_total_duration) . ' / ' . convertSecondToTime($task->planned_workload);
     }
+
+    // Always defined, so that consumers can iterate without checking the key on a task with no time spent
+    $out['task']['timespent'] = [];
 
     $task->fetchTimeSpentOnTask();
     if (is_array($task->lines) && !empty($task->lines)) {

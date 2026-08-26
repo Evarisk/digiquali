@@ -304,49 +304,6 @@ class Survey extends SaturneObject
     }
 
     /**
-     * Return if a survey can be deleted
-     *
-     * @return int 0 < if KO, > 0 if OK
-     */
-    public function is_erasable(): int
-    {
-        return $this->isLinkedToOtherObjects();
-    }
-
-    /**
-     * Return if a survey is linked to another object
-     *
-     * @return int 0 < if KO, > 0 if OK
-     */
-    public function isLinkedToOtherObjects(): int
-    {
-        // Links between objects are stored in table element_element
-        $sql = 'SELECT rowid, fk_source, sourcetype, fk_target, targettype';
-        $sql .= ' FROM '.MAIN_DB_PREFIX . 'element_element';
-        $sql .= ' WHERE fk_target = ' . $this->id;
-        $sql .= " AND targettype = '" . $this->table_element . "'";
-
-        $resql = $this->db->query($sql);
-        if ($resql) {
-            $nbObjectsLinked = 0;
-            $num = $this->db->num_rows($resql);
-            $i = 0;
-            while ($i < $num) {
-                $nbObjectsLinked++;
-                $i++;
-            }
-            if ($nbObjectsLinked > 0) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else {
-            dol_print_error($this->db);
-            return -1;
-        }
-    }
-
-    /**
      * Clone an object into another one
      *
      * @param  User      $user    User that creates
@@ -686,8 +643,9 @@ class Survey extends SaturneObject
 
                 foreach ($this->lines as $questionAnswer) {
                     if ($questionId == $questionAnswer->fk_question) {
-                        if ($question->checkAnswerIsCorrect($questionAnswer->answer) >= 0) {
-                            $surveyCorrectAnswersTotalPoints += $question->points;
+                        $earnedPoints = $question->calculateEarnedPoints($questionAnswer->answer);
+                        if ($earnedPoints > 0) {
+                            $surveyCorrectAnswersTotalPoints += $earnedPoints;
                         } elseif ($question->type == $question::TYPE_PERCENTAGE) {
                             $answer = $questionAnswer->answer !== '' ? $questionAnswer->answer : 0;
                             $surveyCorrectAnswersTotalPoints += round($answer / 100, 2);
@@ -788,7 +746,8 @@ class Survey extends SaturneObject
      */
     public function displayAnswers(SurveyLine $objectLine, array $questionsAndGroups, bool $isFrontend = false, int $level = 0)
     {
-        global $conf, $langs;
+        // $user is required by the included template, which reads the per-user display preferences
+        global $conf, $langs, $user;
 
         $object = $this;
 
@@ -907,6 +866,8 @@ class SurveyLine extends SaturneObject
         'answer'            => ['type' => 'text',         'label' => 'Answer',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
         'answer_photo'      => ['type' => 'text',         'label' => 'AnswerPhoto',      'enabled' => 0, 'position' => 100, 'notnull' => 0, 'visible' => 0],
         'comment'           => ['type' => 'text',         'label' => 'Comment',          'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0],
+        'earned_points'     => ['type' => 'real',         'label' => 'EarnedPoints',     'enabled' => 1, 'position' => 111, 'notnull' => 0, 'visible' => 0],
+        'score_rate'        => ['type' => 'real',         'label' => 'ScoreRate',        'enabled' => 1, 'position' => 112, 'notnull' => 0, 'visible' => 0],
         'fk_user_creat'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserAuthor', 'picto' => 'user',                                'enabled' => 1, 'position' => 120, 'notnull' => 1, 'visible' => 0, 'foreignkey' => 'user.rowid'],
         'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0, 'foreignkey' => 'user.rowid'],
         'fk_survey'         => ['type' => 'integer:Survey:digiquali/class/survey.class.php',     'label' => 'Survey',     'picto' => 'fontawesome_fa-marker_fas_#d35968',   'enabled' => 1, 'position' => 140,  'notnull' => 1, 'visible' => 0, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
@@ -972,6 +933,16 @@ class SurveyLine extends SaturneObject
      * @var string|null Comment
      */
     public ?string $comment = '';
+
+    /**
+     * @var float|null Earned points
+     */
+    public ?float $earned_points;
+
+    /**
+     * @var float|null Score rate
+     */
+    public ?float $score_rate;
 
     /**
      * @var int User ID

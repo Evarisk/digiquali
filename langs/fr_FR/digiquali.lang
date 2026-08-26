@@ -40,6 +40,16 @@ GenerateMainSheetCategories    = Génération des catégories principales du mod
 MainSheetCategoriesDescription = Cette option permet la génération des catégories principales du modèle de contrôle. <br> Les catégories créées seront : <ul><li>Contrôle</li><ul><li>Qualité</li><ul><li>Hygiène et Sécurité</li><ul><li>Trousses de premier secours</li></ul></ul><li>Matériels</li><ul><li>Masque</li></ul><li>Véhicules</li><ul><li>Voiture</li><li>Véhicule industriel</li></ul></ul></ul>
 SheetMainCategory              = Choix de la catégorie principale du modèle de contrôle
 SheetMainCategoryDescription   = Cette option permet de choisir quelle catégorie sera utilisée lors du choix de catégorie pendant la création d'un contrôle
+ShowProjectOnControl           = Afficher le projet sur le contrôle
+ShowTagsOnControl              = Afficher les tags sur le contrôle
+DefaultControlTags             = Tags par défaut du contrôle
+ControlCreationOptions         = Options de création du contrôle
+ShowProjectOnControlHelp       = Si activé, le champ projet sera visible lors de la création d'un contrôle depuis ce modèle
+ShowTagsOnControlHelp          = Si activé, le champ tags/catégories sera visible lors de la création d'un contrôle depuis ce modèle
+DefaultControlTagsHelp         = Catégories qui seront pré-sélectionnées lors de la création d'un contrôle depuis ce modèle
+DefaultControlProject          = Projet par défaut du contrôle
+ConfigureYourObjectsHere       = Configurez vos Objets ici
+ControlledObjectsTitle         = Objets contrôlés par ce Contrôle/Questionnaire
 
 # Control - Contrôle
 DisplayMediasSample                                = Afficher les médias d'exemple des questions
@@ -113,6 +123,7 @@ NoteControl                   = Note publique
 EnterComment                  = Saisir les commentaires
 EnterCommentTooltip           = Saisit le commentaire sur les réponses de question
 ErrorQuestionUsedInSheet      = La question %s ne peut pas être supprimée, elle est utilisée dans un ou plusieurs modèles.
+ErrorQuestionGroupUsedInSheet = Le groupe de questions %s ne peut pas être supprimé, il est utilisé dans un ou plusieurs modèles.
 ErrorNoQuestionSelected       = Aucune question sélectionnée
 AddQuestionIntoCategory       = Assigner cette catégorie à la question
 QuestionType                  = Type de question
@@ -220,6 +231,8 @@ NotCreated                     = Pas encore créé(e)s
 CategoriesGeneration           = Cette option permet la génération des catégories par défaut des modèles. Les catégories créées seront : <br> - Qualité <br> - Hygiène <br> - Sécurité <br> - Environnement <br> - Sureté <br> - Réglementaire <br> - Bureau d'Etude <br> - Fournisseurs <br> - Commercial <br> - Production <br> - Méthodes <br> - Comptabilité <br> - Logistique <br> - Informatique <br>
 UniqueLinkedElement            = Liaison unique sur les éléments de Dolibarr
 UniqueLinkedElementDescription = Lier un seul élément de Dolibarr à un modèle
+SheetLinkedObjectSelect2            = Liste déroulante pour les objets contrôlés
+SheetLinkedObjectSelect2Description = Afficher les objets contrôlés dans une liste déroulante compacte (avec recherche) au lieu de la liste de cases à cocher
 ErrorSheetUsedInControl        = Le modèle %s ne peut pas être supprimé, il est utilisé dans un ou plusieurs contrôles/questionnaires.
 AddSheetIntoCategory           = Assigner cette catégorie au modèle
 QuestionMandatorized           = La question %s a été rendue obligatoire
@@ -356,6 +369,17 @@ LinkInventory                                  = Activer le lien avec les invent
 LinkInventoryDescription                       = Permet la liaison entre les inventaires et les modèles
 LinkMouvement                                  = Activer le lien avec les mouvements de stock
 LinkMouvementDescription                       = Permet la liaison entre les mouvements de stock et les modèles
+LinkableElements                               = Éléments liables
+LinkedObjectUsage                              = Utilisation
+LinkedObjectUsageDetail                        = %d lien(s), %d fréquence(s) de contrôle renseignée(s)
+NoLinkedObjectUsage                            = Aucune utilisation
+DisableLinkConfirm                             = Le lien avec « %s » va être désactivé. %d valeur(s) de fréquence de contrôle seront définitivement supprimées. Confirmer ?
+EnableAllLinksConfirm                          = Tous les liens vont être activés : les champs complémentaires, onglets et hooks seront créés sur tous les objets disponibles. Confirmer ?
+DisableAllLinksConfirm                         = Tous les liens vont être désactivés : les champs complémentaires seront supprimés et leurs valeurs perdues. Confirmer ?
+CleanUnusedLinks                               = Nettoyer les liens inutilisés
+CleanUnusedLinksConfirm                        = Les champs complémentaires, onglets et hooks des liens désactivés vont être supprimés. Confirmer ?
+LinkedObjectSyncDone                           = Synchronisation effectuée : %d onglet(s), %d hook(s), %d champ(s) complémentaire(s) ajouté(s), %d supprimé(s)
+LinkedObjectSyncError                          = La synchronisation des liens a échoué, aucune modification n'a été enregistrée
 LinkFicheinter                                 = Activer le lien avec les fiches d'intervention
 LinkFicheinterDescription                      = Permet la liaison entre les fiches d'intervention et les modèles
 LinkBom                                        = Activer le lien avec les nomenclatures BOM
@@ -458,6 +482,7 @@ DraftValidatedLocked                           = -- (Brouillon + validé + verro
 CloneControlEquipments                         = Cloner les moyens de contrôle
 NoControl                                      = Aucun contrôle
 NoPeriodicityControl                           = Aucune périodicité de contrôle
+NoDocumentation                                = Aucun document lié
 LockControlDate                                = Le verrouillage de ce contrôle en date du &emsp;&emsp;&emsp; : <b> %s </b> <br> entrainera une date de prochain contrôle pour le : <b> %s </b> <br> soit dans &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; : <b> %d jours. </b>
 
 
@@ -702,3 +727,24 @@ NFProduit = Produit
 
 MobileApp    = Application mobile
 LastControls = Derniers contrôles
+
+# Grading Policy
+GradingPolicy = Politique de notation
+Proportional = Proportionnelle
+AllOrNothing = Tout ou rien
+OptionWeighted = Pondérée par option
+WeightPercent = Pondération (%)
+
+Scoring = Notation
+TestPassed=Test réussi
+TestFailed=Test échoué
+ObtainedScore=Score obtenu
+Result=Résultat
+DefaultValue=Valeur par défaut
+
+LinkProject_task=Activer le lien avec les tâches du projet
+LinkProject_taskDescription=Permet la liaison entre les tâches de projet et les modèles
+LinkContrat=Activer le lien avec les contrats
+LinkContratDescription=Permet la liaison entre les contrats et les modèles
+LinkCall_list=Activer le lien avec les appels
+LinkCall_listDescription=Permet la liaison entre les listes d'appels et les modèles

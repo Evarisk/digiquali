@@ -191,13 +191,12 @@ if (empty($resHook)) {
     }
 
     if ($action == 'show_only_questions_with_no_answer') {
+        // saturne.utils.toggleSetting() posts {<data-toggle-key>: value}, so the key is the action name
         $data = json_decode(file_get_contents('php://input'), true);
-
-        $showOnlyQuestionsWithNoAnswer = $data['showOnlyQuestionsWithNoAnswer'];
-
-        $tabParam['DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER'] = $showOnlyQuestionsWithNoAnswer;
-
-        dol_set_user_param($db, $conf, $user, $tabParam);
+        if (isset($data[$action])) {
+            $tabParam['DIGIQUALI_' . dol_strtoupper($action)] = $data[$action];
+            dol_set_user_param($db, $conf, $user, $tabParam);
+        }
     }
 
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_save_action.tpl.php';
@@ -368,8 +367,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             $questionConfirmInfo .= '<br><b>' . $langs->trans('BewareQuestionsAnswered', $questionCounter - $answerCounter) . '</b>';
         }
 
+        [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $object->calculatePoints();
+        $correctAnswersRate = 0;
+        if ($totalPoints > 0) {
+            $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
+        }
+        $isPassed = $object->isCorrectFromPoints($correctPoints, $totalPoints) && !$atLeastOneIncorrectSubGroup;
+
+        $questionConfirmInfo .= '<br><br><table style="width: 100%; font-weight: bold;">';
+        $questionConfirmInfo .= '<tr><td style="padding-bottom: 5px;">' . $langs->trans('SuccessScore') . '</td><td style="padding-bottom: 5px;">: ' . $object->success_rate . ' %</td></tr>';
+        $questionConfirmInfo .= '<tr><td style="padding-bottom: 5px;">' . $langs->trans('ObtainedScore') . '</td><td style="padding-bottom: 5px;">: ' . $correctAnswersRate . ' %</td></tr>';
+        $questionConfirmInfo .= '<tr><td style="padding-bottom: 5px; color: ' . ($isPassed ? '#28a745' : '#dc3545') . ';">' . $langs->trans('Result') . '</td><td style="padding-bottom: 5px; color: ' . ($isPassed ? '#28a745' : '#dc3545') . ';">: ' . ($isPassed ? 'OK' : 'KO') . '</td></tr>';
+        $questionConfirmInfo .= '</table>';
+
         $questionConfirmInfo .= '<br><br><b>' . $langs->trans('ConfirmValidateSurvey') . '</b>';
-        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('ValidateObject', $langs->transnoentities('The' . ucfirst($object->element))), $questionConfirmInfo, 'confirm_validate', '', 'yes', 'actionButtonValidate', 250);
+        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('ValidateObject', $langs->transnoentities('The' . ucfirst($object->element))), $questionConfirmInfo, 'confirm_validate', '', 'yes', 'actionButtonValidate', 350, 600);
     }
 
     // Draft confirmation
@@ -475,7 +487,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     $object->fetchObjectLinked('', '', $object->id, 'digiquali_survey');
     $linkedObjectType = key($object->linkedObjects);
     foreach($objectsMetadata as $objectMetadata) {
-        if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+        if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
             continue;
         }
 
@@ -527,15 +539,16 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     }
     print '</td></tr>';
 
-    if ($object->status >= SURVEY::STATUS_LOCKED) {
-        $surveyResult = $object->getFormattedResults();
-    
-        print '<tr class="field_success_rate"><td class="titlefield fieldname_success_rate">';
-        print $langs->trans('RateResult');
-        print '</td><td class="valuefield fieldname_success_rate">';
-        print '<span class="badge badge-' . ($object->isCorrect() ? 'status4' : 'status8') . ' badge-status' . '">' . $surveyResult . '</div>';
-        print '</td></tr>';
+    [$numberOfAnweredQuestions, $numberOfQuestions, $correctPoints, $totalPoints, $atLeastOneIncorrectSubGroup] = $object->calculatePoints();
+    $correctAnswersRate = 0;
+    if ($totalPoints > 0) {
+        $correctAnswersRate = round($correctPoints / $totalPoints * 100, 2);
     }
+    print '<tr class="field_obtained_score"><td class="titlefield fieldname_obtained_score">';
+    print $langs->trans('ObtainedScore');
+    print '</td><td class="valuefield fieldname_obtained_score">';
+    print '<span id="survey-obtained-score">' . $correctAnswersRate . ' % (' . $correctPoints . ' / ' . $totalPoints . ' points)</span>';
+    print '</td></tr>';
 
     // Other attributes. Fields from hook formObjectOptions and Extrafields
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
@@ -624,9 +637,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             // Send email
             $displayButton = $onPhone ? '<i class="fas fa-envelope fa-2x"></i>' : '<i class="fas fa-envelope"></i>' . ' ' . $langs->trans('SendMail') . ' ';
             if ($object->status != Survey::STATUS_LOCKED) {
+                // dol_most_recent_file() returns null while no document has been generated yet
                 $fileParams = dol_most_recent_file($upload_dir . '/' . $object->element . 'document' . '/' . $object->ref);
-                $file       = $fileParams['fullname'];
-                if (file_exists($file) && !strstr($fileParams['name'], 'specimen')) {
+                if (!empty($fileParams) && file_exists($fileParams['fullname']) && !strstr($fileParams['name'], 'specimen')) {
                     $forceBuildDoc = 0;
                 } else {
                     $forceBuildDoc = 1;
@@ -665,14 +678,23 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             <div class="progress progress-bar-success" style="width:<?php print ($questionCounter > 0 ? ($answerCounter/$questionCounter) * 100 : 0) . '%'; ?>;" title="<?php print ($questionCounter > 0 ? $answerCounter . '/' . $questionCounter : 0); ?>"></div>
         </div>
         <?php if ($answerCounter != $questionCounter) {
-            print $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER ? img_picto($langs->trans('Enabled'), 'switch_on', 'class="show-only-questions-with-no-answer marginrightonly"') : img_picto($langs->trans('Disabled'), 'switch_off', 'class="show-only-questions-with-no-answer marginrightonly"');
-            print $form->textwithpicto($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'));
+            // The user preference does not exist until the toggle has been used at least once
+            $showOnlyWithNoAnswer = !empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER);
+
+            // The generic handler of control.js binds on data-toggle-action, not on a class
+            $toggleAttributes  = 'data-toggle-action="show_only_questions_with_no_answer"';
+            $toggleAttributes .= ' data-toggle-key="show_only_questions_with_no_answer"';
+            $toggleAttributes .= ' data-update-targets=".progress-info,.question-answer-container"';
+            $toggleAttributes .= ' class="show-only-questions-with-no-answer marginrightonly"';
+
+            print img_picto($langs->trans($showOnlyWithNoAnswer ? 'Enabled' : 'Disabled'), $showOnlyWithNoAnswer ? 'switch_on' : 'switch_off', $toggleAttributes);
+            print $form->textwithpicto($showOnlyWithNoAnswer ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>', $langs->trans('ShowOnlyQuestionsWithNoAnswer'), 1, 'help', 'marginrightonly');
         } else {
             $user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER = 0;
         } ?>
     </div>
 
-    <?php if (!$user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER || $answerCounter != $questionCounter) {
+    <?php if (empty($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || $answerCounter != $questionCounter) {
         print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '');
         print '<div id="tablelines" class="question-answer-container">';
         $questionsAndGroups = $sheet->fetchQuestionsAndGroups();

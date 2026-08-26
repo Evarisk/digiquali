@@ -54,7 +54,9 @@ if ($action == 'save') {
     $questions = $sheet->fetchAllQuestions();
 
     if (!empty($questions)) {
-        $controlLineObj = new ControlLine($db);
+        $lineClass = get_class($objectLine);
+        $fkField = ($object->element === 'survey') ? 'fk_survey' : 'fk_control';
+        
         foreach ($questions as $question) {
             // If AutoSave, ONLY process the specific question to save time
             if ($isAutoSave) {
@@ -63,7 +65,7 @@ if ($action == 'save') {
                 }
             }
 
-            $line = new ControlLine($db);
+            $line = new $lineClass($db);
             $resLines = $line->fetchFromParentWithQuestion($object->id, $question->id);
             
             $lineExists = false;
@@ -73,7 +75,7 @@ if ($action == 'save') {
                 $lineExists = true;
             } else {
                 // Init new line properties manually if it doesn't exist
-                $line->fk_control = $object->id;
+                $line->$fkField = $object->id;
                 $line->fk_question = $question->id;
                 $line->status = 1;
             }
@@ -94,6 +96,16 @@ if ($action == 'save') {
                 }
             }
 
+            // Calculate and set the score on the line
+            if ($line->answer !== null) {
+                $line->earned_points = $question->calculateEarnedPoints($line->answer);
+                if ($question->points > 0) {
+                    $line->score_rate = $line->earned_points / (float)$question->points;
+                } else {
+                    $line->score_rate = 0;
+                }
+            }
+
             if ($lineExists) {
                 if ($line->id > 0) {
                     $res = $line->update($user);
@@ -102,7 +114,7 @@ if ($action == 'save') {
                     }
                 }
             } else {
-                if ($line->fk_control > 0 && $line->fk_question > 0) {
+                if ($line->$fkField > 0 && $line->fk_question > 0) {
                     $line->date_creation = dol_now();
                     $res = $line->create($user);
                     if ($res < 0) {
@@ -110,6 +122,14 @@ if ($action == 'save') {
                     }
                 }
             }
+        }
+
+        // The lines above are saved through their own ControlLine/SurveyLine instances, so the
+        // $object->lines loaded at the top of the page is now stale. Reload it so every counter
+        // recomputed further down (answered-questions progress bar, per-group answer counters and
+        // statistics) reflects the answer that was just saved, including questions inside groups.
+        if ($object->id > 0) {
+            $object->fetchLines();
         }
     }
 

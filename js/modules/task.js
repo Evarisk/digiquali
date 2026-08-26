@@ -228,23 +228,25 @@ window.digiquali.task.updateTask = function() {
   const taskId = $this.data('task-id');
   const $task  = $(document).find(`#answer_task${taskId}`);
 
-  const label     = $form.find('#answer-task-label').val();
-  const startDate = $form.find('#answer-task-start-date').val();
-  const endDate   = $form.find('#answer-task-end-date').val();
-  const budget    = $form.find('#answer-task-budget').val();
-  const progress  = $form.find('#answer-task-progress').val();
+  const label          = $form.find('#answer-task-label').val();
+  const startDate       = $form.find('#answer-task-start-date').val();
+  const endDate         = $form.find('#answer-task-end-date').val();
+  const budget          = $form.find('#answer-task-budget').val();
+  const progress        = $form.find('#answer-task-progress').val();
+  const assignedUserId  = $form.find('[name="answer-task-edit-assigned-user"]').val();
 
   $.ajax({
     url: `${document.URL}&action=update_task&token=${token}`,
     type: 'POST',
     contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
-      task_id:    taskId,
-      label:      label,
-      date_start: startDate,
-      date_end:   endDate,
-      budget:     budget,
-      progress:   progress
+      task_id:        taskId,
+      label:          label,
+      date_start:     startDate,
+      date_end:       endDate,
+      budget:         budget,
+      progress:       progress,
+      fk_user_assign: assignedUserId
     }),
     success: function(resp) {
       $modal.removeClass('modal-active');

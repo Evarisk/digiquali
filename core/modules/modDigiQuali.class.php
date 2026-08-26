@@ -201,6 +201,7 @@ class modDigiQuali extends DolibarrModules
 //            $i++ => ['DIGIQUALI_SHEET_LINK_SUPPLIER_INVOICE', 'integer', 0, '', 0, 'current'],
 			$i++ => ['DIGIQUALI_SHEET_DEFAULT_TAG', 'integer', 0, '', 0, 'current'],
             $i++ => ['DIGIQUALI_SHEET_BACKWARD_COMPATIBILITY', 'integer', 0, '', 0, 'current'],
+            $i++ => ['DIGIQUALI_LINKED_OBJECT_BACKWARD', 'integer', 0, '', 0, 'current'],
 
 			// CONST QUESTION
 			$i++ => ['DIGIQUALI_QUESTION_ADDON', 'chaine', 'mod_question_standard', '', 0, 'current'],
@@ -317,21 +318,35 @@ class modDigiQuali extends DolibarrModules
 		$this->tabs   = [];
 		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
-        $objectsMetadata = saturne_get_objects_metadata();
+        // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
+        dol_include_once('/saturne/lib/object.lib.php');
+        dol_include_once('/saturne/lib/linked_object.lib.php');
+        
+        $linkableObjects    = [];
+        if (function_exists('saturne_get_objects_metadata') && function_exists('saturne_filter_linkable_objects')) {
+            $linkableObjects = saturne_filter_linkable_objects(saturne_get_objects_metadata(), ['digiquali_']);
+        }
+        
+        $enabledObjectTypes = [];
+        if (function_exists('saturne_get_enabled_linked_object_types')) {
+            $enabledObjectTypes = saturne_get_enabled_linked_object_types($linkableObjects, 'DIGIQUALI_SHEET_LINK_');
+        }
 
-        foreach($objectsMetadata as $objectType => $objectMetadata) {
+        foreach ($enabledObjectTypes as $objectType) {
+            $objectMetadata = $linkableObjects[$objectType];
+
             if (preg_match('/_/', $objectType)) {
                 $splittedElementType = explode('_', $objectType);
                 $moduleName = $splittedElementType[0];
                 $objectName = dol_strtolower($objectMetadata['class_name']);
-                $objectType = $objectName . '@' . $moduleName;
+                $tabType    = $objectName . '@' . $moduleName;
             } else {
-                $objectType = $objectMetadata['tab_type'];
+                $tabType = $objectMetadata['tab_type'];
             }
             if ($objectMetadata['link_name'] !== 'propal') {
-                $this->tabs[] = ['data' => $objectType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
             }
-            $this->tabs[] = ['data' => $objectType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
 
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_list'];
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_card'];
@@ -909,21 +924,6 @@ class modDigiQuali extends DolibarrModules
 
 			dolibarr_set_const($this->db, 'DIGIQUALI_QUESTION_NF_TAGS_SET', 1, 'integer', 0, '', $conf->entity);
 		}
-        // Create extrafields during init.
-        include_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
-        $extraFields = new ExtraFields($this->db);
-
-        $objectsMetadata = saturne_get_objects_metadata();
-        foreach($objectsMetadata as $objectMetadataType => $objectMetadata) {
-            $extraFields->addExtraField('qc_frequency', 'QcFrequency', 'int', 100, 10, $objectMetadata['table_element'], 0, 0, '', 'a:1:{s:7:"options";a:1:{s:0:"";N;}}', 1, '', 1, '','',0, 'digiquali@digiquali', '$conf->digiquali->enabled');
-            if ($objectMetadataType == 'productlot') {
-                $extraFields->update('control_history_link', 'ControlHistoryLink', 'varchar', 255, $objectMetadata['table_element'], 0, 0, 110, '', 0, '', 5, '', '', '', 0, 'digiquali@digiquali', '$conf->digiquali->enabled');
-                $extraFields->addExtraField('control_history_link', 'ControlHistoryLink', 'varchar', 110, 255, $objectMetadata['table_element'], 0, 0, '', '', 0, '', 5, '','',0, 'digiquali@digiquali', '$conf->digiquali->enabled');
-            } else {
-                $extraFields->delete('control_history_link', $objectMetadata['table_element']);
-            }
-        }
-
 		if ($result < 0) {
 			return -1;
 		} // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
@@ -1007,10 +1007,21 @@ class modDigiQuali extends DolibarrModules
             dolibarr_set_const($this->db, 'DIGIQUALI_SHEET_LINK_PROJECT_DEFAULT', 1, 'integer', 0, '', $conf->entity);
         }
 
+        require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
+
+        // Constants must be written before _init(), which inserts the tabs the constructor computed.
+        if (getDolGlobalInt('DIGIQUALI_LINKED_OBJECT_BACKWARD') == 0) {
+            digiquali_run_linked_object_backward();
+            dolibarr_set_const($this->db, 'DIGIQUALI_LINKED_OBJECT_BACKWARD', 1, 'integer', 0, '', $conf->entity);
+        }
+
 		// Permissions
 		$this->remove($options);
 
 		$result = $this->_init($sql, $options);
+
+        // Replayed on a fresh descriptor, so that the constants written above are taken into account.
+        digiquali_sync_linked_objects();
 
 		if (getDolGlobalInt('DIGIQUALI_QUESTION_BACKWARD_COMPATIBILITY') == 0 && $result > 0) {
 			require_once __DIR__ . '/../../class/question.class.php';

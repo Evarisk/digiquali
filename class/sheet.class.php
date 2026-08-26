@@ -124,6 +124,9 @@ class Sheet extends SaturneObject
         'photo'               => ['type' => 'text',         'label' => 'Photo',              'enabled' => 1, 'position' => 95,  'notnull' => 0, 'visible' => -2, 'disablesearch' => 1, 'disablesort' => 1],
         'success_rate'        => ['type' => 'real',         'label' => 'SuccessScore',       'enabled' => 1, 'position' => 35,  'notnull' => 0, 'visible' => 2, 'help' => 'PercentageValue'],
         'mandatory_questions' => ['type' => 'text',         'label' => 'MandatoryQuestions', 'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 0],
+        'show_project'        => ['type' => 'boolean',      'label' => 'ShowProjectOnControl', 'enabled' => 1, 'position' => 101, 'notnull' => 0, 'visible' => 0, 'default' => 1],
+        'show_tags'           => ['type' => 'boolean',      'label' => 'ShowTagsOnControl',    'enabled' => 1, 'position' => 102, 'notnull' => 0, 'visible' => 0, 'default' => 1],
+        'default_control_tags' => ['type' => 'text',        'label' => 'DefaultControlTags',   'enabled' => 1, 'position' => 103, 'notnull' => 0, 'visible' => 0],
         'fk_user_creat'       => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserAuthor', 'picto' => 'user', 'enabled' => 1, 'position' => 110, 'notnull' => 1, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_user_modif'       => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserModif',  'picto' => 'user', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid']
     ];
@@ -201,12 +204,27 @@ class Sheet extends SaturneObject
     /**
      * @var float|null Success rate
      */
-    public ?float $success_rate;
+    public ?float $success_rate = null;
 
     /**
      * @var string Mandatory questions.
      */
     public ?string $mandatory_questions = '{}';
+
+    /**
+     * @var int|null Show project on control creation.
+     */
+    public ?int $show_project = 1;
+
+    /**
+     * @var int|null Show tags on control creation.
+     */
+    public ?int $show_tags = 1;
+
+    /**
+     * @var string|null Default control tags JSON.
+     */
+    public ?string $default_control_tags = null;
 
     /**
      * @var int User ID.
@@ -338,6 +356,7 @@ class Sheet extends SaturneObject
 
             $questionIds = [];
             $questionGroupIds = [];
+            $clonedQuestionIds = [];
 
             if (is_array($questionAndGroups) && !empty($questionAndGroups)) {
                 foreach ($questionAndGroups as $position => $questionOrGroup) {
@@ -347,15 +366,20 @@ class Sheet extends SaturneObject
                         $clonedQuestion->id = $clonedQuestion->createFromClone($user, $questionOrGroup->id, []);
                         $clonedQuestion->add_object_linked('digiquali_' . $object->element, $sheetID);
                         $questionIds[$position+1] = $clonedQuestion->id;
+
+                        $clonedQuestionIds[(int) $questionOrGroup->id] = (int) $clonedQuestion->id;
                     } else {
                         $clonedQuestionGroup = new QuestionGroup($this->db);
                         $clonedQuestionGroup->id = $clonedQuestionGroup->createFromClone($user, $questionOrGroup->id, []);
                         $clonedQuestionGroup->add_object_linked('digiquali_' . $object->element, $sheetID);
                         $questionGroupIds[$position+1] = $clonedQuestionGroup->id;
+
+                        $clonedQuestionIds += $clonedQuestionGroup->clonedQuestionIds;
                     }
                 }
                 $object->updateQuestionsAndGroupsPosition($questionIds, $questionGroupIds);
 
+                $object->remapMandatoryQuestions($clonedQuestionIds, $user);
             }
         } else {
             $error++;
@@ -373,6 +397,38 @@ class Sheet extends SaturneObject
             $this->db->rollback();
             return -1;
         }
+    }
+
+    /**
+     * Rewrite mandatory_questions onto another set of questions.
+     *
+     * mandatory_questions stores raw question IDs. Cloning a sheet re-creates its questions with
+     * fresh IDs, so the copied JSON would still point at the source's questions: every mandatory
+     * flag would silently be lost. The import does the same remapping (view/digiqualitools.php).
+     *
+     * @param  array<int,int> $clonedQuestionIds Source question ID => new question ID
+     * @param  User           $user              User doing the update
+     * @return int<-1,1>                         < 0 if KO, > 0 if OK
+     */
+    public function remapMandatoryQuestions(array $clonedQuestionIds, User $user): int
+    {
+        $mandatoryQuestions = json_decode($this->mandatory_questions ?? '', true);
+
+        if (!is_array($mandatoryQuestions) || empty($mandatoryQuestions)) {
+            return 1;
+        }
+
+        $remappedQuestions = [];
+        foreach ($mandatoryQuestions as $mandatoryQuestionId) {
+            // IDs have been stored as int and as string over time, cast before looking them up
+            if (!empty($clonedQuestionIds[(int) $mandatoryQuestionId])) {
+                $remappedQuestions[] = $clonedQuestionIds[(int) $mandatoryQuestionId];
+            }
+        }
+
+        $this->mandatory_questions = !empty($remappedQuestions) ? json_encode($remappedQuestions) : '{}';
+
+        return $this->setValueFrom('mandatory_questions', $this->mandatory_questions, '', null, '', '', $user);
     }
 
 	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
@@ -535,6 +591,7 @@ class Sheet extends SaturneObject
     public function updateQuestionsAndGroupsPosition(?array $questionIds, ?array $questionGroupIds, $reindexLast = false, ?int $fk_source = null, string $sourcetype = 'digiquali_sheet')
     {
         $this->db->begin();
+        $error = 0;
 
         if (is_null($fk_source)) {
             $fk_source = $this->id;

@@ -238,6 +238,11 @@ if (empty($resHook)) {
     // Actions set_thirdparty, set_project
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
 
+    // Move linked tasks to the new project so they follow the control
+    if ($action == 'set_project' && $permissiontoadd) {
+        $object->setLinkedTasksProject(GETPOSTINT(GETPOST('project_key', 'aZ09')), $user);
+    }
+
     if ($action == 'set_categories' && $permissiontoadd) {
         if ($object->fetch($id) > 0) {
             $result = $object->setCategories(GETPOST('categories', 'array'));
@@ -459,11 +464,16 @@ if ($action == 'create') {
         $object->fields['fk_user_controller']['visible'] = 1;
         $object->fields['fk_user_controller']['default'] = $user->id;
         if (!empty($conf->projet->enabled)) {
-            $object->fields['projectid']['visible'] = 1;
+            if (!empty($sheet->show_project)) {
+                $object->fields['projectid']['visible'] = 1;
+            }
             if (!empty($sheet->fk_project)) {
                 $_POST['projectid'] = $sheet->fk_project;
             }
         }
+        // Store show_project to handle hidden input after commonfields
+        $sheetShowProject = $sheet->show_project;
+        $sheetDefaultProjectId = $sheet->fk_project;
     }
 
     if ($viewmode == 'images') {
@@ -526,7 +536,7 @@ if ($action == 'create') {
     }
 
     if ($source == 'pwa') {
-        $object->fields['fk_user_controller']['type']  = 'integer:User:user/class/user.class.php';
+        $object->fields['fk_user_controller']['type']  = 'integer:User:user/class/user.class.php:0:(t.statut:=:1)';
         $object->fields['fk_user_controller']['label'] = img_picto('', 'fontawesome_fa-user_fas_#79633f_2em', 'class="pictofixedwidth"');
         $object->fields['fk_user_controller']['picto'] = '';
         $object->fields['projectid']['type']           = 'integer:Project:projet/class/project.class.php';
@@ -537,16 +547,32 @@ if ($action == 'create') {
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
 
+    // Hidden project input when project field is not visible but sheet has a default project
+    if ($fkSheet > 0 && empty($sheetShowProject) && !empty($sheetDefaultProjectId)) {
+        print '<input type="hidden" name="projectid" value="' . intval($sheetDefaultProjectId) . '">';
+    }
+
     if ($fkSheet > 0) {
+        // Default control tags from sheet
+        $defaultControlTags = json_decode($sheet->default_control_tags ?? '[]', true) ?: [];
+        $selectedCategories = GETPOSTISSET('categories') ? GETPOST('categories', 'array') : $defaultControlTags;
+
         // Categories
         if (!empty($conf->categorie->enabled)) {
-            print '<tr><td>' . ($source != 'pwa' ? $langs->trans('Categories') : img_picto('', 'fontawesome_fa-tags_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
-            $categoryArborescence = $form->select_all_categories('control', '', 'parent', 64, 0, 1);
-            print ($source != 'pwa' ? img_picto('', 'category', 'class="pictofixedwidth"') : '') . $form::multiselectarray('categories', $categoryArborescence, GETPOST('categories', 'array'), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
-            if ($source != 'pwa') {
-                print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=control&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
+            if (!empty($sheet->show_tags)) {
+                print '<tr><td>' . ($source != 'pwa' ? $langs->trans('Categories') : img_picto('', 'fontawesome_fa-tags_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
+                $categoryArborescence = $form->select_all_categories('control', '', 'parent', 64, 0, 1);
+                print ($source != 'pwa' ? img_picto('', 'category', 'class="pictofixedwidth"') : '') . $form::multiselectarray('categories', $categoryArborescence, $selectedCategories, '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
+                if ($source != 'pwa') {
+                    print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=control&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
+                }
+                print '</td></tr>';
+            } else {
+                // Hidden inputs to still apply default tags
+                foreach ($selectedCategories as $catId) {
+                    print '<input type="hidden" name="categories[]" value="' . intval($catId) . '">';
+                }
             }
-            print '</td></tr>';
         }
 
         // Other attributes
@@ -646,7 +672,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
     $object->fetchObjectLinked('', '', $object->id, 'digiquali_control');
 
-    $linkedObjectType = key($object->linkedObjects);
+    // linkedObjects is empty when the control has no link, or when the linked object belongs to a
+    // module that has been disabled since : fetchObjectLinked() silently drops those types.
+    $linkedObjectType = !empty($object->linkedObjects) ? key($object->linkedObjects) : '';
 
     // Build the full list of question IDs of the sheet, including questions nested inside (sub-)groups.
     // fetchAllQuestions() walks the question groups recursively, so deeply nested questions are counted too.
@@ -730,11 +758,16 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     // Clone confirmation
     if (($action == 'clone' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // Define confirmation messages
-        $objectMetadata = $objectsMetadata[$linkedObjectType];
-        $linkedObject   = $object->linkedObjects[$objectMetadata['link_name']][key($object->linkedObjects[$objectMetadata['link_name']])];
+        // Without a loadable linked object the clone label falls back on the control reference.
+        $objectMetadata   = !empty($linkedObjectType) ? ($objectsMetadata[$linkedObjectType] ?? []) : [];
+        $linkedObjectName = $object->ref;
+        if (!empty($objectMetadata['link_name']) && !empty($object->linkedObjects[$objectMetadata['link_name']])) {
+            $linkedObject     = current($object->linkedObjects[$objectMetadata['link_name']]);
+            $linkedObjectName = $linkedObject->{$objectMetadata['name_field']};
+        }
 
         $formQuestionClone = [
-            ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObject->{$objectMetadata['name_field']}, 'size' => 24],
+            ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObjectName, 'size' => 24],
             ['type' => 'checkbox', 'name' => 'clone_attendants',         'label' => $langs->trans('CloneAttendants'),        'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_photos',             'label' => $langs->trans('ClonePhotos'),            'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_control_equipments', 'label' => $langs->trans('CloneControlEquipments'), 'value' => 1]
@@ -838,7 +871,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     }
 
     foreach ($objectsMetadata as $objectMetadata) {
-        if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+        if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
             continue;
         }
 
@@ -874,8 +907,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
             $percentQuestionCounter++;
             foreach ($object->lines as $line) {
-                if ($line->fk_question === $questionLinked->id) {
-                    $averagePercentageQuestions += $line->answer;
+                // An unanswered line holds an empty string (Control::create), which is a fatal in PHP 8: 0 + '' is a TypeError
+                if ($line->fk_question === $questionLinked->id && is_numeric($line->answer)) {
+                    $averagePercentageQuestions += (float) $line->answer;
                 }
             }
         }

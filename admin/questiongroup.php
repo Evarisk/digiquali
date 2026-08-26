@@ -103,6 +103,7 @@ print dol_get_fiche_head($head, 'questiongroup', $title, -1, "digiquali_color@di
 
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 
+$constArray = $constArray ?? [];
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
 
 if ($object->isextrafieldmanaged > 0) {

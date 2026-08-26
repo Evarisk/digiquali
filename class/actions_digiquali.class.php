@@ -329,12 +329,15 @@ class ActionsDigiquali
     /**
      * Overloading the saturnePrintFieldListLoopObject function : replacing the parent's function with the one below
      *
-     * @param  array $parameters Hook metadata (context, etc...)
-     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     * @param  array       $parameters Hook metadata (context, etc...)
+     * @param  object|null $object     Current object
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function printFieldListSelect(array $parameters): int
+    public function printFieldListSelect(array $parameters, ?object $object = null): int
     {
+        global $sortfield, $sortorder;
+
         if (preg_match('/\bsheetlist\b/', $parameters['context'])) {
             $sql = ',COUNT(ee.fk_target) AS nb_question';
             $this->resprints = $sql;
@@ -345,7 +348,179 @@ class ActionsDigiquali
             $this->resprints = $sql;
         }
 
+        if (preg_match('/surveylist|controllist/', $parameters['context']) && $object instanceof CommonObject) {
+            $this->resprints .= $this->getLinkedElementSortSelect($object, (string) $sortfield, (string) $sortorder);
+        }
+
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Build the SELECT expressions that let a control / survey list be sorted on a linked element column.
+     *
+     * Those columns (contract, project, product, etc.) hold values coming from llx_element_element, not
+     * from the listed object's own table, so ordering on them requires a correlated subquery returning
+     * the linked object's name. Two aliases are produced per sorted column:
+     *  - sortvalue_<post_name> the linked object name, the actual sort criteria
+     *  - sortempty_<post_name> a flag keeping the rows without any linked element at the bottom
+     * They are deliberately prefixed: an alias named after the field itself would land in $object-><key>
+     * through setVarsFromFetchObj and feed a ref string to a column declared as integer:<Class>.
+     * The flag polarity follows the requested direction, because the generic list applies one and the
+     * same direction to every sort token: sorting "is empty" ascending, or "is not empty" descending,
+     * both push the empty rows last.
+     *
+     * The expressions are emitted only for the column currently sorted on, so a list displayed without
+     * sorting on a linked element keeps exactly the query it had before.
+     *
+     * @param  CommonObject $object    Listed object (control or survey)
+     * @param  string       $sortfield Requested sort field(s), comma separated
+     * @param  string       $sortorder Requested sort order(s), comma separated
+     * @return string                  SQL to append to the SELECT, empty when no linked element is sorted on
+     * @throws Exception
+     */
+    protected function getLinkedElementSortSelect(CommonObject $object, string $sortfield, string $sortorder): string
+    {
+        global $conf;
+
+        if (empty($sortfield)) {
+            return '';
+        }
+
+        if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
+            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
+        }
+
+        $sortedFields = array_map('trim', explode(',', $sortfield));
+        // The direction is repeated for every token by saturne_get_title_field_of_list, so the first one
+        // is the direction the empty flag will be sorted with
+        $isDescending = (bool) preg_match('/^desc/i', trim((string) (explode(',', $sortorder)[0] ?? '')));
+
+        $out      = '';
+        $rendered = [];
+        foreach ($conf->cache['objectsMetadata'] as $objectMetadata) {
+            if (empty($objectMetadata['conf']) || !in_array('sortvalue_' . $objectMetadata['post_name'], $sortedFields, true)) {
+                continue;
+            }
+            if (empty($objectMetadata['table_element']) || empty($objectMetadata['name_field'])) {
+                continue;
+            }
+            // 'contrat' is registered as an alias of 'contract' and carries the same post_name
+            if (isset($rendered[$objectMetadata['post_name']])) {
+                continue;
+            }
+            $rendered[$objectMetadata['post_name']] = 1;
+
+            $nameFields = array_map('trim', explode(',', $objectMetadata['name_field']));
+            $nameSelect = count($nameFields) > 1
+                ? 'CONCAT_WS(\' \', lnk.' . implode(', lnk.', $nameFields) . ')'
+                : 'lnk.' . $nameFields[0];
+
+            $subQuery  = '(SELECT ' . $nameSelect . ' FROM ' . $this->db->prefix() . $objectMetadata['table_element'] . ' AS lnk';
+            $subQuery .= ' INNER JOIN ' . $this->db->prefix() . 'element_element AS eesort ON (eesort.fk_source = lnk.rowid)';
+            $subQuery .= ' WHERE eesort.fk_target = t.rowid';
+            $subQuery .= ' AND eesort.targettype = \'' . $this->db->escape($object->module . '_' . $object->element) . '\'';
+            $subQuery .= ' AND eesort.sourcetype = \'' . $this->db->escape($objectMetadata['link_name']) . '\'';
+            $subQuery .= ' ORDER BY ' . $nameSelect . ' LIMIT 1)';
+
+            $out .= ', ' . $subQuery . ' AS sortvalue_' . $objectMetadata['post_name'];
+            $out .= ', (' . $subQuery . ($isDescending ? ' IS NOT NULL' : ' IS NULL') . ') AS sortempty_' . $objectMetadata['post_name'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Return the ids of the objects the generic list is about to display.
+     *
+     * $sqlForList is the snapshot the saturne list exposes for aggregate hooks: the whole filtered query,
+     * before sorting and pagination. Wrapping it as a subquery, with the very order and limit the list
+     * applies, yields exactly the rows of the current page - including when the sort references an alias
+     * that only exists inside that query.
+     *
+     * @return int[] Ids of the page, empty when the list variables are out of reach
+     */
+    protected function getListPageObjectIds(): array
+    {
+        global $limit, $offset, $sortfield, $sortorder, $sqlForList;
+
+        if (empty($sqlForList)) {
+            return [];
+        }
+
+        $sql  = 'SELECT listpage.rowid FROM (' . $sqlForList;
+        $sql .= $this->db->order($sortfield, $sortorder);
+        $sql .= (!empty($limit) ? $this->db->plimit($limit + 1, $offset) : '');
+        $sql .= ') AS listpage';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return [];
+        }
+
+        $ids = [];
+        while ($obj = $this->db->fetch_object($resql)) {
+            $ids[] = (int) $obj->rowid;
+        }
+        $this->db->free($resql);
+
+        return $ids;
+    }
+
+    /**
+     * Load, for a whole page of listed objects, the date of the last agenda event of each status change.
+     *
+     * The last_status_date column used to call ActionComm::getActions() once per status and per row, so
+     * one hundred queries for a page of twenty-five. Each of them orders by datep and takes the first
+     * row, and MySQL resolves part of them with an index_merge intersection on idx_actioncomm_entity -
+     * an index every row matches - which costs 30ms instead of 0.3ms. One query scoped to the ids of the
+     * page replaces them all and always uses idx_actioncomm_fk_element.
+     *
+     * Rows are read in ascending datep order and each one overwrites the previous entry of its key, so
+     * the value kept is the one of the greatest datep: the same record getActions() returned.
+     *
+     * @param  CommonObject $object Listed object (control or survey), giving the agenda element type
+     * @param  int[]        $ids    Ids to load
+     * @return array<int, array<string, int>> Timestamps indexed by object id, then by agenda code
+     */
+    protected function loadLastStatusDates(CommonObject $object, array $ids): array
+    {
+        $ids = array_filter(array_map('intval', $ids));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $codes = [];
+        foreach (['VALIDATE', 'UNVALIDATE', 'LOCK', 'ARCHIVE'] as $code) {
+            $codes[] = '\'AC_' . dol_strtoupper($object->element) . '_' . $code . '\'';
+        }
+
+        $sql  = 'SELECT fk_element, code, datec FROM ' . $this->db->prefix() . 'actioncomm';
+        $sql .= ' WHERE entity IN (' . getEntity('agenda') . ')';
+        $sql .= ' AND elementtype = \'' . $this->db->escape($object->element . '@' . $object->module) . '\'';
+        $sql .= ' AND code IN (' . implode(', ', $codes) . ')';
+        $sql .= ' AND fk_element IN (' . implode(', ', $ids) . ')';
+        $sql .= ' ORDER BY datep ASC';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return [];
+        }
+
+        $lastStatusDates = [];
+        while ($obj = $this->db->fetch_object($resql)) {
+            $lastStatusDates[(int) $obj->fk_element][$obj->code] = $this->db->jdate($obj->datec);
+        }
+        $this->db->free($resql);
+
+        // Ids without any agenda event must still count as loaded, otherwise the caller reloads them one by one
+        foreach ($ids as $id) {
+            if (!isset($lastStatusDates[$id])) {
+                $lastStatusDates[$id] = [];
+            }
+        }
+
+        return $lastStatusDates;
     }
 
     /**
@@ -395,7 +570,7 @@ class ActionsDigiquali
             }
             $objectsMetadata = $conf->cache['objectsMetadata'];
             foreach ($objectsMetadata as $objectMetadata) {
-                if ($objectMetadata['conf'] == 0) {
+                if (empty($objectMetadata['conf'])) {
                     continue;
                 }
                 if ($objectMetadata['post_name'] == $parameters['key'] && (int) $parameters['val'] > 0) {
@@ -498,6 +673,11 @@ class ActionsDigiquali
     public function printFieldListOption(array $parameters): int
     {
         global $conf, $extrafields, $langs, $object;
+
+        // The hook also runs on the lists that declare no object of their own, and there is nothing to decorate there
+        if (!is_object($object)) {
+            return 0;
+        }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
             require_once __DIR__ . '/../../saturne/lib/object.lib.php';
@@ -602,6 +782,10 @@ class ActionsDigiquali
     {
         global $conf, $langs;
 
+        if ($object === null || !is_object($object)) {
+            return 0;
+        }
+
         if (strpos($parameters['context'], 'main') !== false) {
             if (!empty($parameters['head'])) {
                 foreach ($parameters['head'] as $headKey => $headTab) {
@@ -621,7 +805,7 @@ class ActionsDigiquali
                             $linkedMedias    = 0;
                             $confName        = 'DIGIQUALI_' . dol_strtoupper($object->element) . '_USE_LARGE_MEDIA_IN_GALLERY';
 
-                            if (is_array($questionsLinked['digiquali_question']) && !empty($questionsLinked['digiquali_question'])) {
+                            if (!empty($questionsLinked['digiquali_question']) && is_array($questionsLinked['digiquali_question'])) {
                                 foreach ($questionsLinked['digiquali_question'] as $questionLinked) {
                                     if ($questionLinked->authorize_answer_photo > 0) {
                                         saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, (getDolGlobalInt($confName) ? 'large' : 'medium'), '', 0, 0, 0, 200, 200, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, $object, '', 0, 0);
@@ -882,11 +1066,17 @@ class ActionsDigiquali
             $sheet     = new Sheet($this->db);
 
             $object->fetchLines();
-            $object->fetchObjectLinked('', '', $object->id, 'digiquali_control');
+            // This hook serves both the control and the survey list, so the target type must follow the
+            // current object: a hard-coded 'digiquali_control' finds no link at all for a survey
+            $object->fetchObjectLinked('', '', $object->id, 'digiquali_' . $object->element);
 
-            $sheet->fetch($object->fk_sheet);
-            $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position');
-            $conf->cache['sheet'] = $sheet;
+            // A failed fetch() leaves the object as it was, so an unfetched sheet must not reach the cache
+            if ($sheet->fetch($object->fk_sheet) > 0) {
+                $sheet->fetchObjectLinked($object->fk_sheet, 'digiquali_' . $sheet->element, null, '', 'OR', 1, 'position');
+                $conf->cache['sheet'] = $sheet;
+            } else {
+                $conf->cache['sheet'] = null;
+            }
 
             $filter      = ['customsql' => 'fk_object = ' . $object->id . ' AND status > 0 AND object_type = "' . $object->element . '"'];
             $signatories = $signatory->fetchAll('', 'role', 0, 0, $filter);
@@ -897,6 +1087,7 @@ class ActionsDigiquali
             $conf->cache['thirdparty']  = [];
             if (is_array($signatories) && !empty($signatories)) {
                 foreach ($signatories as $signatory) {
+                    $contact = null; // An unresolved contact must not leak from the previous signatory
                     // fetch user or contact depending on the element type of the signatory
                     if ($signatory->element_type == 'user') {
                         $userTmp = new User($this->db);
@@ -965,19 +1156,27 @@ class ActionsDigiquali
             $out = [];
 
             if ($parameters['key'] == 'fk_sheet') {
-                $out[$parameters['key']] = $conf->cache['sheet']->getNomUrl(1, '', 0, 'maxwidth200onsmartphone maxwidth300', -1, 1);
+                $out[$parameters['key']] = isset($conf->cache['sheet']) ? $conf->cache['sheet']->getNomUrl(1, '', 0, 'maxwidth200onsmartphone maxwidth300', -1, 1) : '';
             }
 
-            if (!empty($object->linkedObjects)) {
-                $linkedObjectType = key($object->linkedObjects);
-                $objectsMetadata  = $conf->cache['objectsMetadata'];
+            // Linked element columns (contract, project, product, etc.) are fed by llx_element_element.
+            // Every linked type must be scanned: an object linked to both a contract and a project has
+            // to fill both columns, not only the one of the first type returned by fetchObjectLinked()
+            $objectsMetadata = $conf->cache['objectsMetadata'] ?? [];
+            if (!empty($object->linkedObjects) && is_array($objectsMetadata)) {
                 foreach ($objectsMetadata as $objectMetadata) {
-                    if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+                    if (empty($objectMetadata['conf']) || $parameters['key'] != $objectMetadata['post_name']) {
                         continue;
                     }
-                    if ($parameters['key'] == $objectMetadata['post_name']) {
-                        $out[$parameters['key']] = $object->linkedObjects[$objectMetadata['link_name']][key($object->linkedObjects[$objectMetadata['link_name']])]->getNomUrl(1);
+                    $linkedObjects = $object->linkedObjects[$objectMetadata['link_name']] ?? [];
+                    if (empty($linkedObjects)) {
+                        continue;
                     }
+                    $links = [];
+                    foreach ($linkedObjects as $linkedObject) {
+                        $links[] = $linkedObject->getNomUrl(1);
+                    }
+                    $out[$parameters['key']] = implode('<br>', $links);
                 }
             }
 
@@ -996,7 +1195,7 @@ class ActionsDigiquali
 
             if ($parameters['key'] == 'question_answered') {
                 $NbQuestion  = 0;
-                $questionIds = $conf->cache['sheet']->linkedObjectsIds['digiquali_question'] ?? [];
+                $questionIds = isset($conf->cache['sheet']) ? ($conf->cache['sheet']->linkedObjectsIds['digiquali_question'] ?? []) : [];
                 if (is_array($questionIds) && !empty($questionIds)) {
                     $NbQuestion = count($questionIds);
                     $NbAnswer   = 0;
@@ -1013,15 +1212,20 @@ class ActionsDigiquali
             }
 
             if ($parameters['key'] == 'last_status_date') {
-                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-
-                $actionComm = new ActionComm($this->db);
+                if (!isset($conf->cache['lastStatusDatesIds'])) {
+                    $conf->cache['lastStatusDatesIds'] = $this->getListPageObjectIds();
+                    $conf->cache['lastStatusDates']    = $this->loadLastStatusDates($object, $conf->cache['lastStatusDatesIds']);
+                }
+                if (!in_array($object->id, $conf->cache['lastStatusDatesIds'], true)) {
+                    // The page ids could not be determined, so load this row alone rather than show nothing
+                    $conf->cache['lastStatusDatesIds'][] = $object->id;
+                    $conf->cache['lastStatusDates']     += $this->loadLastStatusDates($object, [$object->id]);
+                }
 
                 $out[$parameters['key']] = '';
                 $actionCommCode          = ['VALIDATE' => 'ValidationDate', 'UNVALIDATE' => 'ReopeningDate', 'LOCK' => 'LockingDate', 'ARCHIVE' => 'ArchivingDate'];
                 foreach ($actionCommCode as $code => $date) {
-                    $lastAction     = $actionComm->getActions(0, $object->id, $object->element . '@' . $object->module, ' AND a.code = "AC_' . dol_strtoupper($object->element) . '_' . $code . '"', 'a.datep', 'DESC', 1);
-                    $lastActionDate = (!empty($lastAction) && isset($lastAction[0]->datec)) ? $lastAction[0]->datec : 0;
+                    $lastActionDate = $conf->cache['lastStatusDates'][$object->id]['AC_' . dol_strtoupper($object->element) . '_' . $code] ?? 0;
                     if ($lastActionDate > 0) {
                         $out[$parameters['key']] .= $langs->trans($date) . '<br>' . dol_print_date($lastActionDate, 'dayhour') . '<br>';
                     }
@@ -1029,7 +1233,7 @@ class ActionsDigiquali
             }
 
             if ($parameters['key'] == 'average_percentage_questions' || $parameters['key'] == 'verdict_object') {
-                $questions = $conf->cache['sheet']->linkedObjects['digiquali_question'];
+                $questions = isset($conf->cache['sheet']) ? ($conf->cache['sheet']->linkedObjects['digiquali_question'] ?? []) : [];
                 if (is_array($questions) && !empty($questions)) {
                     $questions = array_column($questions, null, 'id');
                 }
@@ -1037,10 +1241,13 @@ class ActionsDigiquali
                 $answers = [];
                 if (is_array($object->lines) && !empty($object->lines)) {
                     foreach ($object->lines as $objectLine) {
-                        if ($questions[$objectLine->fk_question]->type !== 'Percentage') {
-                            continue; // Skip non-percentage questions
+                        if (!isset($questions[$objectLine->fk_question]) || $questions[$objectLine->fk_question]->type !== 'Percentage') {
+                            continue; // Skip questions the sheet no longer carries, and non-percentage ones
                         }
-                        $answers[] = $objectLine->answer;
+                        if (!is_numeric($objectLine->answer)) {
+                            continue; // An unanswered question holds '', which array_sum() cannot add
+                        }
+                        $answers[] = (float) $objectLine->answer;
                     }
                 }
 
@@ -1072,7 +1279,6 @@ class ActionsDigiquali
                                 }
                                 switch ($signatory->attendance) {
                                     case 1:
-                                        break;
                                         $cssButton = '#0d8aff';
                                         $userIcon  = 'fa-user-clock';
                                         break;
@@ -1085,15 +1291,22 @@ class ActionsDigiquali
                                         $userIcon  = 'fa-user';
                                         break;
                                 }
-                                if (is_array($users[$signatory->role]) && !empty($users[$signatory->role][$signatory->id])) {
-                                    $out[$parameters['key']] .= $users[$signatory->role][$signatory->id]->getNomUrl(1, '', 0, 0, 24, 1);
-                                } elseif (is_array($contacts[$signatory->role]) && !empty($contacts[$signatory->role][$signatory->id])) {
-                                    $out[$parameters['key']] .= $contacts[$signatory->role][$signatory->id]->getNomUrl(1);
+                                // Only the roles holding a signatory are cached, so both lookups can miss
+                                $roleUsers    = $users[$signatory->role] ?? [];
+                                $roleContacts = $contacts[$signatory->role] ?? [];
+
+                                $signatoryName = '';
+                                if (!empty($roleUsers[$signatory->id])) {
+                                    $signatoryName = $roleUsers[$signatory->id]->getNomUrl(1, '', 0, 0, 24, 1);
+                                } elseif (!empty($roleContacts[$signatory->id])) {
+                                    $signatoryName = $roleContacts[$signatory->id]->getNomUrl(1);
                                 }
-                                if ((is_array($users[$signatory->role]) && !empty($users[$signatory->role])) || (is_array($contacts[$signatory->role]) && !empty($contacts[$signatory->role]))) {
-                                    $out[$parameters['key']] .= ' - ' . $signatory->getLibStatut(3);
-                                    $out[$parameters['key']] .= ' - <i class="fas ' . $userIcon . '" style="color: ' . $cssButton . '"></i><br>';
+                                if (dol_strlen($signatoryName) == 0) {
+                                    continue; // Neither the user nor the contact could be loaded
                                 }
+
+                                $out[$parameters['key']] .= $signatoryName . ' - ' . $signatory->getLibStatut(3);
+                                $out[$parameters['key']] .= ' - <i class="fas ' . $userIcon . '" style="color: ' . $cssButton . '"></i><br>';
                             }
                         }
                     }
@@ -1103,6 +1316,7 @@ class ActionsDigiquali
             if ($parameters['key'] == 'society_attendants') {
                 $thirdparties = $conf->cache['thirdparty'];
                 if (is_array($thirdparties) && !empty($thirdparties)) {
+                    $out[$parameters['key']]  = '';
                     $alreadyAddedThirdParties = [];
                     foreach ($thirdparties as $thirdparty) {
                         if (!empty($thirdparty->id) && !in_array($thirdparty->id, $alreadyAddedThirdParties)) {

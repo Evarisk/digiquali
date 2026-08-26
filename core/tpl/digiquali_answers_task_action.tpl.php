@@ -80,6 +80,19 @@ if ($action == 'update_task' && !empty($permissionToAddTask)) {
     }
 
     $task->update($user);
+
+    // Sync the assigned user (responsable) of the task
+    if (array_key_exists('fk_user_assign', $data)) {
+        $existingContacts = $task->liste_contact(-1, 'internal', 0, 'TASKEXECUTIVE');
+        if (is_array($existingContacts)) {
+            foreach ($existingContacts as $existingContact) {
+                $task->delete_contact($existingContact['rowid']);
+            }
+        }
+        if ($data['fk_user_assign'] > 0) {
+            $task->add_contact($data['fk_user_assign'], 'TASKEXECUTIVE', 'internal');
+        }
+    }
     // @todo manage error
 }
 

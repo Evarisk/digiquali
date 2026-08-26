@@ -48,6 +48,7 @@ window.digiquali.object.init = function() {
   window.digiquali.object.event();
 
   window.digiquali.object.placePercents();
+  window.digiquali.object.updateGlobalScore();
 };
 
 /**
@@ -138,6 +139,8 @@ window.digiquali.object.selectAnswer = function() {
     $(this).closest('.answer-cell').find('.question-answer').val(answer);
   }
 
+  window.digiquali.object.updateLiveScore(questionId, answer);
+
   if (!publicInterface) {
     window.digiquali.object.saveAnswer(questionId, answer, comment);
   } else {
@@ -186,7 +189,11 @@ window.digiquali.object.updateButtonsStatus = function() {
   });
 
   $('.validateButton').removeClass('butAction');
-  $('#dialog-confirm-actionButtonValidate').removeAttr('id');
+  let $dialog = $('#dialog-confirm-actionButtonValidate');
+  if ($dialog.length) {
+    $dialog.attr('data-original-id', 'dialog-confirm-actionButtonValidate');
+    $dialog.removeAttr('id');
+  }
   $('.validateButton').addClass('butActionRefused');
 };
 
@@ -201,46 +208,73 @@ window.digiquali.object.updateButtonsStatus = function() {
  * @param  {string} comment    Comment value
  * @return {void}
  */
+window.digiquali.object.saveTimeouts = window.digiquali.object.saveTimeouts || {};
+
 window.digiquali.object.saveAnswer = function(questionId, answer, comment) {
   let token          = window.saturne.toolbox.getToken();
   let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
   let answerVal      = Array.isArray(answer) ? answer.join(',') : answer;
 
-  $.ajax({
-    url: document.URL + querySeparator + 'action=save',
-    type: 'POST',
-    data: {
-      token: token,
-      autoSave: 'true',
-      questionId: questionId,
-      answer: answerVal,
-      comment: comment
-    },
-    success: function(resp) {
-      let $resp = $(resp);
-      $('.progress-info').replaceWith($resp.find('.progress-info'));
-      $('#dialog-confirm-actionButtonValidate>.confirmmessage').replaceWith($resp.find('#dialog-confirm-actionButtonValidate>.confirmmessage'));
-      // Refresh the per-group answered-question counters in real time so that questions inside
-      // groups (and nested sub-groups) are reflected immediately, on both backend and public interfaces.
-      $('.group-answer-counter').each(function() {
-        let groupId       = $(this).attr('data-group-id');
-        let $freshCounter = $resp.find('.group-answer-counter[data-group-id="' + groupId + '"]');
-        if ($freshCounter.length) {
-          $(this).text($freshCounter.first().text());
+  if (window.digiquali.object.saveTimeouts[questionId]) {
+    clearTimeout(window.digiquali.object.saveTimeouts[questionId]);
+  }
+
+  window.digiquali.object.saveTimeouts[questionId] = setTimeout(function() {
+    $.ajax({
+      url: document.URL + querySeparator + 'action=save',
+      type: 'POST',
+      data: {
+        token: token,
+        autoSave: 'true',
+        questionId: questionId,
+        answer: answerVal,
+        comment: comment
+      },
+      success: function(resp) {
+        let $resp = $(resp);
+        $('.progress-info').replaceWith($resp.find('.progress-info'));
+        $('#saveButton').replaceWith($resp.find('#saveButton'));
+        
+        
+        let $hiddenDialog = $('[data-original-id="dialog-confirm-actionButtonValidate"]');
+        if ($hiddenDialog.length) {
+          $hiddenDialog.attr('id', 'dialog-confirm-actionButtonValidate');
+          $hiddenDialog.removeAttr('data-original-id');
         }
-      });
-      // Remove the red unsaved warning from the comment box that was saved
-      let $commentArea = $('.question-comment[name="comment' + questionId + '"]');
-      if ($commentArea.length) {
-          $commentArea.removeClass('show-comment-unsaved-message');
-          $commentArea.next('p').remove();
+        $('#dialog-confirm-actionButtonValidate>.confirmmessage').replaceWith($resp.find('#dialog-confirm-actionButtonValidate>.confirmmessage'));
+        
+        let $newValidateBtn = $resp.find('.validateButton');
+        if ($newValidateBtn.length) {
+          $('.validateButton').attr('class', $newValidateBtn.attr('class'));
+          $('.validateButton').attr('title', $newValidateBtn.attr('title') || '');
+          if ($newValidateBtn.attr('id')) {
+            $('.validateButton').attr('id', $newValidateBtn.attr('id'));
+          } else {
+            $('.validateButton').removeAttr('id');
+          }
+        }
+        // Refresh the per-group answered-question counters in real time so that questions inside
+        // groups (and nested sub-groups) are reflected immediately, on both backend and public interfaces.
+        $('.group-answer-counter').each(function() {
+          let groupId       = $(this).attr('data-group-id');
+          let $freshCounter = $resp.find('.group-answer-counter[data-group-id="' + groupId + '"]');
+          if ($freshCounter.length) {
+            $(this).text($freshCounter.first().text());
+          }
+        });
+        // Remove the red unsaved warning from the comment box that was saved
+        let $commentArea = $('.question-comment[name="comment' + questionId + '"]');
+        if ($commentArea.length) {
+            $commentArea.removeClass('show-comment-unsaved-message');
+            $commentArea.next('p').remove();
+        }
+        $.jnotify('Sauvegarde réussie', 'success', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
+      },
+      error: function() {
+        $.jnotify('Erreur de sauvegarde', 'error', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
       }
-      $.jnotify('Sauvegarde réussie', 'success', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
-    },
-    error: function() {
-      $.jnotify('Erreur de sauvegarde', 'error', false, {autoHide: true, clickOverlay: false, minWidth: 250, TimeShown: 1500, ShowTimeEffect: 150, HideTimeEffect: 150, LongTrip: 20, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false, ColorOverlay: '#000', OpacityOverlay: 0.3});
-    }
-  });
+    });
+  }, 1000);
 };
 
 /**
@@ -258,6 +292,8 @@ window.digiquali.object.saveTextOrNumericAnswer = function() {
     let answer          = $(this).val();
     let comment         = $(this).closest('.table-id-' + questionId).find('textarea[name="comment' + questionId + '"]').val() || '';
     let publicInterface = $(this).closest('.table-id-' + questionId).attr('data-publicInterface');
+
+    window.digiquali.object.updateLiveScore(questionId, answer);
 
     if (!publicInterface) {
       window.digiquali.object.saveAnswer(questionId, answer, comment);
@@ -311,6 +347,7 @@ window.digiquali.object.rangePercent = function(fromInit) {
   slider.parent().append(rangePercent);
 
   if (!fromInit) {
+    window.digiquali.object.updateLiveScore(questionId, rangePercentValue);
     if (!publicInterface) {
       let comment = $(this).closest('.table-id-' + questionId).find('textarea[name="comment' + questionId + '"]').val() || '';
       window.digiquali.object.saveAnswer(questionId, rangePercentValue, comment);
@@ -319,7 +356,68 @@ window.digiquali.object.rangePercent = function(fromInit) {
     }
   }
 
-}
+};
+
+window.digiquali.object.updateLiveScore = function(questionId, answerValue) {
+  let $questionContainer = $('.table-id-' + questionId);
+  if (!$questionContainer.length) return;
+
+  let type = $questionContainer.attr('data-type');
+  let points = parseFloat($questionContainer.attr('data-points')) || 0;
+  let gradingPolicy = $questionContainer.attr('data-grading-policy');
+  let min = parseFloat($questionContainer.attr('data-min'));
+  let max = parseFloat($questionContainer.attr('data-max'));
+  
+  let earned = 0.0;
+  
+  if (['Percentage', 'Range'].includes(type)) {
+    let answerNum = parseFloat(answerValue);
+    if (!isNaN(answerNum)) {
+      if (!isNaN(min) && !isNaN(max) && answerNum >= min && answerNum <= max) {
+        earned = points;
+      } else if (type === 'Percentage' && (!gradingPolicy || gradingPolicy === 'proportional')) {
+        earned = Math.round((answerNum / 100) * points * 100) / 100;
+      }
+    }
+  } else if (['OkKo', 'OkKoToFixNonApplicable', 'MarqueNF', 'UniqueChoice', 'MultipleChoices'].includes(type)) {
+    let correctAnswersStr = $questionContainer.attr('data-correct-answers') || '';
+    let correctAnswers = correctAnswersStr ? correctAnswersStr.split(',') : [];
+    
+    let answerValueStr = (Array.isArray(answerValue) ? answerValue.join(',') : String(answerValue));
+    let selectedAnswers = answerValueStr.split(',');
+    
+    if (gradingPolicy === 'proportional') {
+      let totalCorrectExpected = correctAnswers.length;
+      if (totalCorrectExpected > 0) {
+        let correctSelected = 0;
+        selectedAnswers.forEach(function(ans) {
+          if (ans !== '' && correctAnswers.includes(ans)) {
+            correctSelected++;
+          }
+        });
+        earned = (correctSelected / totalCorrectExpected) * points;
+      }
+    } else {
+      let isCorrect = true;
+      if (correctAnswers.length > 0) {
+        selectedAnswers.forEach(function(ans) {
+          if (ans !== '' && !correctAnswers.includes(ans)) isCorrect = false;
+        });
+        correctAnswers.forEach(function(ans) {
+          if (!selectedAnswers.includes(ans)) isCorrect = false;
+        });
+      } else {
+        isCorrect = false;
+      }
+      if (isCorrect) earned = points;
+    }
+  }
+
+  let displayEarned = Math.round(earned * 100) / 100;
+  $questionContainer.find('.score-value').text(displayEarned + ' / ' + points + (points > 1 ? ' points' : ' point'));
+
+  window.digiquali.object.updateGlobalScore();
+};
 
 /**
  * Place the object in the right place
@@ -360,5 +458,36 @@ window.digiquali.object.saveCommentAuto = function() {
     if (!publicInterface) {
       window.digiquali.object.saveAnswer(questionId, answer, comment);
     }
+  }
+};
+
+window.digiquali.object.updateGlobalScore = function() {
+  let totalEarned = 0;
+  let totalPoints = 0;
+  
+  $('.question-answer-container .score-value').each(function() {
+    let text = $(this).text();
+    let parts = text.split(' / ');
+    if (parts.length === 2) {
+      let earned = parseFloat(parts[0]);
+      let maxStr = parts[1].split(' ')[0];
+      let max = parseFloat(maxStr);
+      if (!isNaN(earned) && !isNaN(max)) {
+        totalEarned += earned;
+        totalPoints += max;
+      }
+    }
+  });
+
+  let percentage = 0;
+  if (totalPoints > 0) {
+    percentage = Math.round((totalEarned / totalPoints) * 100 * 100) / 100;
+  }
+  
+  let $surveyScore = $('#survey-obtained-score');
+  if ($surveyScore.length) {
+    let roundedEarned = Math.round(totalEarned * 100) / 100;
+    let roundedPoints = Math.round(totalPoints * 100) / 100;
+    $surveyScore.text(percentage + ' % (' + roundedEarned + ' / ' + roundedPoints + ' points)');
   }
 };

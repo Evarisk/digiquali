@@ -928,7 +928,12 @@ class pdf_controldocument extends SaturneDocumentModel
         $wLabel  = $w - $wRef - $wDate - $wProg - 6;
 
         foreach ($tasks as $task) {
-            $rowH = 6;
+            $labelText = $task->label ?? '';
+
+            // Compute the row height so long task names wrap instead of overflowing the row
+            $pdf->SetFont('', '', 7);
+            $rowH = max(6, $pdf->getStringHeight($wLabel, $labelText));
+
             $this->checkPageBreak($pdf, $rowH + 1);
             $sy = $pdf->GetY();
 
@@ -937,13 +942,12 @@ class pdf_controldocument extends SaturneDocumentModel
 
             $pdf->SetTextColor(180, 100, 0);
             $pdf->SetFont('', 'B', 7);
-            $pdf->SetXY($x + 3, $sy + 1);
+            $pdf->SetXY($x + 3, $sy + ($rowH - 4) / 2);
             $pdf->Cell($wRef, 4, $task->ref, 0, 0, 'L');
 
             $pdf->SetTextColor(...$this->colorBlack);
             $pdf->SetFont('', '', 7);
-            $pdf->SetXY($x + 3 + $wRef, $sy + 1);
-            $pdf->Cell($wLabel, 4, $task->label, 0, 0, 'L');
+            $pdf->MultiCell($wLabel, 4, $labelText, 0, 'L', 0, 0, $x + 3 + $wRef, $sy + 1, true, 0, false, true, $rowH - 2, 'M', false);
 
             $dateStr = '';
             if (!empty($task->date_end)) {
@@ -953,14 +957,14 @@ class pdf_controldocument extends SaturneDocumentModel
             }
             $pdf->SetTextColor(...$this->colorGray);
             $pdf->SetFont('', '', 7);
-            $pdf->SetXY($x + 3 + $wRef + $wLabel, $sy + 1);
+            $pdf->SetXY($x + 3 + $wRef + $wLabel, $sy + ($rowH - 4) / 2);
             $pdf->Cell($wDate, 4, $dateStr, 0, 0, 'C');
 
             $prog    = (int)($task->progress ?? 0);
             $progRgb = $prog >= 100 ? [56, 161, 105] : ($prog > 0 ? [255, 152, 0] : [220, 53, 69]);
             $pdf->SetTextColor(...$progRgb);
             $pdf->SetFont('', 'B', 7);
-            $pdf->SetXY($x + 3 + $wRef + $wLabel + $wDate, $sy + 1);
+            $pdf->SetXY($x + 3 + $wRef + $wLabel + $wDate, $sy + ($rowH - 4) / 2);
             $pdf->Cell($wProg, 4, $prog . '%', 0, 0, 'C');
 
             $pdf->SetTextColor(0, 0, 0);
@@ -1258,7 +1262,7 @@ class pdf_controldocument extends SaturneDocumentModel
         }
         $linkedObject = null;
         foreach ($objectsMetadata as $objectMetadata) {
-            if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+            if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
                 continue;
             }
             if (!empty($control->linkedObjects[$objectMetadata['link_name']])) {

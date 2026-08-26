@@ -1,6 +1,7 @@
 <?php 
 
 $isAddFormsVisible = $isAddFormsVisible ?? false;
+$tdOffsetStyle = $tdOffsetStyle ?? '';
 $question = new Question($db);
 $questionGroup = new QuestionGroup($db);
 
@@ -29,34 +30,32 @@ if ($object->status < $object::STATUS_LOCKED) {
     print '</td>';
     print '</tr>';
 
-    // Form for adding an existing question
+    // Form for adding existing questions (multiselect + AJAX add, no page reload)
+    $form = new Form($db);
+
+    // Only offer questions not already linked to a sheet or a group
+    $questionFilter     = ['customsql' => "t.rowid NOT IN (SELECT fk_target FROM " . MAIN_DB_PREFIX . "element_element WHERE targettype = 'digiquali_question')"];
+    $availableQuestions = saturne_fetch_all_object_type('Question', '', '', 0, 0, $questionFilter);
+    $questionArray      = [];
+    if (is_array($availableQuestions) && !empty($availableQuestions)) {
+        foreach ($availableQuestions as $availableQuestionId => $availableQuestion) {
+            $questionArray[$availableQuestionId] = img_picto('', $availableQuestion->picto) . ' ' . $availableQuestion->ref . ' - ' . $availableQuestion->label;
+        }
+    }
+
     print '<tr id="addQuestionRow-'. $groupId .'" class="hidden">';
     print '<td class="maxwidth300" colspan="9" ' . $tdOffsetStyle . '>';
-    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
+    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="id" value="' . $object->id . '">';
-
-    print img_picto('', $question->picto, 'class="pictofixedwidth"') . $question->selectQuestionList(0, 'questionId', '', '1', 0, 0, array(), '', 0, 0, 'maxwidth600 minwidth400', '', false);
     print '<input type="hidden" name="action" value="addQuestion">';
     print '<input type="hidden" name="targetGroupId" value="' . $groupId . '">';
-    print '<input type="submit" id="actionButtonAdd" class="button hideifnotset button-save" name="add" value="' . $langs->trans("Add") . '">';
-    print '</td>';
+    print img_picto('', $question->picto, 'class="pictofixedwidth"');
+    // Unique htmlname per group so select2 enhances every add-form (ids must be unique in the DOM)
+    print $form->multiselectArray('questionId_' . $groupId, $questionArray, [], 0, 0, '', 0, 450, '', '', $langs->transnoentities('SelectMultipleQuestion'));
+    print '<input type="submit" class="button button-save addExistingQuestion" data-parent-id="' . $groupId . '" value="' . $langs->trans("Add") . '">';
     print '</form>';
-    print '</tr>';
-
-    // Form for adding a new question
-    print '<tr id="addNewQuestionRow-'. $groupId .'" class="hidden">';
-    print '<td class="maxwidth300" colspan="9" ' . $tdOffsetStyle . '>';
-    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
-    print '<input type="hidden" name="token" value="' . newToken() . '">';
-    print '<input type="hidden" name="id" value="' . $object->id . '">';
-
-    print img_picto('', $question->picto, 'class="pictofixedwidth"') . $question->selectQuestionList(0, 'questionId', '', '1', 0, 0, array(), '', 0, 0, 'maxwidth600 minwidth400', '', false);
-    print '<input type="hidden" name="action" value="addQuestion">';
-    print '<input type="hidden" name="targetGroupId" value="' . $groupId . '">';
-    print '<input type="submit" id="actionButtonAdd" class="button hideifnotset button-save" name="add" value="' . $langs->trans("Add") . '">';
     print '</td>';
-    print '</form>';
     print '</tr>';
 
     // Form for adding an existing group

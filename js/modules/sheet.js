@@ -18,6 +18,44 @@ window.digiquali.sheet.init = function() {
     window.digiquali.sheet.event();
     window.digiquali.sheet.displayOpenedGroups();
     window.digiquali.sheet.initMandatoryAll();
+    window.digiquali.sheet.initLinkedObjectSelect();
+};
+
+/**
+ * Enhance the "controlled objects" select (create/edit form) with select2 so the object
+ * picto shows both in the dropdown list and on the selected value(s).
+ * Dolibarr renders the <select> with addjscombo=0 (no built-in select2), so this is the
+ * only initialization and both templateResult and templateSelection decode the option data-html.
+ *
+ * @since   21.3.0
+ * @version 21.3.0
+ *
+ * @return {void}
+ */
+window.digiquali.sheet.initLinkedObjectSelect = function() {
+    var $select = $('#linked_object');
+    if ($select.length === 0 || typeof $.fn.select2 === 'undefined') {
+        return;
+    }
+
+    var renderOption = function(item) {
+        if (!item.id || item.id === '-1') {
+            return item.text;
+        }
+        var dataHtml = $(item.element).attr('data-html');
+        if (dataHtml && typeof htmlEntityDecodeJs === 'function') {
+            return $('<span>' + htmlEntityDecodeJs(dataHtml) + '</span>');
+        }
+        return item.text;
+    };
+
+    $select.select2({
+        templateResult: renderOption,
+        templateSelection: renderOption,
+        escapeMarkup: function(markup) { return markup; },
+        width: 'resolve',
+        placeholder: { id: '-1', text: $select.data('placeholder') || '' }
+    });
 };
 
 /**
@@ -32,9 +70,21 @@ window.digiquali.sheet.event = function() {
 
     $(document).on('click', '.toggle-group-in-tree', window.digiquali.sheet.toggleGroupInTree);
     $(document).on('click', '.addQuestionButton, .addGroupButton', window.digiquali.sheet.buttonActions);
+    $(document).on('click', '.addExistingQuestion', window.digiquali.sheet.addQuestions);
     $(document).on('change', '#mandatory-all', window.digiquali.sheet.toggleAllMandatory);
     window.digiquali.sheet.initDragAndDropInParent();
+    window.digiquali.sheet.restoreTreeState();
+};
 
+/**
+ * Restore the collapsed/expanded state of the navigation tree groups from localStorage.
+ *
+ * @since   21.2.0
+ * @version 21.3.0
+ *
+ * @return {void}
+ */
+window.digiquali.sheet.restoreTreeState = function() {
   const savedState = JSON.parse(localStorage.getItem('digiqualiGroupStates') || '{}');
 
   $('.group-item').each(function () {
@@ -96,6 +146,84 @@ window.digiquali.sheet.buttonActions = function(evt) {
     addQuestionRow.addClass('hidden');
   }
 }
+
+/**
+ * Add one or several existing questions to the model (or one of its groups) via AJAX.
+ * Selection is done through a multiselect, so several questions can be linked at once
+ * without reloading the whole page.
+ *
+ * @since   21.3.0
+ * @version 21.3.0
+ *
+ * @param  {Object} evt Click event on the "Add" button
+ * @return {void}
+ */
+window.digiquali.sheet.addQuestions = function(evt) {
+  evt.preventDefault();
+
+  const button      = $(this);
+  const form        = button.closest('form');
+  const select      = form.find('select.multiselect');
+  const questionIds = select.val() || [];
+
+  if (questionIds.length === 0) {
+    return;
+  }
+
+  const url       = form.attr('action');
+  const separator = url.indexOf('?') > -1 ? '&' : '?';
+
+  window.saturne.loader.display(button);
+
+  $.ajax({
+    url: url + separator + 'action=addQuestion&ajax=1',
+    type: 'POST',
+    data: {
+      token: form.find('input[name="token"]').val(),
+      id: form.find('input[name="id"]').val(),
+      targetGroupId: form.find('input[name="targetGroupId"]').val(),
+      questionId: questionIds
+    },
+    success: function(resp) {
+      window.digiquali.sheet.refreshQuestionTable(resp);
+    },
+    error: function() {
+      window.saturne.loader.remove(button);
+    }
+  });
+};
+
+/**
+ * Refresh the questions table and the navigation tree in place from an AJAX response,
+ * then restore interactions (drag & drop, opened groups, mandatory-all checkbox).
+ *
+ * @since   21.3.0
+ * @version 21.3.0
+ *
+ * @param  {string} resp Full sheet card HTML returned by the AJAX request
+ * @return {void}
+ */
+window.digiquali.sheet.refreshQuestionTable = function(resp) {
+  const response = $(resp);
+
+  // Replace the questions table with the refreshed one (re-runs its inline grip script)
+  const newTable = response.find('#tablelines');
+  if (newTable.length) {
+    $('#tablelines').replaceWith(newTable);
+  }
+
+  // Replace the navigation tree if it is displayed
+  const newTree = response.find('.question-and-group-tree');
+  if (newTree.length && $('.question-and-group-tree').length) {
+    $('.question-and-group-tree').replaceWith(newTree);
+  }
+
+  // Re-init drag & drop on the new table and restore its display state
+  window.digiquali.sheet.initDragAndDropInParent();
+  window.digiquali.sheet.displayOpenedGroups();
+  window.digiquali.sheet.restoreTreeState();
+  window.digiquali.sheet.initMandatoryAll();
+};
 
 /**
  * Show or hide the sub-questions of a group

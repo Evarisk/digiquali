@@ -24,7 +24,7 @@
 /**
  * The following vars must be defined:
  * Global   : $langs
- * Objects  : $object, $task
+ * Objects  : $object, $task, $form
  */
 
 $taskInfos = get_task_infos($task); ?>
@@ -52,17 +52,23 @@ $taskInfos = get_task_infos($task); ?>
                         <input type="text" id="answer-task-label" name="label" value="<?php echo $task->label; ?>">
                     </label>
                 </div>
+                <div class="answer-task-affected">
+                    <label>
+                        <span class="title"><?php echo $langs->trans('AffectedTo'); ?></span>
+                        <?php echo $form->select_dolusers($taskInfos['task']['assigned_user_id'], 'answer-task-edit-assigned-user', 1); ?>
+                    </label>
+                </div>
                 <div class="answer-task-date wpeo-gridlayout grid-3">
                     <div>
                         <label>
                             <span class="title"><?php echo $langs->trans('DateStart'); ?></span>
-                            <?php print '<input type="datetime-local" id="answer-task-date-start" name="date_start" value="' . (!empty($task->date_start) ? dol_print_date($task->date_start, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
+                            <?php print '<input type="datetime-local" id="answer-task-start-date" name="date_start" value="' . (!empty($task->date_start) ? dol_print_date($task->date_start, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
                         </label>
                     </div>
                     <div>
                         <label>
                             <span class="title"><?php echo $langs->trans('Deadline'); ?></span>
-                            <?php print '<input type="datetime-local" id="answer-task-date-end" name="date_end" value="' . (!empty($task->date_end) ? dol_print_date($task->date_end, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
+                            <?php print '<input type="datetime-local" id="answer-task-end-date" name="date_end" value="' . (!empty($task->date_end) ? dol_print_date($task->date_end, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
                         </label>
                     </div>
                     <div>

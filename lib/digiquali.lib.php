@@ -70,7 +70,7 @@ function digiquali_admin_prepare_head(): array
 
     $head[$h][0] = dol_buildpath('digiquali/admin/mapping.php', 1);
     $head[$h][1] = $conf->browser->layout == 'classic' ? '<i class="fas fa-sitemap pictofixedwidth"></i>' . $langs->trans('Mapping') : '<i class="fas fa-sitemap"></i>';
-    $head[$h][2] = 'survey';
+    $head[$h][2] = 'mapping';
     $h++;
 
     $head[$h][0] = dol_buildpath('digiquali/admin/publicinterface.php', 1);

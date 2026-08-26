@@ -131,7 +131,7 @@ class Control extends SaturneObject
         'fk_user_creat'      => ['type' => 'integer:User:user/class/user.class.php',           'label' => 'UserAuthor',  'picto' => 'user',                            'enabled' => 1, 'position' => 200, 'notnull' => 1, 'visible' => -2, 'csslist' => 'maxwidth200', 'foreignkey' => 'user.rowid'],
         'fk_user_modif'      => ['type' => 'integer:User:user/class/user.class.php',           'label' => 'UserModif',   'picto' => 'user',                            'enabled' => 1, 'position' => 210, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_sheet'           => ['type' => 'integer:Sheet:digiquali/class/sheet.class.php',    'label' => 'Sheet',       'picto' => 'fontawesome_fa-list_fas_#d35968', 'enabled' => 1, 'position' => 40,  'notnull' => 1, 'visible' => 5, 'index' => 1, 'css' => 'minwidth150 maxwidth500 widthcentpercentminusxx', 'csslist' => 'minwidth150', 'foreignkey' => 'digiquali_sheet.rowid'],
-        'fk_user_controller' => ['type' => 'integer:User:user/class/user.class.php:1',         'label' => 'Controller',  'picto' => 'user',                            'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => 4, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'user.rowid',   'positioncard' => 1],
+        'fk_user_controller' => ['type' => 'integer:User:user/class/user.class.php:1:(t.statut:=:1)', 'label' => 'Controller',  'picto' => 'user',                            'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => 4, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'user.rowid',   'positioncard' => 1],
         'projectid'          => ['type' => 'integer:Project:projet/class/project.class.php:1', 'label' => 'Project',     'picto' => 'project',                         'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => 4, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'projet.rowid', 'positioncard' => 2],
         'fk_master_task'     => ['type' => 'integer:Task:projet/class/task.class.php',          'label' => 'MasterTask',  'picto' => 'projecttask',                     'enabled' => '$conf->projet->enabled', 'position' => 61,  'notnull' => -1, 'visible' => 0, 'foreignkey' => 'projet_task.rowid']
     ];
@@ -326,7 +326,7 @@ class Control extends SaturneObject
             if (!empty($questions)) {
                 foreach ($questions as $question) {
                     $controlLine->ref         = $controlLine->getNextNumRef();
-                    $fk_element              = 'fk_'. $object->element;
+                    $fk_element              = 'fk_'. $this->element;
                     $controlLine->fk_control = $this->id;
                     $controlLine->fk_question = $question->id;
                     $controlLine->answer      = '';
@@ -338,7 +338,7 @@ class Control extends SaturneObject
                 }
             }
 
-            if ($this->context['createfromclone'] != 'createfromclone') {
+            if (($this->context['createfromclone'] ?? '') != 'createfromclone') {
                 $objectsMetadata = saturne_get_objects_metadata();
                 foreach ($objectsMetadata as $objectMetadata) {
                     if (!empty(GETPOST($objectMetadata['post_name'])) && GETPOST($objectMetadata['post_name']) > 0) {
@@ -475,8 +475,11 @@ class Control extends SaturneObject
 
         $qcFrequency = 0;
         $this->fetchObjectLinked('', '', '', $this->module . '_' . $this->element);
-        $linkedObjectType = key($this->linkedObjects);
-        $linkedObject     = current($this->linkedObjects[$linkedObjectType]);
+
+        // linkedObjects is empty when the control has no link, or when the linked object belongs to a
+        // module that has been disabled since : fetchObjectLinked() silently drops those types.
+        $linkedObjectType = !empty($this->linkedObjects) ? key($this->linkedObjects) : '';
+        $linkedObject     = !empty($linkedObjectType) ? current($this->linkedObjects[$linkedObjectType]) : null;
         if ($this->verdict == 1 && !empty($linkedObject->array_options['options_qc_frequency'])) {
             $qcFrequency = $linkedObject->array_options['options_qc_frequency'];
         } elseif ($this->verdict == 2) {
@@ -491,7 +494,8 @@ class Control extends SaturneObject
             }
         }
 
-        if (!empty($this->next_control_date)) {
+        // The reminder is about the linked object : without one there is nothing to remind about.
+        if (!empty($this->next_control_date) && !empty($linkedObject)) {
             // Get object metadata infos on current linked object
             $objectMetadataInfos = [];
             $objectsMetadata     = saturne_get_objects_metadata();
@@ -541,50 +545,52 @@ class Control extends SaturneObject
         return parent::setLocked($user, $noTrigger);
     }
 
-	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
-	/**
-	 *  Return if a control can be deleted
-	 *
-	 *  @return    int         <=0 if no, >0 if yes
-	 */
-	public function is_erasable() {
-		return $this->isLinkedToOtherObjects();
-	}
+    /**
+     * Move every task related to this control to a new project.
+     *
+     * Moves both the master task (fk_master_task) and all tasks linked to the control lines,
+     * so the linked tasks follow the control when its project changes.
+     *
+     * @param  int<0,max> $newProjectId New project ID
+     * @param  User       $user         User that performs the action
+     * @return int<-1,1>                Return integer < 0 if KO, > 0 if OK
+     * @throws Exception
+     */
+    public function setLinkedTasksProject(int $newProjectId, User $user): int
+    {
+        if ($newProjectId <= 0) {
+            return 1;
+        }
 
-	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
-	/**
-	 *  Return if a control is linked to another object
-	 *
-	 *  @return    int         <=0 if no, >0 if yes
-	 */
-	public function isLinkedToOtherObjects() {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
 
-		// Links between objects are stored in table element_element
-		$sql = 'SELECT rowid, fk_source, sourcetype, fk_target, targettype';
-		$sql .= ' FROM '.MAIN_DB_PREFIX.'element_element';
-		$sql .= ' WHERE fk_target = ' . $this->id;
-		$sql .= " AND targettype = '" . $this->table_element . "'";
+        $this->db->begin();
 
-		$resql = $this->db->query($sql);
+        // Move the master task created with the control. The database column is fk_projet
+        if (!empty($this->fk_master_task)) {
+            $masterTask = new Task($this->db);
+            if ($masterTask->fetch($this->fk_master_task) > 0 && $masterTask->fk_project != $newProjectId) {
+                $masterTask->setValueFrom('fk_projet', $newProjectId, '', null, 'int', '', $user);
+            }
+        }
 
-		if ($resql) {
-			$nbObjectsLinked = 0;
-			$num = $this->db->num_rows($resql);
-			$i = 0;
-			while ($i < $num) {
-				$nbObjectsLinked++;
-				$i++;
-			}
-			if ($nbObjectsLinked > 0) {
-				return -1;
-			} else {
-				return 1;
-			}
-		} else {
-			dol_print_error($this->db);
-			return -1;
-		}
-	}
+        // Move every task linked to the control lines
+        $this->fetchLines();
+        if (is_array($this->lines)) {
+            foreach ($this->lines as $line) {
+                $line->fetchObjectLinked($line->id, $line->element);
+                foreach ($line->linkedObjects['project_task'] ?? [] as $task) {
+                    if ($task->fk_project != $newProjectId) {
+                        $task->setValueFrom('fk_projet', $newProjectId, '', null, 'int', '', $user);
+                    }
+                }
+            }
+        }
+
+        $this->db->commit();
+
+        return 1;
+    }
 
     /**
      * Clone an object into another one.
@@ -1135,10 +1141,23 @@ class Control extends SaturneObject
             require_once __DIR__ . '/sheet.class.php';
 
             $objectsMetadata = saturne_get_objects_metadata();
+
+            // linkedObjects is keyed by link_name, the metadata by object type : they differ for
+            // thirdparty/societe, contact/socpeople and task/project_task, hence this lookup table.
+            $metadataByLinkName = [];
+            foreach ($objectsMetadata as $objectMetadata) {
+                if (!empty($objectMetadata['link_name'])) {
+                    $metadataByLinkName[$objectMetadata['link_name']] = $objectMetadata;
+                }
+            }
+
             foreach ($controls as $control) {
                 $control->fetchObjectLinked('', '', $control->id, 'digiquali_control');
-                $linkedObjectType = key($control->linkedObjects);
-                if (!isset($control->linkedObjects) && $objectsMetadata[$linkedObjectType]['conf'] < 0) {
+
+                // A control with no link, or whose linked object belongs to a disabled module, has
+                // nothing to show in the LinkedObject column : skip it instead of dereferencing null.
+                $linkedObjectType = !empty($control->linkedObjects) ? key($control->linkedObjects) : '';
+                if (empty($linkedObjectType) || empty($metadataByLinkName[$linkedObjectType]['conf'])) {
                     continue;
                 }
 
@@ -1213,7 +1232,8 @@ class Control extends SaturneObject
      */
     public function displayAnswers(ControlLine $objectLine, array $questionsAndGroups, bool $isFrontend, int $level = 0)
     {
-        global $conf, $langs;
+        // $user is required by the included template, which reads the per-user display preferences
+        global $conf, $langs, $user;
 
         $object = $this;
 
@@ -1310,6 +1330,8 @@ class ControlLine extends SaturneObject
         'answer'            => ['type' => 'text',         'label' => 'Answer',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => -1],
         'answer_photo'      => ['type' => 'text',         'label' => 'AnswerPhoto',      'enabled' => 0, 'position' => 100, 'notnull' => 0, 'visible' => -1],
         'comment'           => ['type' => 'text',         'label' => 'Comment',          'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => -1],
+        'earned_points'     => ['type' => 'real',         'label' => 'EarnedPoints',     'enabled' => 1, 'position' => 111, 'notnull' => 0, 'visible' => -1],
+        'score_rate'        => ['type' => 'real',         'label' => 'ScoreRate',        'enabled' => 1, 'position' => 112, 'notnull' => 0, 'visible' => -1],
         'fk_user_creat'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserAuthor', 'picto' => 'user',                                'enabled' => 1, 'position' => 70, 'notnull' => 1, 'visible' => -1, 'foreignkey' => 'user.rowid'],
         'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php',              'label' => 'UserModif',  'picto' => 'user',                                'enabled' => 1, 'position' => 75, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_control'        => ['type' => 'integer:control:digiquali/class/control.class.php',    'label' => 'Control',    'picto' => 'fontawesome_fa-tasks_fas_#d35968',    'enabled' => 1, 'position' => 2,  'notnull' => 1, 'visible' => -1, 'index' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'foreignkey' => 'digiquali_survey.rowid'],
@@ -1375,6 +1397,16 @@ class ControlLine extends SaturneObject
      * @var string|null Comment
      */
     public ?string $comment = '';
+
+    /**
+     * @var float|null Earned points
+     */
+    public ?float $earned_points;
+
+    /**
+     * @var float|null Score rate
+     */
+    public ?float $score_rate;
 
     /**
      * @var int User ID

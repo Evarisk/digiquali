@@ -303,8 +303,9 @@ class doc_surveydocument_odt extends SaturneDocumentModel
 
             $percentQuestionCounter++;
             foreach ($object->lines as $line) {
-                if ($line->fk_question === $questionLinked->id) {
-                    $averagePercentageQuestions += $line->answer;
+                // A line submitted with a blank percentage holds an empty string, which is a fatal in PHP 8: 0 + '' is a TypeError
+                if ($line->fk_question === $questionLinked->id && is_numeric($line->answer)) {
+                    $averagePercentageQuestions += (float) $line->answer;
                 }
             }
         }

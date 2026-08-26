@@ -152,36 +152,49 @@ if (empty($reshook)) {
     }
 
 	if ($action == 'addQuestion' && $permissiontoadd) {
-		$questionId = GETPOST('questionId');
-		if ($questionId > 0) {
-			$question->fetch($questionId);
+		$questionIds = GETPOST('questionId', 'array');
+		$isAjax      = GETPOSTINT('ajax');
 
-			// Add question to target group or to sheet
-			$targetQuestionGroupId = GETPOST('targetGroupId');
+		if (is_array($questionIds) && !empty($questionIds)) {
+			// Add questions to target group or to sheet root
+			$targetQuestionGroupId = GETPOSTINT('targetGroupId');
 			if ($targetQuestionGroupId == 0) {
-				$targetLinkedId = $id;
+				$targetLinkedId    = $id;
 				$targetElementType = $object->element;
 			} else {
-				$targetLinkedId = $targetQuestionGroupId;
+				$targetLinkedId    = $targetQuestionGroupId;
 				$targetElementType = 'questiongroup';
 			}
 
-			$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
+			$addedRefs = [];
+			foreach ($questionIds as $questionId) {
+				if ($questionId > 0 && $question->fetch($questionId) > 0) {
+					$question->add_object_linked('digiquali_' . $targetElementType, $targetLinkedId);
 
-			if ($targetQuestionGroupId > 0) {
-				$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
-			} else {
-				$object->updateQuestionsAndGroupsPosition([], [], true);
+					// Reindex after each add so every new question gets its own sequential position
+					if ($targetQuestionGroupId > 0) {
+						$object->updateQuestionsAndGroupsPosition([], [], true, $targetQuestionGroupId, 'digiquali_questiongroup');
+					} else {
+						$object->updateQuestionsAndGroupsPosition([], [], true);
+					}
+
+					$addedRefs[] = $question->ref;
+				}
 			}
 
-            $object->call_trigger('SHEET_ADDQUESTION', $user);
-			setEventMessages($langs->trans('AddQuestionLink', 1) . ' ' . $question->ref, []);
-			header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id'));
-			exit;
-		} else {
+			if (!empty($addedRefs)) {
+				$object->call_trigger('SHEET_ADDQUESTION', $user);
+				setEventMessages($langs->trans('AddQuestionLink', count($addedRefs)) . ' ' . implode(', ', $addedRefs), []);
+			}
+
+			if (empty($isAjax)) {
+				header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . $id);
+				exit;
+			}
+			// Ajax: do not redirect, fall through to re-render the refreshed sheet card
+		} elseif (empty($isAjax)) {
 			setEventMessages($langs->trans('ErrorNoQuestionSelected'), null, 'errors');
 		}
-
 	}
 
 	if ($action == 'unlinkQuestion' && $permissiontoadd) {
@@ -228,8 +241,14 @@ if (empty($reshook)) {
     }
 
 	if ($action == 'add' && $permissiontoadd && !$cancel) {
-		if (is_array(GETPOST('linked_object')) && !empty(GETPOST('linked_object'))) {
-			foreach (GETPOST('linked_object') as $linked_object_type) {
+		// linked_object comes as an array (multiselect) or a scalar (single select in unique mode)
+		$linkedObjectsPost = GETPOST('linked_object', 'array');
+		if (empty($linkedObjectsPost) && dol_strlen(GETPOST('linked_object', 'alphanohtml')) > 0) {
+			$linkedObjectsPost = [GETPOST('linked_object', 'alphanohtml')];
+		}
+		$showArray = [];
+		if (!empty($linkedObjectsPost)) {
+			foreach ($linkedObjectsPost as $linked_object_type) {
 				$showArray[$linked_object_type] = 1;
 			}
 		} else {
@@ -241,6 +260,13 @@ if (empty($reshook)) {
 		}
 		$object->element_linked = json_encode($showArray);
 
+		$object->default_control_tags = json_encode(GETPOST('default_control_tags', 'array'));
+		// The generic add/update include re-reads this 'text' field with GETPOST(..., 'nohtml'),
+		// which warns on the array posted by the multiselect : hand it the encoded value
+		$_POST['default_control_tags'] = $object->default_control_tags;
+		$_POST['show_project'] = GETPOST('ctrl_show_project');
+		$_POST['show_tags'] = GETPOST('ctrl_show_tags');
+
 		if (empty(GETPOST('categories', 'array'))) {
 			$category->fetch($conf->global->DIGIQUALI_SHEET_DEFAULT_TAG);
 			$defaultCategory[] = $category->id;
@@ -249,13 +275,25 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'update' && $permissiontoadd) {
+		// linked_object comes as an array (multiselect) or a scalar (single select in unique mode)
+		$linkedObjectsPost = GETPOST('linked_object', 'array');
+		if (empty($linkedObjectsPost) && dol_strlen(GETPOST('linked_object', 'alphanohtml')) > 0) {
+			$linkedObjectsPost = [GETPOST('linked_object', 'alphanohtml')];
+		}
 		$showArray = [];
-		if (is_array(GETPOST('linked_object')) && !empty(GETPOST('linked_object'))) {
-			foreach (GETPOST('linked_object') as $linked_object_type) {
+		if (!empty($linkedObjectsPost)) {
+			foreach ($linkedObjectsPost as $linked_object_type) {
 				$showArray[$linked_object_type] = 1;
 			}
 		}
 		$object->element_linked = json_encode($showArray);
+
+		$object->default_control_tags = json_encode(GETPOST('default_control_tags', 'array'));
+		// The generic add/update include re-reads this 'text' field with GETPOST(..., 'nohtml'),
+		// which warns on the array posted by the multiselect : hand it the encoded value
+		$_POST['default_control_tags'] = $object->default_control_tags;
+		$_POST['show_project'] = GETPOST('ctrl_show_project');
+		$_POST['show_tags'] = GETPOST('ctrl_show_tags');
 
 		if (empty(GETPOST('categories', 'array'))) {
 			$category->fetch($conf->global->DIGIQUALI_SHEET_DEFAULT_TAG);
@@ -498,44 +536,103 @@ if ($action == 'create') {
     print $form::selectarray('type', $object->fields['type']['arrayofkeyval'], GETPOST('type'));
     print '</td></tr>';
 
-    // Project
-    if (!empty($conf->projet->enabled)) {
-        print '<tr><td class="">' . img_picto('', 'project', 'class="paddingrightonly"') . $langs->trans('Project') . '</td><td>';
-        print $formproject->select_projects(-1, GETPOSTINT('fk_project'), 'fk_project', 0, 0, 1, 0, 0, 0, 0, '', 1, 0, 'maxwidth500');
-        print '</td></tr>';
-    }
-
-    //FK Element
-    $nbLinkableElements = 0;
-    foreach ($objectsMetadata as $objectType => $objectMetadata) {
-        if ($objectMetadata['conf'] == 0) {
-            continue;
-        }
-
-        print '<tr><td class="">' . img_picto('', $objectMetadata['picto'], 'class="paddingrightonly"') . $langs->trans($objectMetadata['langs']) . '</td><td>';
-        $linkedObjects = empty(GETPOST('linked_object')) ? [] : GETPOST('linked_object');
-        if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
-            print '<input type="radio" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
-        } else {
-            print '<input type="checkbox" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
-        }
-        print '</td></tr>';
-        $nbLinkableElements++;
-    }
-
-    if ($nbLinkableElements == 0) {
-        $noticeMessage = '<a href="' . dol_buildpath('custom/digiquali/admin/sheet.php', 1) . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
-        print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
-    }
-
 	if (!empty($conf->categorie->enabled)) {
 		// Categories
-		print '<tr><td>'.$langs->trans("Categories").'</td><td>';
+		print '<tr><td class="fieldrequired">' . img_picto('', 'category', 'class="paddingrightonly"') . $langs->trans("Categories").'</td><td>';
 		$cate_arbo = $form->select_all_categories('sheet', '', 'parent', 64, 0, 1);
-		print img_picto('', 'category', 'class="pictofixedwidth"').$form::multiselectarray('categories', $cate_arbo, GETPOST('categories', 'array'), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
+		print $form::multiselectarray('categories', $cate_arbo, GETPOST('categories', 'array'), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
         print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=sheet&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
 		print "</td></tr>";
 	}
+
+	// Control creation options
+	print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlCreationOptions') . '</b></td></tr>';
+
+	// Default project for control
+	if (!empty($conf->projet->enabled)) {
+		print '<tr><td>' . img_picto('', 'project', 'class="paddingrightonly"') . $langs->trans('DefaultControlProject') . '</td><td>';
+		print $formproject->select_projects(-1, GETPOSTINT('fk_project'), 'fk_project', 0, 0, 1, 0, 0, 0, 0, '', 1, 0, 'maxwidth500');
+		print '</td></tr>';
+
+		// Show project on control
+		print '<tr><td>' . $langs->trans('ShowProjectOnControl') . ' ' . img_picto($langs->trans('ShowProjectOnControlHelp'), 'help') . '</td><td>';
+		print $form::selectarray('ctrl_show_project', [0 => $langs->trans('No'), 1 => $langs->trans('Yes')], GETPOSTISSET('ctrl_show_project') ? GETPOST('ctrl_show_project') : 1);
+		print '</td></tr>';
+	}
+
+	// Default control tags
+	if (!empty($conf->categorie->enabled)) {
+		print '<tr><td>' . img_picto('', 'category', 'class="paddingrightonly"') . $langs->trans('DefaultControlTags') . ' ' . img_picto($langs->trans('DefaultControlTagsHelp'), 'help') . '</td><td>';
+		$controlCateArbo = $form->select_all_categories('control', '', 'parent', 64, 0, 1);
+		print $form::multiselectarray('default_control_tags', $controlCateArbo, GETPOST('default_control_tags', 'array'), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
+		print '</td></tr>';
+
+		// Show tags on control
+		print '<tr><td>' . $langs->trans('ShowTagsOnControl') . ' ' . img_picto($langs->trans('ShowTagsOnControlHelp'), 'help') . '</td><td>';
+		print $form::selectarray('ctrl_show_tags', [0 => $langs->trans('No'), 1 => $langs->trans('Yes')], GETPOSTISSET('ctrl_show_tags') ? GETPOST('ctrl_show_tags') : 1);
+		print '</td></tr>';
+	}
+
+    // Linked elements
+    $sheetAdminUrl = dol_buildpath('custom/digiquali/admin/sheet.php', 1);
+    print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b> <a href="' . $sheetAdminUrl . '" target="_blank"><span class="opacitymedium">(' . $langs->trans('ConfigureYourObjectsHere') . ')</span></a></td></tr>';
+
+    if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
+        // Compact dropdown (select2) rendering, opt-in via admin config
+        $linkableElementOptions = [];
+        foreach ($objectsMetadata as $objectType => $objectMetadata) {
+            if (empty($objectMetadata['conf'])) {
+                continue;
+            }
+            $objectLabel = $langs->trans($objectMetadata['langs']);
+            $linkableElementOptions[$objectType] = [
+                'id'        => $objectType,
+                'label'     => $objectLabel,
+                'data-html' => img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth"') . $objectLabel,
+            ];
+        }
+
+        if (!empty($linkableElementOptions)) {
+            $selectedLinkedObjects   = GETPOST('linked_object', 'array');
+            // addjscombo = 0: skip Dolibarr's select2 init, we enhance it ourselves so the picto shows both in the list and on the selection
+            $linkedObjectPlaceholder = 'data-placeholder="' . dol_escape_htmltag($langs->transnoentities('NoLinkedObjectSelected')) . '"';
+            print '<tr><td colspan="2">';
+            if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+                print $form->selectarray('linked_object', $linkableElementOptions, (!empty($selectedLinkedObjects) ? reset($selectedLinkedObjects) : ''), 1, 0, 0, $linkedObjectPlaceholder, 0, 0, 0, '', 'minwidth300 maxwidth500 widthcentpercentminusx', 0);
+            } else {
+                print $form->multiselectArray('linked_object', $linkableElementOptions, $selectedLinkedObjects, 0, 0, 'minwidth300 maxwidth500 widthcentpercentminusx', 0, 0, $linkedObjectPlaceholder, '', '', 0);
+            }
+            print '</td></tr>';
+        } else {
+            $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+            print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
+        }
+    } else {
+        // Default rendering: one row per controllable object type
+        $nbLinkableElements = 0;
+        foreach ($objectsMetadata as $objectType => $objectMetadata) {
+            if (empty($objectMetadata['conf'])) {
+                continue;
+            }
+
+            print '<tr><td class="">' . img_picto('', $objectMetadata['picto'], 'class="paddingrightonly"') . $langs->trans($objectMetadata['langs']) . '</td><td>';
+            $linkedObjects = empty(GETPOST('linked_object')) ? [] : GETPOST('linked_object');
+            if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+                print '<input type="radio" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
+            } else {
+                print '<input type="checkbox" id="show_' . $objectType . '" name="linked_object[]" value="' . $objectType . '"' . (in_array($objectType, $linkedObjects) ? 'checked' : '') .'>';
+            }
+            print '</td></tr>';
+            $nbLinkableElements++;
+        }
+
+        if ($nbLinkableElements == 0) {
+            $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+            print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
+        }
+    }
+
+
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_add.tpl.php';
@@ -590,32 +687,9 @@ if (($id || $ref) && $action == 'edit') {
     print $form::selectarray('type', $object->fields['type']['arrayofkeyval'], $object->type);
     print '</td></tr>';
 
-    // Project
-    if (!empty($conf->projet->enabled)) {
-        print '<tr><td class="">' . img_picto('', 'project', 'class="paddingrightonly"') . $langs->trans('Project') . '</td><td>';
-        print $formproject->select_projects(-1, $object->fk_project, 'fk_project', 0, 0, 1, 0, 0, 0, 0, '', 1, 0, 'maxwidth500');
-        print '</td></tr>';
-    }
-
-    //FK Element
-	$elementLinked = json_decode($object->element_linked ?? '{}') ?? new stdClass();
-
-	foreach ($objectsMetadata as $key => $element) {
-		if (empty($element['conf'])) {
-			continue;
-		}
-		print '<tr><td class="">' . img_picto('', $element['picto'], 'class="paddingrightonly"') . $langs->trans($element['langs']) . '</td><td>';
-		if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
-			print '<input type="radio" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? 'checked=checked' : '').'>';
-		} else {
-			print '<input type="checkbox" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? 'checked=checked' : '').'>';
-		}
-		print '</td></tr>';
-	}
-
 	// Tags-Categories
 	if ($conf->categorie->enabled) {
-		print '<tr><td>'.$langs->trans("Categories").'</td><td>';
+		print '<tr><td class="fieldrequired">' . img_picto('', 'category', 'class="paddingrightonly"') . $langs->trans("Categories").'</td><td>';
 		$cate_arbo = $form->select_all_categories('sheet', '', 'parent', 64, 0, 1);
 		$c = new Categorie($db);
 		$cats = $c->containing($object->id, 'sheet');
@@ -625,10 +699,94 @@ if (($id || $ref) && $action == 'edit') {
 				$arrayselected[] = $cat->id;
 			}
 		}
-		print img_picto('', 'category', 'class="pictofixedwidth"').$form::multiselectarray('categories', $cate_arbo, (GETPOSTISSET('categories') ? GETPOST('categories', 'array') : $arrayselected), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
-        print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=sheet&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
+		print $form::multiselectarray('categories', $cate_arbo, (GETPOSTISSET('categories') ? GETPOST('categories', 'array') : $arrayselected), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
 		print "</td></tr>";
 	}
+
+	// Control creation options
+	print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlCreationOptions') . '</b></td></tr>';
+
+	// Default project for control
+	if (!empty($conf->projet->enabled)) {
+		print '<tr><td>' . img_picto('', 'project', 'class="paddingrightonly"') . $langs->trans('DefaultControlProject') . '</td><td>';
+		print $formproject->select_projects(-1, $object->fk_project, 'fk_project', 0, 0, 1, 0, 0, 0, 0, '', 1, 0, 'maxwidth500');
+		print '</td></tr>';
+
+		// Show project on control
+		print '<tr><td>' . $langs->trans('ShowProjectOnControl') . ' ' . img_picto($langs->trans('ShowProjectOnControlHelp'), 'help') . '</td><td>';
+		print $form::selectarray('ctrl_show_project', [0 => $langs->trans('No'), 1 => $langs->trans('Yes')], GETPOSTISSET('ctrl_show_project') ? GETPOST('ctrl_show_project') : $object->show_project);
+		print '</td></tr>';
+	}
+
+	// Default control tags
+	if (!empty($conf->categorie->enabled)) {
+		print '<tr><td>' . img_picto('', 'category', 'class="paddingrightonly"') . $langs->trans('DefaultControlTags') . ' ' . img_picto($langs->trans('DefaultControlTagsHelp'), 'help') . '</td><td>';
+		$controlCateArbo = $form->select_all_categories('control', '', 'parent', 64, 0, 1);
+		$defaultControlTagsSelected = GETPOSTISSET('default_control_tags') ? GETPOST('default_control_tags', 'array') : (json_decode($object->default_control_tags ?? '[]', true) ?: []);
+		print $form::multiselectarray('default_control_tags', $controlCateArbo, $defaultControlTagsSelected, '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
+		print '</td></tr>';
+
+		// Show tags on control
+		print '<tr><td>' . $langs->trans('ShowTagsOnControl') . ' ' . img_picto($langs->trans('ShowTagsOnControlHelp'), 'help') . '</td><td>';
+		print $form::selectarray('ctrl_show_tags', [0 => $langs->trans('No'), 1 => $langs->trans('Yes')], GETPOSTISSET('ctrl_show_tags') ? GETPOST('ctrl_show_tags') : $object->show_tags);
+		print '</td></tr>';
+	}
+
+    // Linked elements
+    print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b></td></tr>';
+
+	$elementLinked = json_decode($object->element_linked ?? '{}') ?? new stdClass();
+
+	if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
+		// Compact dropdown (select2) rendering, opt-in via admin config
+		$linkableElementOptions = [];
+		$selectedLinkedObjects  = [];
+		foreach ($objectsMetadata as $key => $element) {
+			if (empty($element['conf'])) {
+				continue;
+			}
+			$objectLabel = $langs->trans($element['langs']);
+			$linkableElementOptions[$key] = [
+				'id'        => $key,
+				'label'     => $objectLabel,
+				'data-html' => img_picto('', $element['picto'], 'class="pictofixedwidth"') . $objectLabel,
+			];
+			if (!empty($elementLinked->$key)) {
+				$selectedLinkedObjects[] = $key;
+			}
+		}
+
+		if (!empty($linkableElementOptions)) {
+			if (GETPOSTISSET('linked_object')) {
+				$selectedLinkedObjects = GETPOST('linked_object', 'array');
+			}
+			// addjscombo = 0: skip Dolibarr's select2 init, we enhance it ourselves so the picto shows both in the list and on the selection
+			$linkedObjectPlaceholder = 'data-placeholder="' . dol_escape_htmltag($langs->transnoentities('NoLinkedObjectSelected')) . '"';
+			print '<tr><td colspan="2">';
+			if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+				print $form->selectarray('linked_object', $linkableElementOptions, (!empty($selectedLinkedObjects) ? reset($selectedLinkedObjects) : ''), 1, 0, 0, $linkedObjectPlaceholder, 0, 0, 0, '', 'minwidth300 maxwidth500 widthcentpercentminusx', 0);
+			} else {
+				print $form->multiselectArray('linked_object', $linkableElementOptions, $selectedLinkedObjects, 0, 0, 'minwidth300 maxwidth500 widthcentpercentminusx', 0, 0, $linkedObjectPlaceholder, '', '', 0);
+			}
+			print '</td></tr>';
+		}
+	} else {
+		// Default rendering: one row per controllable object type
+		foreach ($objectsMetadata as $key => $element) {
+			if (empty($element['conf'])) {
+				continue;
+			}
+			print '<tr><td class="">' . img_picto('', $element['picto'], 'class="paddingrightonly"') . $langs->trans($element['langs']) . '</td><td>';
+			if ($conf->global->DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT) {
+				print '<input type="radio" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? ' checked=checked' : '').'>';
+			} else {
+				print '<input type="checkbox" id="show_' . $key . '" name="linked_object[]" value="'.$key.'"'.(!empty($elementLinked->$key) ? ' checked=checked' : '').'>';
+			}
+			print '</td></tr>';
+		}
+	}
+
+
 
 	// Other attributes
 	include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_edit.tpl.php';
@@ -720,10 +878,56 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	// Categories
 	if ($conf->categorie->enabled) {
-		print '<tr><td class="valignmiddle">'.$langs->trans("Categories").'</td><td>';
+		print '<tr><td class="valignmiddle">' . img_picto('', 'category', 'class="paddingrightonly"') . $langs->trans("Categories").'</td><td>';
 		print $form->showCategories($object->id, 'sheet', 1);
 		print "</td></tr>";
 	}
+
+	// Control creation options
+	print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlCreationOptions') . '</b></td></tr>';
+
+	// Default project for control
+	if (!empty($conf->projet->enabled)) {
+		print '<tr><td class="titlefield">' . img_picto('', 'project', 'class="paddingrightonly"') . $langs->trans('DefaultControlProject') . '</td><td>';
+		if (!empty($object->fk_project)) {
+			$tmpProject = new Project($db);
+			$tmpProject->fetch($object->fk_project);
+			print $tmpProject->getNomUrl(1);
+		} else {
+			print '<span class="opacitymedium">' . $langs->trans('None') . '</span>';
+		}
+		print '</td></tr>';
+
+		// Show project on control
+		print '<tr><td>' . $langs->trans('ShowProjectOnControl') . '</td><td>';
+		print yn($object->show_project);
+		print '</td></tr>';
+	}
+
+	// Default control tags
+	if (!empty($conf->categorie->enabled)) {
+		print '<tr><td>' . img_picto('', 'category', 'class="paddingrightonly"') . $langs->trans('DefaultControlTags') . '</td><td>';
+		$defaultControlTagIds = json_decode($object->default_control_tags ?? '[]', true) ?: [];
+		if (!empty($defaultControlTagIds)) {
+			$tmpCategory = new Categorie($db);
+			foreach ($defaultControlTagIds as $catId) {
+				if ($tmpCategory->fetch($catId) > 0) {
+					print '<span class="noborderoncategories" ' . $tmpCategory->getHtmlColor() . '>' . $tmpCategory->getNomUrl(1) . '</span> ';
+				}
+			}
+		} else {
+			print '<span class="opacitymedium">' . $langs->trans('None') . '</span>';
+		}
+		print '</td></tr>';
+
+		// Show tags on control
+		print '<tr><td>' . $langs->trans('ShowTagsOnControl') . '</td><td>';
+		print yn($object->show_tags);
+		print '</td></tr>';
+	}
+
+	// Linked elements
+	print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b></td></tr>';
 
 	$elementLinked = json_decode($object->element_linked ?? '{}') ?? new stdClass();
 
@@ -795,7 +999,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			}
 
 			// Modify
-			print '<a class="butAction" id="actionButtonEdit" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=edit' . '"><i class="fas fa-edit"></i> ' . $langs->trans('Modify') . '</a>';
+			if ($object->status != $object::STATUS_LOCKED && $object->status != $object::STATUS_ARCHIVED) {
+				print '<a class="butAction" id="actionButtonEdit" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=edit' . '"><i class="fas fa-edit"></i> ' . $langs->trans('Modify') . '</a>';
+			} else {
+				print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeUnlocked', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '"><i class="fas fa-edit"></i> ' . $langs->trans('Modify') . '</span>';
+			}
 
 			// Lock
 			if ($object->status == $object::STATUS_VALIDATED) {
@@ -849,6 +1057,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print '<td>' . $langs->trans('Label') . '</td>';
     print '<td>' . $langs->trans('Description') . '</td>';
     print '<td>' . $langs->trans('QuestionType') . '</td>';
+    print '<td>' . $langs->trans('NumberOfPoints') . '</td>';
+    print '<td>' . $langs->trans('GradingPolicy') . '</td>';
     $mandatoryAllCheckbox = $object->status < Sheet::STATUS_LOCKED ? ' <input type="checkbox" id="mandatory-all" title="' . dol_escape_htmltag($langs->trans('SetAllMandatory')) . '">' : '';
     print '<td class="center">' . $langs->trans('Mandatory') . $mandatoryAllCheckbox . '</td>';
     print '<td class="center">' . $langs->trans('PhotoOk') . '</td>';
