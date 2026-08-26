@@ -626,6 +626,22 @@ class modDigiQuali extends DolibarrModules
 		$this->menu[$r++] = [
 			'fk_menu'  => 'fk_mainmenu=digiquali',
 			'type'     => 'left',
+			'titre'    => $langs->trans('MobileApp'),
+			'prefix'   => '<i class="fas fa-mobile-alt pictofixedwidth"></i>',
+			'mainmenu' => 'digiquali',
+			'leftmenu' => 'digiquali_pwa',
+			'url'      => '/digiquali/view/frontend/pwa_home.php?source=pwa',
+			'langs'    => 'digiquali@digiquali',
+			'position' => 1000 + $r,
+			'enabled'  => '$conf->digiquali->enabled && $user->rights->digiquali->lire',
+			'perms'    => '$user->rights->digiquali->lire',
+			'target'   => '_blank',
+			'user'     => 0,
+		];
+
+		$this->menu[$r++] = [
+			'fk_menu'  => 'fk_mainmenu=digiquali',
+			'type'     => 'left',
 			'titre'    => $langs->transnoentities('Question'),
 			'prefix'   => '<i class="fas fa-question pictofixedwidth"></i>',
 			'mainmenu' => 'digiquali',

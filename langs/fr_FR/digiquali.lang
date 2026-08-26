@@ -721,6 +721,13 @@ NFSysteme = Système
 NFPoste   = Poste
 NFProduit = Produit
 
+#
+# PWA (frontend mobile)
+#
+
+MobileApp    = Application mobile
+LastControls = Derniers contrôles
+
 # Grading Policy
 GradingPolicy = Politique de notation
 Proportional = Proportionnelle
@@ -742,5 +749,15 @@ LinkContratDescription=Permet la liaison entre les contrats et les modèles
 LinkCall_list=Activer le lien avec les appels
 LinkCall_listDescription=Permet la liaison entre les listes d'appels et les modèles
 
+#
+# Answer wizard (mobile)
+#
 
-
+AnswerWizardFinish        = Terminer
+AnswerWizardSteps         = Aller à
+AnswerWizardProgress      = %s/%s
+AnswerWizardSummary       = Récapitulatif
+AnswerWizardAllAnswered   = Toutes les questions ont une réponse
+AnswerWizardRemaining     = %s question(s) sans réponse
+AnswerWizardValidateTitle = Terminer et valider ?
+AnswerWizardValidateText  = Vous avez répondu à %s question(s) sur %s. Après validation, les réponses ne seront plus modifiables.

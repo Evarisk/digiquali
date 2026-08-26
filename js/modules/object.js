@@ -141,9 +141,10 @@ window.digiquali.object.selectAnswer = function() {
 
   window.digiquali.object.updateLiveScore(questionId, answer);
 
-  if (!publicInterface) {
-    window.digiquali.object.saveAnswer(questionId, answer, comment);
-  } else {
+  // Answers are saved on the fly on both interfaces: a public session interrupted after
+  // twenty questions must not lose them. Only the submit button validates the object.
+  window.digiquali.object.saveAnswer(questionId, answer, comment);
+  if (publicInterface) {
     window.digiquali.object.updateButtonsStatus();
   }
 };
@@ -295,8 +296,9 @@ window.digiquali.object.saveTextOrNumericAnswer = function() {
 
     window.digiquali.object.updateLiveScore(questionId, answer);
 
-    if (!publicInterface) {
-      window.digiquali.object.saveAnswer(questionId, answer, comment);
+    window.digiquali.object.saveAnswer(questionId, answer, comment);
+    if (publicInterface) {
+      window.digiquali.object.updateButtonsStatus();
     }
   }
 };
@@ -348,10 +350,9 @@ window.digiquali.object.rangePercent = function(fromInit) {
 
   if (!fromInit) {
     window.digiquali.object.updateLiveScore(questionId, rangePercentValue);
-    if (!publicInterface) {
-      let comment = $(this).closest('.table-id-' + questionId).find('textarea[name="comment' + questionId + '"]').val() || '';
-      window.digiquali.object.saveAnswer(questionId, rangePercentValue, comment);
-    } else {
+    let comment = $(this).closest('.table-id-' + questionId).find('textarea[name="comment' + questionId + '"]').val() || '';
+    window.digiquali.object.saveAnswer(questionId, rangePercentValue, comment);
+    if (publicInterface) {
       window.digiquali.object.updateButtonsStatus();
     }
   }
@@ -453,11 +454,7 @@ window.digiquali.object.saveCommentAuto = function() {
     }
     let answer = answerElement.val() || '';
     
-    let publicInterface = $(this).closest('.table-id-' + questionId).attr('data-publicInterface');
-
-    if (!publicInterface) {
-      window.digiquali.object.saveAnswer(questionId, answer, comment);
-    }
+    window.digiquali.object.saveAnswer(questionId, answer, comment);
   }
 };
 

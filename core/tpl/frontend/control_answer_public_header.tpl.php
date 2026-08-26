@@ -47,8 +47,17 @@ $linkedObjectInfoArray = get_linked_object_infos($linkedObject, $linkableElement
             <?php if (!empty($linkedObjectInfoArray['linkedObject']['label'])) : ?>
                 <div class="public-answer-header__label"><?php echo $linkedObjectInfoArray['linkedObject']['label']; ?></div>
             <?php endif; ?>
-            <?php if (!empty($linkedObjectInfoArray['linkedObject']['description'])) : ?>
-                <div class="public-answer-header__description"><?php echo $linkedObjectInfoArray['linkedObject']['description']; ?></div>
+            <?php
+            // A linked object description may hold rich HTML (a whole project sheet, for
+            // instance). Strip it down to a short plain-text line: this header only says what
+            // is being controlled, and on a phone it sits above the questions.
+            $linkedObjectDescription = $linkedObjectInfoArray['linkedObject']['description'] ?? '';
+            if (!empty($linkedObjectDescription)) {
+                $linkedObjectDescription = str_replace(['\r\n', '\n', '\r'], ' ', html_entity_decode($linkedObjectDescription, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                $linkedObjectDescription = dol_trunc(trim(dol_string_nohtmltag($linkedObjectDescription, 1)), 160);
+            }
+            if (!empty($linkedObjectDescription)) : ?>
+                <div class="public-answer-header__description"><?php echo dol_escape_htmltag($linkedObjectDescription); ?></div>
             <?php endif; ?>
             <?php if (!empty($linkedObjectInfoArray['parentLinkedObject']['title'])) : ?>
                 <div class="public-answer-header__type"><?php echo $linkedObjectInfoArray['parentLinkedObject']['title']; ?></div>

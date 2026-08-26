@@ -171,6 +171,9 @@ print '<input type="hidden" name="action" value="save">';
 $sheet->fetch($object->fk_sheet);
 $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
 
+require_once __DIR__ . '/../lib/digiquali_answer_wizard.lib.php';
+$wizardSteps = digiquali_answer_wizard_build_steps($object, $questionsAndGroups);
+
 $substitutionArray = getCommonSubstitutionArray($langs, 0, null, $object);
 complete_substitutions_array($substitutionArray, $langs, $object);
 $answerPublicInterfaceTitle = make_substitutions($langs->transnoentities($conf->global->DIGIQUALI_ANSWER_PUBLIC_INTERFACE_TITLE), $substitutionArray);
@@ -178,28 +181,36 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_SHOW_TITLE')) {
     print '<h2 class="page-title center">' . (dol_strlen($answerPublicInterfaceTitle) > 0 ? $answerPublicInterfaceTitle : $langs->transnoentities('AnswerPublicInterface')) . '</h2>';
 }
 
-print '<div class="question-answer-container question-answer-container-pwa public-card__container" data-public-interface="true" style="max-width: 1000px; margin-bottom: 4em;">';
-if (!empty($linkedObject)) {
-    require __DIR__ . '/../core/tpl/frontend/control_answer_public_header.tpl.php';
-}
+print '<div class="question-answer-container question-answer-container-pwa public-card__container" data-public-interface="true">';
 $publicInterface = true;
 
 $isFrontend = true;
-$object->displayAnswers($objectLine, $questionsAndGroups, $isFrontend);
+
+// Intro screen of the wizard: what is being controlled
+$wizardIntroHtml = '';
+if (!empty($linkedObject)) {
+    ob_start();
+    require __DIR__ . '/../core/tpl/frontend/control_answer_public_header.tpl.php';
+    $wizardIntroHtml = ob_get_clean();
+}
+
+// Summary screen of the wizard: signature then the only action that validates the object
+ob_start();
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signatory->id > 0) {
     $previousStatus        = $object->status;
     $object->status        = $object::STATUS_VALIDATED; // Special case because public answer need draft status object to complete question
     $moreParams['moreCSS'] = 'hidden';                  // Needed for prevent click on signature button action
-    print '<div style="margin-top: 2em;">';
     require_once __DIR__ . '/../../saturne/core/tpl/signature/public_signature_view.tpl.php';
-    print '</div>';
     $object->status = $previousStatus;
 }
 if ($object->status == $object::STATUS_DRAFT) {
-    print '<div class="public-card__footer" style="margin-top: 2em;">';
-    print '<button type="submit" class="wpeo-button save-public-answer ' . (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signatory->id > 0 ? 'signature-validate button-disable' : '') . '">' . $langs->trans('Submit') . '</button>';
+    print '<div class="public-card__footer">';
+    print '<button type="submit" class="wpeo-button save-public-answer ' . (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signatory->id > 0 ? 'signature-validate button-disable' : '') . '">' . $langs->trans('AnswerWizardFinish') . '</button>';
     print '</div>';
 }
+$wizardSummaryExtraHtml = ob_get_clean();
+
+require __DIR__ . '/../core/tpl/frontend/digiquali_answer_wizard.tpl.php';
 print '</div>';
 print '</form>';
 
