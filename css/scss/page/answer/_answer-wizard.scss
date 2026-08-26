@@ -377,13 +377,29 @@
   }
 }
 
-.answer-wizard__picker {
+.answer-wizard__picker,
+.answer-wizard__confirm {
   position: fixed;
   inset: 0;
   z-index: 40;
 
   &[hidden] {
     display: none;
+  }
+}
+
+.answer-wizard__confirm-text {
+  margin: 0 0 1.2em;
+  color: $color__text-main;
+  font-size: 14px;
+}
+
+.answer-wizard__confirm-actions {
+  display: flex;
+  gap: 0.6em;
+
+  .answer-wizard__button {
+    flex: 1;
   }
 }
 

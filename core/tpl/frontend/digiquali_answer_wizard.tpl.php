@@ -97,10 +97,12 @@ $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep
         <?php if ($wizardHasIntro) { ?>
             <section class="answer-wizard__screen" data-screen-index="0" data-screen-type="intro">
                 <?php print $wizardIntroHtml; ?>
-                <div class="answer-wizard__intro-summary">
-                    <i class="fas fa-list-ol"></i>
-                    <span><?php echo $langs->trans('AnswerWizardIntroQuestions', $wizardProgress['total'], $wizardStepCount); ?></span>
-                </div>
+                <?php if ($wizardProgress['total'] > 0) { ?>
+                    <div class="answer-wizard__intro-summary">
+                        <i class="fas fa-list-ol"></i>
+                        <span><?php echo $langs->trans('AnswerWizardIntroQuestions', $wizardProgress['total'], $wizardStepCount); ?></span>
+                    </div>
+                <?php } ?>
                 <?php if ($wizardIsDraft) { ?>
                     <button type="button" class="answer-wizard__button answer-wizard__button--primary answer-wizard__start">
                         <i class="fas fa-play"></i>
@@ -198,6 +200,25 @@ $wizardStartIndex   = $wizardHasIntro ? 0 : $wizardStepOffset + $wizardFirstStep
                 <i class="fas fa-chevron-right"></i>
             </button>
         </nav>
+    <?php } ?>
+
+    <?php if (!empty($wizardValidateConfirm) && $wizardIsDraft) { ?>
+        <div class="answer-wizard__confirm" hidden>
+            <div class="answer-wizard__picker-backdrop answer-wizard__confirm-close"></div>
+            <div class="answer-wizard__picker-sheet">
+                <div class="answer-wizard__picker-title"><?php echo $langs->trans('AnswerWizardValidateTitle'); ?></div>
+                <p class="answer-wizard__confirm-text"
+                   data-pattern="<?php echo dol_escape_htmltag($langs->transnoentities('AnswerWizardValidateText', '%COUNT%', '%TOTAL%')); ?>"></p>
+                <div class="answer-wizard__confirm-actions">
+                    <button type="button" class="answer-wizard__button answer-wizard__button--ghost answer-wizard__confirm-close">
+                        <?php echo $langs->trans('Cancel'); ?>
+                    </button>
+                    <button type="submit" name="validate_object" value="1" class="answer-wizard__button answer-wizard__button--primary">
+                        <?php echo $langs->trans('Validate'); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
     <?php } ?>
 
     <div class="answer-wizard__picker" hidden>

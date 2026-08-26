@@ -71,6 +71,8 @@ window.digiquali.answerWizard.event = function() {
   $(document).on('click', '.answer-wizard__start, .answer-wizard__next', window.digiquali.answerWizard.goNext);
   $(document).on('click', '.answer-wizard__previous, .answer-wizard__back', window.digiquali.answerWizard.goPrevious);
   $(document).on('click', '.answer-wizard__step-counter', window.digiquali.answerWizard.togglePicker);
+  $(document).on('click', '.answer-wizard__finish', window.digiquali.answerWizard.openConfirm);
+  $(document).on('click', '.answer-wizard__confirm-close', window.digiquali.answerWizard.closeConfirm);
   $(document).on('click', '.answer-wizard__picker-backdrop', window.digiquali.answerWizard.togglePicker);
   $(document).on('click', '[data-goto-screen]', window.digiquali.answerWizard.goToScreen);
 
@@ -220,6 +222,44 @@ window.digiquali.answerWizard.goToScreen = function() {
       $('html, body').scrollTop(Math.max(0, $question.offset().top - 80));
     }
   }
+};
+
+/**
+ * Open the confirmation sheet, filled with the answer count of the moment.
+ *
+ * Validating locks the answers, so the user is told how many questions are actually
+ * answered before committing.
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.answerWizard.openConfirm = function() {
+  const $wizard  = $('.answer-wizard');
+  const $confirm = $wizard.find('.answer-wizard__confirm');
+  if (!$confirm.length) {
+    return;
+  }
+
+  const answered = parseInt($wizard.attr('data-answered-questions'), 10) || 0;
+  const total    = parseInt($wizard.attr('data-total-questions'), 10) || 0;
+  const $text    = $confirm.find('.answer-wizard__confirm-text');
+
+  $text.text(($text.attr('data-pattern') || '').replace('%COUNT%', answered).replace('%TOTAL%', total));
+  $confirm.prop('hidden', false);
+};
+
+/**
+ * Close the confirmation sheet without validating
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.answerWizard.closeConfirm = function() {
+  $('.answer-wizard__confirm').prop('hidden', true);
 };
 
 /**

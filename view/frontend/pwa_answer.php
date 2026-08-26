@@ -92,6 +92,16 @@ if ($action == 'save' && !empty($permissionToWrite)) {
     // this the page would simply redraw itself, which looks like the button did nothing since
     // the answers were already saved as they were given.
     if (empty($isAutoSave)) {
+        // Locking the answers is irreversible for the user, so it only happens through the
+        // explicit confirmation sheet, never as a side effect of saving
+        if (GETPOSTINT('validate_object') && $object->status == $object::STATUS_DRAFT) {
+            $object->validate($user);
+            if ($sheet->type == 'survey') {
+                $object->setLocked($user);
+            }
+            $object->call_trigger(dol_strtoupper($object->element) . '_SAVEANSWER', $user);
+        }
+
         setEventMessages($langs->trans('AnswerSaved'), []);
         header('Location: ' . dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa');
         exit;
@@ -142,13 +152,14 @@ $wizardIntroHtml = ob_get_clean();
 ob_start();
 if ($object->status == $object::STATUS_DRAFT && !empty($permissionToWrite)) {
     print '<div class="answer-wizard__summary-actions">';
-    print '<button type="submit" class="answer-wizard__button answer-wizard__button--primary">' . $langs->trans('AnswerWizardFinish') . '</button>';
+    print '<button type="button" class="answer-wizard__button answer-wizard__button--primary answer-wizard__finish">' . $langs->trans('AnswerWizardFinish') . '</button>';
     print '</div>';
 }
 $wizardSummaryExtraHtml = ob_get_clean();
 
-$isFrontend       = true;
-$wizardExtraClass = 'answer-wizard--pwa';
+$isFrontend            = true;
+$wizardExtraClass      = 'answer-wizard--pwa';
+$wizardValidateConfirm = true;
 require __DIR__ . '/../../core/tpl/frontend/digiquali_answer_wizard.tpl.php';
 
 print '</div>';

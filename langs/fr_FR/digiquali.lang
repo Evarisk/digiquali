@@ -766,3 +766,5 @@ AnswerWizardSummary        = Récapitulatif
 AnswerWizardAllAnswered    = Toutes les questions ont une réponse
 AnswerWizardRemaining      = %s question(s) sans réponse
 AnswerWizardIntroQuestions = %s questions réparties en %s étapes
+AnswerWizardValidateTitle  = Terminer et valider ?
+AnswerWizardValidateText   = Vous avez répondu à %s question(s) sur %s. Après validation, les réponses ne seront plus modifiables.
