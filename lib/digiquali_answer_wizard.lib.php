@@ -18,31 +18,12 @@
 /**
  * \file    lib/digiquali_answer_wizard.lib.php
  * \ingroup digiquali
- * \brief   Library functions for the mobile answer wizard: split a sheet into steps and count progress.
+ * \brief   Library functions for the mobile answer screen: group the questions and count progress.
  *
- * The wizard is the shared engine behind both answering surfaces (public QR page and
- * connected PWA screen). It only decides *how the questions are split and counted*;
- * the answer widgets themselves stay in show_answer_from_question().
- */
-
-/**
- * Default number of ungrouped questions gathered in a single step.
- *
- * Overridable with DIGIQUALI_ANSWER_WIZARD_MAX_QUESTIONS_PER_STEP.
- */
-const DIGIQUALI_ANSWER_WIZARD_DEFAULT_STEP_SIZE = 8;
-
-/**
- * Split the sheet content into wizard steps.
- *
- * Walks the ordered list returned by Sheet::fetchQuestionsAndGroups() and applies two rules:
- *   - a first-level question group becomes one step (its sub-groups stay nested inside it,
- *     rendered by the existing recursive template);
- *   - consecutive ungrouped questions are gathered into steps of at most
- *     DIGIQUALI_ANSWER_WIZARD_MAX_QUESTIONS_PER_STEP questions.
- *
- * A sheet with no group and few questions therefore yields a single step, which renders
- * exactly like the current flat list.
+ * Shared engine behind both answering surfaces (public QR page and connected PWA screen).
+ * The questions are rendered as one continuous scroll; sections only exist to title the
+ * groups, to count progress and to feed the quick jump menu. The answer widgets themselves
+ * stay in show_answer_from_question().
  *
  * @param  CommonObject $object            Control or Survey being answered (lines are loaded if needed).
  * @param  array        $questionsAndGroups Ordered Question/QuestionGroup list of the sheet.
@@ -50,16 +31,9 @@ const DIGIQUALI_ANSWER_WIZARD_DEFAULT_STEP_SIZE = 8;
  */
 function digiquali_answer_wizard_build_steps(CommonObject $object, array $questionsAndGroups): array
 {
-    global $langs;
-
     // calculatePoints() and the answered counters both read $object->lines
     if (empty($object->lines) && $object->id > 0) {
         $object->fetchLines();
-    }
-
-    $stepSize = getDolGlobalInt('DIGIQUALI_ANSWER_WIZARD_MAX_QUESTIONS_PER_STEP');
-    if ($stepSize <= 0) {
-        $stepSize = DIGIQUALI_ANSWER_WIZARD_DEFAULT_STEP_SIZE;
     }
 
     $steps        = [];
@@ -68,7 +42,7 @@ function digiquali_answer_wizard_build_steps(CommonObject $object, array $questi
     foreach ($questionsAndGroups as $questionOrGroup) {
         if ($questionOrGroup->element == 'questiongroup') {
             // Flush the ungrouped questions read so far, so the sheet order is preserved
-            $steps = array_merge($steps, digiquali_answer_wizard_pack_questions($pendingItems, $object, count($steps), $stepSize));
+            $steps        = array_merge($steps, digiquali_answer_wizard_build_questions_step($pendingItems, $object, count($steps)));
             $pendingItems = [];
 
             [$answered, $total] = $questionOrGroup->calculatePoints($object);
@@ -88,61 +62,41 @@ function digiquali_answer_wizard_build_steps(CommonObject $object, array $questi
         }
     }
 
-    $steps = array_merge($steps, digiquali_answer_wizard_pack_questions($pendingItems, $object, count($steps), $stepSize));
-
-    // A single unnamed step needs no title: the page header already says what is being answered
-    if (count($steps) == 1 && $steps[0]['type'] == 'questions') {
-        $steps[0]['label'] = '';
-    } elseif (!empty($steps)) {
-        foreach ($steps as $index => $step) {
-            if ($step['type'] == 'questions' && empty($step['label'])) {
-                $steps[$index]['label'] = $langs->transnoentities('AnswerWizardOtherQuestions');
-            }
-        }
-    }
-
-    return $steps;
+    return array_merge($steps, digiquali_answer_wizard_build_questions_step($pendingItems, $object, count($steps)));
 }
 
 /**
- * Pack a run of ungrouped questions into steps of at most $stepSize questions.
+ * Build one section out of a run of ungrouped questions.
+ *
+ * They are not split any further: the page scrolls continuously, so cutting a plain list of
+ * questions into arbitrary packs would only add titles nobody asked for.
  *
  * @param  array        $questions  Consecutive ungrouped questions (may be empty).
  * @param  CommonObject $object     Control or Survey being answered.
- * @param  int          $stepOffset Number of steps already built, used to number the packs.
- * @param  int          $stepSize   Maximum number of questions per step.
- * @return array<int,array<string,mixed>> Built steps (empty when $questions is empty).
+ * @param  int          $stepOffset Number of sections already built, used to key this one.
+ * @return array<int,array<string,mixed>> A single section, or none when $questions is empty.
  */
-function digiquali_answer_wizard_pack_questions(array $questions, CommonObject $object, int $stepOffset, int $stepSize): array
+function digiquali_answer_wizard_build_questions_step(array $questions, CommonObject $object, int $stepOffset): array
 {
-    global $langs;
-
     if (empty($questions)) {
         return [];
     }
 
-    $steps  = [];
-    $chunks = array_chunk($questions, $stepSize);
-
-    foreach ($chunks as $chunkIndex => $chunkQuestions) {
-        $questionIds = [];
-        foreach ($chunkQuestions as $question) {
-            $questionIds[] = $question->id;
-        }
-
-        $steps[] = [
-            'type'        => 'questions',
-            'key'         => 'questions-' . ($stepOffset + $chunkIndex),
-            'label'       => count($chunks) > 1 ? $langs->transnoentities('AnswerWizardQuestionsPack', $chunkIndex + 1, count($chunks)) : '',
-            'picto'       => 'fontawesome_fa-question-circle_fas',
-            'description' => '',
-            'items'       => $chunkQuestions,
-            'total'       => count($chunkQuestions),
-            'answered'    => digiquali_answer_wizard_count_answered($questionIds, $object),
-        ];
+    $questionIds = [];
+    foreach ($questions as $question) {
+        $questionIds[] = $question->id;
     }
 
-    return $steps;
+    return [[
+        'type'        => 'questions',
+        'key'         => 'questions-' . $stepOffset,
+        'label'       => '',
+        'picto'       => 'fontawesome_fa-question-circle_fas',
+        'description' => '',
+        'items'       => $questions,
+        'total'       => count($questions),
+        'answered'    => digiquali_answer_wizard_count_answered($questionIds, $object),
+    ]];
 }
 
 /**
@@ -192,26 +146,6 @@ function digiquali_answer_wizard_get_progress(array $steps): array
         'total'    => $total,
         'percent'  => $total > 0 ? (int) round($answered * 100 / $total) : 0,
     ];
-}
-
-/**
- * Return the index of the first step still holding unanswered questions.
- *
- * Used to resume an interrupted session where the user left off. Falls back to the
- * first step when everything is answered (the user then simply reviews and submits).
- *
- * @param  array $steps Steps built by digiquali_answer_wizard_build_steps().
- * @return int          Zero-based step index.
- */
-function digiquali_answer_wizard_get_first_incomplete_step(array $steps): int
-{
-    foreach ($steps as $index => $step) {
-        if ($step['answered'] < $step['total']) {
-            return $index;
-        }
-    }
-
-    return 0;
 }
 
 /**

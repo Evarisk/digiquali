@@ -753,18 +753,11 @@ LinkCall_listDescription=Permet la liaison entre les listes d'appels et les mod�
 # Answer wizard (mobile)
 #
 
-AnswerWizardStart          = Commencer
-AnswerWizardResume         = Reprendre
-AnswerWizardPrevious       = Précédent
-AnswerWizardNext           = Suivant
-AnswerWizardFinish         = Terminer
-AnswerWizardStepOf         = Étape %s/%s
-AnswerWizardSteps          = Étapes
-AnswerWizardOtherQuestions = Autres questions
-AnswerWizardQuestionsPack  = Questions %s/%s
-AnswerWizardSummary        = Récapitulatif
-AnswerWizardAllAnswered    = Toutes les questions ont une réponse
-AnswerWizardRemaining      = %s question(s) sans réponse
-AnswerWizardIntroQuestions = %s questions réparties en %s étapes
-AnswerWizardValidateTitle  = Terminer et valider ?
-AnswerWizardValidateText   = Vous avez répondu à %s question(s) sur %s. Après validation, les réponses ne seront plus modifiables.
+AnswerWizardFinish        = Terminer
+AnswerWizardSteps         = Aller à
+AnswerWizardProgress      = %s/%s
+AnswerWizardSummary       = Récapitulatif
+AnswerWizardAllAnswered   = Toutes les questions ont une réponse
+AnswerWizardRemaining     = %s question(s) sans réponse
+AnswerWizardValidateTitle = Terminer et valider ?
+AnswerWizardValidateText  = Vous avez répondu à %s question(s) sur %s. Après validation, les réponses ne seront plus modifiables.

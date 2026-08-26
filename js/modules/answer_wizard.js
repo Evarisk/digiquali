@@ -17,7 +17,7 @@
 /**
  * \file    js/modules/answer_wizard.js
  * \ingroup digiquali
- * \brief   JavaScript of the mobile answer wizard (screen navigation, progress, save state)
+ * \brief   JavaScript of the mobile answer screen (progress, current group, save state)
  */
 
 'use strict';
@@ -34,7 +34,7 @@ window.digiquali.answerWizard = {};
  * Answer wizard init
  *
  * The module loader calls init() on every registered module without a try/catch,
- * so this bails out immediately when the page holds no wizard.
+ * so this bails out immediately when the page holds no answer screen.
  *
  * @since   21.0.0
  * @version 21.0.0
@@ -42,21 +42,13 @@ window.digiquali.answerWizard = {};
  * @return {void}
  */
 window.digiquali.answerWizard.init = function() {
-  const $wizard = $('.answer-wizard');
-  if (!$wizard.length) {
+  if (!$('.answer-wizard').length) {
     return;
   }
 
   window.digiquali.answerWizard.event();
-
-  // Single-screen mode keeps every section stacked and visible: no "is-ready", no navigation.
-  // Only the progress bar and the save indicator stay live.
-  if (!$wizard.hasClass('answer-wizard--single')) {
-    $wizard.addClass('is-ready');
-    window.digiquali.answerWizard.showScreen(parseInt($wizard.attr('data-current-screen'), 10) || 0, false);
-  }
-
   window.digiquali.answerWizard.refreshProgress();
+  window.digiquali.answerWizard.refreshCurrentGroup();
 };
 
 /**
@@ -68,17 +60,18 @@ window.digiquali.answerWizard.init = function() {
  * @return {void}
  */
 window.digiquali.answerWizard.event = function() {
-  $(document).on('click', '.answer-wizard__start, .answer-wizard__next', window.digiquali.answerWizard.goNext);
-  $(document).on('click', '.answer-wizard__previous, .answer-wizard__back', window.digiquali.answerWizard.goPrevious);
-  $(document).on('click', '.answer-wizard__step-counter', window.digiquali.answerWizard.togglePicker);
+  $(document).on('click', '.answer-wizard__counter', window.digiquali.answerWizard.togglePicker);
+  $(document).on('click', '.answer-wizard__picker-backdrop', window.digiquali.answerWizard.closePicker);
+  $(document).on('click', '[data-goto-step]', window.digiquali.answerWizard.goToStep);
+  $(document).on('click', '[data-goto-question]', window.digiquali.answerWizard.goToQuestion);
   $(document).on('click', '.answer-wizard__finish', window.digiquali.answerWizard.openConfirm);
   $(document).on('click', '.answer-wizard__confirm-close', window.digiquali.answerWizard.closeConfirm);
-  $(document).on('click', '.answer-wizard__picker-backdrop', window.digiquali.answerWizard.togglePicker);
-  $(document).on('click', '[data-goto-screen]', window.digiquali.answerWizard.goToScreen);
 
   // Same interactions as object.js, but here they only recompute the local progress
   $(document).on('click', '.answer-wizard .answer:not(.disable)', window.digiquali.answerWizard.refreshProgress);
   $(document).on('input change', '.answer-wizard .question-answer', window.digiquali.answerWizard.refreshProgress);
+
+  $(window).on('scroll', window.digiquali.answerWizard.refreshCurrentGroup);
 
   $(document).ajaxSend(window.digiquali.answerWizard.onAnswerSaveStart);
   $(document).ajaxSuccess(window.digiquali.answerWizard.onAnswerSaveSuccess);
@@ -86,142 +79,108 @@ window.digiquali.answerWizard.event = function() {
 };
 
 /**
- * Show a wizard screen and sync the header, footer and picker with it.
+ * Name the group the user is currently scrolled into.
+ *
+ * The page is one continuous scroll, so the sticky bar is what tells the user where they
+ * are. The current section is the last one whose top has passed under the bar.
  *
  * @since   21.0.0
  * @version 21.0.0
  *
- * @param  {int}  screenIndex Index of the screen to display
- * @param  {bool} scrollTop   Scroll back to the top of the wizard
  * @return {void}
  */
-window.digiquali.answerWizard.showScreen = function(screenIndex, scrollTop) {
-  const $wizard  = $('.answer-wizard');
-  const $screens = $wizard.find('.answer-wizard__screen');
-
-  const summaryIndex = parseInt($wizard.attr('data-summary-index'), 10);
-  const boundedIndex = Math.max(0, Math.min(screenIndex, summaryIndex));
-  const $screen      = $screens.filter('[data-screen-index="' + boundedIndex + '"]');
-  if (!$screen.length) {
+window.digiquali.answerWizard.refreshCurrentGroup = function() {
+  const $wizard = $('.answer-wizard');
+  if (!$wizard.length) {
     return;
   }
 
-  $screens.removeClass('is-active');
-  $screen.addClass('is-active');
-  $wizard.attr('data-current-screen', boundedIndex);
+  const barBottom = $wizard.find('.answer-wizard__bar').offset().top + $wizard.find('.answer-wizard__bar').outerHeight();
+  let label = '';
 
-  window.digiquali.answerWizard.refreshChrome();
-
-  if (scrollTop !== false) {
-    $('html, body').scrollTop(Math.max(0, $wizard.offset().top - 10));
-  }
-};
-
-/**
- * Update header labels, counter and footer buttons for the current screen.
- *
- * @since   21.0.0
- * @version 21.0.0
- *
- * @return {void}
- */
-window.digiquali.answerWizard.refreshChrome = function() {
-  const $wizard = $('.answer-wizard');
-  const current = parseInt($wizard.attr('data-current-screen'), 10);
-
-  const stepOffset   = parseInt($wizard.attr('data-step-offset'), 10);
-  const stepCount    = parseInt($wizard.attr('data-step-count'), 10);
-  const summaryIndex = parseInt($wizard.attr('data-summary-index'), 10);
-
-  const $screen    = $wizard.find('.answer-wizard__screen[data-screen-index="' + current + '"]');
-  const screenType = $screen.attr('data-screen-type');
-
-  let label   = '';
-  let counter = '';
-  if (screenType === 'step') {
-    label   = $screen.attr('data-step-label') || '';
-    counter = $wizard.find('.answer-wizard__step-counter-text').attr('data-step-pattern') || '';
-    counter = counter.replace('%CURRENT%', current - stepOffset + 1).replace('%TOTAL%', stepCount);
-  } else if (screenType === 'summary') {
-    label = $screen.attr('data-step-label') || '';
-  }
-
-  // The intro screen carries its own object header: the wizard chrome would only add an empty bar
-  $wizard.toggleClass('is-intro', screenType === 'intro');
-
-  $wizard.find('.answer-wizard__step-label').text(label);
-  $wizard.find('.answer-wizard__step-counter').toggle(screenType === 'step');
-  $wizard.find('.answer-wizard__step-counter-text').text(counter);
-  $wizard.find('.answer-wizard__back').prop('hidden', current === 0);
-
-  // Say where the button leads: from the last step it opens the summary, not another step
-  const $next = $wizard.find('.answer-wizard__next');
-  $next.prop('hidden', current === summaryIndex);
-  $next.find('.answer-wizard__next-label').text(
-    (current + 1 === summaryIndex) ? ($next.attr('data-label-summary') || '') : ($next.attr('data-label-next') || '')
-  );
-  $wizard.find('.answer-wizard__previous').prop('hidden', current === 0);
-
-  $wizard.find('.answer-wizard__picker-item').removeClass('is-current')
-    .filter('[data-goto-screen="' + current + '"]').addClass('is-current');
-};
-
-/**
- * Go to the next screen
- *
- * @since   21.0.0
- * @version 21.0.0
- *
- * @return {void}
- */
-window.digiquali.answerWizard.goNext = function() {
-  const $wizard = $('.answer-wizard');
-  const current = parseInt($wizard.attr('data-current-screen'), 10);
-
-  // From the intro screen, jump straight to where the user left off
-  if (current === 0 && $wizard.find('.answer-wizard__screen[data-screen-index="0"]').attr('data-screen-type') === 'intro') {
-    window.digiquali.answerWizard.showScreen(parseInt($wizard.attr('data-resume-index'), 10), true);
-    return;
-  }
-
-  window.digiquali.answerWizard.showScreen(current + 1, true);
-};
-
-/**
- * Go to the previous screen
- *
- * @since   21.0.0
- * @version 21.0.0
- *
- * @return {void}
- */
-window.digiquali.answerWizard.goPrevious = function() {
-  const current = parseInt($('.answer-wizard').attr('data-current-screen'), 10);
-
-  window.digiquali.answerWizard.showScreen(current - 1, true);
-};
-
-/**
- * Go to the screen carried by the clicked element, and highlight a question when asked.
- *
- * @since   21.0.0
- * @version 21.0.0
- *
- * @return {void}
- */
-window.digiquali.answerWizard.goToScreen = function() {
-  const $item      = $(this);
-  const questionId = $item.attr('data-goto-question');
-
-  $('.answer-wizard__picker').prop('hidden', true);
-  window.digiquali.answerWizard.showScreen(parseInt($item.attr('data-goto-screen'), 10), true);
-
-  if (questionId) {
-    const $question = $('.answer-wizard .question.table-id-' + questionId);
-    if ($question.length) {
-      $('html, body').scrollTop(Math.max(0, $question.offset().top - 80));
+  $wizard.find('.answer-wizard__step').each(function() {
+    const $step = $(this);
+    if ($step.offset().top <= barBottom + 5) {
+      label = $step.attr('data-step-label') || '';
     }
+  });
+
+  $wizard.find('.answer-wizard__current-group').text(label);
+};
+
+/**
+ * Scroll to a section, from the jump menu
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.answerWizard.goToStep = function() {
+  const $step = $('.answer-wizard__step[data-step-key="' + $(this).attr('data-goto-step') + '"]');
+
+  window.digiquali.answerWizard.closePicker();
+  if ($step.length) {
+    window.digiquali.answerWizard.scrollTo($step);
   }
+};
+
+/**
+ * Scroll to a question, from the summary list
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.answerWizard.goToQuestion = function() {
+  const $question = $('.answer-wizard .question.table-id-' + $(this).attr('data-goto-question'));
+
+  if ($question.length) {
+    window.digiquali.answerWizard.scrollTo($question);
+  }
+};
+
+/**
+ * Scroll an element just under the sticky bar
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @param  {jQuery} $target Element to bring into view
+ * @return {void}
+ */
+window.digiquali.answerWizard.scrollTo = function($target) {
+  const $bar   = $('.answer-wizard__bar');
+  const offset = $target.offset().top - ($bar.length ? $bar.outerHeight() : 0) - 10;
+
+  $('html, body').animate({scrollTop: Math.max(0, offset)}, 250);
+};
+
+/**
+ * Open or close the jump menu
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.answerWizard.togglePicker = function() {
+  const $picker = $('.answer-wizard__picker');
+
+  $picker.prop('hidden', !$picker.prop('hidden'));
+};
+
+/**
+ * Close the jump menu
+ *
+ * @since   21.0.0
+ * @version 21.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.answerWizard.closePicker = function() {
+  $('.answer-wizard__picker').prop('hidden', true);
 };
 
 /**
@@ -263,20 +222,6 @@ window.digiquali.answerWizard.closeConfirm = function() {
 };
 
 /**
- * Open or close the step picker sheet
- *
- * @since   21.0.0
- * @version 21.0.0
- *
- * @return {void}
- */
-window.digiquali.answerWizard.togglePicker = function() {
-  const $picker = $('.answer-wizard__picker');
-
-  $picker.prop('hidden', !$picker.prop('hidden'));
-};
-
-/**
  * Tell whether a question card currently holds an answer.
  *
  * Mirrors the server rule (an answer that is not an empty string), so the local
@@ -305,7 +250,7 @@ window.digiquali.answerWizard.isQuestionAnswered = function($question) {
 };
 
 /**
- * Recompute the global progress bar and the per-step counters.
+ * Recompute the progress bar and the per-section counters.
  *
  * @since   21.0.0
  * @version 21.0.0
@@ -322,12 +267,12 @@ window.digiquali.answerWizard.refreshProgress = function() {
   let total    = 0;
 
   $wizard.find('.answer-wizard__step').each(function() {
-    const $step     = $(this);
-    const stepTotal = parseInt($step.attr('data-step-total'), 10) || 0;
+    const $step      = $(this);
+    const stepTotal  = parseInt($step.attr('data-step-total'), 10) || 0;
     let stepAnswered = 0;
 
     $step.find('.question').each(function() {
-      const $question = $(this);
+      const $question  = $(this);
       const isAnswered = window.digiquali.answerWizard.isQuestionAnswered($question);
 
       $question.toggleClass('question-complete', isAnswered);
@@ -336,11 +281,13 @@ window.digiquali.answerWizard.refreshProgress = function() {
       }
     });
 
-    answered += Math.min(stepAnswered, stepTotal);
-    total    += stepTotal;
+    stepAnswered = Math.min(stepAnswered, stepTotal);
+    answered    += stepAnswered;
+    total       += stepTotal;
 
-    const $count = $wizard.find('.answer-wizard__picker-item-count[data-step-key="' + $step.attr('data-step-key') + '"]');
-    $count.text(Math.min(stepAnswered, stepTotal) + '/' + stepTotal)
+    $wizard.find('[data-step-key="' + $step.attr('data-step-key') + '"]')
+      .filter('.answer-wizard__step-count, .answer-wizard__picker-item-count')
+      .text(stepAnswered + '/' + stepTotal)
       .toggleClass('is-complete', stepTotal > 0 && stepAnswered >= stepTotal);
   });
 
@@ -348,11 +295,14 @@ window.digiquali.answerWizard.refreshProgress = function() {
   $wizard.find('.answer-wizard__progress-bar').css('width', percent + '%');
   $wizard.attr('data-answered-questions', answered);
 
+  const $counter = $wizard.find('.answer-wizard__counter-text');
+  $counter.text(($counter.attr('data-pattern') || '').replace('%COUNT%', answered).replace('%TOTAL%', total));
+
   window.digiquali.answerWizard.refreshSummary(total - answered);
 };
 
 /**
- * Refresh the summary screen from the current state of the questions.
+ * Refresh the summary from the current state of the questions.
  *
  * The summary is rendered server-side on page load, but answers are given without
  * reloading: left alone it would still list questions the user has just answered.
@@ -390,7 +340,7 @@ window.digiquali.answerWizard.refreshSummary = function(remaining) {
 };
 
 /**
- * Flag the header as saving when an answer autosave request starts.
+ * Flag the save badge as saving when an answer autosave request starts.
  *
  * @since   21.0.0
  * @version 21.0.0
@@ -407,7 +357,7 @@ window.digiquali.answerWizard.onAnswerSaveStart = function(event, xhr, settings)
 };
 
 /**
- * Flag the header as saved once the autosave request succeeded.
+ * Flag the save badge as saved once the autosave request succeeded.
  *
  * @since   21.0.0
  * @version 21.0.0
@@ -425,7 +375,7 @@ window.digiquali.answerWizard.onAnswerSaveSuccess = function(event, xhr, setting
 };
 
 /**
- * Flag the header as failed when the autosave request could not reach the server.
+ * Flag the save badge as failed when the autosave request could not reach the server.
  *
  * @since   21.0.0
  * @version 21.0.0

@@ -68,18 +68,11 @@ LinkedObjectSyncError                   = Link synchronisation failed, no change
 # Answer wizard (mobile)
 #
 
-AnswerWizardStart          = Start
-AnswerWizardResume         = Resume
-AnswerWizardPrevious       = Previous
-AnswerWizardNext           = Next
-AnswerWizardFinish         = Finish
-AnswerWizardStepOf         = Step %s/%s
-AnswerWizardSteps          = Steps
-AnswerWizardOtherQuestions = Other questions
-AnswerWizardQuestionsPack  = Questions %s/%s
-AnswerWizardSummary        = Summary
-AnswerWizardAllAnswered    = Every question has an answer
-AnswerWizardRemaining      = %s unanswered question(s)
-AnswerWizardIntroQuestions = %s questions across %s steps
-AnswerWizardValidateTitle  = Finish and validate?
-AnswerWizardValidateText   = You answered %s question(s) out of %s. Once validated, the answers can no longer be changed.
+AnswerWizardFinish        = Finish
+AnswerWizardSteps         = Jump to
+AnswerWizardProgress      = %s/%s
+AnswerWizardSummary       = Summary
+AnswerWizardAllAnswered   = Every question has an answer
+AnswerWizardRemaining     = %s unanswered question(s)
+AnswerWizardValidateTitle = Finish and validate?
+AnswerWizardValidateText  = You answered %s question(s) out of %s. Once validated, the answers can no longer be changed.

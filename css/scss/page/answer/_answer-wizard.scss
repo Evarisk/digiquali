@@ -1,11 +1,10 @@
-// Mobile answer wizard, shared by the public QR page and the connected PWA screen.
-// Offset of the sticky header: 0 on the public page, height of the PWA header when embedded.
+// Mobile answer screen, shared by the public QR page and the connected PWA screen.
+// One continuous scroll: the sticky bar is the only navigation aid.
+// --answer-wizard-top: 0 on the public page, height of the PWA header when embedded.
 .answer-wizard {
   --answer-wizard-top: 0px;
-  --answer-wizard-footer-height: 64px;
 
-  display: flex;
-  flex-direction: column;
+  display: block;
   width: 100%;
   max-width: 900px;
   box-sizing: border-box;
@@ -14,98 +13,36 @@
   // (the public card does, the PWA page does not)
   margin-inline: auto;
 
-  // Without JS every screen stays visible: the page degrades to the plain scrolling list
-  &.is-ready {
-    .answer-wizard__screen {
-      display: none;
-
-      &.is-active {
-        display: block;
-      }
-    }
-  }
-
-  &--readonly {
-    --answer-wizard-footer-height: 0px;
-  }
-
-  &.is-intro .answer-wizard__header {
-    display: none;
-  }
-
-  // Inside the PWA the sticky header must sit below the fixed app header
+  // Inside the PWA the sticky bar must sit below the fixed app header
   &--pwa {
     --answer-wizard-top: 60px;
   }
 
-  // One step only: no navigation, no step title, no step counter. What would remain of the
-  // header is a progress bar floating alone under an empty white band, so drop it entirely:
-  // every question is on screen, progress is read directly from the questions.
-  &--single {
-    --answer-wizard-footer-height: 0px;
-
-    .answer-wizard__header {
-      display: none;
-    }
-
-    // Every question is visible right above: listing them again as "missing" is noise
-    .answer-wizard__summary-list {
-      display: none;
-    }
+  // No group to name and no jump menu to open: the bar would only repeat the page title
+  &--unnamed .answer-wizard__bar-content {
+    display: none;
   }
 }
 
-.answer-wizard__summary-actions {
-  margin-top: 1.5em;
-
-  .answer-wizard__button {
-    width: 100%;
-  }
-}
-
-
-.answer-wizard__header {
+.answer-wizard__bar {
   position: sticky;
   top: var(--answer-wizard-top);
   z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 0.6em 0.8em 0.9em;
   background: #fff;
   border-bottom: 1px solid rgba($color__public-secondary, 0.6);
   box-shadow: 0 2px 6px rgba(27, 100, 168, 0.08);
-
-  // The wizard is rendered inside a form that Dolibarr pages may indent
-  margin-left: calc(var(--answer-wizard-bleed, 0px) * -1);
-  margin-right: calc(var(--answer-wizard-bleed, 0px) * -1);
 }
 
-.answer-wizard__back {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  background: rgba($color__public-secondary, 0.25);
-  color: $color__public-primary;
-  font-size: 15px;
-  cursor: pointer;
-
-  &[hidden] {
-    visibility: hidden;
-  }
-}
-
-.answer-wizard__header-content {
+.answer-wizard__bar-content {
   display: flex;
-  flex-direction: column;
-  gap: 0.15em;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.7em 0.9em;
+}
+
+.answer-wizard__current-group {
   flex: 1;
   min-width: 0;
-}
-
-.answer-wizard__step-label {
   font-size: 15px;
   font-weight: 600;
   color: $color__public-primary;
@@ -114,15 +51,18 @@
   white-space: nowrap;
 }
 
-.answer-wizard__step-counter {
+.answer-wizard__counter {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.4em;
-  padding: 0;
+  padding: 0.3em 0.7em;
   border: none;
-  background: none;
-  color: #6b7a90;
-  font-size: 12px;
+  border-radius: 12px;
+  background: rgba($color__public-secondary, 0.3);
+  color: $color__public-primary;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 
   i {
@@ -130,50 +70,7 @@
   }
 }
 
-// Floating save badge: invisible while idle, so it only shows up when something is saved
-.answer-wizard__save-state {
-  position: fixed;
-  right: 12px;
-  bottom: calc(var(--answer-wizard-footer-height) + 12px + env(safe-area-inset-bottom));
-  z-index: 25;
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(27, 100, 168, 0.25);
-  text-align: center;
-  font-size: 14px;
-
-  &[data-state="idle"] {
-    display: none;
-  }
-
-  .answer-wizard__save-icon {
-    display: none;
-  }
-
-  &[data-state="saved"] .answer-wizard__save-icon--saved {
-    display: inline;
-    color: $color__green;
-  }
-
-  &[data-state="saving"] .answer-wizard__save-icon--saving {
-    display: inline;
-    color: $color__public-secondary;
-  }
-
-  &[data-state="error"] .answer-wizard__save-icon--error {
-    display: inline;
-    color: $color__red;
-  }
-}
-
 .answer-wizard__progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
   height: 4px;
   background: rgba($color__public-secondary, 0.35);
 }
@@ -185,13 +82,12 @@
   transition: width 0.25s ease;
 }
 
-.answer-wizard__screens {
-  flex: 1;
-  padding-bottom: var(--answer-wizard-footer-height);
+.answer-wizard__intro {
+  padding-top: 1em;
 }
 
-.answer-wizard__screen {
-  padding-top: 1em;
+.answer-wizard__step {
+  padding-top: 1.2em;
 
   // Long labels and descriptions must never push the layout wider than the viewport
   * {
@@ -205,6 +101,8 @@
   align-items: center;
   gap: 0.6em;
   margin-bottom: 0.4em;
+  padding-top: 0.6em;
+  border-top: 2px solid rgba($color__public-secondary, 0.5);
 }
 
 .answer-wizard__step-picto {
@@ -214,10 +112,28 @@
 }
 
 .answer-wizard__step-title {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 17px;
   font-weight: 600;
   color: $color__public-primary;
+}
+
+.answer-wizard__step-count,
+.answer-wizard__picker-item-count {
+  flex-shrink: 0;
+  padding: 0.2em 0.6em;
+  border-radius: 10px;
+  background: rgba($color__public-secondary, 0.3);
+  color: $color__public-primary;
+  font-size: 12px;
+  font-weight: 600;
+
+  &.is-complete {
+    background: rgba($color__green, 0.25);
+    color: #1c7a45;
+  }
 }
 
 .answer-wizard__step-description {
@@ -226,23 +142,11 @@
   font-size: 13px;
 }
 
-// The step header already names and describes the group: drop the duplicated title and
-// description of the root group. Sub-groups keep theirs, they structure the inside of the step.
+// The section header already names and describes the group: drop the duplicated title and
+// description of the root group. Sub-groups keep theirs, they structure the inside of it.
 .answer-wizard__step > .digiquali-question-group > h3,
 .answer-wizard__step > .digiquali-question-group > .group-description {
   display: none;
-}
-
-.answer-wizard__intro-summary {
-  display: flex;
-  align-items: center;
-  gap: 0.6em;
-  margin-top: 1em;
-  padding: 0.8em 1em;
-  border-radius: 12px;
-  background: rgba($color__public-secondary, 0.2);
-  color: $color__public-primary;
-  font-weight: 500;
 }
 
 .answer-wizard__button {
@@ -271,33 +175,10 @@
     opacity: 0.5;
     cursor: default;
   }
-
-  &[hidden] {
-    display: none;
-  }
 }
 
-.answer-wizard__start {
-  width: 100%;
-  margin-top: 1em;
-}
-
-.answer-wizard__footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 30;
-  display: flex;
-  gap: 0.6em;
-  padding: 0.6em 0.8em calc(0.6em + env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1px solid rgba($color__public-secondary, 0.6);
-  box-shadow: 0 -2px 8px rgba(27, 100, 168, 0.1);
-
-  .answer-wizard__button {
-    flex: 1;
-  }
+.answer-wizard__summary {
+  padding-top: 1.5em;
 }
 
 .answer-wizard__summary-status {
@@ -309,11 +190,16 @@
   background: #fff;
   box-shadow: 0 4px 4px rgba(27, 100, 168, 0.15);
   font-weight: 500;
+
+  &[data-state="remaining"] .answer-wizard__summary-icon--warning,
+  &[data-state="complete"] .answer-wizard__summary-icon--ok {
+    display: inline;
+  }
 }
 
 .answer-wizard__summary-icon {
-  font-size: 20px;
   display: none;
+  font-size: 20px;
 
   &--ok {
     color: $color__green;
@@ -321,13 +207,6 @@
 
   &--warning {
     color: $color__yellow;
-  }
-}
-
-.answer-wizard__summary-status {
-  &[data-state="remaining"] .answer-wizard__summary-icon--warning,
-  &[data-state="complete"] .answer-wizard__summary-icon--ok {
-    display: inline;
   }
 }
 
@@ -377,6 +256,53 @@
   }
 }
 
+.answer-wizard__summary-actions {
+  margin-top: 1.5em;
+
+  .answer-wizard__button {
+    width: 100%;
+  }
+}
+
+// Floating save badge: invisible while idle, so it only shows up when something is saved
+.answer-wizard__save-state {
+  position: fixed;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 25;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(27, 100, 168, 0.25);
+  text-align: center;
+  font-size: 14px;
+
+  &[data-state="idle"] {
+    display: none;
+  }
+
+  .answer-wizard__save-icon {
+    display: none;
+  }
+
+  &[data-state="saved"] .answer-wizard__save-icon--saved {
+    display: inline;
+    color: $color__green;
+  }
+
+  &[data-state="saving"] .answer-wizard__save-icon--saving {
+    display: inline;
+    color: $color__public-secondary;
+  }
+
+  &[data-state="error"] .answer-wizard__save-icon--error {
+    display: inline;
+    color: $color__red;
+  }
+}
+
 .answer-wizard__picker,
 .answer-wizard__confirm {
   position: fixed;
@@ -385,21 +311,6 @@
 
   &[hidden] {
     display: none;
-  }
-}
-
-.answer-wizard__confirm-text {
-  margin: 0 0 1.2em;
-  color: $color__text-main;
-  font-size: 14px;
-}
-
-.answer-wizard__confirm-actions {
-  display: flex;
-  gap: 0.6em;
-
-  .answer-wizard__button {
-    flex: 1;
   }
 }
 
@@ -442,11 +353,6 @@
   border-bottom: 1px solid rgba($color__public-secondary, 0.35);
   cursor: pointer;
 
-  &.is-current {
-    color: $color__primary;
-    font-weight: 600;
-  }
-
   &:last-child {
     border-bottom: none;
   }
@@ -457,17 +363,18 @@
   min-width: 0;
 }
 
-.answer-wizard__picker-item-count {
-  flex-shrink: 0;
-  padding: 0.2em 0.6em;
-  border-radius: 10px;
-  background: rgba($color__public-secondary, 0.3);
-  color: $color__public-primary;
-  font-size: 12px;
+.answer-wizard__confirm-text {
+  margin: 0 0 1.2em;
+  color: $color__text-main;
+  font-size: 14px;
+}
 
-  &.is-complete {
-    background: rgba($color__green, 0.25);
-    color: #1c7a45;
+.answer-wizard__confirm-actions {
+  display: flex;
+  gap: 0.6em;
+
+  .answer-wizard__button {
+    flex: 1;
   }
 }
 
@@ -493,16 +400,16 @@
     text-decoration: none;
   }
 
+  .question-points:empty {
+    display: none;
+  }
+
   // No media may overflow the card, whatever size the host page or Saturne gives it
   img,
   .linked-medias img,
   .saturne-media-block img {
     max-width: 100%;
     height: auto;
-  }
-
-  .question-points:empty {
-    display: none;
   }
 }
 
@@ -522,11 +429,6 @@ body.pwa-answer {
 }
 
 @media (max-width: $media__small) {
-  .answer-wizard__screen {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
   .answer-wizard__summary-item-step {
     display: none;
   }
