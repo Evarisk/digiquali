@@ -482,3 +482,97 @@ function controldetPrepareHead($object)
 
 	return $head;
 }
+
+/**
+ * Get the lots/serials of a product along with the stock holding them.
+ *
+ * The controls tab of a product lists the controls linked to the product itself. Lots and serials are
+ * distinct objects, so the controls really carried out on the units held in stock never show up there.
+ * The second list of that tab is restricted to those lots and shows in which warehouse each of them
+ * stands : both needs are served by this map, which the page caches for the list hooks to reuse.
+ *
+ * @param  int   $productId Id of the parent product
+ * @return array            Lot id => ['lot' => ProductLot, 'warehouses' => Entrepot[], 'qty' => float], ordered by batch
+ * @throws Exception
+ */
+function digiquali_get_product_lot_stock(int $productId): array
+{
+    global $db;
+
+    if ($productId <= 0 || !isModEnabled('productbatch')) {
+        return [];
+    }
+
+    // Load Dolibarr libraries
+    require_once DOL_DOCUMENT_ROOT . '/product/stock/class/entrepot.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
+
+    // Lots/serials of the product
+    $lots = [];
+    $sql  = 'SELECT pl.* FROM ' . $db->prefix() . 'product_lot AS pl';
+    $sql .= ' WHERE pl.fk_product = ' . $productId;
+    $sql .= ' AND pl.entity IN (' . getEntity('productlot') . ')';
+    $sql .= ' ORDER BY pl.batch';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_get_product_lot_stock ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+    while ($obj = $db->fetch_object($resql)) {
+        $productLot = new ProductLot($db);
+        $productLot->setVarsFromFetchObj($obj);
+        $lots[(int) $obj->rowid] = ['lot' => $productLot, 'warehouses' => [], 'qty' => 0];
+    }
+    $db->free($resql);
+
+    if (empty($lots)) {
+        return [];
+    }
+
+    $lotIdsByBatch = [];
+    foreach ($lots as $lotId => $lotData) {
+        $lotIdsByBatch[(string) $lotData['lot']->batch] = $lotId;
+    }
+
+    // Warehouses holding each lot. The stock rows carry the batch value, not the lot id, hence the
+    // lookup on the batch built above
+    $sql  = 'SELECT ps.fk_entrepot AS warehouse_id, pb.batch, SUM(pb.qty) AS qty';
+    $sql .= ' FROM ' . $db->prefix() . 'product_batch AS pb';
+    $sql .= ' INNER JOIN ' . $db->prefix() . 'product_stock AS ps ON (ps.rowid = pb.fk_product_stock)';
+    $sql .= ' INNER JOIN ' . $db->prefix() . 'entrepot AS e ON (e.rowid = ps.fk_entrepot)';
+    $sql .= ' WHERE ps.fk_product = ' . $productId;
+    $sql .= ' AND e.entity IN (' . getEntity('stock') . ')';
+    $sql .= ' GROUP BY ps.fk_entrepot, pb.batch, e.ref';
+    $sql .= ' HAVING SUM(pb.qty) <> 0';
+    $sql .= ' ORDER BY e.ref, pb.batch';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        $warehouses = [];
+        while ($obj = $db->fetch_object($resql)) {
+            $lotId = $lotIdsByBatch[(string) $obj->batch] ?? 0;
+            if (empty($lotId)) {
+                // A batch held in stock without its lot record is not an object a control can point at
+                continue;
+            }
+
+            $warehouseId = (int) $obj->warehouse_id;
+            if (!isset($warehouses[$warehouseId])) {
+                $warehouse                = new Entrepot($db);
+                $warehouses[$warehouseId] = ($warehouse->fetch($warehouseId) > 0 ? $warehouse : null);
+            }
+            if (!is_object($warehouses[$warehouseId])) {
+                continue;
+            }
+
+            $lots[$lotId]['warehouses'][$warehouseId] = $warehouses[$warehouseId];
+            $lots[$lotId]['qty']                     += (float) $obj->qty;
+        }
+        $db->free($resql);
+    } else {
+        dol_syslog('digiquali_get_product_lot_stock ' . $db->lasterror(), LOG_ERR);
+    }
+
+    return $lots;
+}

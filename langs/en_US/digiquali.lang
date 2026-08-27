@@ -65,6 +65,13 @@ LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d ho
 LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
 
 #
+# Controls of a product
+#
+
+ControlsOnParentProduct   = Controls carried out on the parent product
+ControlsOnProductLots     = Controls carried out on the lots/serials in stock
+
+#
 # Answer wizard (mobile)
 #
 
