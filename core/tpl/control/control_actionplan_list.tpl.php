@@ -70,9 +70,16 @@ print $form->selectarray('search_status', $statusLabels, $searchStatus, $langs->
 print $form->selectarray('search_verdict', $verdictFilterOptions, $searchVerdict, $langs->trans('ActionPlanAllVerdicts'), 0, 0, '', 0, 0, 0, '', 'maxwidth150', 1);
 print $form->selectarray('search_assignee', $assigneeFilterOptions, $searchAssignee, $langs->trans('ActionPlanAllAssignees'), 0, 0, '', 0, 0, 0, '', 'maxwidth200', 1);
 print '<input type="text" name="search_text" class="actionplan-search" value="' . dol_escape_htmltag($searchText) . '" placeholder="' . dol_escape_htmltag($langs->trans('Search')) . '">';
-print '<button type="submit" class="button small">' . img_picto('', 'search', 'class="pictofixedwidth"') . $langs->trans('Search') . '</button>';
-$actionPlanResetUrl = $actionPlanUrl . (empty($actionPlanFormParameters) ? '' : '?' . http_build_query($actionPlanFormParameters));
-print '<a class="button button-cancel small" href="' . dol_escape_htmltag($actionPlanResetUrl) . '">' . img_picto('', 'refresh', 'class="pictofixedwidth"') . $langs->trans('Reset') . '</a>';
+
+// Icon buttons, the way a list filter row does it : the only button worth weight here is the one
+// creating an action
+print '<button type="submit" class="actionplan-filter-button" title="' . dol_escape_htmltag($langs->trans('Search')) . '"><i class="fas fa-search"></i></button>';
+
+$actionPlanFiltered = ($searchQuestion > 0 || $searchStatus !== '' || $searchVerdict !== '' || $searchAssignee > 0 || $searchText !== '');
+if ($actionPlanFiltered) {
+    $actionPlanResetUrl = $actionPlanUrl . (empty($actionPlanFormParameters) ? '' : '?' . http_build_query($actionPlanFormParameters));
+    print '<a class="actionplan-filter-button actionplan-filter-reset" href="' . dol_escape_htmltag($actionPlanResetUrl) . '" title="' . dol_escape_htmltag($langs->trans('RemoveFilter')) . '"><i class="fas fa-eraser"></i></a>';
+}
 
 if ($actionPlanEdit) {
     // The saturne modal opener reads what to open from a .modal-options child, not from the trigger itself

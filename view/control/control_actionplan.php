@@ -176,14 +176,7 @@ if ($object->id > 0) {
         print '</td></tr></table>';
     }
 
-    // The two views read the same plan, the link swaps which one is drawn
-    print '<div class="actionplan-view-switch">';
-    if ($view == 'gantt') {
-        print '<a class="button" href="' . dol_escape_htmltag($actionPlanUrl . '?id=' . $object->id) . '"><i class="fas fa-arrow-left pictofixedwidth"></i>' . $langs->trans('ActionPlanListView') . '</a>';
-    } else {
-        print '<a class="button" href="' . dol_escape_htmltag($actionPlanUrl . '?id=' . $object->id . '&view=gantt') . '"><i class="fas fa-stream pictofixedwidth"></i>' . $langs->trans('ActionPlanGanttView') . '</a>';
-    }
-    print '</div>';
+    require_once __DIR__ . '/../../core/tpl/control/control_actionplan_view_switch.tpl.php';
 
     if ($view == 'gantt') {
         require_once __DIR__ . '/../../core/tpl/control/control_actionplan_gantt.tpl.php';

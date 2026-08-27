@@ -430,6 +430,42 @@ div.fiche > form:has(+ .control-product-lot-list) > div.div-table-responsive {
 
 // Action plan
 
+// Segmented control, shared by the list/Gantt switch and by the granularity of the Gantt
+.actionplan-switch {
+  display: inline-flex;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: #fff;
+    border-right: 1px solid rgba(0, 0, 0, 0.12);
+    color: #444;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+
+    &:last-child {
+      border-right: none;
+    }
+    &:hover {
+      background: #f2f2f2;
+    }
+    &.active {
+      background: $color__secondary;
+      color: #fff;
+    }
+  }
+}
+
+.actionplan-gantt .actionplan-switch {
+  margin: 0;
+}
+
 .control-actionplan {
   .actionplan-kpi {
     display: flex;
@@ -487,6 +523,38 @@ div.fiche > form:has(+ .control-product-lot-list) > div.div-table-responsive {
       flex: 1 1 200px;
       min-width: 160px;
     }
+
+    .actionplan-add {
+      margin-left: auto;
+    }
+  }
+
+  .actionplan-filter-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    background: #fff;
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover {
+      background: #f2f2f2;
+      border-color: rgba(0, 0, 0, 0.3);
+      color: $color__secondary;
+    }
+  }
+
+  .actionplan-filter-reset:hover {
+    color: $color__red;
+    border-color: $color__red;
   }
 
   .actionplan-assignee {
@@ -616,20 +684,9 @@ div.fiche > form:has(+ .control-product-lot-list) > div.div-table-responsive {
     margin: 16px 0;
   }
 
-  .actionplan-gantt-granularity a {
-    display: inline-block;
-    padding: 5px 14px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 4px;
-    margin-right: 4px;
-    color: #444;
-    text-decoration: none;
-
-    &.active {
-      background: $color__secondary;
-      border-color: $color__secondary;
-      color: #fff;
-    }
+  .actionplan-gantt-granularity {
+    display: inline-flex;
+    align-items: center;
   }
 
   .actionplan-gantt-table {

@@ -59,10 +59,13 @@ print '<div class="actionplan-gantt">';
 print '<div class="actionplan-gantt-toolbar">';
 print '<div class="actionplan-gantt-granularity">';
 print '<span class="paddingrightonly">' . $langs->trans('ActionPlanGanttGranularity') . ' :</span>';
+// Same segmented control as the one switching between the list and this chart
+print '<span class="actionplan-switch">';
 foreach ($granularities as $granularityKey => $granularityLabel) {
     $granularityUrl = $actionPlanUrl . '?' . http_build_query(($actionPlanFormParameters ?? []) + ['view' => 'gantt', 'granularity' => $granularityKey]);
     print '<a class="' . ($actionPlanGranularity == $granularityKey ? 'active' : '') . '" href="' . dol_escape_htmltag($granularityUrl) . '">' . $granularityLabel . '</a>';
 }
+print '</span>';
 print '</div>';
 
 if (!empty($scheduled)) {
@@ -104,8 +107,11 @@ if (empty($scheduled)) {
                 $label = dol_print_date($cursor, '%d/%m');
                 break;
             case 'week':
-                $next  = dol_time_plus_duree($cursor, 7, 'd');
-                $label = $langs->trans('ActionPlanGanttWeek') . ' ' . dol_print_date($cursor, '%V');
+                $next = dol_time_plus_duree($cursor, 7, 'd');
+                // dol_print_date does not know %V : the week number comes from the same helper the
+                // cursor is aligned with
+                $weekOfColumn = dol_get_first_day_week((int) dol_print_date($cursor, '%d'), (int) dol_print_date($cursor, '%m'), (int) dol_print_date($cursor, '%Y'));
+                $label        = $langs->trans('ActionPlanGanttWeekShort') . $weekOfColumn['week'];
                 break;
             default:
                 $next  = dol_time_plus_duree($cursor, 1, 'm');
