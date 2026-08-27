@@ -72,6 +72,46 @@ ControlsOnParentProduct   = Controls carried out on the parent product
 ControlsOnProductLots     = Controls carried out on the lots/serials in stock
 
 #
+# Action plan
+#
+
+ActionPlan                    = Action plan
+ActionPlanLinkedToControl     = Action plan linked to the control
+ActionPlanTotalActions        = Actions in total
+ActionPlanStatusDone          = Done
+ActionPlanStatusOngoing       = Ongoing
+ActionPlanStatusLate          = Late
+ActionPlanAllQuestions        = Every question
+ActionPlanAllStatus           = Every status
+ActionPlanAllVerdicts         = Every verdict
+ActionPlanAllAssignees        = Every assignee
+ActionPlanNewAction           = New action
+ActionPlanSelectQuestion      = Select a question
+ActionPlanLinkedQuestion      = Linked question
+ActionPlanAction              = Action / Description
+ActionPlanAssignee            = Assignee
+ActionPlanVerdict             = Verdict
+ActionPlanRowActions          = Actions
+ActionPlanNoAction            = No action in the plan
+ControlActionPlanGlobalProgress      = Overall progress of the action plan:
+ActionPlanOpenTask            = Open the task
+ActionPlanConfirmDeleteAction = Are you sure you want to delete this action?
+ActionPlanViewGantt           = Gantt
+ActionPlanViewList            = List
+ActionPlanGanttWeekShort      = W
+ActionPlanGanttPeriod         = Period
+ActionPlanGanttGranularity    = Granularity
+ActionPlanGanttToday          = Today
+ActionPlanGanttNoDate         = Actions without a date, left out of the chart
+ActionPlanGanttDay            = Day
+ActionPlanGanttWeek           = Week
+ActionPlanGanttMonth          = Month
+ActionPlanCount               = %s action(s)
+PublicActionPlan              = Public interface of the action plan
+GoToPublicActionPlanPage      = Go to the public action plan page
+PublicActionPlanDisabled      = The public interface of the action plan is not enabled
+
+#
 # Answer wizard (mobile)
 #
 

@@ -55,6 +55,13 @@ function control_prepare_head(Control $object): array
     $head[2][1] .= '<span class="badge marginleftonlyshort">' . $nbEquipment . '</span>';
 	$head[2][2]  = 'equipment';
 
+    // Action plan tab. Index 15 places it between the attendants tab (10) and the notes one (20),
+    // saturne_object_prepare_head() sorting the tabs on their key
+    $head[15][0]  = dol_buildpath('/digiquali/view/control/control_actionplan.php', 1) . '?id=' . $object->id;
+    $head[15][1]  = $conf->browser->layout != 'phone' ? '<i class="fas fa-clipboard-list pictofixedwidth"></i>' . $langs->trans('ActionPlan') : '<i class="fas fa-clipboard-list"></i>';
+    $head[15][1] .= '<span class="badge marginleftonlyshort">' . digiquali_count_control_actions($object->id) . '</span>';
+    $head[15][2]  = 'actionplan';
+
 	$moreparam['documentType']       = 'ControlDocument';
     $moreparam['attendantTableMode'] = 'simple';
     $moreparam['handlePhoto']        = true;
@@ -575,4 +582,251 @@ function digiquali_get_product_lot_stock(int $productId): array
     }
 
     return $lots;
+}
+
+/**
+ * Get the action plan of a control : the tasks carried by the answers of its questions.
+ *
+ * An action is a project task linked to a control line, the line being the answer given to one question
+ * of the control. The link lives in llx_element_element and can have been written in either direction,
+ * hence the union. Everything the action plan displays about an action is gathered here : the question
+ * it answers, the answer given to that question, and the users it is assigned to.
+ *
+ * @param  Control $control Control the action plan belongs to
+ * @return array            List of ['task' => SaturneTask, 'line' => ControlLine, 'question' => Question|null, 'answer' => Answer|null, 'assignees' => User[]]
+ * @throws Exception
+ */
+function digiquali_get_control_actions(Control $control): array
+{
+    global $db;
+
+    if (empty($control->id)) {
+        return [];
+    }
+
+    // Load Dolibarr libraries
+    require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+
+    // Load Saturne libraries
+    require_once __DIR__ . '/../../saturne/class/task/saturnetask.class.php';
+
+    // Load DigiQuali libraries
+    require_once __DIR__ . '/../class/answer.class.php';
+    require_once __DIR__ . '/../class/question.class.php';
+
+    $controlLine = new ControlLine($db);
+    $lines       = $controlLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_control = ' . $control->id . ' AND t.status > 0']);
+    if (!is_array($lines) || empty($lines)) {
+        return [];
+    }
+
+    // Tasks linked to those lines. The link is written from the task or from the line depending on the
+    // code path that created it, so both directions are read
+    $lineIds = implode(',', array_map('intval', array_keys($lines)));
+    $sql     = 'SELECT fk_target AS line_id, fk_source AS task_id FROM ' . $db->prefix() . 'element_element';
+    $sql    .= " WHERE sourcetype = 'project_task' AND targettype = 'controldet' AND fk_target IN (" . $lineIds . ')';
+    $sql    .= ' UNION ';
+    $sql    .= 'SELECT fk_source AS line_id, fk_target AS task_id FROM ' . $db->prefix() . 'element_element';
+    $sql    .= " WHERE sourcetype = 'controldet' AND targettype = 'project_task' AND fk_source IN (" . $lineIds . ')';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_get_control_actions ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+    $taskIdsByLine = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $taskIdsByLine[(int) $obj->line_id][] = (int) $obj->task_id;
+    }
+    $db->free($resql);
+
+    if (empty($taskIdsByLine)) {
+        return [];
+    }
+
+    $questions = [];
+    $answers   = [];
+    $users     = [];
+    $actions   = [];
+
+    foreach ($taskIdsByLine as $lineId => $taskIds) {
+        $line = $lines[$lineId] ?? null;
+        if (empty($line)) {
+            continue;
+        }
+
+        // Question of the line, and the answer given to it. The line holds the positions of the chosen
+        // answers, not their ids, which is how the whole module reads an answer back
+        $questionId = (int) $line->fk_question;
+        if (!isset($questions[$questionId])) {
+            $question              = new Question($db);
+            $questions[$questionId] = ($question->fetch($questionId) > 0 ? $question : null);
+
+            $answerObject        = new Answer($db);
+            $questionAnswers     = $answerObject->fetchAll('', 'position', 0, 0, ['customsql' => 't.fk_question = ' . $questionId]);
+            $answers[$questionId] = is_array($questionAnswers) ? $questionAnswers : [];
+        }
+
+        $givenAnswer = null;
+        if (!empty($line->answer) && $line->answer !== '0') {
+            $positions = array_map('trim', explode(',', (string) $line->answer));
+            foreach ($answers[$questionId] as $questionAnswer) {
+                if (in_array((string) $questionAnswer->position, $positions, true)) {
+                    $givenAnswer = $questionAnswer;
+                    break;
+                }
+            }
+        }
+
+        foreach ($taskIds as $taskId) {
+            $task = new SaturneTask($db);
+            if ($task->fetch($taskId) <= 0) {
+                continue;
+            }
+
+            $assignees = [];
+            foreach ($task->getListContactId('internal') as $contactId) {
+                if (!isset($users[$contactId])) {
+                    $assignee          = new User($db);
+                    $users[$contactId] = ($assignee->fetch($contactId) > 0 ? $assignee : null);
+                }
+                if (is_object($users[$contactId])) {
+                    $assignees[$contactId] = $users[$contactId];
+                }
+            }
+
+            $actions[$taskId] = [
+                'task'      => $task,
+                'line'      => $line,
+                'question'  => $questions[$questionId],
+                'answer'    => $givenAnswer,
+                'assignees' => $assignees
+            ];
+        }
+    }
+
+    return $actions;
+}
+
+/**
+ * Tell where an action of a control action plan stands.
+ *
+ * Dolibarr tasks carry a progress and a deadline but no state of their own, so the three states the
+ * action plan speaks of are read from those : a fully progressed action is done, an action past its
+ * deadline is late, anything else is running.
+ *
+ * @param  Task   $task Action to qualify
+ * @return string       'done', 'late' or 'ongoing'
+ */
+function digiquali_get_control_action_status(Task $task): string
+{
+    if ((float) $task->progress >= 100) {
+        return 'done';
+    }
+    if (!empty($task->date_end) && $task->date_end < dol_now()) {
+        return 'late';
+    }
+
+    return 'ongoing';
+}
+
+/**
+ * Count the actions of a control action plan by state, and how far it has gone.
+ *
+ * @param  array $actions Actions as returned by digiquali_get_control_actions()
+ * @return array          ['total' => int, 'done' => int, 'ongoing' => int, 'late' => int, 'progress' => int]
+ */
+function digiquali_get_control_action_stats(array $actions): array
+{
+    $stats = ['total' => count($actions), 'done' => 0, 'ongoing' => 0, 'late' => 0, 'progress' => 0];
+
+    foreach ($actions as $action) {
+        $stats[digiquali_get_control_action_status($action['task'])]++;
+    }
+
+    if ($stats['total'] > 0) {
+        $stats['progress'] = (int) round($stats['done'] * 100 / $stats['total']);
+    }
+
+    return $stats;
+}
+
+/**
+ * Count the actions of the action plan of a control.
+ *
+ * The tab badge only needs how many there are : this counts them in one query instead of building
+ * every action the way digiquali_get_control_actions() does.
+ *
+ * @param  int $controlId Id of the control
+ * @return int            Number of actions carried by the answers of the control
+ */
+function digiquali_count_control_actions(int $controlId): int
+{
+    global $db;
+
+    if ($controlId <= 0) {
+        return 0;
+    }
+
+    $lines  = '(SELECT rowid FROM ' . $db->prefix() . 'digiquali_controldet WHERE fk_control = ' . $controlId . ' AND status > 0)';
+    $sql    = 'SELECT COUNT(*) AS nb FROM (';
+    $sql   .= "SELECT fk_source AS task_id FROM " . $db->prefix() . "element_element WHERE sourcetype = 'project_task' AND targettype = 'controldet' AND fk_target IN " . $lines;
+    $sql   .= ' UNION ';
+    $sql   .= "SELECT fk_target AS task_id FROM " . $db->prefix() . "element_element WHERE sourcetype = 'controldet' AND targettype = 'project_task' AND fk_source IN " . $lines;
+    $sql   .= ') AS controlactions';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_count_control_actions ' . $db->lasterror(), LOG_ERR);
+        return 0;
+    }
+    $obj = $db->fetch_object($resql);
+    $db->free($resql);
+
+    return (int) ($obj->nb ?? 0);
+}
+
+/**
+ * Keep the actions of a control action plan matching the filters of the page.
+ *
+ * An action is spread over a task, the control line it answers and the answer given to that line, so
+ * no single query holds every criteria : the plan is filtered once built.
+ *
+ * @param  array $actions Actions as returned by digiquali_get_control_actions()
+ * @param  array $filters ['question' => int, 'status' => string, 'verdict' => string, 'assignee' => int, 'text' => string], empty values matching everything
+ * @return array          The actions the filters keep
+ */
+function digiquali_filter_control_actions(array $actions, array $filters): array
+{
+    $questionId = (int) ($filters['question'] ?? 0);
+    $status     = (string) ($filters['status'] ?? '');
+    $verdict    = (string) ($filters['verdict'] ?? '');
+    $assigneeId = (int) ($filters['assignee'] ?? 0);
+    $text       = dol_strtolower(trim((string) ($filters['text'] ?? '')));
+
+    return array_filter($actions, function (array $action) use ($questionId, $status, $verdict, $assigneeId, $text) {
+        if ($questionId > 0 && (!is_object($action['question']) || $action['question']->id != $questionId)) {
+            return false;
+        }
+        if ($status !== '' && digiquali_get_control_action_status($action['task']) !== $status) {
+            return false;
+        }
+        if ($verdict !== '' && (!is_object($action['answer']) || $action['answer']->value !== $verdict)) {
+            return false;
+        }
+        if ($assigneeId > 0 && !isset($action['assignees'][$assigneeId])) {
+            return false;
+        }
+        if ($text !== '') {
+            $haystack = dol_strtolower($action['task']->ref . ' ' . $action['task']->label . ' ' . $action['task']->description);
+            if (is_object($action['question'])) {
+                $haystack .= ' ' . dol_strtolower($action['question']->ref . ' ' . $action['question']->label);
+            }
+            if (strpos($haystack, $text) === false) {
+                return false;
+            }
+        }
+
+        return true;
+    });
 }
