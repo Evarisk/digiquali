@@ -288,6 +288,12 @@ if (!empty($fromType)) {
     saturne_banner_tab($objectsMetadata[$fromType]['object'], 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
 
     $moreUrlParameters = '&fromtype=' . $fromType . '&fromid=' . $fromId . '&mode=' . $mode;
+
+    // The product tab shows two lists : the controls of the product itself and, below, the ones carried
+    // out on its lots/serials. Naming the first one keeps them apart
+    if ($fromType == 'product' && isModEnabled('productbatch')) {
+        $title = $langs->trans('ControlsOnParentProduct');
+    }
 }
 
 if ($fromId) {
@@ -333,6 +339,12 @@ if ($nbLinkableElements == 0) {
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
+}
+
+// Controls carried out on the lots/serials of the product, grouped by warehouse : they are linked to the
+// lots, not to the product, so the list above never shows them
+if ($fromType == 'product' && isModEnabled('productbatch')) {
+    require_once __DIR__ . '/../../core/tpl/control/control_product_lot_list.tpl.php';
 }
 
 // End of page
