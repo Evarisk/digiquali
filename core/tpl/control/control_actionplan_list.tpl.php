@@ -99,6 +99,10 @@ print '<th class="liste_titre">' . $langs->trans('ActionPlanLinkedQuestion') . '
 print '<th class="liste_titre">' . $langs->trans('ActionPlanAction') . '</th>';
 print '<th class="liste_titre">' . $langs->trans('ActionPlanAssignee') . '</th>';
 print '<th class="liste_titre center">' . $langs->trans('Deadline') . '</th>';
+// The budget is a figure of the house : it stays out of the interface anyone holding the link can open
+if (!$actionPlanPublic) {
+    print '<th class="liste_titre right">' . $langs->trans('Budget') . '</th>';
+}
 print '<th class="liste_titre center">' . $langs->trans('Status') . '</th>';
 print '<th class="liste_titre center">' . $langs->trans('ActionPlanVerdict') . '</th>';
 if ($actionPlanEdit) {
@@ -106,8 +110,10 @@ if ($actionPlanEdit) {
 }
 print '</tr>';
 
+$actionPlanColumnCount = 7 + ($actionPlanPublic ? 0 : 1) + ($actionPlanEdit ? 1 : 0);
+
 if (empty($actions)) {
-    print '<tr class="oddeven"><td colspan="' . ($actionPlanEdit ? 8 : 7) . '"><span class="opacitymedium">' . $langs->trans('ActionPlanNoAction') . '</span></td></tr>';
+    print '<tr class="oddeven"><td colspan="' . $actionPlanColumnCount . '"><span class="opacitymedium">' . $langs->trans('ActionPlanNoAction') . '</span></td></tr>';
 }
 
 foreach ($actions as $actionRow) {
@@ -146,6 +152,12 @@ foreach ($actions as $actionRow) {
     print '<td class="center nowraponall' . ($actionStatus == 'late' ? ' actionplan-deadline-late' : '') . '">';
     print !empty($actionTask->date_end) ? dol_print_date($actionTask->date_end, 'day') : '';
     print '</td>';
+
+    if (!$actionPlanPublic) {
+        print '<td class="right nowraponall">';
+        print (is_numeric($actionTask->budget_amount) ? price($actionTask->budget_amount, 0, $langs, 1, -1, -1, $conf->currency) : '');
+        print '</td>';
+    }
 
     print '<td class="center"><span class="actionplan-status status-' . $actionStatus . '">' . $statusLabels[$actionStatus] . '</span></td>';
 
