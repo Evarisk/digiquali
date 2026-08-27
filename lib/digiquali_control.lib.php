@@ -484,21 +484,18 @@ function controldetPrepareHead($object)
 }
 
 /**
- * Get the controls carried out on the lots/serials of a product, grouped by warehouse then by lot.
+ * Get the lots/serials of a product along with the stock holding them.
  *
- * The controls tab of a product only lists the controls linked to the product itself. Lots and serials
- * are distinct objects, so the controls really carried out on the units held in stock never show up
- * there. This gathers them from llx_element_element and keys them the way the stock is organised
- * (warehouse > lot), so the product card can show what has been controlled on each lot and where.
- *
- * Lots holding no stock are gathered under the key 0 instead of being dropped, but only when they carry
- * a control, so a control done on a lot since consumed stays visible without listing every dead lot.
+ * The controls tab of a product lists the controls linked to the product itself. Lots and serials are
+ * distinct objects, so the controls really carried out on the units held in stock never show up there.
+ * The second list of that tab is restricted to those lots and shows in which warehouse each of them
+ * stands : both needs are served by this map, which the page caches for the list hooks to reuse.
  *
  * @param  int   $productId Id of the parent product
- * @return array            Warehouse id => ['warehouse' => Entrepot|null, 'lots' => lot id => ['lot' => ProductLot, 'qty' => float|null, 'controls' => Control[]]]
+ * @return array            Lot id => ['lot' => ProductLot, 'warehouses' => Entrepot[], 'qty' => float], ordered by batch
  * @throws Exception
  */
-function digiquali_get_product_lot_controls(int $productId): array
+function digiquali_get_product_lot_stock(int $productId): array
 {
     global $db;
 
@@ -510,9 +507,6 @@ function digiquali_get_product_lot_controls(int $productId): array
     require_once DOL_DOCUMENT_ROOT . '/product/stock/class/entrepot.class.php';
     require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
 
-    // Load DigiQuali libraries
-    require_once __DIR__ . '/../class/control.class.php';
-
     // Lots/serials of the product
     $lots = [];
     $sql  = 'SELECT pl.* FROM ' . $db->prefix() . 'product_lot AS pl';
@@ -522,13 +516,13 @@ function digiquali_get_product_lot_controls(int $productId): array
 
     $resql = $db->query($sql);
     if (!$resql) {
-        dol_syslog('digiquali_get_product_lot_controls ' . $db->lasterror(), LOG_ERR);
+        dol_syslog('digiquali_get_product_lot_stock ' . $db->lasterror(), LOG_ERR);
         return [];
     }
     while ($obj = $db->fetch_object($resql)) {
         $productLot = new ProductLot($db);
         $productLot->setVarsFromFetchObj($obj);
-        $lots[(int) $obj->rowid] = $productLot;
+        $lots[(int) $obj->rowid] = ['lot' => $productLot, 'warehouses' => [], 'qty' => 0];
     }
     $db->free($resql);
 
@@ -537,42 +531,12 @@ function digiquali_get_product_lot_controls(int $productId): array
     }
 
     $lotIdsByBatch = [];
-    foreach ($lots as $lotId => $productLot) {
-        $lotIdsByBatch[(string) $productLot->batch] = $lotId;
+    foreach ($lots as $lotId => $lotData) {
+        $lotIdsByBatch[(string) $lotData['lot']->batch] = $lotId;
     }
 
-    // Controls linked to those lots, newest first
-    $controlIdsByLot = [];
-    $controlIds      = [];
-    $sql  = 'SELECT ee.fk_source AS lot_id, ee.fk_target AS control_id';
-    $sql .= ' FROM ' . $db->prefix() . 'element_element AS ee';
-    $sql .= " WHERE ee.sourcetype = 'productlot' AND ee.targettype = 'digiquali_control'";
-    $sql .= ' AND ee.fk_source IN (' . implode(',', array_keys($lots)) . ')';
-
-    $resql = $db->query($sql);
-    if ($resql) {
-        while ($obj = $db->fetch_object($resql)) {
-            $controlIdsByLot[(int) $obj->lot_id][] = (int) $obj->control_id;
-            $controlIds[(int) $obj->control_id]    = (int) $obj->control_id;
-        }
-        $db->free($resql);
-    } else {
-        dol_syslog('digiquali_get_product_lot_controls ' . $db->lasterror(), LOG_ERR);
-    }
-
-    $controls = [];
-    if (!empty($controlIds)) {
-        $control  = new Control($db);
-        $controls = $control->fetchAll('DESC', 't.date_creation', 0, 0, ['customsql' => 't.rowid IN (' . implode(',', $controlIds) . ') AND t.status >= 0']);
-        if (!is_array($controls)) {
-            $controls = [];
-        }
-    }
-
-    // Stock held per warehouse for each lot. The stock rows carry the batch value, not the lot id,
-    // hence the lookup on the batch built above
-    $groups         = [];
-    $lotIdsInStock  = [];
+    // Warehouses holding each lot. The stock rows carry the batch value, not the lot id, hence the
+    // lookup on the batch built above
     $sql  = 'SELECT ps.fk_entrepot AS warehouse_id, pb.batch, SUM(pb.qty) AS qty';
     $sql .= ' FROM ' . $db->prefix() . 'product_batch AS pb';
     $sql .= ' INNER JOIN ' . $db->prefix() . 'product_stock AS ps ON (ps.rowid = pb.fk_product_stock)';
@@ -589,54 +553,26 @@ function digiquali_get_product_lot_controls(int $productId): array
         while ($obj = $db->fetch_object($resql)) {
             $lotId = $lotIdsByBatch[(string) $obj->batch] ?? 0;
             if (empty($lotId)) {
-                // A batch present in stock without its lot record cannot carry any control link
+                // A batch held in stock without its lot record is not an object a control can point at
                 continue;
             }
 
             $warehouseId = (int) $obj->warehouse_id;
             if (!isset($warehouses[$warehouseId])) {
-                $warehouse = new Entrepot($db);
-                $warehouse->fetch($warehouseId);
-                $warehouses[$warehouseId] = $warehouse;
+                $warehouse                = new Entrepot($db);
+                $warehouses[$warehouseId] = ($warehouse->fetch($warehouseId) > 0 ? $warehouse : null);
+            }
+            if (!is_object($warehouses[$warehouseId])) {
+                continue;
             }
 
-            $groups[$warehouseId]['warehouse']    = $warehouses[$warehouseId];
-            $groups[$warehouseId]['lots'][$lotId] = [
-                'lot'      => $lots[$lotId],
-                'qty'      => (float) $obj->qty,
-                'controls' => []
-            ];
-            $lotIdsInStock[$lotId] = $lotId;
+            $lots[$lotId]['warehouses'][$warehouseId] = $warehouses[$warehouseId];
+            $lots[$lotId]['qty']                     += (float) $obj->qty;
         }
         $db->free($resql);
     } else {
-        dol_syslog('digiquali_get_product_lot_controls ' . $db->lasterror(), LOG_ERR);
+        dol_syslog('digiquali_get_product_lot_stock ' . $db->lasterror(), LOG_ERR);
     }
 
-    // Lots out of stock keep their own group, appended last. Only the ones actually controlled are kept :
-    // a lot that is neither held nor controlled has nothing to show
-    foreach ($lots as $lotId => $productLot) {
-        if (isset($lotIdsInStock[$lotId]) || empty($controlIdsByLot[$lotId])) {
-            continue;
-        }
-        $groups[0]['warehouse']    = null;
-        $groups[0]['lots'][$lotId] = [
-            'lot'      => $productLot,
-            'qty'      => null,
-            'controls' => []
-        ];
-    }
-
-    // Dispatch the controls in every group the lot belongs to : the same lot can be held in several warehouses
-    foreach ($groups as $warehouseId => $group) {
-        foreach (array_keys($group['lots']) as $lotId) {
-            foreach ($controlIdsByLot[$lotId] ?? [] as $controlId) {
-                if (isset($controls[$controlId])) {
-                    $groups[$warehouseId]['lots'][$lotId]['controls'][$controlId] = $controls[$controlId];
-                }
-            }
-        }
-    }
-
-    return $groups;
+    return $lots;
 }

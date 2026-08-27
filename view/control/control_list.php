@@ -110,7 +110,9 @@ foreach($objectsMetadata as $objectMetadata) {
         continue;
     }
 
-    if (empty($fromType) || $fromType == $objectMetadata['link_name']) {
+    // A tab shows the column of the element it filters on, plus, on a product, the lot/serial each
+    // control concerns : that one belongs to another metadata than the one the tab was opened from
+    if (empty($fromType) || $fromType == $objectMetadata['link_name'] || ($fromType == 'product' && $objectMetadata['link_name'] == 'productlot')) {
         $object->fields[$objectMetadata['post_name']] = [
             'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
             'label'      => $langs->trans($objectMetadata['langs']),
@@ -288,6 +290,10 @@ if (!empty($fromType)) {
     saturne_banner_tab($objectsMetadata[$fromType]['object'], 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
 
     $moreUrlParameters = '&fromtype=' . $fromType . '&fromid=' . $fromId . '&mode=' . $mode;
+
+    // Sort links, pagination and the search form all post to this very page : without these, the tab
+    // loses the element it is opened from as soon as one of them is used
+    $formMoreParams = ['fromtype' => $fromType, 'fromid' => $fromId];
 
     // The product tab shows two lists : the controls of the product itself and, below, the ones carried
     // out on its lots/serials. Naming the first one keeps them apart

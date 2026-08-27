@@ -70,8 +70,6 @@ LinkedObjectSyncError                   = Link synchronisation failed, no change
 
 ControlsOnParentProduct   = Controls carried out on the parent product
 ControlsOnProductLots     = Controls carried out on the lots/serials in stock
-ProductLotsWithoutStock   = Lots/serials out of stock
-NoControlOnThisProductLot = No control on this lot/serial
 
 #
 # Answer wizard (mobile)

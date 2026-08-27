@@ -19,129 +19,72 @@
 /**
  * \file    core/tpl/control/control_product_lot_list.tpl.php
  * \ingroup digiquali
- * \brief   Template page listing the controls done on the lots/serials of a product, grouped by warehouse
+ * \brief   Template page for the second list of the controls tab of a product : the controls carried
+ *          out on its lots/serials, rendered by the saturne list templates
  */
 
 /**
  * The following vars must be defined :
- * Globals    : $conf, $db, $langs
- * Variables  : $fromId (id of the product whose controls tab is displayed)
+ * Globals    : $conf, $db, $hookmanager, $langs, $user
+ * Objects    : $extrafields, $form, $object
+ * Variables  : $arrayfields, $excludeFields, $fromId, $fromType, $objectsMetadata, $search, and every
+ *              other variable the saturne list templates read
  */
 
-// Load Dolibarr libraries
-require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-
 // Load DigiQuali libraries
-require_once __DIR__ . '/../../../class/sheet.class.php';
 require_once __DIR__ . '/../../../lib/digiquali_control.lib.php';
 
-$productLotGroups = digiquali_get_product_lot_controls((int) $fromId);
+$langs->loadLangs(['productbatch', 'stocks']);
 
-// A product holding no lot/serial at all has nothing to show here
-if (!empty($productLotGroups)) {
-    $showProject = isModEnabled('project');
+$productLotStock = digiquali_get_product_lot_stock((int) $fromId);
 
-    // Sheets and projects are shared by many controls : fetch each of them only once
-    $sheets   = [];
-    $projects = [];
+// Nothing to show for a product holding no lot/serial
+if (!empty($productLotStock)) {
+    // The lot restriction reaches the query through the cache instead of through $search : a search key
+    // would land in the URL of every link of the page and would filter the list above as well
+    $conf->cache['digiqualiProductLotStock'] = $productLotStock;
 
-    $columns = [
-        ['label' => $langs->trans('Batch'),                 'css' => ''],
-        ['label' => $langs->trans('Qty'),                   'css' => 'center'],
-        ['label' => $langs->trans('Ref'),                   'css' => ''],
-        ['label' => $langs->trans('Sheet'),                 'css' => ''],
-        ['label' => $langs->trans('DateCreation'),          'css' => 'center'],
-        ['label' => $langs->trans('ControlDate'),           'css' => 'center'],
-        ['label' => $langs->trans('NextControlDate'),       'css' => 'center'],
-        ['label' => $langs->trans('DaysBeforeNextControl'), 'css' => 'center'],
-        ['label' => $langs->trans('Verdict'),               'css' => 'center'],
-        ['label' => $langs->trans('Status'),                'css' => 'center']
-    ];
-    if ($showProject) {
-        array_splice($columns, 4, 0, [['label' => $langs->trans('Project'), 'css' => '']]);
-    }
-    $nbColumns = count($columns);
+    // The product filter belongs to the list above : a control carried out on a lot is not linked to the
+    // product itself, so keeping it would leave this list empty
+    $search[$objectsMetadata['product']['post_name']] = '';
 
+    // A control has no warehouse of its own : the column is filled by the loop hook from the lot the
+    // control concerns. It has no column in the control table either, hence its exclusion from the SELECT
+    $object->fields['warehouse'] = ['type' => 'varchar(255)', 'label' => 'Warehouse', 'enabled' => 1, 'position' => 19, 'visible' => 2, 'csslist' => 'tdoverflowmax150', 'disablesort' => 1, 'disablesearch' => 1];
+    $arrayfields['t.warehouse']  = ['label' => 'Warehouse', 'checked' => 1, 'enabled' => 1, 'position' => 19];
+    $excludeFields[]             = 'warehouse';
+    $object->fields              = dol_sort_array($object->fields, 'position');
+    $arrayfields                 = dol_sort_array($arrayfields, 'position');
+
+    // What the saturne list templates read to render a list : a title and a saved column layout of its
+    // own, and a query rebuilt from the state set above
+    $title        = $langs->trans('ControlsOnProductLots');
+    $listLayoutId = $object->element . '_productlot';
+    unset($listColumnWidths, $useSideFilterPanel);
+
+    // The wrapper marks this second list for the stylesheet, which gives the list above back its natural
+    // height : the theme reserves 392px under a list it believes ends the page
     print '<div class="control-product-lot-list">';
-    print load_fiche_titre($langs->trans('ControlsOnProductLots'), '', 'lot');
 
-    print '<div class="div-table-responsive-no-min">';
-    print '<table class="tagtable nobottomiftotal noborder liste centpercent">';
+    // The header appends to these what it prints next to the title : left as they are, this list would
+    // repeat the buttons of the one above
+    unset($cardButton, $newCardButton);
 
-    print '<tr class="liste_titre">';
-    foreach ($columns as $column) {
-        print '<th class="liste_titre' . (!empty($column['css']) ? ' ' . $column['css'] : '') . '">' . $column['label'] . '</th>';
-    }
-    print '</tr>';
+    // require, not require_once : these very templates already rendered the list above
+    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php';
+    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_header.tpl.php';
 
-    foreach ($productLotGroups as $warehouseGroup) {
-        // Warehouse header : the lots out of stock are gathered in a group carrying no warehouse
-        print '<tr class="liste_titre">';
-        print '<td class="liste_titre" colspan="' . $nbColumns . '">';
-        print is_object($warehouseGroup['warehouse']) ? img_picto('', 'stock', 'class="pictofixedwidth"') . $warehouseGroup['warehouse']->getNomUrl(0) : '<span class="opacitymedium">' . $langs->trans('ProductLotsWithoutStock') . '</span>';
-        print '</td>';
-        print '</tr>';
+    // The displayed columns are saved per page and not per list, so the header just unchecked a column
+    // the saved selection cannot know about. It belongs to this list only : put it back
+    $arrayfields['t.warehouse']['checked'] = 1;
 
-        foreach ($warehouseGroup['lots'] as $lotData) {
-            $nbControls = count($lotData['controls']);
-            $lotCells   = '<td rowspan="' . max(1, $nbControls) . '">' . $lotData['lot']->getNomUrl(1) . '</td>';
-            $lotCells  .= '<td class="center" rowspan="' . max(1, $nbControls) . '">' . (isset($lotData['qty']) ? price2num($lotData['qty'], 'MS') : '') . '</td>';
+    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_search_input.tpl.php';
+    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
+    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
+    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
 
-            if ($nbControls == 0) {
-                print '<tr class="oddeven">';
-                print $lotCells;
-                print '<td colspan="' . ($nbColumns - 2) . '"><span class="opacitymedium">' . $langs->trans('NoControlOnThisProductLot') . '</span></td>';
-                print '</tr>';
-                continue;
-            }
-
-            foreach ($lotData['controls'] as $control) {
-                print '<tr class="oddeven">';
-
-                // The lot and its quantity are printed once and span every control it carries
-                print $lotCells;
-                $lotCells = '';
-
-                print '<td class="nowraponall">' . $control->getNomUrl(1) . '</td>';
-
-                if (!isset($sheets[$control->fk_sheet])) {
-                    $sheet                      = new Sheet($db);
-                    $sheets[$control->fk_sheet] = ($sheet->fetch($control->fk_sheet) > 0 ? $sheet : null);
-                }
-                print '<td class="tdoverflowmax200">' . (is_object($sheets[$control->fk_sheet]) ? $sheets[$control->fk_sheet]->getNomUrl(1) : '') . '</td>';
-
-                if ($showProject) {
-                    if (!empty($control->projectid) && !isset($projects[$control->projectid])) {
-                        $project                       = new Project($db);
-                        $projects[$control->projectid] = ($project->fetch($control->projectid) > 0 ? $project : null);
-                    }
-                    print '<td class="tdoverflowmax200">' . (!empty($control->projectid) && is_object($projects[$control->projectid]) ? $projects[$control->projectid]->getNomUrl(1) : '') . '</td>';
-                }
-
-                print '<td class="center nowraponall">' . dol_print_date($control->date_creation, 'dayhour') . '</td>';
-                print '<td class="center nowraponall">' . (!empty($control->control_date) ? dol_print_date($control->control_date, 'day') : '') . '</td>';
-                print '<td class="center nowraponall">' . (!empty($control->next_control_date) ? dol_print_date($control->next_control_date, 'day') : '') . '</td>';
-
-                print '<td class="center">';
-                if (!empty($control->next_control_date)) {
-                    $daysBeforeNextControl = (int) round(($control->next_control_date - dol_now('tzuser')) / (3600 * 24));
-                    $nextControlDateColor  = $control->getNextControlDateColor();
-                    // The colour comes from the module configuration, so it cannot live in a stylesheet
-                    print '<div class="wpeo-button" style="background-color: ' . $nextControlDateColor . '; border-color: ' . $nextControlDateColor . ';">' . $daysBeforeNextControl . '</div>';
-                }
-                print '</td>';
-
-                $verdictColor = $control->verdict == 1 ? 'green' : ($control->verdict == 2 ? 'red' : 'grey');
-                print '<td class="center"><div class="wpeo-button button-' . $verdictColor . '">' . $control->fields['verdict']['arrayofkeyval'][!empty($control->verdict) ? $control->verdict : 0] . '</div></td>';
-
-                print '<td class="center">' . $control->getLibStatut(5) . '</td>';
-
-                print '</tr>';
-            }
-        }
-    }
-
-    print '</table>';
     print '</div>';
-    print '</div>';
+
+    // The cache drives a hook shared by every control list : leave nothing behind
+    unset($conf->cache['digiqualiProductLotStock']);
 }

@@ -617,11 +617,27 @@ class ActionsDigiquali
      */
     public function printFieldListWhere(array $parameters): int
     {
+        global $conf;
+
         if (strpos($parameters['context'], 'controllist') !== false) {
-            if (isset($parameters['search']['verdict']) && $parameters['search']['verdict'] != '' && $parameters['search']['verdict'] == 0) {
-                $sql = ' OR (t.verdict IS NULL)';
-                $this->resprints = $sql;
+            $sql = '';
+
+            // Second list of the controls tab of a product : the controls of its lots/serials. The
+            // restriction is carried by the cache and not by $search, which would land in the URL and
+            // filter the list of the product itself as well. It is emitted before the verdict clause
+            // below, whose OR would otherwise take it out of the branch matching an empty verdict
+            if (!empty($conf->cache['digiqualiProductLotStock'])) {
+                $lotIds = implode(',', array_map('intval', array_keys($conf->cache['digiqualiProductLotStock'])));
+                $sql   .= ' AND EXISTS (SELECT 1 FROM ' . $this->db->prefix() . 'element_element AS eelot';
+                $sql   .= ' WHERE eelot.fk_target = t.rowid AND eelot.targettype = "digiquali_control"';
+                $sql   .= ' AND eelot.sourcetype = "productlot" AND eelot.fk_source IN (' . $lotIds . '))';
             }
+
+            if (isset($parameters['search']['verdict']) && $parameters['search']['verdict'] != '' && $parameters['search']['verdict'] == 0) {
+                $sql .= ' OR (t.verdict IS NULL)';
+            }
+
+            $this->resprints = $sql;
         }
 
         return 0; // or return 1 to replace standard code
@@ -1178,6 +1194,19 @@ class ActionsDigiquali
                     }
                     $out[$parameters['key']] = implode('<br>', $links);
                 }
+            }
+
+            // The controls tab of a product carries a warehouse column on its lots/serials list. A
+            // control has no warehouse of its own : it gets the ones holding the lot it concerns,
+            // read from the stock map the page cached
+            if ($parameters['key'] == 'warehouse' && !empty($conf->cache['digiqualiProductLotStock'])) {
+                $warehouseLinks = [];
+                foreach ($object->linkedObjects['productlot'] ?? [] as $linkedLot) {
+                    foreach ($conf->cache['digiqualiProductLotStock'][$linkedLot->id]['warehouses'] ?? [] as $warehouse) {
+                        $warehouseLinks[$warehouse->id] = $warehouse->getNomUrl(1);
+                    }
+                }
+                $out[$parameters['key']] = implode('<br>', $warehouseLinks);
             }
 
             if ($parameters['key'] == 'days_remaining_before_next_control') {
