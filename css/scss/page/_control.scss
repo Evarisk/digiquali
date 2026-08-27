@@ -417,3 +417,13 @@
   margin-left: 10px;
 }
 
+
+// The eldy theme reserves 392px under a list that is the last thing on the page ("no content after
+// table"). The controls tab of a product now prints the lots/serials list right after that form, so
+// the reserved height turns into a hole between the two tables : give the list back its natural
+// height when it is followed by that second listing. Both theme selectors are matched, and every
+// element is spelled out to outweigh their specificity
+div.fiche > div.tabBar > form:has(+ .control-product-lot-list) > div.div-table-responsive,
+div.fiche > form:has(+ .control-product-lot-list) > div.div-table-responsive {
+  min-height: 0;
+}
