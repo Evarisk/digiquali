@@ -427,3 +427,308 @@ div.fiche > div.tabBar > form:has(+ .control-product-lot-list) > div.div-table-r
 div.fiche > form:has(+ .control-product-lot-list) > div.div-table-responsive {
   min-height: 0;
 }
+
+// Action plan
+
+.control-actionplan {
+  .actionplan-kpi {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .actionplan-kpi-cell {
+    flex: 1 1 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 14px 10px;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+
+    &:last-child {
+      border-right: none;
+    }
+    &.kpi-done .actionplan-kpi-value {
+      color: $color__green;
+    }
+    &.kpi-ongoing .actionplan-kpi-value {
+      color: #e9ad4f;
+    }
+    &.kpi-late .actionplan-kpi-value {
+      color: $color__red;
+    }
+  }
+
+  .actionplan-kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .actionplan-kpi-label {
+    font-size: 13px;
+    color: #6b6b6b;
+    text-align: center;
+  }
+
+  .actionplan-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+
+    .actionplan-search {
+      flex: 1 1 200px;
+      min-width: 160px;
+    }
+  }
+
+  .actionplan-assignee {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 8px;
+  }
+
+  .actionplan-assignee-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: $color__secondary;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .actionplan-status,
+  .actionplan-verdict {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .actionplan-status {
+    &.status-done {
+      background: rgba(71, 229, 142, 0.25);
+      color: darken($color__green, 25%);
+    }
+    &.status-ongoing {
+      background: rgba(59, 130, 246, 0.18);
+      color: #1d4ed8;
+    }
+    &.status-late {
+      background: rgba(224, 83, 83, 0.2);
+      color: darken($color__red, 15%);
+    }
+  }
+
+  .actionplan-verdict {
+    color: #fff;
+  }
+
+  .actionplan-deadline-late {
+    color: $color__red;
+    font-weight: 600;
+  }
+
+  .actionplan-action {
+    display: inline-block;
+    margin: 0 4px;
+    color: #6b6b6b;
+    cursor: pointer;
+
+    &:hover {
+      color: $color__secondary;
+    }
+  }
+
+  .actionplan-action-delete:hover {
+    color: $color__red;
+  }
+
+  .actionplan-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .actionplan-progress-bar {
+    flex: 1;
+    height: 10px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .actionplan-progress-done {
+    display: block;
+    height: 100%;
+    background: $color__green;
+  }
+
+  .actionplan-progress-value {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+.modal-actionplan-add {
+  .actionplan-add-container label {
+    display: block;
+    margin-bottom: 12px;
+
+    .title {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="datetime-local"] {
+      width: 100%;
+    }
+  }
+}
+
+// Gantt view of the action plan
+
+.actionplan-gantt {
+  .actionplan-gantt-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .actionplan-gantt-granularity a {
+    display: inline-block;
+    padding: 5px 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    margin-right: 4px;
+    color: #444;
+    text-decoration: none;
+
+    &.active {
+      background: $color__secondary;
+      border-color: $color__secondary;
+      color: #fff;
+    }
+  }
+
+  .actionplan-gantt-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+
+    th,
+    td {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 8px;
+      vertical-align: middle;
+    }
+    th {
+      background: #f8f8f8;
+      font-size: 12px;
+      text-align: center;
+    }
+    .actionplan-gantt-head {
+      width: 280px;
+      text-align: left;
+    }
+  }
+
+  .actionplan-gantt-label {
+    font-size: 13px;
+
+    .actionplan-gantt-ref {
+      display: block;
+      font-weight: 700;
+      color: $color__secondary;
+    }
+  }
+
+  .actionplan-gantt-track {
+    position: relative;
+    height: 34px;
+    padding: 0;
+  }
+
+  .actionplan-gantt-bar {
+    position: absolute;
+    top: 7px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+
+    &.status-done {
+      background: $color__green;
+    }
+    &.status-ongoing {
+      background: #3b82f6;
+    }
+    &.status-late {
+      background: $color__red;
+    }
+  }
+
+  .actionplan-gantt-today {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: $color__red;
+  }
+
+  .actionplan-gantt-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .actionplan-gantt-legend-swatch {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: middle;
+
+    &.status-done {
+      background: $color__green;
+    }
+    &.status-ongoing {
+      background: #3b82f6;
+    }
+    &.status-late {
+      background: $color__red;
+    }
+  }
+}

@@ -462,6 +462,45 @@ ShowObjectControlHistory                       = Voir l'historique de contrôle
 NoControlOnThisObject                          = Le contrôle initial n'a pas été réalisé, veuillez vous référer à la notice et contacter votre responsable qualité
 ControlsOnParentProduct                        = Contrôles réalisés sur le produit parent
 ControlsOnProductLots                          = Contrôles réalisés sur les lots/séries en stock
+
+#
+# Plan d'action
+#
+
+ActionPlan                                     = Plan d'action
+ActionPlanLinkedToControl                      = Plan d'action lié au contrôle
+ActionPlanTotalActions                         = Actions au total
+ActionPlanStatusDone                           = Terminée
+ActionPlanStatusOngoing                        = En cours
+ActionPlanStatusLate                           = En retard
+ActionPlanAllQuestions                         = Toutes les questions
+ActionPlanAllStatus                            = Tous les statuts
+ActionPlanAllVerdicts                          = Tous les verdicts
+ActionPlanAllAssignees                         = Tous les responsables
+ActionPlanNewAction                            = Nouvelle action
+ActionPlanSelectQuestion                       = Sélectionner une question
+ActionPlanLinkedQuestion                       = Question liée
+ActionPlanAction                               = Action / Description
+ActionPlanAssignee                             = Responsable
+ActionPlanVerdict                              = Verdict
+ActionPlanRowActions                           = Actions
+ActionPlanNoAction                             = Aucune action dans le plan
+ControlActionPlanGlobalProgress                       = Avancement global du plan d'action :
+ActionPlanOpenTask                             = Ouvrir la tâche
+ActionPlanConfirmDeleteAction                  = Êtes-vous sûr de vouloir supprimer cette action ?
+ActionPlanGanttView                            = Vue Gantt
+ActionPlanListView                             = Retour à la liste
+ActionPlanGanttPeriod                          = Période
+ActionPlanGanttGranularity                     = Granularité
+ActionPlanGanttToday                           = Aujourd'hui
+ActionPlanGanttNoDate                          = Actions sans date, absentes du diagramme
+ActionPlanGanttDay                             = Jour
+ActionPlanGanttWeek                            = Semaine
+ActionPlanGanttMonth                           = Mois
+ActionPlanCount                                = %s action(s)
+PublicActionPlan                               = Interface publique du plan d'action
+GoToPublicActionPlanPage                       = Voir l'interface publique du plan d'action
+PublicActionPlanDisabled                       = L'interface publique du plan d'action n'est pas activée
 ControlHistoryLink                             = Interface publique contrôle
 EnablePublicControlHistory                     = Afficher l'historique public de contrôle
 EnablePublicControlHistoryDescription          = Permet l'affichage de l'historique de contrôle sur l'interface publique de contrôle
