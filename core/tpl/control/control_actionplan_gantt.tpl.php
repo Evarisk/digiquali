@@ -151,8 +151,10 @@ if (empty($scheduled)) {
 
         print '<td class="actionplan-gantt-track" colspan="' . count($columns) . '">';
         // Both offsets are computed from the dates of the action, so they cannot live in a stylesheet
-        print '<span class="actionplan-gantt-bar status-' . $actionStatus . '" style="left: ' . round($left, 2) . '%; width: ' . round($width, 2) . '%;" title="' . dol_escape_htmltag($actionTask->label . ' - ' . dol_print_date($actionRow['start'], 'day') . ' > ' . dol_print_date($actionRow['end'], 'day')) . '">';
-        print dol_escape_htmltag($actionTask->ref) . ' ' . (int) $actionTask->progress . '%';
+        // Only the progress rides the bar : the reference can be long enough to overflow it, and the
+        // row already carries it on the left
+        print '<span class="actionplan-gantt-bar status-' . $actionStatus . '" style="left: ' . round($left, 2) . '%; width: ' . round($width, 2) . '%;" title="' . dol_escape_htmltag($actionTask->ref . ' - ' . $actionTask->label . ' - ' . dol_print_date($actionRow['start'], 'day') . ' > ' . dol_print_date($actionRow['end'], 'day')) . '">';
+        print (int) $actionTask->progress . '%';
         print '</span>';
         if ($now >= $gridStart && $now <= $gridEnd) {
             print '<span class="actionplan-gantt-today" style="left: ' . round(($now - $gridStart) * 100 / $gridSpan, 2) . '%;"></span>';
