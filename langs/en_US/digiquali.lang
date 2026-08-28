@@ -99,6 +99,7 @@ ActionPlanConfirmDeleteAction = Are you sure you want to delete this action?
 ActionPlanViewGantt           = Gantt
 ActionPlanViewList            = List
 ActionPlanGanttWeekShort      = W
+ActionPlanGanttTruncated      = Period too long for this granularity, the chart stops on %s
 ActionPlanGanttPeriod         = Period
 ActionPlanGanttGranularity    = Granularity
 ActionPlanGanttToday          = Today

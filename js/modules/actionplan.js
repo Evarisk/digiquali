@@ -40,6 +40,35 @@ window.digiquali.actionPlan = {};
  */
 window.digiquali.actionPlan.init = function() {
   window.digiquali.actionPlan.event();
+  window.digiquali.actionPlan.centerGantt();
+};
+
+/**
+ * Bring the Gantt to where the plan stands today
+ *
+ * A plan spanning years scrolls sideways : opened on its first period, the finer granularities show
+ * nothing but empty columns. The chart opens centered on the day marker, or on its first action when
+ * the period is entirely past or ahead
+ *
+ * @since   23.0.0
+ * @version 23.0.0
+ *
+ * @return {void}
+ */
+window.digiquali.actionPlan.centerGantt = function() {
+  const $container = $('.actionplan-gantt .div-table-responsive-no-min');
+  if (!$container.length || $container.get(0).scrollWidth <= $container.get(0).clientWidth) {
+    return;
+  }
+
+  const $today  = $container.find('.actionplan-gantt-today').first();
+  const $target = $today.length ? $today : $container.find('.actionplan-gantt-bar').first();
+  if (!$target.length) {
+    return;
+  }
+
+  const targetLeft = $target.offset().left - $container.offset().left + $container.scrollLeft();
+  $container.scrollLeft(Math.max(0, targetLeft - ($container.width() / 2)));
 };
 
 /**

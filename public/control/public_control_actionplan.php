@@ -124,7 +124,9 @@ $conf->dol_hide_leftmenu = 1;
 
 $title = $langs->transnoentities('ActionPlan');
 
-saturne_header(0, '', $title, '', '', 0, 0, [], [], '', 'page-public-card');
+// A wide Gantt must scroll inside its container rather than stretch the page, which the theme bounds
+// through this body class
+saturne_header(0, '', $title, '', '', 0, 0, [], [], '', 'page-public-card' . ($view == 'gantt' ? ' classforhorizontalscrolloftabs' : ''));
 
 if (!getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
     print '<div class="public-card__container">' . saturne_show_notice($langs->transnoentities('PublicActionPlanDisabled'), '', 'error', 'notice-infos', true) . '</div>';
