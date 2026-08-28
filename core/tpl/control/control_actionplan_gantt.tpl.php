@@ -28,6 +28,8 @@
  * Variables  : $actions, $actionPlanUrl, $actionPlanFormParameters (optional), $actionPlanGranularity
  */
 
+$actionPlanPublic = !empty($actionPlanPublic);
+
 $granularities = [
     'day'   => $langs->trans('ActionPlanGanttDay'),
     'week'  => $langs->trans('ActionPlanGanttWeek'),
@@ -153,7 +155,14 @@ if (empty($scheduled)) {
 
         print '<tr>';
         print '<td class="actionplan-gantt-head actionplan-gantt-label">';
-        print '<span class="actionplan-gantt-ref">' . dol_escape_htmltag($actionTask->ref) . (is_object($actionRow['question']) ? ' &middot; ' . dol_escape_htmltag($actionRow['question']->ref) : '') . '</span>';
+        // The action and the question it answers open from here, the way they do from the list. The
+        // public interface keeps them as plain text : it opens with the sole tracking link
+        print '<span class="actionplan-gantt-ref">';
+        print $actionPlanPublic ? dol_escape_htmltag($actionTask->ref) : $actionTask->getNomUrl(1);
+        if (is_object($actionRow['question'])) {
+            print ' &middot; ' . ($actionPlanPublic ? dol_escape_htmltag($actionRow['question']->ref) : $actionRow['question']->getNomUrl(1));
+        }
+        print '</span>';
         print dol_escape_htmltag($actionTask->label);
         print '</td>';
 
