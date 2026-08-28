@@ -485,7 +485,6 @@ ActionPlanAssignee                             = Responsable
 ActionPlanVerdict                              = Verdict
 ActionPlanRowActions                           = Actions
 ActionPlanNoAction                             = Aucune action dans le plan
-ControlActionPlanGlobalProgress                       = Avancement global du plan d'action :
 ActionPlanOpenTask                             = Ouvrir la tâche
 ActionPlanConfirmDeleteAction                  = Êtes-vous sûr de vouloir supprimer cette action ?
 ActionPlanViewGantt                            = Gantt

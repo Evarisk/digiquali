@@ -59,6 +59,13 @@ foreach ([
 }
 print '</div>';
 
+// How far the plan has gone, on every action it holds and not only on the filtered ones. It sits with
+// the figures it summarises, which is label enough for a bar carrying its own value
+print '<div class="actionplan-progress">';
+print '<span class="actionplan-progress-bar"><span class="actionplan-progress-done" style="width: ' . $stats['progress'] . '%;"></span></span>';
+print '<span class="actionplan-progress-value">' . $stats['progress'] . '% (' . $stats['done'] . '/' . $stats['total'] . ')</span>';
+print '</div>';
+
 // Filters. A GET form keeps a filtered plan shareable and reloadable, which a POST one would not
 print '<form method="GET" action="' . dol_escape_htmltag($actionPlanUrl) . '" class="actionplan-filters">';
 foreach ($actionPlanFormParameters ?? [] as $parameterKey => $parameterValue) {
@@ -184,13 +191,6 @@ foreach ($actions as $actionRow) {
 }
 
 print '</table>';
-print '</div>';
-
-// How far the plan has gone, on every action it holds and not only on the filtered ones
-print '<div class="actionplan-progress">';
-print '<span class="actionplan-progress-label">' . $langs->trans('ControlActionPlanGlobalProgress') . '</span>';
-print '<span class="actionplan-progress-bar"><span class="actionplan-progress-done" style="width: ' . $stats['progress'] . '%;"></span></span>';
-print '<span class="actionplan-progress-value">' . $stats['progress'] . '% (' . $stats['done'] . '/' . $stats['total'] . ')</span>';
 print '</div>';
 
 print '</div>';
