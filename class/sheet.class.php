@@ -134,7 +134,7 @@ class Sheet extends SaturneObject
     /**
      * @var int ID.
      */
-    public int $rowid;
+    public int $rowid = 0;
 
     /**
      * @var string Ref.
@@ -179,12 +179,12 @@ class Sheet extends SaturneObject
     /**
      * @var string Label.
      */
-    public string $label;
+    public string $label = '';
 
     /**
      * @var string|null Description.
      */
-    public ?string $description;
+    public ?string $description = null;
 
     /**
      * @var int|null Project ID.
