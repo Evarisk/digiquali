@@ -119,7 +119,11 @@ if (empty($resHook)) {
 $title   = $langs->trans('ActionPlan');
 $helpUrl = '';
 
-saturne_header(0, '', $title, $helpUrl);
+// The right column of the page is a table-cell that grows with its content : a wide Gantt would stretch
+// the whole page instead of scrolling. This body class is what the theme provides to bound it
+$moreCssOnBody = ($view == 'gantt' ? 'classforhorizontalscrolloftabs' : '');
+
+saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], [], '', $moreCssOnBody);
 
 if ($object->id > 0) {
     saturne_get_fiche_head($object, 'actionplan', $title);

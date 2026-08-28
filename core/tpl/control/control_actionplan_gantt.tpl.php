@@ -99,8 +99,11 @@ if (empty($scheduled)) {
             $cursor = dol_get_first_day((int) dol_print_date($cursor, '%Y'), (int) dol_print_date($cursor, '%m'));
     }
 
-    $gridStart = $cursor;
-    while ($cursor <= $rangeEnd && count($columns) < 400) {
+    // A daily grid over a plan spanning years is long but scrollable : the cap is only there to keep a
+    // pathological period from being drawn, and the chart says so when it bites
+    $gridStart      = $cursor;
+    $gridColumnsMax = 800;
+    while ($cursor <= $rangeEnd && count($columns) < $gridColumnsMax) {
         switch ($actionPlanGranularity) {
             case 'day':
                 $next  = dol_time_plus_duree($cursor, 1, 'd');
@@ -125,8 +128,13 @@ if (empty($scheduled)) {
     $gridSpan = max(1, $gridEnd - $gridStart);
     $now      = dol_now();
 
+    if (count($columns) >= $gridColumnsMax && $gridEnd < $rangeEnd) {
+        print '<div class="opacitymedium">' . $langs->trans('ActionPlanGanttTruncated', dol_print_date($gridEnd, 'day')) . '</div>';
+    }
+
+    // The granularity drives how narrow a column may get before the chart starts scrolling sideways
     print '<div class="div-table-responsive-no-min">';
-    print '<table class="actionplan-gantt-table">';
+    print '<table class="actionplan-gantt-table granularity-' . $actionPlanGranularity . '">';
 
     print '<tr>';
     print '<th class="actionplan-gantt-head">' . $langs->trans('ActionPlanAction') . '</th>';

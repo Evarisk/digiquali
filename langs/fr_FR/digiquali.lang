@@ -491,6 +491,7 @@ ActionPlanConfirmDeleteAction                  = Êtes-vous sûr de vouloir supp
 ActionPlanViewGantt                            = Gantt
 ActionPlanViewList                             = Liste
 ActionPlanGanttWeekShort                       = S
+ActionPlanGanttTruncated                       = Période trop longue pour cette granularité, le diagramme s'arrête au %s
 ActionPlanGanttPeriod                          = Période
 ActionPlanGanttGranularity                     = Granularité
 ActionPlanGanttToday                           = Aujourd'hui

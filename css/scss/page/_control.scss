@@ -691,23 +691,56 @@ div.fiche > form:has(+ .control-product-lot-list) > div.div-table-responsive {
 
   .actionplan-gantt-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background: #fff;
 
     th,
     td {
       border: 1px solid rgba(0, 0, 0, 0.08);
+      border-width: 0 1px 1px 0;
       padding: 8px;
       vertical-align: middle;
+    }
+    tr:first-child th {
+      border-top-width: 1px;
+    }
+    th:first-child,
+    td:first-child {
+      border-left-width: 1px;
     }
     th {
       background: #f8f8f8;
       font-size: 12px;
       text-align: center;
+      white-space: nowrap;
     }
+
+    // A column never shrinks below what its label needs : past a certain number of periods the chart
+    // widens and the container scrolls, rather than squeezing the header out of the page
+    th:not(.actionplan-gantt-head) {
+      min-width: 78px;
+    }
+    &.granularity-week th:not(.actionplan-gantt-head) {
+      min-width: 54px;
+    }
+    &.granularity-day th:not(.actionplan-gantt-head) {
+      min-width: 48px;
+    }
+
+    // The action stays readable whatever the horizontal scroll
     .actionplan-gantt-head {
+      position: sticky;
+      left: 0;
+      z-index: 2;
       width: 280px;
+      min-width: 280px;
       text-align: left;
+      background: #fff;
+    }
+    th.actionplan-gantt-head {
+      z-index: 3;
+      background: #f8f8f8;
     }
   }
 
