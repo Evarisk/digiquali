@@ -159,6 +159,37 @@ class pdf_controldocument extends SaturneDocumentModel
         return html_entity_decode(strip_tags((string)$text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
+    /**
+     * Label and color of the object status badge (draft / validated / locked).
+     */
+    private function getStatusBadge($control, $outputLangs): array
+    {
+        if ($control->status >= 2) {
+            return ['label' => $outputLangs->convToOutputCharset($outputLangs->transnoentities('Locked')), 'color' => [26, 45, 64]];
+        }
+        if ($control->status == 1) {
+            return ['label' => $outputLangs->convToOutputCharset($outputLangs->transnoentities('Validated')), 'color' => [40, 167, 69]];
+        }
+        if ($control->status == 0) {
+            return ['label' => $outputLangs->convToOutputCharset($outputLangs->transnoentities('Draft')), 'color' => $this->colorGray];
+        }
+        return ['label' => '', 'color' => $this->colorGray];
+    }
+
+    /**
+     * Cut a one-line text so it never overflows the given width (TCPDF Cell does not clip).
+     */
+    private function truncateToWidth($pdf, string $text, float $maxWidth): string
+    {
+        if ($maxWidth <= 0 || $pdf->GetStringWidth($text) <= $maxWidth) {
+            return $text;
+        }
+        while (dol_strlen($text) > 1 && $pdf->GetStringWidth($text . '...') > $maxWidth) {
+            $text = dol_substr($text, 0, dol_strlen($text) - 1);
+        }
+        return rtrim($text) . '...';
+    }
+
     private function fillRect($pdf, float $x, float $y, float $w, float $h, array $rgb): void
     {
         $pdf->SetFillColor($rgb[0], $rgb[1], $rgb[2]);
@@ -350,10 +381,25 @@ class pdf_controldocument extends SaturneDocumentModel
         $subtitleParts[] = $totalQ . ' questions';
         $subtitle = implode(' · ', $subtitleParts);
 
+        // Status badge (right-aligned, under the branding line) — kept out of the verdict box
+        // so the object status is never read as the control result
+        $statusBadge = $this->getStatusBadge($control, $outputLangs);
+        $badgeW      = 0;
+        if (!empty($statusBadge['label'])) {
+            $pdf->SetFont('', 'B', 7);
+            $badgeW = min(30, $pdf->GetStringWidth($statusBadge['label']) + 5);
+            $badgeX = $x + $usableW - $badgeW;
+            $this->fillRect($pdf, $badgeX, $y + 8.5, $badgeW, 5, $statusBadge['color']);
+            $pdf->SetTextColor(...$this->colorWhite);
+            $pdf->SetXY($badgeX, $y + 8.5);
+            $pdf->Cell($badgeW, 5, $statusBadge['label'], 0, 0, 'C');
+        }
+
         $pdf->SetTextColor(...$this->colorGray);
         $pdf->SetFont('', '', 8);
+        $subtitleW = $x + $usableW - $badgeW - 3 - $titleX;
         $pdf->SetXY($titleX, $y + 9);
-        $pdf->Cell($titleW, 5, $subtitle, 0, 0, 'L');
+        $pdf->Cell($subtitleW, 5, $this->truncateToWidth($pdf, $subtitle, $subtitleW), 0, 0, 'L');
 
         $lineY = $y + $badgeSz + 3;
 
@@ -483,40 +529,27 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetDrawColor(...$this->colorTeal);
         $pdf->Rect($noteX, $y, $noteW, $tableH);
 
-        // Status badge
-        $noteStatusLabel = '';
-        $noteStatusColor = $this->colorGray;
-        if ($control->status >= 2) {
-            $noteStatusLabel = $outputLangs->convToOutputCharset($outputLangs->transnoentities('Locked'));
-            $noteStatusColor = [26, 45, 64];
-        } elseif ($control->status == 1) {
-            $noteStatusLabel = $outputLangs->convToOutputCharset($outputLangs->transnoentities('Validated'));
-            $noteStatusColor = [40, 167, 69];
-        } elseif ($control->status == 0) {
-            $noteStatusLabel = $outputLangs->convToOutputCharset($outputLangs->transnoentities('Draft'));
-        }
-        if (!empty($noteStatusLabel)) {
-            $this->fillRect($pdf, $noteX + 2, $y + 2, $noteW - 4, 5, $noteStatusColor);
-            $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('', 'B', 7);
-            $pdf->SetXY($noteX + 2, $y + 2);
-            $pdf->Cell($noteW - 4, 5, $noteStatusLabel, 0, 0, 'C');
-        }
+        // The box holds the verdict only — the object status badge lives in the page header
+        $labelH   = 4;
+        $valueH   = 9;
+        $contentY = $y + max(2, ($tableH - ($labelH * 2 + $valueH)) / 2);
 
         // "Résultat du contrôle" label (2 lines)
         $pdf->SetTextColor(...$this->colorNavy);
         $pdf->SetFont('', 'B', 7);
-        $pdf->SetXY($noteX, $y + 9);
-        $pdf->Cell($noteW, 4, $outputLangs->convToOutputCharset('Résultat du'), 0, 0, 'C');
-        $pdf->SetXY($noteX, $y + 13);
-        $pdf->Cell($noteW, 4, $outputLangs->convToOutputCharset('contrôle'), 0, 0, 'C');
+        $pdf->SetXY($noteX, $contentY);
+        $pdf->Cell($noteW, $labelH, $outputLangs->convToOutputCharset('Résultat du'), 0, 0, 'C');
+        $pdf->SetXY($noteX, $contentY + $labelH);
+        $pdf->Cell($noteW, $labelH, $outputLangs->convToOutputCharset('contrôle'), 0, 0, 'C');
 
-        // Score
-        $score = !empty($control->success_rate) ? round((float)$control->success_rate) . ' %' : '—';
-        $pdf->SetTextColor(...$this->colorTeal);
+        // Verdict (same labels as the control card: OK / KO / N/A translated)
+        $verdictValue = (int) $control->verdict;
+        $verdictLabel = $this->cleanText($control->fields['verdict']['arrayofkeyval'][$verdictValue] ?? $outputLangs->transnoentities('NA'));
+        $verdictColor = $verdictValue == 1 ? [40, 167, 69] : ($verdictValue == 2 ? [220, 53, 69] : $this->colorGray);
+        $pdf->SetTextColor(...$verdictColor);
         $pdf->SetFont('', 'B', 14);
-        $pdf->SetXY($noteX, $y + 18);
-        $pdf->Cell($noteW, 9, $score, 0, 0, 'C');
+        $pdf->SetXY($noteX, $contentY + $labelH * 2);
+        $pdf->Cell($noteW, $valueH, $outputLangs->convToOutputCharset($verdictLabel), 0, 0, 'C');
 
         $cellData = [
             [
