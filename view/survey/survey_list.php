@@ -37,6 +37,7 @@ if (isModEnabled('categorie')) {
 
 // load DigiQuali libraries
 require_once __DIR__ . '/../../class/survey.class.php';
+require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -101,6 +102,11 @@ $objectPosition                 = 21;
 $excludeFields                  = [];
 $objectsMetadata                = saturne_get_objects_metadata();
 $conf->cache['objectsMetadata'] = $objectsMetadata; // Read back by the saturnePrintFieldListLoopObject hook to render the linked element columns
+
+// The tab is opened with the link name of the element (fromtype=commande), which is not always the key the
+// metadata array is indexed with (order) : resolve the entry once instead of reading the array with a key
+// that does not exist. Stays empty for the fromtype values that designate no object, ex. fk_sheet
+$fromObjectMetadata = digiquali_get_object_metadata_from_link_name($objectsMetadata, $fromType);
 foreach($objectsMetadata as $objectMetadata) {
     // conf holds the raw constant value : absent or empty means the link is off. A == 0 test would
     // let those through, since PHP 8 compares '' to 0 as strings
@@ -165,7 +171,9 @@ foreach ($object->fields as $key => $val) {
 }
 
 if (!empty($fromType)) {
-    $search[$objectsMetadata[$fromType]['post_name']] = $fromId;
+    if (!empty($fromObjectMetadata)) {
+        $search[$fromObjectMetadata['post_name']] = $fromId;
+    }
     if ($fromType == 'fk_sheet') {
         $search['fk_sheet'] = $fromId;
     }
@@ -265,11 +273,15 @@ if (empty($resHook)) {
 $title = $langs->trans(ucfirst($object->element) . 'List');
 saturne_header(0,'', $title, $helpUrl ?? '', '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
 
-if (!empty($fromType) && !empty($fromId)) {
-    $objectsMetadata[$fromType]['object']->fetch($fromId);
-    saturne_get_fiche_head($objectsMetadata[$fromType]['object'], $object->element, $langs->trans(ucfirst($object->element)));
-    $linkBack = '<a href="' . dol_buildpath($fromType . '/list.php?restore_lastsearch_values=1', 1) . '">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($objectsMetadata[$fromType]['object'], 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
+if (!empty($fromObjectMetadata) && !empty($fromId)) {
+    $fromObject = $fromObjectMetadata['object'];
+    $fromObject->fetch($fromId);
+    saturne_get_fiche_head($fromObject, $object->element, $langs->trans(ucfirst($object->element)));
+
+    // The list of the element is reached through its own path : fromtype is a link name, not a directory
+    $backUrl  = $fromObjectMetadata['list_url'] ?: $fromType . '/list.php';
+    $linkBack = '<a href="' . dol_buildpath($backUrl . '?restore_lastsearch_values=1', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    saturne_banner_tab($fromObject, 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
 
     $moreUrlParameters = '&fromtype=' . $fromType . '&fromid=' . $fromId;
     $formMoreParams    = ['fromtype' => $fromType, 'fromid' => $fromId];

@@ -56,6 +56,7 @@ require_once __DIR__ . '/../../class/digiqualidocuments/controldocument.class.ph
 require_once __DIR__ . '/../../lib/digiquali_control.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
+require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
 
 if (isModEnabled('dolicar')) {
     require_once __DIR__ . '/../../../dolicar/class/registrationcertificatefr.class.php';
@@ -666,7 +667,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     if (($action == 'clone' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // Define confirmation messages
         // Without a loadable linked object the clone label falls back on the control reference.
-        $objectMetadata   = !empty($linkedObjectType) ? ($objectsMetadata[$linkedObjectType] ?? []) : [];
+        $objectMetadata   = digiquali_get_object_metadata_from_link_name($objectsMetadata, $linkedObjectType);
         $linkedObjectName = $object->ref;
         if (!empty($objectMetadata['link_name']) && !empty($object->linkedObjects[$objectMetadata['link_name']])) {
             $linkedObject     = current($object->linkedObjects[$objectMetadata['link_name']]);
