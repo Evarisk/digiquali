@@ -35,6 +35,32 @@ define('DIGIQUALI_LINKED_OBJECT_EXCLUDED_PREFIX', 'digiquali_');
 define('DIGIQUALI_LINKED_OBJECT_ELEMENT_TYPES', 'digiquali_control,digiquali_survey');
 
 /**
+ * Get the metadata of an object from its element link name
+ *
+ * Tabs and links carry the link name of the element (fromtype=commande), which is not always the key the
+ * metadata array is indexed with (order) : reading the array with it lands on a missing entry, and every
+ * consumer of the result then works on null.
+ *
+ * @param  array<string, array<string, mixed>> $objectsMetadata Result of saturne_get_objects_metadata()
+ * @param  string                              $linkName        Element link name, ex. 'commande'
+ * @return array<string, mixed>                                 Matching metadata | empty array if none matches
+ */
+function digiquali_get_object_metadata_from_link_name(array $objectsMetadata, string $linkName): array
+{
+    if (empty($linkName)) {
+        return [];
+    }
+
+    foreach ($objectsMetadata as $objectMetadata) {
+        if (($objectMetadata['link_name'] ?? '') == $linkName) {
+            return $objectMetadata;
+        }
+    }
+
+    return [];
+}
+
+/**
  * Get the extrafield definitions carried by DigiQuali linked objects
  *
  * @return array Definitions accepted by saturne_sync_linked_object_extrafields()
