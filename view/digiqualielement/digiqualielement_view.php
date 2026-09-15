@@ -45,7 +45,7 @@ require_once __DIR__ . '/../../lib/digiquali_digiqualielement.lib.php';
 global $conf, $db, $hookmanager, $langs, $user;
 
 // Load translation files required by the page
-saturne_load_langs();
+saturne_load_langs(['companies']);
 
 // Get parameters
 $id                  = GETPOSTINT('id');
@@ -134,7 +134,7 @@ saturne_header(1,'', $title, $helpUrl, '', 0, 0, [], [], '', 'mod-' . $object->m
 
 if (!$object->id) {
     $object->ref    = $conf->global->MAIN_INFO_SOCIETE_NOM;
-    $object->label  = $langs->trans('Society');
+    $object->label  = $langs->trans('Company');
     $object->entity = $conf->entity;
     unset($object->fields['element_type']);
 }

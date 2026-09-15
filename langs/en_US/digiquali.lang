@@ -140,3 +140,36 @@ CommentLibrary = Comment library
 
 AnswerPublicInterfaceAddAction            = Enable corrective actions on the public answer interface
 AnswerPublicInterfaceAddActionDescription = Lets a visitor read the corrective actions of a question and add one from the public interface. The control has to be attached to a project, which the actions are created into. The assignee, the budget and the time spent stay a back-office matter.
+
+#
+# DigiQualiElement
+#
+
+# Data
+Digiqualielement  = DigiQuali elements
+DigiQualiElements = DigiQuali elements
+Process           = Process
+SubProcess        = Sub-process
+Subprocess        = Sub-process
+NewProcess        = New process
+NewSubprocess     = New sub-process
+
+#
+# Activity
+#
+
+# Data
+ProcessusActivities = Activities
+SourceFrom          = Who
+InputData           = Input data
+OutputData          = Output data
+ActualScore         = Actual score
+TargetScore         = Target score
+ActivityCreate      = Add activity
+
+# Specimen
+ActivityLabelSpecimen      = Assign roles, responsibilities and authorities within the organisation for occupational health and safety
+ActivitySourceSpecimen     = Management process
+ActivitySourceFromSpecimen = Management
+ActivityInputDataSpecimen  = Company needs in terms of roles.<br>Occupational health and safety management system
+ActivityOutputDataSpecimen = Roles and responsibilities assigned<br>Health, Safety and Working Conditions Committee set up
