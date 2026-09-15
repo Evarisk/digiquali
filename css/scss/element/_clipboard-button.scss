@@ -1,0 +1,9 @@
+// Le bouton de copie natif de Dolibarr porte far fa-clipboard, un presse-papier vide :
+// fa-copy, deux feuilles, dit ce que fait le bouton, copier le lien (#2250)
+.clipboardCPButton.fa-clipboard {
+  font-weight: 900;
+
+  &::before {
+    content: "\f0c5";
+  }
+}
