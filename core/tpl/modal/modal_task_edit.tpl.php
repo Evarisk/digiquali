@@ -24,8 +24,12 @@
 /**
  * The following vars must be defined:
  * Global   : $langs
- * Objects  : $object, $task
+ * Objects  : $object, $task, $form
+ * Optional : $taskPublicView, set by the public interface for a visitor who is not a logged in user allowed to read projects
  */
+
+// Same rule as the add modal : the public interface neither lists the internal users nor speaks of money
+$taskModalShowInternals = empty($taskPublicView);
 
 $taskInfos = get_task_infos($task); ?>
 
@@ -33,18 +37,23 @@ $taskInfos = get_task_infos($task); ?>
     <div class="modal-container wpeo-modal-event">
         <!-- Modal-Header -->
         <div class="modal-header">
-            <h2 class="modal-title"><?php echo $langs->trans('TaskEdit') . ' ' . $task->getNomUrl() . ' ' . $langs->trans('AT') . '  ' . $langs->trans('Project') . '  ' . $object->project->getNomUrl(); ?></h2>
+            <h2 class="modal-title"><?php echo $taskModalShowInternals
+                ? $langs->trans('TaskEdit') . ' ' . $task->getNomUrl() . ' ' . $langs->trans('AT') . '  ' . $langs->trans('Project') . '  ' . $object->project->getNomUrl()
+                : $langs->trans('Modify') . ' ' . dol_escape_htmltag($task->ref); ?></h2>
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <!-- Modal-Content -->
         <div class="modal-content answer-task-content">
             <div>
-                <span class="answer-task-reference"><?php echo $taskInfos['task']['ref']; ?></span>
-                <span class="answer-task-author"><?php echo $taskInfos['task']['author']; ?></span>
+                <span class="answer-task-reference"><?php echo $taskModalShowInternals ? $taskInfos['task']['ref'] : dol_escape_htmltag($task->ref); ?></span>
+                <?php if ($taskModalShowInternals) : ?>
+                    <span class="answer-task-author"><?php echo $taskInfos['task']['author']; ?></span>
+                <?php endif; ?>
                 <span class="answer-task-date"><i class="fas fa-calendar-alt pictofixedwidth"></i><?php echo $taskInfos['task']['date']; ?></span>
-                <span class="answer-total-task-timespent"><i class="fas fa-clock pictofixedwidth"></i><?php echo $taskInfos['task']['time']; ?></span>
-                <span><i class="fas fa-coins pictofixedwidth"></i><?php echo $taskInfos['task']['budget']; ?></span>
-                <span class="answer-task-progress <?php //echo $task->getTaskProgressColorClass($task_progress); ?>"><?php echo $taskInfos['task']['progress'] ? $taskInfos['task']['progress'] . " %" : 0 . " %" ?></span>
+                <?php if ($taskModalShowInternals) : ?>
+                    <span class="answer-total-task-timespent"><i class="fas fa-clock pictofixedwidth"></i><?php echo $taskInfos['task']['time']; ?></span>
+                    <span><i class="fas fa-coins pictofixedwidth"></i><?php echo $taskInfos['task']['budget']; ?></span>
+                <?php endif; ?>
             </div>
             <div class="answer-task-content">
                 <div class="answer-task-title">
@@ -53,25 +62,44 @@ $taskInfos = get_task_infos($task); ?>
                         <input type="text" id="answer-task-label" name="label" value="<?php echo $task->label; ?>">
                     </label>
                 </div>
-                <div class="answer-task-date wpeo-gridlayout grid-3">
+                <?php if ($taskModalShowInternals) : ?>
+                    <div class="answer-task-affected">
+                        <label>
+                            <span class="title"><?php echo $langs->trans('AffectedTo'); ?></span>
+                            <?php echo $form->select_dolusers($taskInfos['task']['assigned_user_id'], 'answer-task-edit-assigned-user', 1); ?>
+                        </label>
+                    </div>
+                <?php endif; ?>
+                <div class="answer-task-date wpeo-gridlayout <?php echo $taskModalShowInternals ? 'grid-3' : 'grid-2'; ?>">
                     <div>
                         <label>
                             <span class="title"><?php echo $langs->trans('DateStart'); ?></span>
-                            <?php print '<input type="datetime-local" id="answer-task-date-start" name="date_start" value="' . (!empty($task->date_start) ? dol_print_date($task->date_start, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
+                            <?php print '<input type="datetime-local" id="answer-task-start-date" name="date_start" value="' . (!empty($task->date_start) ? dol_print_date($task->date_start, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
                         </label>
                     </div>
                     <div>
                         <label>
                             <span class="title"><?php echo $langs->trans('Deadline'); ?></span>
-                            <?php print '<input type="datetime-local" id="answer-task-date-end" name="date_end" value="' . (!empty($task->date_end) ? dol_print_date($task->date_end, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
+                            <?php print '<input type="datetime-local" id="answer-task-end-date" name="date_end" value="' . (!empty($task->date_end) ? dol_print_date($task->date_end, '%Y-%m-%dT%H:%M') : '') . '">'; ?>
                         </label>
                     </div>
-                    <div>
-                        <label>
-                            <span class="title"><?php echo $langs->trans('Budget'); ?></span>
-                            <input type="number" id="answer-task-budget" name="budget" min="0" value="<?php echo $task->budget_amount; ?>">
-                        </label>
-                    </div>
+                    <?php if ($taskModalShowInternals) : ?>
+                        <div>
+                            <label>
+                                <span class="title"><?php echo $langs->trans('Budget'); ?></span>
+                                <input type="number" id="answer-task-budget" name="budget" min="0" value="<?php echo $task->budget_amount; ?>">
+                            </label>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="answer-task-progress-field">
+                    <label>
+                        <span class="title"><?php echo $langs->trans('Progress'); ?></span>
+                        <div class="answer-task-progress-control">
+                            <input type="range" id="answer-task-progress" class="range" name="progress" min="0" max="100" step="1" value="<?php echo (int) $task->progress; ?>">
+                            <span class="task-progress-value"><?php echo (int) $task->progress; ?> %</span>
+                        </div>
+                    </label>
                 </div>
             </div>
         </div>

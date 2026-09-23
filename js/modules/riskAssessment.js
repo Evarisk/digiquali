@@ -63,13 +63,51 @@ window.digiquali.riskAssessment.event = function initializeEvents() {
   $(document).on('input', '.control-slider', window.digiquali.riskAssessment.updateControlPercentage);
   $(document).on('change', '.control-percentage-input', window.digiquali.riskAssessment.updateControlPercentage);
 
-  // Events for create/update risk assessment
-  $(document).on('click', '#riskassessment_add', function createRiskAssessment() {
-    window.saturne.object.ObjectFromModal.call(this, 'create', 'riskassessment');
+  // Remember which evaluation line a re-evaluation targets, or reset it for a brand-new line
+  $(document).on('click', '.riskassessment-new-line', function newRiskAssessmentLine() {
+    $('#riskassessment_create').attr('data-source-id', 0);
   });
+  $(document).on('click', '.riskassessment-reevaluate', function reevaluateRiskAssessment() {
+    $('#riskassessment_create').attr('data-source-id', $(this).find('.modal-options').data('from-source-id'));
+  });
+
+  // Events for create/update risk assessment
+  $(document).on('click', '#riskassessment_add', window.digiquali.riskAssessment.saveRiskAssessment);
   $(document).on('click', '#riskassessment_edit', function updateRiskAssessment() {
     window.saturne.object.ObjectFromModal.call(this, 'update', 'riskassessment');
   });
+};
+
+/**
+ * Create a new evaluation line, or re-evaluate an existing one.
+ *
+ * When data-source-id is set on the modal, the new assessment continues that line
+ * and the source is archived server-side; otherwise a brand-new line is created.
+ * In both cases the activity evaluation list is reloaded.
+ *
+ * @since   21.4.0
+ * @version 21.4.0
+ *
+ * @return {void}
+ */
+window.digiquali.riskAssessment.saveRiskAssessment = function saveRiskAssessment() {
+  const $modal     = $(this).closest('#riskassessment_create');
+  const activityId = $modal.attr('data-from-id');
+  const fromType   = $modal.attr('data-from-type');
+  const sourceId   = parseInt($modal.attr('data-source-id'), 10) || 0;
+  const $list      = $(document).find(`#riskassessment_list_container_${activityId}`);
+
+  window.saturne.loader.display($list);
+
+  window.saturne.object.ajax(
+    'create',
+    'riskassessment',
+    { fk_object_id: activityId, fk_object_element: fromType, source_id: sourceId },
+    function reloadList(resp) {
+      $modal.replaceWith($(resp).find('#riskassessment_create'));
+      $list.replaceWith($(resp).find(`#riskassessment_list_container_${activityId}`));
+    }
+  );
 };
 
 /**

@@ -23,6 +23,77 @@
 
 
 /**
+ * Format the answer of a Duration question for display
+ *
+ * The answer is stored as a number of seconds, like a Dolibarr duration extrafield, so every
+ * display (card, list, PDF, ODT) has to go through this to read as a time and not as a raw count.
+ *
+ * @param  string|int|null $answer Answer of the line, in seconds
+ * @return string                  Duration as HH:MM:SS, empty string when there is no answer
+ */
+function digiquali_format_duration($answer): string
+{
+    // Not loaded by every host page, and this library is included from public pages too
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+    if ($answer === null || $answer === '' || !is_numeric($answer)) {
+        return '';
+    }
+
+    $seconds = (int) $answer;
+
+    // convertSecondToTime() answers '0' instead of a padded time for an empty duration
+    if ($seconds <= 0) {
+        return '00:00:00';
+    }
+
+    return convertSecondToTime($seconds, 'allhourminsec');
+}
+
+/**
+ * Load the comment library, the dictionary of comments that can be dropped into a question comment
+ *
+ * The result is kept in a static : the question template is included once per question, so
+ * without it a sheet of eighty questions would run eighty times the same query.
+ *
+ * @return array Active entries of the dictionary, ordered by position
+ */
+function digiquali_get_comment_library(): array
+{
+    static $commentLibrary = null;
+
+    if ($commentLibrary === null) {
+        $commentLibrary = [];
+
+        $dictionaryEntries = saturne_fetch_dictionary('c_question_comment');
+        if (is_array($dictionaryEntries)) {
+            foreach ($dictionaryEntries as $dictionaryEntry) {
+                // saturne_fetch_dictionary() filters the entity but keeps the disabled entries
+                if (!empty($dictionaryEntry->active)) {
+                    $commentLibrary[$dictionaryEntry->id] = $dictionaryEntry;
+                }
+            }
+        }
+    }
+
+    return $commentLibrary;
+}
+
+/**
+ * Get the text a comment library entry drops into the comment
+ *
+ * The label is the short text shown on the button, the description the full sentence to write down.
+ * A library filled with short comments only has no description, so the label is the fallback.
+ *
+ * @param  stdClass $commentLibraryEntry Entry of the comment library
+ * @return string                        Text to add to the question comment
+ */
+function digiquali_get_comment_library_text(stdClass $commentLibraryEntry): string
+{
+    return dol_strlen($commentLibraryEntry->description) > 0 ? $commentLibraryEntry->description : $commentLibraryEntry->label;
+}
+
+/**
  * Create pictos dropdown string
  *
  * @param  CommonObject $object Object
@@ -157,7 +228,8 @@ function show_answer_from_question(Question $question, CommonObject $object, str
 
             $out .= '<div class="percentage-cell' . ($answerCssClass ?? '') . '">';
             $out .= img_picto('', 'fontawesome_fa-frown_fas_#D53C3D_3em', 'class="range-image"');
-            $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . ($questionAnswer != '' ? $questionAnswer : 100) . '"' . $disabled . '>';
+            $defaultValue = $questionConfig[$question->type]['answer-default-value'] ?? 100;
+            $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . ($questionAnswer != '' ? $questionAnswer : $defaultValue) . '"' . $disabled . '>';
             $out .= img_picto('', 'fontawesome_fa-grin_fas_#57AD39_3em', 'class="range-image"');
             $out .= '</div>';
             break;
@@ -169,6 +241,29 @@ function show_answer_from_question(Question $question, CommonObject $object, str
 
             $out .= '<div class="question-number' . ($answerCssClass ?? '') . '">';
             $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
+            $out .= '</div>';
+            break;
+        case 'Duration':
+            // Stored in seconds like a Dolibarr duration extrafield, but split into three fields so
+            // the answer is entered as a time. The total is carried by the hidden input, which is the
+            // only field named answer<id> : the save action and the auto-save both read that one.
+            $hasAnswer    = ($questionAnswer !== '' && $questionAnswer !== null && is_numeric($questionAnswer));
+            $totalSeconds = $hasAnswer ? max(0, (int) $questionAnswer) : 0;
+
+            $units = [
+                'hour'   => ['value' => (int) floor($totalSeconds / 3600),      'label' => $langs->transnoentities('HourShort'),   'max' => ''],
+                'minute' => ['value' => (int) floor(($totalSeconds % 3600) / 60), 'label' => $langs->transnoentities('MinuteShort'), 'max' => ' max="59"'],
+                'second' => ['value' => (int) ($totalSeconds % 60),             'label' => $langs->transnoentities('SecondShort'), 'max' => ' max="59"'],
+            ];
+
+            $out .= '<div class="question-duration" data-question-id="' . $question->id . '">';
+            $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '" value="' . ($hasAnswer ? $totalSeconds : '') . '">';
+            foreach ($units as $unit => $unitConfig) {
+                $out .= '<span class="question-duration__unit">';
+                $out .= '<input type="number" min="0"' . $unitConfig['max'] . ' step="1" class="question-duration__input" data-duration-unit="' . $unit . '" placeholder="0" value="' . ($hasAnswer ? $unitConfig['value'] : '') . '"' . $disabled . '>';
+                $out .= '<span class="question-duration__label">' . $unitConfig['label'] . '</span>';
+                $out .= '</span>';
+            }
             $out .= '</div>';
             break;
         case 'UniqueChoice':
@@ -206,4 +301,49 @@ function show_answer_from_question(Question $question, CommonObject $object, str
     }
 
     return $out;
+}
+
+/**
+ * Check that a media block action targets one of the answered object's own directories
+ *
+ * The public answer page has no authenticated user: the track ID is its only credential, so the
+ * directory posted by js/modules/mediaBlock.js must be confined to the answered object. Without
+ * this, anyone holding a track ID could write into or delete from any directory of the module.
+ *
+ * @param  CommonObject $object Answered object (control or survey)
+ * @param  string       $action Action posted by the media block
+ * @return bool                 True when the posted target belongs to $object
+ */
+function digiquali_answer_media_dir_is_allowed(CommonObject $object, string $action): bool
+{
+    global $db;
+
+    $subDir = GETPOST('sub_dir', 'alpha');
+    if (dol_strtolower(GETPOST('module_name', 'alpha')) != 'digiquali' || strpos($subDir, '..') !== false) {
+        return false;
+    }
+
+    switch ($action) {
+        case 'uploadPhoto':
+        case 'deletePhoto':
+            // Answer photos are stored in <element>/<object ref>/answer_photo/<question ref>
+            $photoDir    = $object->element . '/' . dol_sanitizeFileName($object->ref) . '/answer_photo/';
+            $questionRef = strpos($subDir, $photoDir) === 0 ? substr($subDir, dol_strlen($photoDir)) : '';
+            return dol_strlen($questionRef) > 0 && strpos($questionRef, '/') === false;
+
+        case 'uploadFile':
+            // The upload resolves its directory from the answer line it creates, not from sub_dir
+            return $object->element == 'control' && GETPOSTINT('fk_control') == $object->id && GETPOSTINT('fk_question') > 0;
+
+        case 'deleteFile':
+            // Attached documents are stored in controldet/<answer line ref>
+            $lineRef = strpos($subDir, 'controldet/') === 0 ? substr($subDir, dol_strlen('controldet/')) : '';
+            if ($object->element != 'control' || dol_strlen($lineRef) == 0 || strpos($lineRef, '/') !== false) {
+                return false;
+            }
+            $objectLine = new ControlLine($db);
+            return $objectLine->fetch(0, $lineRef) > 0 && $objectLine->fk_control == $object->id;
+    }
+
+    return false;
 }

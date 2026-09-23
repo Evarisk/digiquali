@@ -24,19 +24,19 @@
 /**
  * The following vars must be defined:
  * Global  : $langs
- * Objects : $activity
- */
-
-$activityInfos = $activity->getActivityInfos(); ?>
+ * Objects : $riskAssessment
+ */ ?>
 
 <div class="wpeo-modal modal-riskassessment modal-riskassessment-list" id="riskassessment_list">
     <div class="modal-container wpeo-modal-event">
         <div class="modal-header">
-            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentList') . ' ' . $activityInfos['ref']; ?></h2>
+            <h2 class="modal-title"><?php echo $langs->trans('RiskAssessmentHistory'); ?></h2>
             <div class="modal-close"><i class="fas fa-2x fa-times"></i></div>
         </div>
         <div class="modal-content">
-            <?php $riskAssessment->displayRiskAssessmentList($activityInfos); ?>
+            <?php if ($riskAssessment->id > 0) {
+                $riskAssessment->displayLineHistory($riskAssessment->getRootId());
+            } ?>
         </div>
     </div>
 </div>

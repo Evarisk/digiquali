@@ -30,6 +30,9 @@ CREATE TABLE llx_digiquali_sheet(
   photo               text,
   success_rate        double(24,8),
   mandatory_questions text,
+  show_project        smallint DEFAULT 1,
+  show_tags           smallint DEFAULT 1,
+  default_control_tags text,
   fk_user_creat       integer NOT NULL,
   fk_user_modif       integer
 ) ENGINE=innodb;

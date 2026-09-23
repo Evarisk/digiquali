@@ -100,15 +100,15 @@ if ($id > 0 || !empty($ref)) {
     $questionIds     = $object->linkedObjectsIds;
     $questionsLinked = $object->linkedObjects;
     $linkedMedias    = 0;
+    $confName        = 'DIGIQUALI_' . dol_strtoupper($object->element) . '_USE_LARGE_MEDIA_IN_GALLERY';
 
     if (is_array($questionsLinked['digiquali_question']) && !empty($questionsLinked['digiquali_question'])) {
         foreach ($questionsLinked['digiquali_question'] as $questionLinked) {
             if ($questionLinked->authorize_answer_photo > 0) {
-                $photo = saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, ($conf->global->$confName ? 'large' : 'medium'), '', 0, 0, 0, 200, 200, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, $object, '', 0, 0);
+                $photo = saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, (getDolGlobalInt($confName) ? 'large' : 'medium'), '', 0, 0, 0, 200, 200, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, $object, '', 0, 0);
                 print '<div class="question-section">';
                 print '<span class="question-ref">' . $questionLinked->getNomUrl(0, '', 1, '', -1, 1) . (empty($object->nbphoto) ? ' - ' . $langs->transnoentities('NoPhotoYet') : '') . '</span>';
                 print '<div class="table-cell table-full linked-medias answer_photo">';
-                $confName = 'DIGIQUALI_' . dol_strtoupper($object->element) . '_USE_LARGE_MEDIA_IN_GALLERY';
                 if (!empty($object->nbphoto)) {
                     print $photo;
                 }

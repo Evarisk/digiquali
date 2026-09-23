@@ -36,13 +36,26 @@ $permissionToDeleteRiskAssessment = $user->hasRight($riskAssessment->module, $ri
 if ($action == 'create_riskassessment' && !empty($permissionToAddRiskAssessment)) {
     $data = json_decode(file_get_contents('php://input'), true);
 
+    $sourceId = !empty($data['source_id']) ? (int) $data['source_id'] : 0;
+
     $riskAssessment->comment                              = $data['comment'];
     $riskAssessment->gravity_percentage                   = $data['gravity_percentage'];
     $riskAssessment->frequency_percentage                 = $data['frequency_percentage'];
     $riskAssessment->control_percentage                   = $data['control_percentage'];
     $riskAssessment->{'fk_' . $data['fk_object_element']} = $data['fk_object_id'];
 
-    $riskAssessment->create($user);
+    // Re-evaluation: the new assessment continues the source line, then the source is archived
+    $sourceRiskAssessment = null;
+    if ($sourceId > 0) {
+        $sourceRiskAssessment = new Digiquali\RiskAssessment($db);
+        if ($sourceRiskAssessment->fetch($sourceId) > 0) {
+            $riskAssessment->fk_parent = $sourceRiskAssessment->getRootId();
+        }
+    }
+
+    if ($riskAssessment->create($user) > 0 && $sourceRiskAssessment !== null && $sourceRiskAssessment->id > 0) {
+        $sourceRiskAssessment->setArchived($user);
+    }
     // @todo manage error
 }
 

@@ -43,6 +43,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 // Load Saturne libraries.
+require_once __DIR__ . '/../../../saturne/lib/medias.lib.php';
 require_once __DIR__ . '/../../../saturne/class/saturnesignature.class.php';
 require_once __DIR__ . '/../../../saturne/class/task/saturnetask.class.php';
 
@@ -55,6 +56,7 @@ require_once __DIR__ . '/../../class/digiqualidocuments/controldocument.class.ph
 require_once __DIR__ . '/../../lib/digiquali_control.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
+require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
 
 if (isModEnabled('dolicar')) {
     require_once __DIR__ . '/../../../dolicar/class/registrationcertificatefr.class.php';
@@ -64,7 +66,7 @@ if (isModEnabled('dolicar')) {
 global $conf, $db, $hookmanager, $langs, $user;
 
 // Load translation files required by the page
-saturne_load_langs(['other', 'bills', 'orders']);
+saturne_load_langs(['other', 'bills', 'orders', 'projects']);
 
 // Get parameters
 $id                  = GETPOST('id', 'int');
@@ -142,11 +144,13 @@ $permissiontoadd        = $user->rights->digiquali->control->write; // Used by t
 $permissiontodelete     = $user->rights->digiquali->control->delete || ($permissiontoadd && isset($object->status) && $object->status == $object::STATUS_DRAFT);
 $permissiontosetverdict = $user->rights->digiquali->control->setverdict;
 
-// Permissions for tasks management
+// Permissions for tasks management, the corrective actions being project tasks. A control whose content
+// is read-only keeps its action plan visible but no longer editable, unless the setting reopens it
+$canManageControlActions         = digiquali_can_manage_control_actions($object);
 $permissionToReadTask            = $user->hasRight('project', 'lire') || $user->hasRight('project', 'all', 'lire');
-$permissionToAddTask             = $user->hasRight('project', 'creer') || $user->hasRight('project', 'all', 'creer');
-$permissionToDeleteTask          = $user->hasRight('project', 'supprimer') || $user->hasRight('project', 'all', 'supprimer');
-$permissionToManageTaskTimeSpent = $user->hasRight('project', 'time');
+$permissionToAddTask             = $canManageControlActions && ($user->hasRight('project', 'creer') || $user->hasRight('project', 'all', 'creer'));
+$permissionToDeleteTask          = $canManageControlActions && ($user->hasRight('project', 'supprimer') || $user->hasRight('project', 'all', 'supprimer'));
+$permissionToManageTaskTimeSpent = $canManageControlActions && $user->hasRight('project', 'time');
 
 $upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : 1];
 
@@ -165,6 +169,13 @@ if ($resHook < 0) {
 
 if (empty($resHook)) {
     $error = 0;
+
+    // Block content-modifying actions on read-only (locked/archived) objects
+    $modifyingActions = ['set_categories', 'confirm_setVerdict', 'confirm_set_reopen', 'uploadPhoto', 'uploadFile', 'deleteFile', 'deletePhoto', 'save', 'update'];
+    if ((in_array($action, $modifyingActions) || preg_match('/^set[a-z]/', $action)) && isset($object->status) && !$object->isModifiable()) {
+        setEventMessages($langs->trans('ObjectIsReadOnly', ucfirst($langs->transnoentities('The' . ucfirst($object->element)))), [], 'warnings');
+        $action = '';
+    }
 
     $backurlforlist = dol_buildpath('/digiquali/view/control/control_list.php?source=' . $source, 1);
 
@@ -230,6 +241,11 @@ if (empty($resHook)) {
     // Actions set_thirdparty, set_project
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
 
+    // Move linked tasks to the new project so they follow the control
+    if ($action == 'set_project' && $permissiontoadd) {
+        $object->setLinkedTasksProject(GETPOSTINT(GETPOST('project_key', 'aZ09')), $user);
+    }
+
     if ($action == 'set_categories' && $permissiontoadd) {
         if ($object->fetch($id) > 0) {
             $result = $object->setCategories(GETPOST('categories', 'array'));
@@ -277,7 +293,7 @@ if (empty($resHook)) {
     }
 
     // Action to set status STATUS_REOPENED
-    if ($action == 'confirm_set_reopen') {
+    if ($action == 'confirm_set_reopen' && $permissiontoadd) {
         $object->fetch($id);
         if (!$error) {
             $result = $object->setDraft($user, false);
@@ -296,6 +312,9 @@ if (empty($resHook)) {
             }
         }
     }
+
+    // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block
+    require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
 
     // Actions confirm_lock, confirm_archive
     require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
@@ -355,11 +374,16 @@ if ($action == 'create') {
         $object->fields['fk_user_controller']['visible'] = 1;
         $object->fields['fk_user_controller']['default'] = $user->id;
         if (!empty($conf->projet->enabled)) {
-            $object->fields['projectid']['visible'] = 1;
+            if (!empty($sheet->show_project)) {
+                $object->fields['projectid']['visible'] = 1;
+            }
             if (!empty($sheet->fk_project)) {
                 $_POST['projectid'] = $sheet->fk_project;
             }
         }
+        // Store show_project to handle hidden input after commonfields
+        $sheetShowProject = $sheet->show_project;
+        $sheetDefaultProjectId = $sheet->fk_project;
     }
 
     if ($viewmode == 'images') {
@@ -422,7 +446,7 @@ if ($action == 'create') {
     }
 
     if ($source == 'pwa') {
-        $object->fields['fk_user_controller']['type']  = 'integer:User:user/class/user.class.php';
+        $object->fields['fk_user_controller']['type']  = 'integer:User:user/class/user.class.php:0:(t.statut:=:1)';
         $object->fields['fk_user_controller']['label'] = img_picto('', 'fontawesome_fa-user_fas_#79633f_2em', 'class="pictofixedwidth"');
         $object->fields['fk_user_controller']['picto'] = '';
         $object->fields['projectid']['type']           = 'integer:Project:projet/class/project.class.php';
@@ -433,16 +457,32 @@ if ($action == 'create') {
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
 
+    // Hidden project input when project field is not visible but sheet has a default project
+    if ($fkSheet > 0 && empty($sheetShowProject) && !empty($sheetDefaultProjectId)) {
+        print '<input type="hidden" name="projectid" value="' . intval($sheetDefaultProjectId) . '">';
+    }
+
     if ($fkSheet > 0) {
+        // Default control tags from sheet
+        $defaultControlTags = json_decode($sheet->default_control_tags ?? '[]', true) ?: [];
+        $selectedCategories = GETPOSTISSET('categories') ? GETPOST('categories', 'array') : $defaultControlTags;
+
         // Categories
         if (!empty($conf->categorie->enabled)) {
-            print '<tr><td>' . ($source != 'pwa' ? $langs->trans('Categories') : img_picto('', 'fontawesome_fa-tags_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
-            $categoryArborescence = $form->select_all_categories('control', '', 'parent', 64, 0, 1);
-            print ($source != 'pwa' ? img_picto('', 'category', 'class="pictofixedwidth"') : '') . $form::multiselectarray('categories', $categoryArborescence, GETPOST('categories', 'array'), '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
-            if ($source != 'pwa') {
-                print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=control&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
+            if (!empty($sheet->show_tags)) {
+                print '<tr><td>' . ($source != 'pwa' ? $langs->trans('Categories') : img_picto('', 'fontawesome_fa-tags_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
+                $categoryArborescence = $form->select_all_categories('control', '', 'parent', 64, 0, 1);
+                print ($source != 'pwa' ? img_picto('', 'category', 'class="pictofixedwidth"') : '') . $form::multiselectarray('categories', $categoryArborescence, $selectedCategories, '', 0, 'minwidth100imp maxwidth500 widthcentpercentminusxx');
+                if ($source != 'pwa') {
+                    print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/categories/index.php?type=control&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddCategories') . '"></span></a>';
+                }
+                print '</td></tr>';
+            } else {
+                // Hidden inputs to still apply default tags
+                foreach ($selectedCategories as $catId) {
+                    print '<input type="hidden" name="categories[]" value="' . intval($catId) . '">';
+                }
             }
-            print '</td></tr>';
         }
 
         // Other attributes
@@ -542,22 +582,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
     $object->fetchObjectLinked('', '', $object->id, 'digiquali_control');
 
-    $linkedObjectType = key($object->linkedObjects);
-    $questionIds      = $sheet->linkedObjectsIds['digiquali_question'];
+    // linkedObjects is empty when the control has no link, or when the linked object belongs to a
+    // module that has been disabled since : fetchObjectLinked() silently drops those types.
+    $linkedObjectType = !empty($object->linkedObjects) ? key($object->linkedObjects) : '';
 
-
-    foreach($questionsAndGroups as $questionOrGroup) {
-        if ($questionOrGroup->element == 'questiongroup') {
-            $questionGroup->fetch($questionOrGroup->id);
-            $groupQuestions = $questionGroup->fetchQuestionsOrderedByPosition();
-            if (is_array($groupQuestions) && !empty($groupQuestions)) {
-                foreach($groupQuestions as $groupQuestion) {
-                    $questionIds[] = $groupQuestion->id;
-                }
-            }
-
-        } else {
-            $questionIds[] = $questionOrGroup->id;
+    // Build the full list of question IDs of the sheet, including questions nested inside (sub-)groups.
+    // fetchAllQuestions() walks the question groups recursively, so deeply nested questions are counted too.
+    $questionIds    = [];
+    $sheetQuestions = $sheet->fetchAllQuestions();
+    if (is_array($sheetQuestions) && !empty($sheetQuestions)) {
+        foreach ($sheetQuestions as $sheetQuestion) {
+            $questionIds[] = $sheetQuestion->id;
         }
     }
 
@@ -618,26 +653,34 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
         $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id . '&object_type=' . $object->element, $langs->trans('ReOpenObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmReOpenObject', $langs->transnoentities('The' . ucfirst($object->element)), $langs->transnoentities('The' . ucfirst($object->element))), 'confirm_set_reopen', '', 'yes', 'actionButtonInProgress', 350, 600);
     }
 
-    // Lock confirmation
-    $nextControlExist = 0;
-    $days             = 0;
-    if (strlen($object->next_control_date > 0)) {
-        $nextControlExist = 1;
-        $days             = abs($object->next_control_date - $object->control_date);
-        $days             = floor($days / (60 * 60 * 24));
-    }
+    // Lock confirmation. The next control date is only written in database by the lock itself :
+    // preview the date it will set, otherwise the confirmation always announces NA and 0 day.
+    $nextControlDate = $object->getNextControlDate();
+    $days            = $object->getNextControlDelay();
     if (($action == 'lock' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
-        $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmLockObject', $langs->transnoentities('The' . ucfirst($object->element))) . ($object->verdict == 2 ? '<br>' . $langs->transnoentities('BeCarefullVerdictKO') : '' . '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlExist == 1 ? dol_print_date($object->next_control_date) : $langs->transnoentities('NA'), $days)), 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
+        // A KO verdict has its own periodicity : the warning does not replace the announced dates
+        $lockConfirmContent = $langs->trans('ConfirmLockObject', $langs->transnoentities('The' . ucfirst($object->element)));
+        if ($object->verdict == 2) {
+            $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
+        }
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+
+        $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $lockConfirmContent, 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
     }
 
     // Clone confirmation
     if (($action == 'clone' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // Define confirmation messages
-        $objectMetadata = $objectsMetadata[$linkedObjectType];
-        $linkedObject   = $object->linkedObjects[$objectMetadata['link_name']][key($object->linkedObjects[$objectMetadata['link_name']])];
+        // Without a loadable linked object the clone label falls back on the control reference.
+        $objectMetadata   = digiquali_get_object_metadata_from_link_name($objectsMetadata, $linkedObjectType);
+        $linkedObjectName = $object->ref;
+        if (!empty($objectMetadata['link_name']) && !empty($object->linkedObjects[$objectMetadata['link_name']])) {
+            $linkedObject     = current($object->linkedObjects[$objectMetadata['link_name']]);
+            $linkedObjectName = $linkedObject->{$objectMetadata['name_field']};
+        }
 
         $formQuestionClone = [
-            ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObject->{$objectMetadata['name_field']}, 'size' => 24],
+            ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObjectName, 'size' => 24],
             ['type' => 'checkbox', 'name' => 'clone_attendants',         'label' => $langs->trans('CloneAttendants'),        'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_photos',             'label' => $langs->trans('ClonePhotos'),            'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_control_equipments', 'label' => $langs->trans('CloneControlEquipments'), 'value' => 1]
@@ -741,7 +784,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     }
 
     foreach ($objectsMetadata as $objectMetadata) {
-        if ($objectMetadata['conf'] == 0 || $objectMetadata['link_name'] != $linkedObjectType) {
+        if (empty($objectMetadata['conf']) || $objectMetadata['link_name'] != $linkedObjectType) {
             continue;
         }
 
@@ -759,25 +802,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     }
 
     print '<tr class="linked-medias photo question-table"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list">';
-    $pathPhotos = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/photos/';
-    $fileArray  = dol_dir_list($pathPhotos, 'files');
-?>
-    <span class="add-medias" <?php echo ($object->status < Control::STATUS_LOCKED) ? '' : 'style="display:none"' ?>>
-        <input hidden multiple class="fast-upload<?php echo getDolGlobalInt('SATURNE_USE_FAST_UPLOAD_IMPROVEMENT') ? '-improvement' : ''; ?>" id="fast-upload-photo-default" type="file" name="userfile[]" capture="environment" accept="image/*">
-        <input type="hidden" class="fast-upload-options" data-from-subtype="photo" data-from-subdir="photos" />
-        <label for="fast-upload-photo-default">
-            <div class="wpeo-button <?php echo ($onPhone ? 'button-square-40' : 'button-square-50'); ?>">
-                <i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>
-            </div>
-        </label>
-        <input type="hidden" class="favorite-photo" id="photo" name="photo" value="<?php echo $object->photo ?>" />
-        <div class="wpeo-button <?php echo ($onPhone ? 'button-square-40' : 'button-square-50'); ?> 'open-media-gallery add-media modal-open" value="0">
-            <input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="<?php echo $object->id ?>" data-from-type="control" data-from-subtype="photo" data-from-subdir="photos" />
-            <i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>
-        </div>
-    </span>
-    <?php
-    print saturne_show_medias_linked('digiquali', $pathPhotos, 'small', 0, 0, 0, 0, $onPhone ? 40 : 50, $onPhone ? 40 : 50, 0, 0, 0, 'control/' . $object->ref . '/photos/', $object, 'photo', $object->status < Control::STATUS_LOCKED, $permissiontodelete && $object->status < Control::STATUS_LOCKED);
+    print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="' . dol_escape_htmltag($object->photo) . '"/>';
+    print saturne_render_media_block('digiquali', 'control/' . $object->id . '/photos', '', '', [
+        'show_photo'  => true,
+        'show_audio'  => false,
+        'show_upload' => $object->status < Control::STATUS_LOCKED,
+    ]);
     print '</td></tr>';
 
     $averagePercentageQuestions = 0;
@@ -790,8 +820,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
             $percentQuestionCounter++;
             foreach ($object->lines as $line) {
-                if ($line->fk_question === $questionLinked->id) {
-                    $averagePercentageQuestions += $line->answer;
+                // An unanswered line holds an empty string (Control::create), which is a fatal in PHP 8: 0 + '' is a TypeError
+                if ($line->fk_question === $questionLinked->id && is_numeric($line->answer)) {
+                    $averagePercentageQuestions += (float) $line->answer;
                 }
             }
         }
@@ -888,7 +919,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             }
 
             // ReOpen
-            $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('ReOpenDoli');
+            $displayButton = $onPhone ? '<i class="fas fa-lock fa-2x"></i>' : '<i class="fas fa-lock"></i>' . ' ' . $langs->trans('ReOpenDoli');
             if ($object->status == Control::STATUS_VALIDATED) {
                 print '<span class="butAction" id="actionButtonInProgress">' . $displayButton . '</span>';
             } elseif ($object->status > Control::STATUS_VALIDATED) {
@@ -918,7 +949,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             }
 
             // Lock
-            $displayButton = $onPhone ? '<i class="fas fa-lock fa-2x"></i>' : '<i class="fas fa-lock"></i>' . ' ' . $langs->trans('Lock');
+            $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('Lock');
             if ($object->status == $object::STATUS_VALIDATED && $object->verdict != null && $signatory->checkSignatoriesSignatures($object->id, $object->element) && !$equipmentOutdated) {
                 print '<span class="butAction" id="actionButtonLock">' . $displayButton . '</span>';
             } else {
@@ -945,6 +976,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
                 print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=confirm_archive&token=' . newToken() . '">' . $displayButton . '</a>';
             } else {
                 print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeLockedToArchive', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
+            }
+
+            // Unarchive
+            $displayButton = $onPhone ? '<i class="fas fa-box-open fa-2x"></i>' : '<i class="fas fa-box-open"></i>' . ' ' . $langs->trans('Unarchive');
+            if ($object->status == Control::STATUS_ARCHIVED) {
+                print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=confirm_unarchive&token=' . newToken() . '">' . $displayButton . '</a>';
             }
 
             // Clone
@@ -1228,6 +1265,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
         print dol_get_fiche_end();
     }
 }
+
+// Photo editor modal (required by saturne_render_media_block)
+require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
 
 // End of page
 llxFooter();

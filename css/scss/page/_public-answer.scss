@@ -1,0 +1,106 @@
+@import "answer/_answer.scss";
+
+.public-answer-header {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 4px rgba(27, 100, 168, 0.15);
+  padding: 1em;
+  margin-bottom: 1em;
+
+  @media (max-width: $media__small) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  &__object {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    flex: 1;
+  }
+
+  &__thumbnail {
+    flex-shrink: 0;
+
+    img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    &--placeholder {
+      width: 80px;
+      height: 80px;
+      background: rgba($color__public-secondary, 0.12);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $color__public-secondary;
+      font-size: 2em;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+    min-width: 0;
+  }
+
+  &__control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+    border-left: 2px solid rgba($color__public-secondary, 0.3);
+    padding-left: 1em;
+
+    @media (max-width: $media__small) {
+      border-left: none;
+      border-top: 2px solid rgba($color__public-secondary, 0.3);
+      padding-left: 0;
+      padding-top: 0.8em;
+      width: 100%;
+    }
+  }
+
+  &__type {
+    font-size: 12px;
+    font-weight: 500;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__name {
+    font-size: 16px;
+    font-weight: 600;
+    color: $color__public-primary;
+    overflow-wrap: break-word;
+    word-break: break-word;
+
+    a {
+      color: inherit;
+    }
+  }
+
+  &__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: $color__public-primary;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  &__description {
+    font-size: 13px;
+    color: #888;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    margin-top: 0.1em;
+  }
+}

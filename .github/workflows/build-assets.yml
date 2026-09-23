@@ -1,0 +1,21 @@
+---
+name: Build assets
+
+on:
+    # Les .min ne sont volontairement pas exclus : en lecture seule, une PR qui ne fait
+    # que rafraichir les assets compiles est justement une PR qu'on veut verifier.
+    pull_request:
+        paths:
+            - 'css/scss/**'
+            - 'js/**'
+
+jobs:
+    # Le ruleset de ce depot exige une pull request pour toutes les refs : github-actions[bot]
+    # est arrete comme le serait un humain, et le mode commit ne pourrait que rapporter son
+    # propre refus a chaque merge. Ce qui reste est l'essentiel : attraper un .min perime
+    # avant qu'il n'atteigne develop.
+    verify:
+      uses: Evarisk/Saturne/.github/workflows/build-assets-reusable.yml@main
+      with:
+        module: digiquali
+        mode: verify

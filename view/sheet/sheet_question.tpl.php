@@ -7,6 +7,8 @@ print '<td ' . $tdOffsetStyle . '>' . $question->getNomUrl(1) . '</td>';
 print '<td>' . $question->label . '</td>';
 print '<td>' . $question->description . '</td>';
 print '<td>' . $langs->transnoentities($question->type) . '</td>';
+print '<td>' . $question->points . '</td>';
+print '<td>' . (!empty($question->grading_policy) ? $langs->trans($question->fields['grading_policy']['arrayofkeyval'][$question->grading_policy]) : $langs->trans('Proportional')) . '</td>';
 $mandatoryArray = json_decode($sheetObject->mandatory_questions, true);
 
 print '<td class="center">';

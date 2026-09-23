@@ -1,0 +1,188 @@
+# Copyright (C) 2022-2023 EVARISK <technique@evarisk.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# ControlDocument
+#
+
+ControlDocumentPDF                      = Control Sheet PDF with photo
+
+#
+# Public control
+#
+
+NoDocumentation                         = No linked document
+
+# Deletion errors
+ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
+ErrorQuestionGroupUsedInSheet           = Question group %s cannot be deleted, it is used in one or more templates.
+ErrorSheetUsedInControl                 = Template %s cannot be deleted, it is used in one or more controls/surveys.
+
+# Grading Policy
+GradingPolicy = Grading Policy
+Proportional = Proportional
+AllOrNothing = All or Nothing
+OptionWeighted = Option Weighted
+WeightPercent = Weight (%)
+
+Scoring = Scoring
+TestPassed=Test passed
+TestFailed=Test failed
+ObtainedScore=Obtained score
+Result=Result
+DefaultValue=Default value
+
+LinkProject_task=Enable link with project tasks
+LinkProject_taskDescription=Allows linking between project tasks and templates
+LinkContrat=Enable link with contracts
+LinkContratDescription=Allows linking between contracts and templates
+LinkCall_list=Enable link with calls
+LinkCall_listDescription=Allows linking between call lists and templates
+
+# Linkable elements
+LinkableElements                        = Linkable elements
+ElementLinked                           = Controlled objects
+LinkedObjectUsage                       = Usage
+LinkedObjectUsageDetail                 = %d link(s), %d control frequency value(s)
+NoLinkedObjectUsage                     = Not used
+DisableLinkConfirm                      = The link with "%s" is about to be disabled. %d control frequency value(s) will be permanently deleted. Confirm?
+EnableAllLinksConfirm                   = Every link is about to be enabled: extrafields, tabs and hooks will be created on all available objects. Confirm?
+DisableAllLinksConfirm                  = Every link is about to be disabled: extrafields will be deleted and their values lost. Confirm?
+CleanUnusedLinks                        = Clean unused links
+CleanUnusedLinksConfirm                 = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
+LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
+LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
+
+#
+# Controls of a product
+#
+
+ControlsOnParentProduct   = Controls carried out on the parent product
+ControlsOnProductLots     = Controls carried out on the lots/serials in stock
+
+#
+# Action plan
+#
+
+ActionPlan                    = Action plan
+ActionPlanLinkedToControl     = Action plan linked to the control
+ActionPlanTotalActions        = Actions in total
+ActionPlanStatusDone          = Done
+ActionPlanStatusOngoing       = Ongoing
+ActionPlanStatusLate          = Late
+ActionPlanAllQuestions        = Every question
+ActionPlanAllStatus           = Every status
+ActionPlanAllVerdicts         = Every verdict
+ActionPlanAllAssignees        = Every assignee
+ActionPlanNewAction           = New action
+ActionPlanSelectQuestion      = Select a question
+ActionPlanLinkedQuestion      = Linked question
+ActionPlanAction              = Action / Description
+ActionPlanAssignee            = Assignee
+ActionPlanVerdict             = Verdict
+ActionPlanRowActions          = Actions
+ActionPlanNoAction            = No action in the plan
+ActionPlanOpenTask            = Open the task
+ActionPlanConfirmDeleteAction = Are you sure you want to delete this action?
+ActionPlanViewGantt           = Gantt
+ActionPlanViewList            = List
+ActionPlanGanttWeekShort      = W
+ActionPlanGanttTruncated      = Period too long for this granularity, the chart stops on %s
+ActionPlanGanttPeriod         = Period
+ActionPlanGanttGranularity    = Granularity
+ActionPlanGanttToday          = Today
+ActionPlanGanttNoDate         = Actions without a date, left out of the chart
+ActionPlanGanttDay            = Day
+ActionPlanGanttWeek           = Week
+ActionPlanGanttMonth          = Month
+ActionPlanCount               = %s action(s)
+PublicActionPlan              = Public interface of the action plan
+GoToPublicActionPlanPage      = Go to the public action plan page
+PublicActionPlanDisabled      = The public interface of the action plan is not enabled
+
+ManageControlActionsOnLockedControl            = Manage the corrective actions of a locked control
+ManageControlActionsOnLockedControlDescription = Allows corrective actions of a locked control to be added, edited, deleted and followed up. Without this setting, the action plan of a locked control stays readable but can no longer be changed. An archived control is read-only in every case.
+
+#
+# Answer wizard (mobile)
+#
+
+AnswerWizardFinish        = Finish
+AnswerWizardSteps         = Jump to
+AnswerWizardProgress      = %s/%s
+AnswerWizardSummary       = Summary
+AnswerWizardAllAnswered   = Every question has an answer
+AnswerWizardRemaining     = %s unanswered question(s)
+AnswerWizardValidateTitle = Finish and validate?
+AnswerWizardValidateText  = You answered %s question(s) out of %s. Once validated, the answers can no longer be changed.
+
+#
+# Comment library - Bibliotheque de commentaires
+#
+
+CommentLibrary = Comment library
+
+#
+# Mass add of questions into a template
+#
+
+NbQuestionsAlreadyInSheet     = %d question(s) already in it
+QuestionsInSheetWillBeIgnored = Questions already in the selected template will not be added.
+
+#
+# Public interface
+#
+
+AnswerPublicInterfaceAddAction            = Enable corrective actions on the public answer interface
+AnswerPublicInterfaceAddActionDescription = Lets a visitor read the corrective actions of a question and add one from the public interface. The control has to be attached to a project, which the actions are created into. The assignee, the budget and the time spent stay a back-office matter.
+
+#
+# DigiQualiElement
+#
+
+# Data
+Digiqualielement  = DigiQuali elements
+DigiQualiElements = DigiQuali elements
+Process           = Process
+SubProcess        = Sub-process
+Subprocess        = Sub-process
+NewProcess        = New process
+NewSubprocess     = New sub-process
+
+#
+# Activity
+#
+
+# Data
+ProcessusActivities = Activities
+SourceFrom          = Who
+InputData           = Input data
+OutputData          = Output data
+ActualScore         = Actual score
+TargetScore         = Target score
+ActivityCreate      = Add activity
+
+# Specimen
+ActivityLabelSpecimen      = Assign roles, responsibilities and authorities within the organisation for occupational health and safety
+ActivitySourceSpecimen     = Management process
+ActivitySourceFromSpecimen = Management
+ActivityInputDataSpecimen  = Company needs in terms of roles.<br>Occupational health and safety management system
+ActivityOutputDataSpecimen = Roles and responsibilities assigned<br>Health, Safety and Working Conditions Committee set up
+
+#
+# Standard
+#
+
+ISO9001Description = ISO 9001 standard - Quality management systems

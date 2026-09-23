@@ -42,6 +42,7 @@ require_once __DIR__ . '/../../../../../lib/digiquali_sheet.lib.php';
 require_once __DIR__ . '/../../../../../class/question.class.php';
 require_once __DIR__ . '/../../../../../class/sheet.class.php';
 require_once __DIR__ . '/../../../../../class/answer.class.php';
+require_once __DIR__ . '/../../../../../lib/digiquali_answer.lib.php';
 
 /**
  * Class to build documents using ODF templates generator.
@@ -203,6 +204,9 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                         break;
                                     case 'Percentage' :
                                         $tmpArray['answer'] = $answerResult . ' %';
+                                        break;
+                                    case 'Duration' :
+                                        $tmpArray['answer'] = digiquali_format_duration($answerResult);
                                         break;
                                     case 'MultipleChoices' :
                                         $answers = explode(',', $answerResult);
@@ -368,14 +372,16 @@ class doc_controldocument_odt extends SaturneDocumentModel
      * @return int                               1 if OK, <=0 if KO.
      * @throws Exception
      */
-    public function write_file(SaturneDocuments $objectDocument, Translate $outputLangs, string $srcTemplatePath, int $hideDetails = 0, int $hideDesc = 0, int $hideRef = 0, array $moreParam): int
+    public function write_file(SaturneDocuments $objectDocument, Translate $outputLangs, string $srcTemplatePath, int $hideDetails = 0, int $hideDesc = 0, int $hideRef = 0, array $moreParam = []): int
     {
         global $conf;
+
+        $moreParam = self::getMoreParam($objectDocument, $moreParam);
 
         $object = $moreParam['object'];
 
         if (!empty($object->photo)) {
-            $path       = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->ref . '/photos';
+            $path       = $conf->digiquali->multidir_output[$conf->entity] . '/control/' . $object->id . '/photos';
             $thumb_name = saturne_get_thumb_name($object->photo, 'small');
             $image      = $path . '/thumbs/' . $thumb_name;
             $tmpArray['photoDefault'] = $image;

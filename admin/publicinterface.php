@@ -138,6 +138,11 @@ $constArray['digiquali'] = [
         'name'        => 'AnswerPublicInterfaceShowTitle',
         'description' => 'AnswerPublicInterfaceShowTitleDescription',
         'code'        => 'DIGIQUALI_ANSWER_PUBLIC_INTERFACE_SHOW_TITLE',
+    ],
+    'AnswerPublicInterfaceAddAction' => [
+        'name'        => 'AnswerPublicInterfaceAddAction',
+        'description' => 'AnswerPublicInterfaceAddActionDescription',
+        'code'        => 'DIGIQUALI_ANSWER_PUBLIC_INTERFACE_ADD_ACTION',
     ]
 ];
 require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';

@@ -64,5 +64,18 @@ function digiqualielement_prepare_head(DigiQualiElement $object): array
     $moreparam['specialName'] = $langs->trans(dol_ucfirst($object->element_type));
     $moreparam['handlePhoto'] = true;
 
-    return saturne_object_prepare_head($object, $head, $moreparam);
+    $head = saturne_object_prepare_head($object, $head, $moreparam);
+
+    // Process infos and activities are merged on digiqualielement_view.php, the card tab is redundant
+    if ($user->hasRight($object->module, 'activity', 'read')) {
+        foreach ($head as $key => $tab) {
+            if (isset($tab[2]) && $tab[2] == 'card') {
+                unset($head[$key]);
+                break;
+            }
+        }
+        $head = array_values($head);
+    }
+
+    return $head;
 }

@@ -114,3 +114,33 @@
     }
   }
 }
+
+.riskassessment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+
+  .riskassessment-list__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5em;
+
+    .riskassessment-list__title {
+      font-size: 13px;
+      font-weight: 600;
+      color: $color__public-primary;
+    }
+  }
+
+  .riskassessment-list__empty {
+    font-size: 13px;
+    padding: 0.5em 0;
+  }
+}
+
+.riskassessment-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}

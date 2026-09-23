@@ -96,12 +96,12 @@ $img->type         = 'image/png';
 $img->sizes        = '512x512';
 $manifest->icons[] = $img;
 
-$manifest->id               = dol_buildpath('/custom/digiquali/view/control/control_list.php?source=pwa', 1);
-$manifest->start_url        = dol_buildpath('/custom/digiquali/view/control/control_list.php?source=pwa', 1);
+$manifest->id               = dol_buildpath('/custom/digiquali/view/frontend/pwa_home.php?source=pwa', 1);
+$manifest->start_url        = dol_buildpath('/custom/digiquali/view/frontend/pwa_home.php?source=pwa', 1);
 $manifest->background_color = '#ffffff';
 $manifest->display          = 'standalone';
 $manifest->display_override = ['window-controls-overlay'];
-$manifest->scope            = dol_buildpath('/custom/digiquali/', 1);
+$manifest->scope            = dol_buildpath('/custom/digiquali/view/frontend/', 1);
 $manifest->theme_color      = '#ffffff';
 $manifest->description      = 'Système de management de la qualité pour Dolibarr';
 

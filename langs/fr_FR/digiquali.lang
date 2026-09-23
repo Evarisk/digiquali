@@ -40,6 +40,17 @@ GenerateMainSheetCategories    = Génération des catégories principales du mod
 MainSheetCategoriesDescription = Cette option permet la génération des catégories principales du modèle de contrôle. <br> Les catégories créées seront : <ul><li>Contrôle</li><ul><li>Qualité</li><ul><li>Hygiène et Sécurité</li><ul><li>Trousses de premier secours</li></ul></ul><li>Matériels</li><ul><li>Masque</li></ul><li>Véhicules</li><ul><li>Voiture</li><li>Véhicule industriel</li></ul></ul></ul>
 SheetMainCategory              = Choix de la catégorie principale du modèle de contrôle
 SheetMainCategoryDescription   = Cette option permet de choisir quelle catégorie sera utilisée lors du choix de catégorie pendant la création d'un contrôle
+ShowProjectOnControl           = Afficher le projet sur le contrôle
+ShowTagsOnControl              = Afficher les tags sur le contrôle
+DefaultControlTags             = Tags par défaut du contrôle
+ControlCreationOptions         = Options de création du contrôle
+ShowProjectOnControlHelp       = Si activé, le champ projet sera visible lors de la création d'un contrôle depuis ce modèle
+ShowTagsOnControlHelp          = Si activé, le champ tags/catégories sera visible lors de la création d'un contrôle depuis ce modèle
+DefaultControlTagsHelp         = Catégories qui seront pré-sélectionnées lors de la création d'un contrôle depuis ce modèle
+DefaultControlProject          = Projet par défaut du contrôle
+ConfigureYourObjectsHere       = Configurez vos Objets ici
+ControlledObjectsTitle         = Objets contrôlés par ce Contrôle/Questionnaire
+ElementLinked                  = Objets contrôlés
 
 # Control - Contrôle
 DisplayMediasSample                                = Afficher les médias d'exemple des questions
@@ -75,6 +86,8 @@ AnswerPublicInterfaceUseSignatory            = Activer la signature sur l'interf
 AnswerPublicInterfaceUseSignatoryDescription = Rend obligatoire l'utilisation de la signature sur l'interface publique de réponse aux questions
 AnswerPublicInterfaceShowTitle               = Activer le titre sur l'interface publique de réponse aux questions
 AnswerPublicInterfaceShowTitleDescription    = Permet d'afficher le titre du contrôle sur l'interface publique de réponse aux questions
+AnswerPublicInterfaceAddAction               = Activer les actions correctives sur l'interface publique de réponse aux questions
+AnswerPublicInterfaceAddActionDescription    = Permet de consulter les actions correctives d'une question et d'en ajouter depuis l'interface publique. Le contrôle doit être rattaché à un projet, dans lequel les actions sont créées. Le responsable, le budget et le temps passé restent réservés au back-office.
 
 #
 # Questions
@@ -94,6 +107,8 @@ AddQuestionLink               = %d Question(s) ajoutée(s) au modèle :
 WarningQuestionLink           = %d Question(s) déjà dans le modèle :
 ConfirmMassAddQuestion        = Confirmation d'ajout en masse de questions au modèle
 ConfirmMassAddingQuestion     = Êtes-vous sur de vouloir ajouter les %d question(s) sélectionnée(s) ?
+NbQuestionsAlreadyInSheet     = %d question(s) déjà présente(s)
+QuestionsInSheetWillBeIgnored = Les questions déjà présentes dans le modèle sélectionné ne seront pas ajoutées.
 removeQuestionLink            = Question retirée du modèle :
 LockQuestion                  = La question %s est passée au statut verrouillé
 LockQuestions                 = Toutes les questions sélectionnées sont passées au statut verrouillé
@@ -112,7 +127,9 @@ AuthorizeAnswerPhotoTooltip   = Autorise l'envoi de photos sur les réponses de 
 NoteControl                   = Note publique
 EnterComment                  = Saisir les commentaires
 EnterCommentTooltip           = Saisit le commentaire sur les réponses de question
+CommentLibrary                = Bibliothèque de commentaires
 ErrorQuestionUsedInSheet      = La question %s ne peut pas être supprimée, elle est utilisée dans un ou plusieurs modèles.
+ErrorQuestionGroupUsedInSheet = Le groupe de questions %s ne peut pas être supprimé, il est utilisé dans un ou plusieurs modèles.
 ErrorNoQuestionSelected       = Aucune question sélectionnée
 AddQuestionIntoCategory       = Assigner cette catégorie à la question
 QuestionType                  = Type de question
@@ -133,6 +150,7 @@ NCMineure                     = NC Mineure
 Observation                   = Observation
 ProgressTrack                 = Piste de progrès
 StrongPoint                   = Point fort
+ISO9001Description            = Norme ISO 9001 - Systèmes de management de la qualité
 ISO9001Conforme               = C - Conforme
 ISO9001NonConformite          = NC - Non-Conformité
 ISO9001Observation            = OBS - Observation
@@ -220,6 +238,8 @@ NotCreated                     = Pas encore créé(e)s
 CategoriesGeneration           = Cette option permet la génération des catégories par défaut des modèles. Les catégories créées seront : <br> - Qualité <br> - Hygiène <br> - Sécurité <br> - Environnement <br> - Sureté <br> - Réglementaire <br> - Bureau d'Etude <br> - Fournisseurs <br> - Commercial <br> - Production <br> - Méthodes <br> - Comptabilité <br> - Logistique <br> - Informatique <br>
 UniqueLinkedElement            = Liaison unique sur les éléments de Dolibarr
 UniqueLinkedElementDescription = Lier un seul élément de Dolibarr à un modèle
+SheetLinkedObjectSelect2            = Liste déroulante pour les objets contrôlés
+SheetLinkedObjectSelect2Description = Afficher les objets contrôlés dans une liste déroulante compacte (avec recherche) au lieu de la liste de cases à cocher
 ErrorSheetUsedInControl        = Le modèle %s ne peut pas être supprimé, il est utilisé dans un ou plusieurs contrôles/questionnaires.
 AddSheetIntoCategory           = Assigner cette catégorie au modèle
 QuestionMandatorized           = La question %s a été rendue obligatoire
@@ -284,6 +304,8 @@ AddControl                                     = Ajouter un contrôle
 NewControl                                     = Nouveau contrôle
 ControlList                                    = Liste des contrôles
 Controller                                     = Contrôleur
+Attendant                                      = Participant
+ExtSocietyAttendant                            = Participant externe
 ControlDate                                    = Date de contrôle
 Controls                                       = Contrôles
 ControlMustBeDraft                             = Le contrôle doit être brouillon pour accéder à cette fonctionnalité
@@ -354,6 +376,17 @@ LinkInventory                                  = Activer le lien avec les invent
 LinkInventoryDescription                       = Permet la liaison entre les inventaires et les modèles
 LinkMouvement                                  = Activer le lien avec les mouvements de stock
 LinkMouvementDescription                       = Permet la liaison entre les mouvements de stock et les modèles
+LinkableElements                               = Éléments liables
+LinkedObjectUsage                              = Utilisation
+LinkedObjectUsageDetail                        = %d lien(s), %d fréquence(s) de contrôle renseignée(s)
+NoLinkedObjectUsage                            = Aucune utilisation
+DisableLinkConfirm                             = Le lien avec « %s » va être désactivé. %d valeur(s) de fréquence de contrôle seront définitivement supprimées. Confirmer ?
+EnableAllLinksConfirm                          = Tous les liens vont être activés : les champs complémentaires, onglets et hooks seront créés sur tous les objets disponibles. Confirmer ?
+DisableAllLinksConfirm                         = Tous les liens vont être désactivés : les champs complémentaires seront supprimés et leurs valeurs perdues. Confirmer ?
+CleanUnusedLinks                               = Nettoyer les liens inutilisés
+CleanUnusedLinksConfirm                        = Les champs complémentaires, onglets et hooks des liens désactivés vont être supprimés. Confirmer ?
+LinkedObjectSyncDone                           = Synchronisation effectuée : %d onglet(s), %d hook(s), %d champ(s) complémentaire(s) ajouté(s), %d supprimé(s)
+LinkedObjectSyncError                          = La synchronisation des liens a échoué, aucune modification n'a été enregistrée
 LinkFicheinter                                 = Activer le lien avec les fiches d'intervention
 LinkFicheinterDescription                      = Permet la liaison entre les fiches d'intervention et les modèles
 LinkBom                                        = Activer le lien avec les nomenclatures BOM
@@ -423,6 +456,10 @@ ControlReminderFrequency                       = Fréquence de rappel d'évènem
 ControlReminderFrequencyDescription            = Choisir la fréquence de rappel d'évènement de contrôle <br> (par défaut : Un rappel 30 jours, 60 jours et 90 jours avant le contrôle)
 ControlReminderType                            = Type de rappel d'évènement de contrôle
 ControlReminderTypeDescription                 = Choisir le type de rappel d'évènement de contrôle <br> (par défaut : navigateur)
+DisableControlAttachedFiles                    = Désactiver l'upload des fichiers joints
+DisableControlAttachedFilesDescription         = Masque le bouton d'ajout de fichiers joints (PDF, documents) sur les réponses aux questions d'un contrôle
+ManageControlActionsOnLockedControl            = Gérer les actions correctives d'un contrôle verrouillé
+ManageControlActionsOnLockedControlDescription = Autorise l'ajout, la modification, la suppression et le suivi des actions correctives d'un contrôle verrouillé. Sans cette option, le plan d'action d'un contrôle verrouillé reste consultable mais n'est plus modifiable. Un contrôle archivé reste en lecture seule dans tous les cas.
 PublicAnswer                                   = Interface publique de réponse
 YourAnswersHaveBeenSaved                       = Vos réponses ont bien été sauvegardées
 DaysBeforeNextControl                          = Jours avant prochain contrôle
@@ -432,6 +469,48 @@ ErrorEquipmentLink                             = L'équipement n'a pas pu être 
 LastControl                                    = Dernier contrôle
 ShowObjectControlHistory                       = Voir l'historique de contrôle
 NoControlOnThisObject                          = Le contrôle initial n'a pas été réalisé, veuillez vous référer à la notice et contacter votre responsable qualité
+ControlsOnParentProduct                        = Contrôles réalisés sur le produit parent
+ControlsOnProductLots                          = Contrôles réalisés sur les lots/séries en stock
+
+#
+# Plan d'action
+#
+
+ActionPlan                                     = Plan d'action
+ActionPlanLinkedToControl                      = Plan d'action lié au contrôle
+ActionPlanTotalActions                         = Actions au total
+ActionPlanStatusDone                           = Terminée
+ActionPlanStatusOngoing                        = En cours
+ActionPlanStatusLate                           = En retard
+ActionPlanAllQuestions                         = Toutes les questions
+ActionPlanAllStatus                            = Tous les statuts
+ActionPlanAllVerdicts                          = Tous les verdicts
+ActionPlanAllAssignees                         = Tous les responsables
+ActionPlanNewAction                            = Nouvelle action
+ActionPlanSelectQuestion                       = Sélectionner une question
+ActionPlanLinkedQuestion                       = Question liée
+ActionPlanAction                               = Action / Description
+ActionPlanAssignee                             = Responsable
+ActionPlanVerdict                              = Verdict
+ActionPlanRowActions                           = Actions
+ActionPlanNoAction                             = Aucune action dans le plan
+ActionPlanOpenTask                             = Ouvrir la tâche
+ActionPlanConfirmDeleteAction                  = Êtes-vous sûr de vouloir supprimer cette action ?
+ActionPlanViewGantt                            = Gantt
+ActionPlanViewList                             = Liste
+ActionPlanGanttWeekShort                       = S
+ActionPlanGanttTruncated                       = Période trop longue pour cette granularité, le diagramme s'arrête au %s
+ActionPlanGanttPeriod                          = Période
+ActionPlanGanttGranularity                     = Granularité
+ActionPlanGanttToday                           = Aujourd'hui
+ActionPlanGanttNoDate                          = Actions sans date, absentes du diagramme
+ActionPlanGanttDay                             = Jour
+ActionPlanGanttWeek                            = Semaine
+ActionPlanGanttMonth                           = Mois
+ActionPlanCount                                = %s action(s)
+PublicActionPlan                               = Interface publique du plan d'action
+GoToPublicActionPlanPage                       = Voir l'interface publique du plan d'action
+PublicActionPlanDisabled                       = L'interface publique du plan d'action n'est pas activée
 ControlHistoryLink                             = Interface publique contrôle
 EnablePublicControlHistory                     = Afficher l'historique public de contrôle
 EnablePublicControlHistoryDescription          = Permet l'affichage de l'historique de contrôle sur l'interface publique de contrôle
@@ -454,6 +533,7 @@ DraftValidatedLocked                           = -- (Brouillon + validé + verro
 CloneControlEquipments                         = Cloner les moyens de contrôle
 NoControl                                      = Aucun contrôle
 NoPeriodicityControl                           = Aucune périodicité de contrôle
+NoDocumentation                                = Aucun document lié
 LockControlDate                                = Le verrouillage de ce contrôle en date du &emsp;&emsp;&emsp; : <b> %s </b> <br> entrainera une date de prochain contrôle pour le : <b> %s </b> <br> soit dans &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; : <b> %d jours. </b>
 
 
@@ -478,7 +558,7 @@ NoObjectLineAnswersPhoto                = Pas de photos sur les réponses du %s
 # Data - Donnée
 ControlDocument                         = Fiche de Contrôle
 Controldocument                         = Fiche de Contrôle
-ControlDocumentPDF                      = FC-A4-MEDIA-PDF
+ControlDocumentPDF                      = Fiche de Contrôle PDF avec photo
 ControlDocumentsMin                     = fiches de contôle
 ControlDocumentDisplayMedias            = Afficher les médias dans la fiche de contrôle
 ControlDocumentDisplayMediasDescription = Afficher les médias des questions dans la fiche de contrôle ODT
@@ -592,6 +672,10 @@ RiskCalculation         = Gravité x fréquence
 RiskAssessmentAdd       = Ajout de l'évaluation
 RiskAssessmentEdit      = Édition de l'évaluation
 RiskAssessmentList      = Liste des évaluations
+RiskAssessmentNewLine   = Nouvelle évaluation
+RiskAssessmentReevaluate = Réévaluer
+RiskAssessmentHistory   = Historique de l'évaluation
+NoRiskAssessment        = Aucune évaluation
 1D                      = 1J
 1W                      = 1S
 1M                      = 1M
@@ -687,3 +771,44 @@ NF        = NF
 NFSysteme = Système
 NFPoste   = Poste
 NFProduit = Produit
+
+#
+# PWA (frontend mobile)
+#
+
+MobileApp    = Application mobile
+LastControls = Derniers contrôles
+
+# Grading Policy
+GradingPolicy = Politique de notation
+Proportional = Proportionnelle
+AllOrNothing = Tout ou rien
+OptionWeighted = Pondérée par option
+WeightPercent = Pondération (%)
+
+Scoring = Notation
+TestPassed=Test réussi
+TestFailed=Test échoué
+ObtainedScore=Score obtenu
+Result=Résultat
+DefaultValue=Valeur par défaut
+
+LinkProject_task=Activer le lien avec les tâches du projet
+LinkProject_taskDescription=Permet la liaison entre les tâches de projet et les modèles
+LinkContrat=Activer le lien avec les contrats
+LinkContratDescription=Permet la liaison entre les contrats et les modèles
+LinkCall_list=Activer le lien avec les appels
+LinkCall_listDescription=Permet la liaison entre les listes d'appels et les modèles
+
+#
+# Answer wizard (mobile)
+#
+
+AnswerWizardFinish        = Terminer
+AnswerWizardSteps         = Aller à
+AnswerWizardProgress      = %s/%s
+AnswerWizardSummary       = Récapitulatif
+AnswerWizardAllAnswered   = Toutes les questions ont une réponse
+AnswerWizardRemaining     = %s question(s) sans réponse
+AnswerWizardValidateTitle = Terminer et valider ?
+AnswerWizardValidateText  = Vous avez répondu à %s question(s) sur %s. Après validation, les réponses ne seront plus modifiables.

@@ -96,94 +96,96 @@ if (empty($resHook)) {
 
         $questionsAndGroupsLinked = $object->fetchQuestionsAndGroups();
 
+        // Helper: build the export array for one question (including its answers).
+        $buildQuestionExport = function ($questionObject) use ($answer) {
+            $questionExportArray = [
+                'rowid'                  => $questionObject->id,
+                'ref'                    => $questionObject->ref,
+                'status'                 => $questionObject->status,
+                'type'                   => $questionObject->type,
+                'label'                  => $questionObject->label,
+                'description'            => $questionObject->description,
+                'show_photo'             => $questionObject->show_photo,
+                'authorize_answer_photo' => $questionObject->authorize_answer_photo,
+                'enter_comment'          => $questionObject->enter_comment,
+            ];
+
+            $answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $questionObject->id]);
+            if (is_array($answerList) && !empty($answerList)) {
+                foreach ($answerList as $answerSingle) {
+                    $questionExportArray['answers'][$answerSingle->id] = [
+                        'rowid'       => $answerSingle->id,
+                        'ref'         => $answerSingle->ref,
+                        'status'      => $answerSingle->status,
+                        'value'       => $answerSingle->value,
+                        'position'    => $answerSingle->position,
+                        'pictogram'   => $answerSingle->pictogram,
+                        'color'       => $answerSingle->color,
+                        'fk_question' => $answerSingle->fk_question,
+                    ];
+                }
+            }
+
+            return $questionExportArray;
+        };
+
+        // Helper: export a question group and all of its sub-groups recursively, so questions
+        // nested inside (sub-)groups are also written to the export file (and thus re-imported).
+        $exportGroupRecursive = function ($group, $parentGroupId) use (&$exportGroupRecursive, &$digiqualiExportArray, $buildQuestionExport, $db) {
+            $questionGroupExportArray = [
+                'rowid'        => $group->id,
+                'ref'          => $group->ref,
+                'status'       => $group->status,
+                'label'        => $group->label,
+                'description'  => $group->description,
+                'success_rate' => $group->success_rate,
+            ];
+            if (!empty($parentGroupId)) {
+                $questionGroupExportArray['parent_group_id'] = $parentGroupId;
+            }
+
+            $questionsArrayForGroupSingle = [];
+            $questionsInGroup             = $group->fetchQuestionsOrderedByPosition();
+            if (is_array($questionsInGroup) && !empty($questionsInGroup)) {
+                foreach ($questionsInGroup as $questionForGroupSingle) {
+                    if ($questionForGroupSingle->element == 'question') {
+                        $questionsArrayForGroupSingle[$questionForGroupSingle->id] = $buildQuestionExport($questionForGroupSingle);
+                    }
+                }
+            }
+            $questionGroupExportArray['questions']              = $questionsArrayForGroupSingle;
+            $digiqualiExportArray['questiongroups'][$group->id] = $questionGroupExportArray;
+
+            // Recurse into sub-groups (groups nested inside this group).
+            $subGroups = $group->fetchQuestionGroupsOrderedByPosition();
+            if (is_array($subGroups) && !empty($subGroups)) {
+                foreach ($subGroups as $subGroupSingle) {
+                    $childGroup = new QuestionGroup($db);
+                    $childGroup->fetch($subGroupSingle->id);
+                    $exportGroupRecursive($childGroup, $group->id);
+                }
+            }
+        };
+
         if (is_array($questionsAndGroupsLinked) && !empty($questionsAndGroupsLinked)) {
             foreach ($questionsAndGroupsLinked as $key => $questionOrGroupSingle) {
                 if ($questionOrGroupSingle->element == 'question') {
                     $questionSingle = $questionOrGroupSingle;
                     $digiqualiExportArray['element_element_questions'][$object->id][$key] = $questionSingle->id;
-                    $questionExportArray['rowid']                               = $questionSingle->id;
-                    $questionExportArray['ref']                                 = $questionSingle->ref;
-                    $questionExportArray['status']                              = $questionSingle->status;
-                    $questionExportArray['type']                                = $questionSingle->type;
-                    $questionExportArray['label']                               = $questionSingle->label;
-                    $questionExportArray['description']                         = $questionSingle->description;
-                    $questionExportArray['show_photo']                          = $questionSingle->show_photo;
-                    $questionExportArray['authorize_answer_photo']              = $questionSingle->authorize_answer_photo;
-                    $questionExportArray['enter_comment']                       = $questionSingle->enter_comment;
-
-                    $digiqualiExportArray['questions'][$questionSingle->id] = $questionExportArray;
-
-                    $answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $questionSingle->id]);
-
-                    if (is_array($answerList) && !empty($answerList)) {
-                        foreach ($answerList as $answerSingle) {
-                            $answerExportArray['rowid']       = $answerSingle->id;
-                            $answerExportArray['ref']         = $answerSingle->ref;
-                            $answerExportArray['status']      = $answerSingle->status;
-                            $answerExportArray['value']       = $answerSingle->value;
-                            $answerExportArray['position']    = $answerSingle->position;
-                            $answerExportArray['pictogram']   = $answerSingle->pictogram;
-                            $answerExportArray['color']       = $answerSingle->color;
-                            $answerExportArray['fk_question'] = $answerSingle->fk_question;
-
-                            $digiqualiExportArray['questions'][$answerSingle->fk_question]['answers'][$answerSingle->id] = $answerExportArray;
-                        }
-                    }
+                    $digiqualiExportArray['questions'][$questionSingle->id]               = $buildQuestionExport($questionSingle);
                 } else if ($questionOrGroupSingle->element == 'questiongroup') {
                     $questionGroupSingle = $questionOrGroupSingle;
                     $digiqualiExportArray['element_element_questiongroups'][$object->id][$key] = $questionGroupSingle->id;
-                    $questionGroupExportArray['rowid']       = $questionGroupSingle->id;
-                    $questionGroupExportArray['ref']         = $questionGroupSingle->ref;
-                    $questionGroupExportArray['status']      = $questionGroupSingle->status;
-                    $questionGroupExportArray['label']       = $questionGroupSingle->label;
-                    $questionGroupExportArray['description'] = $questionGroupSingle->description;
-                    $questionsArrayForGroupSingle = [];
-                    $questionsInGroup = $questionGroupSingle->fetchQuestionsOrderedByPosition();
-                    if (is_array($questionsInGroup) && !empty($questionsInGroup)) {
-                        foreach ($questionsInGroup as $questionForGroupSingle) {
-                            if ($questionForGroupSingle->element == 'question') {
-                                $questionExportArray = [
-                                    'rowid'                  => $questionForGroupSingle->id,
-                                    'ref'                    => $questionForGroupSingle->ref,
-                                    'status'                 => $questionForGroupSingle->status,
-                                    'type'                   => $questionForGroupSingle->type,
-                                    'label'                  => $questionForGroupSingle->label,
-                                    'description'            => $questionForGroupSingle->description,
-                                    'show_photo'             => $questionForGroupSingle->show_photo,
-                                    'authorize_answer_photo' => $questionForGroupSingle->authorize_answer_photo,
-                                    'enter_comment'          => $questionForGroupSingle->enter_comment,
-                                ];
-
-                                $questionsArrayForGroupSingle[$questionForGroupSingle->id] = $questionExportArray;
-
-                                $answerList = $answer->fetchAll('ASC', 'position', 0, 0, ['fk_question' => $questionForGroupSingle->id]);
-                                if (is_array($answerList) && !empty($answerList)) {
-                                    foreach ($answerList as $answerSingle) {
-                                        $answerExportArray = [
-                                            'rowid'       => $answerSingle->id,
-                                            'ref'         => $answerSingle->ref,
-                                            'status'      => $answerSingle->status,
-                                            'value'       => $answerSingle->value,
-                                            'position'    => $answerSingle->position,
-                                            'pictogram'   => $answerSingle->pictogram,
-                                            'color'       => $answerSingle->color,
-                                            'fk_question' => $answerSingle->fk_question,
-                                        ];
-                                        $questionsArrayForGroupSingle[$answerSingle->fk_question]['answers'][$answerSingle->id] = $answerExportArray;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    $questionGroupExportArray['questions'] = $questionsArrayForGroupSingle;
-                    $digiqualiExportArray['questiongroups'][$questionGroupSingle->id] = $questionGroupExportArray;
+                    $exportGroupRecursive($questionGroupSingle, null);
                 }
-
             }
         }
 
         $fileDir    = $upload_dir . '/temp/';
-        $exportName = str_replace(' ', '_', (!empty($object->label) ? $object->label : $object->ref));
+        $exportName = (!empty($object->label) ? $object->label : $object->ref);
+        $exportName = dol_string_unaccent($exportName);
+        $exportName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $exportName);
+        $exportName = preg_replace('/_+/', '_', $exportName);
         $fileName   = dol_sanitizeFileName(dol_print_date(dol_now(), 'dayhourlog', 'tzuser') . '_' . dol_strtolower($exportName) . '_export');
         $fullName   = $fileDir . $fileName . '.json';
 
