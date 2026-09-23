@@ -135,6 +135,13 @@ print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@d
 
 require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 
+$constArray['digiquali'] = [
+    'ManageControlActionsOnLockedControl' => [
+        'name'        => 'ManageControlActionsOnLockedControl',
+        'description' => 'ManageControlActionsOnLockedControlDescription',
+        'code'        => 'DIGIQUALI_CONTROL_MANAGE_ACTIONS_ON_LOCKED_CONTROL'
+    ]
+];
 require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
 
 /*
@@ -190,6 +197,16 @@ print '</td>';
 print '<td class="center">';
 $controlReminderType = ['browser' => 'Browser', 'email' => 'Email', 'sms' => 'SMS'];
 print Form::selectarray('control_reminder_type', $controlReminderType, (!empty($conf->global->DIGIQUALI_CONTROL_REMINDER_TYPE) ? $conf->global->DIGIQUALI_CONTROL_REMINDER_TYPE : $controlReminderType[0]), 0, 0, 0, '', 1);
+print '</td></tr>';
+
+// Disable the attached documents upload on control answers (#2442)
+print '<tr class="oddeven"><td>';
+print $langs->trans('DisableControlAttachedFiles');
+print '</td><td>';
+print $langs->trans('DisableControlAttachedFilesDescription');
+print '</td>';
+print '<td class="center">';
+print ajax_constantonoff('DIGIQUALI_CONTROL_DISABLE_ATTACHED_FILES');
 print '</td></tr>';
 
 print '</table>';

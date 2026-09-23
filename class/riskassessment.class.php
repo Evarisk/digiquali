@@ -119,6 +119,7 @@ class RiskAssessment extends SaturneObject
         'fk_user_creat'        => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserAuthor', 'picto' => 'user', 'enabled' => 1, 'position' => 130, 'notnull' => 1, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_user_modif'        => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserModif',  'picto' => 'user', 'enabled' => 1, 'position' => 140, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_activity'          => ['type' => 'integer',                                'label' => 'Activity',                      'enabled' => 1, 'position' => 150, 'notnull' => 1, 'visible' => 1],
+        'fk_parent'            => ['type' => 'integer',                                'label' => 'Parent',                        'enabled' => 1, 'position' => 160, 'notnull' => 1, 'visible' => 0, 'default' => 0],
     ];
 
     /**
@@ -154,7 +155,12 @@ class RiskAssessment extends SaturneObject
     /**
      * @var int Activity ID
      */
-    public int $fk_activity;
+    public int $fk_activity = 0;
+
+    /**
+     * @var int Parent risk assessment ID (root of the evaluation line; 0 if this is a line root)
+     */
+    public int $fk_parent = 0;
 
     /**
      * Constructor
@@ -282,28 +288,80 @@ class RiskAssessment extends SaturneObject
         return $residualRiskPercentageClass;
     }
 
-    public function displayRiskAssessmentList(array $activityInfos, $limit = 0): void
+    /**
+     * Get the root id of the evaluation line this risk assessment belongs to.
+     *
+     * @return int Root risk assessment id (itself when it is the line root)
+     */
+    public function getRootId(): int
     {
-        global $db, $langs, $user; // $langs and $user are used in tpl
+        return $this->fk_parent > 0 ? $this->fk_parent : $this->id;
+    }
 
-        $riskAssessment  = new self($db);
-        $riskAssessments = $this->fetchAll('DESC', 'rowid', $limit, 0, ['customsql' => 't.fk_activity = ' . $activityInfos['id']]);
-        if (!is_array($riskAssessments) || empty($riskAssessments)) {
-            $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos();
-            require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
-        } else {
-            foreach ($riskAssessments as $riskAssessment) {
-                $riskAssessmentInfos = $riskAssessment->getRiskAssessmentInfos();
-                require __DIR__ . '/../core/tpl/digiquali_riskassessment_list_view.tpl.php';
-            }
-        }
+    /**
+     * Fetch the current risk assessment of each evaluation line of an activity.
+     * A line groups a chain of re-evaluations; only its latest (validated) one is current.
+     *
+     * @param  int    $activityId Activity id
+     * @return self[]             Current risk assessments, one per evaluation line
+     */
+    public function fetchCurrentLines(int $activityId): array
+    {
+        $riskAssessments = $this->fetchAll('ASC', 'rowid', 0, 0, ['customsql' => 't.fk_activity = ' . $activityId . ' AND t.status = ' . self::STATUS_VALIDATED]);
+
+        return is_array($riskAssessments) ? $riskAssessments : [];
+    }
+
+    /**
+     * Fetch the whole history of an evaluation line (root + re-evaluations), newest first.
+     *
+     * @param  int    $rootId Line root risk assessment id
+     * @return self[]         Risk assessments belonging to the line
+     */
+    public function fetchLineHistory(int $rootId): array
+    {
+        $riskAssessments = $this->fetchAll('DESC', 'rowid', 0, 0, ['customsql' => '(t.rowid = ' . $rootId . ' OR t.fk_parent = ' . $rootId . ')']);
+
+        return is_array($riskAssessments) ? $riskAssessments : [];
+    }
+
+    /**
+     * Display the current evaluation lines of an activity (one block per line).
+     *
+     * @param  array $activityInfos Activity infos (id, element, ...)
+     * @return void
+     */
+    public function displayRiskAssessmentList(array $activityInfos): void
+    {
+        global $db, $langs, $user; // used in tpl
+
+        $riskAssessment     = new self($db);
+        $currentAssessments = $riskAssessment->fetchCurrentLines((int) $activityInfos['id']);
+
+        require __DIR__ . '/../core/tpl/riskassessment/digiquali_riskassessment_lines_view.tpl.php';
+    }
+
+    /**
+     * Display the read-only history of an evaluation line.
+     *
+     * @param  int  $rootId Line root risk assessment id
+     * @return void
+     */
+    public function displayLineHistory(int $rootId): void
+    {
+        global $db, $langs; // used in tpl
+
+        $riskAssessment = new self($db);
+        $lineHistory    = $riskAssessment->fetchLineHistory($rootId);
+
+        require __DIR__ . '/../core/tpl/riskassessment/digiquali_riskassessment_history_view.tpl.php';
     }
 
     public function displayRiskAssessmentView(array $riskAssessmentInfos): void
     {
         global $db, $langs;
 
-        if ($riskAssessmentInfos['id'] > 0) {
+        if (($riskAssessmentInfos['id'] ?? 0) > 0) {
             require __DIR__ . '/../core/tpl/riskassessment/digiquali_riskassessment_single_view.tpl.php';
         } else {
             require __DIR__ . '/../core/tpl/riskassessment/digiquali_riskassessment_add_view.tpl.php';
@@ -314,7 +372,7 @@ class RiskAssessment extends SaturneObject
     {
         global $db, $langs;
 
-        if ($riskAssessmentInfos['id'] > 0) {
+        if (($riskAssessmentInfos['id'] ?? 0) > 0) {
             require __DIR__ . '/../core/tpl/riskassessment/task/digiquali_riskassessment_task_single_view.tpl.php';
         } else {
             require __DIR__ . '/../core/tpl/riskassessment/task/digiquali_riskassessment_task_add_view.tpl.php';

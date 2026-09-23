@@ -55,6 +55,13 @@ function control_prepare_head(Control $object): array
     $head[2][1] .= '<span class="badge marginleftonlyshort">' . $nbEquipment . '</span>';
 	$head[2][2]  = 'equipment';
 
+    // Action plan tab. Index 15 places it between the attendants tab (10) and the notes one (20),
+    // saturne_object_prepare_head() sorting the tabs on their key
+    $head[15][0]  = dol_buildpath('/digiquali/view/control/control_actionplan.php', 1) . '?id=' . $object->id;
+    $head[15][1]  = $conf->browser->layout != 'phone' ? '<i class="fas fa-clipboard-list pictofixedwidth"></i>' . $langs->trans('ActionPlan') : '<i class="fas fa-clipboard-list"></i>';
+    $head[15][1] .= '<span class="badge marginleftonlyshort">' . digiquali_count_control_actions($object->id) . '</span>';
+    $head[15][2]  = 'actionplan';
+
 	$moreparam['documentType']       = 'ControlDocument';
     $moreparam['attendantTableMode'] = 'simple';
     $moreparam['handlePhoto']        = true;
@@ -72,7 +79,7 @@ function control_prepare_head(Control $object): array
  */
 function get_linked_object_infos(CommonObject $linkedObject, array $linkableElements): array
 {
-    global $conf, $db, $langs, $user;
+    global $conf, $db, $hookmanager, $langs, $user;
 
     // Load Dolibarr libraries
     require_once DOL_DOCUMENT_ROOT . '/core/class/link.class.php';
@@ -84,14 +91,19 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
     $permissionToRead = $user->hasRight('produit', 'lire');
 
-    $linkableElement = $linkableElements[$linkedObject->element];
+    $linkableElement = $linkableElements[$linkedObject->element] ?? [];
 
-    // TODO: see if we can remove this if
-    $modulePart = $linkedObject->element;
-    if ($linkedObject->element == 'product') {
-        $modulePart = 'produit';
-    }
-    $out['linkedObject']['images'] = saturne_show_medias_linked($modulePart, $conf->{$linkedObject->element}->multidir_output[$conf->entity] . '/' . $linkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $linkedObject->ref . '/', $linkedObject, 'photo', 0, 0,0, 1);
+    // Some elements don't share their name with their modulepart nor with their $conf key (product => produit / $conf->product, productlot => product_batch / $conf->productbatch)
+    $elementMapping = [
+        'product'    => ['modulePart' => 'produit', 'confKey' => 'product'],
+        'productlot' => ['modulePart' => 'product_batch', 'confKey' => 'productbatch']
+    ];
+
+    $modulePart = $elementMapping[$linkedObject->element]['modulePart'] ?? $linkedObject->element;
+    $confKey    = $elementMapping[$linkedObject->element]['confKey'] ?? $linkedObject->element;
+    $uploadDir  = $conf->$confKey->multidir_output[$conf->entity] ?? '';
+
+    $out['linkedObject']['images'] = dol_strlen($uploadDir) > 0 ? saturne_show_medias_linked($modulePart, $uploadDir . '/' . $linkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $linkedObject->ref . '/', $linkedObject, 'photo', 0, 0,0, 1) : '';
     if ($linkedObject->element == 'productlot') {
         $linkedObject->element = 'product_lot';
     }
@@ -112,8 +124,35 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
     $out['linkedObject']['links'] = [];
     $out['linkedObject']['files'] = $filteredEcmFilesLine;
-    $out['linkedObject']['title']        = $langs->transnoentities($linkableElement['langs']);
-    $out['linkedObject']['name_field']   = $linkedObject->getNomUrl(1, !$permissionToRead ? 'nolink' : '', 1);
+    $out['linkedObject']['title']      = $langs->transnoentities(!empty($linkableElement['langs']) ? $linkableElement['langs'] : dol_ucfirst($linkedObject->element));
+    if (method_exists($linkedObject, 'getNomUrl')) {
+        $out['linkedObject']['name_field'] = $linkedObject->getNomUrl(1, !$permissionToRead ? 'nolink' : '');
+    } else {
+        // Some linked objects (e.g. productbatch) don't implement getNomUrl(): fall back to picto + name
+        $picto = !empty($linkableElement['picto']) ? img_picto('', $linkableElement['picto'], 'class="pictofixedwidth"') : '';
+        $name  = !empty($linkedObject->ref) ? $linkedObject->ref : (!empty($linkedObject->label) ? $linkedObject->label : ($linkedObject->batch ?? ''));
+        $out['linkedObject']['name_field'] = $picto . dol_escape_htmltag($name);
+    }
+
+    // Per-element label and description field mapping
+    $elementFieldsMap = [
+        'product'    => ['label' => 'label',  'description' => 'description'],
+        'productlot' => ['label' => '',       'description' => 'note_public'],
+        'user'       => ['label' => '',       'description' => 'job'],
+        'thirdparty' => ['label' => '',       'description' => 'note_public'],
+        'contact'    => ['label' => '',       'description' => 'poste'],
+        'project'    => ['label' => 'title',  'description' => 'description'],
+        'task'       => ['label' => 'label',  'description' => 'description'],
+    ];
+
+    $fields = $elementFieldsMap[$linkedObject->element] ?? ['label' => '', 'description' => ''];
+
+    $out['linkedObject']['label']       = ($fields['label'] && !empty($linkedObject->{$fields['label']}))
+        ? dol_escape_htmltag($linkedObject->{$fields['label']})
+        : '';
+    $out['linkedObject']['description'] = ($fields['description'] && !empty($linkedObject->{$fields['description']}))
+        ? dol_escape_htmltag($linkedObject->{$fields['description']})
+        : '';
 
     $link->fetchAll($out['linkedObject']['links'], $linkedObject->element, $linkedObject->id);
 
@@ -124,13 +163,18 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
         $file->name_field = $out['linkedObject']['name_field'];
     }
 
+    $out['linkedObject']['qc_frequency'] = '';
+
     $qcFrequency = get_parent_linked_object_qc_frequency($linkedObject, $linkableElements);
     if ($qcFrequency > 0 && getDolGlobalInt('DIGIQUALI_SHOW_QC_FREQUENCY_PUBLIC_INTERFACE')) {
         $out['linkedObject']['qc_frequency'] = '<i class="objet-icon fas fa-history"></i>' . $qcFrequency;
     }
 
-    $out['parentLinkedObject']['files']  = [];
-    $out['parentLinkedObject']['links']  = [];
+    $out['parentLinkedObject']['files']      = [];
+    $out['parentLinkedObject']['links']      = [];
+    $out['parentLinkedObject']['images']     = '';
+    $out['parentLinkedObject']['title']      = '';
+    $out['parentLinkedObject']['name_field'] = '';
     if (isset($linkableElement['fk_parent']) && getDolGlobalInt('DIGIQUALI_SHOW_PARENT_LINKED_OBJECT_ON_PUBLIC_INTERFACE')) {
         $linkedObjectParentData = [];
         foreach ($linkableElements as $value) {
@@ -147,13 +191,11 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 
             $parentLinkedObject->fetch($linkedObject->{$linkableElement['fk_parent']});
 
-            // TODO: see if we can remove this if
-            $modulePart = $parentLinkedObject->element;
-            if ($parentLinkedObject->element == 'product') {
-                $modulePart = 'produit';
-            }
+            $parentModulePart = $elementMapping[$parentLinkedObject->element]['modulePart'] ?? $parentLinkedObject->element;
+            $parentConfKey    = $elementMapping[$parentLinkedObject->element]['confKey'] ?? $parentLinkedObject->element;
+            $parentUploadDir  = $conf->$parentConfKey->multidir_output[$conf->entity] ?? '';
 
-            $out['parentLinkedObject']['images']     = saturne_show_medias_linked($modulePart, $conf->{$parentLinkedObject->element}->multidir_output[$conf->entity] . '/' . $parentLinkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $parentLinkedObject->ref . '/', $parentLinkedObject, 'photo', 0, 0,0, 1);
+            $out['parentLinkedObject']['images']     = dol_strlen($parentUploadDir) > 0 ? saturne_show_medias_linked($parentModulePart, $parentUploadDir . '/' . $parentLinkedObject->ref . '/', 'small', 1, 0, 0, 0, 100, 100, 0, 0, 1,  $parentLinkedObject->ref . '/', $parentLinkedObject, 'photo', 0, 0,0, 1) : '';
             $out['parentLinkedObject']['title']      = $langs->transnoentities($linkedObjectParentData['langs']);
             $out['parentLinkedObject']['name_field'] = $permissionToRead ? $parentLinkedObject->getNomUrl(1, '', 0, -1, 1) : img_picto('', $linkedObjectParentData['picto'], 'class="pictofixedwidth"') . $parentLinkedObject->{$linkedObjectParentData['name_field']};
 
@@ -178,12 +220,20 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
     }
 
     $out['images'] = $out['linkedObject']['images'];
-    if (strpos($out['parentLinkedObject']['images'], 'nophoto') === false) {
+    if (!empty($out['parentLinkedObject']['images']) && strpos($out['parentLinkedObject']['images'], 'nophoto') === false) {
         $out['images'] = $out['parentLinkedObject']['images'];
     }
 
     $out['files']  = array_merge($out['linkedObject']['files'], $out['parentLinkedObject']['files']);
     $out['links']  = array_merge($out['linkedObject']['links'], $out['parentLinkedObject']['links']);
+
+    // Let other modules append the shared files and links of their own objects bound to the linked object
+    $parameters = ['linkableElements' => $linkableElements, 'linkedObjectInfoArray' => $out];
+    $resHook    = $hookmanager->executeHooks('digiqualiLinkedObjectDocumentation', $parameters, $linkedObject);
+    if ($resHook >= 0) {
+        $out['files'] = array_merge($out['files'], $hookmanager->resArray['files'] ?? []);
+        $out['links'] = array_merge($out['links'], $hookmanager->resArray['links'] ?? []);
+    }
 
     return $out;
 }
@@ -267,7 +317,7 @@ function get_control_infos(CommonObject $linkedObject): array
                 }
             }
 
-            $moreParams = '&fromtype=' . $linkedObject->element . '&fromid=' . $linkedObject->id . '&fk_sheet=' . $lastControl->fk_sheet . '&fk_user_controller=' . $lastControl->fk_user_controller . (!empty($lastControl->projectid) ? '&projectid=' . $lastControl->projectid : '') . $arraySelected;
+            $moreParams = '&fromtype=' . $linkedObject->element . '&fromid=' . $linkedObject->id . '&fk_sheet=' . $lastControl->fk_sheet . (!empty($lastControl->projectid) ? '&projectid=' . $lastControl->projectid : '') . $arraySelected;
             $out['nextControl']['create_button'] = '<a class="wpeo-button button-square-60 button-radius-1 button-primary button-flex" href="' . dol_buildpath('custom/digiquali/view/control/control_card.php?action=create' . $moreParams, 1) . '" target="_blank"><i class="button-icon fas fa-plus"></i></a>';
         }
         $verdictControlColor           = $lastControl->verdict == 1 ? 'green' : 'red';
@@ -300,8 +350,18 @@ function get_parent_linked_object_qc_frequency(CommonObject $linkedObject, array
         $objectsMetadata = saturne_get_objects_metadata();
     }
 
-    $qcFrequency    = 0;
-    $objectMetadata = $objectsMetadata[$linkedObject->element];
+    $qcFrequency = 0;
+
+    // $linkedObject->element holds the link name, the metadata is keyed by object type : they differ
+    // for thirdparty/societe, contact/socpeople and task/project_task, hence this lookup.
+    $objectMetadata = [];
+    foreach ($objectsMetadata as $objectsMetadataEntry) {
+        if (($objectsMetadataEntry['link_name'] ?? '') === $linkedObject->element) {
+            $objectMetadata = $objectsMetadataEntry;
+            break;
+        }
+    }
+
     if (isset($objectMetadata['fk_parent'])) {
         $parentLinkedObject = null;
         foreach ($objectsMetadata as $objectMetadata) {
@@ -343,6 +403,19 @@ function get_task_infos(Task $task): array
     $userTmp->fetch($task->fk_user_creat);
     $out['task']['author'] = $userTmp->getNomUrl(1);
 
+    $out['task']['assigned']         = [];
+    $out['task']['assigned_user_id'] = 0;
+    $assignedContacts = $task->liste_contact(-1, 'internal', 0, 'TASKEXECUTIVE');
+    if (is_array($assignedContacts)) {
+        foreach ($assignedContacts as $assignedContact) {
+            $userTmp->fetch($assignedContact['id']);
+            $out['task']['assigned'][] = $userTmp->getNomUrl(1);
+            if (empty($out['task']['assigned_user_id'])) {
+                $out['task']['assigned_user_id'] = $assignedContact['id'];
+            }
+        }
+    }
+
     if (empty($task->date_start) && empty($task->date_end)) {
         $out['task']['date'] = dol_print_date($task->date_c, 'dayhour');
     } else {
@@ -355,6 +428,9 @@ function get_task_infos(Task $task): array
     if ($task->timespent_total_duration > 0 && $task->planned_workload > 0) {
         $out['task']['time'] = convertSecondToTime($task->timespent_total_duration) . ' / ' . convertSecondToTime($task->planned_workload);
     }
+
+    // Always defined, so that consumers can iterate without checking the key on a task with no time spent
+    $out['task']['timespent'] = [];
 
     $task->fetchTimeSpentOnTask();
     if (is_array($task->lines) && !empty($task->lines)) {
@@ -412,4 +488,403 @@ function controldetPrepareHead($object)
 	complete_head_from_modules($conf, $langs, $object, $head, $h, 'test@test', 'remove');
 
 	return $head;
+}
+
+/**
+ * Get the lots/serials of a product along with the stock holding them.
+ *
+ * The controls tab of a product lists the controls linked to the product itself. Lots and serials are
+ * distinct objects, so the controls really carried out on the units held in stock never show up there.
+ * The second list of that tab is restricted to those lots and shows in which warehouse each of them
+ * stands : both needs are served by this map, which the page caches for the list hooks to reuse.
+ *
+ * @param  int   $productId Id of the parent product
+ * @return array            Lot id => ['lot' => ProductLot, 'warehouses' => Entrepot[], 'qty' => float], ordered by batch
+ * @throws Exception
+ */
+function digiquali_get_product_lot_stock(int $productId): array
+{
+    global $db;
+
+    if ($productId <= 0 || !isModEnabled('productbatch')) {
+        return [];
+    }
+
+    // Load Dolibarr libraries
+    require_once DOL_DOCUMENT_ROOT . '/product/stock/class/entrepot.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
+
+    // Lots/serials of the product
+    $lots = [];
+    $sql  = 'SELECT pl.* FROM ' . $db->prefix() . 'product_lot AS pl';
+    $sql .= ' WHERE pl.fk_product = ' . $productId;
+    $sql .= ' AND pl.entity IN (' . getEntity('productlot') . ')';
+    $sql .= ' ORDER BY pl.batch';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_get_product_lot_stock ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+    while ($obj = $db->fetch_object($resql)) {
+        $productLot = new ProductLot($db);
+        $productLot->setVarsFromFetchObj($obj);
+        $lots[(int) $obj->rowid] = ['lot' => $productLot, 'warehouses' => [], 'qty' => 0];
+    }
+    $db->free($resql);
+
+    if (empty($lots)) {
+        return [];
+    }
+
+    $lotIdsByBatch = [];
+    foreach ($lots as $lotId => $lotData) {
+        $lotIdsByBatch[(string) $lotData['lot']->batch] = $lotId;
+    }
+
+    // Warehouses holding each lot. The stock rows carry the batch value, not the lot id, hence the
+    // lookup on the batch built above
+    $sql  = 'SELECT ps.fk_entrepot AS warehouse_id, pb.batch, SUM(pb.qty) AS qty';
+    $sql .= ' FROM ' . $db->prefix() . 'product_batch AS pb';
+    $sql .= ' INNER JOIN ' . $db->prefix() . 'product_stock AS ps ON (ps.rowid = pb.fk_product_stock)';
+    $sql .= ' INNER JOIN ' . $db->prefix() . 'entrepot AS e ON (e.rowid = ps.fk_entrepot)';
+    $sql .= ' WHERE ps.fk_product = ' . $productId;
+    $sql .= ' AND e.entity IN (' . getEntity('stock') . ')';
+    $sql .= ' GROUP BY ps.fk_entrepot, pb.batch, e.ref';
+    $sql .= ' HAVING SUM(pb.qty) <> 0';
+    $sql .= ' ORDER BY e.ref, pb.batch';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        $warehouses = [];
+        while ($obj = $db->fetch_object($resql)) {
+            $lotId = $lotIdsByBatch[(string) $obj->batch] ?? 0;
+            if (empty($lotId)) {
+                // A batch held in stock without its lot record is not an object a control can point at
+                continue;
+            }
+
+            $warehouseId = (int) $obj->warehouse_id;
+            if (!isset($warehouses[$warehouseId])) {
+                $warehouse                = new Entrepot($db);
+                $warehouses[$warehouseId] = ($warehouse->fetch($warehouseId) > 0 ? $warehouse : null);
+            }
+            if (!is_object($warehouses[$warehouseId])) {
+                continue;
+            }
+
+            $lots[$lotId]['warehouses'][$warehouseId] = $warehouses[$warehouseId];
+            $lots[$lotId]['qty']                     += (float) $obj->qty;
+        }
+        $db->free($resql);
+    } else {
+        dol_syslog('digiquali_get_product_lot_stock ' . $db->lasterror(), LOG_ERR);
+    }
+
+    return $lots;
+}
+
+/**
+ * Can the corrective actions of a control still be managed?
+ *
+ * Adding, editing or deleting an action changes the content of the control, so it follows the state of
+ * that control like every other modification of the answers screen does. A locked control is the one
+ * case teams may want to reopen : corrective actions are often followed up long after the control itself
+ * has been closed, hence the setting. An archived control stays read-only whatever the setting says.
+ *
+ * @param  Control $control Control the action plan belongs to
+ * @return bool             True if the corrective actions of the control can be added, edited or deleted
+ */
+function digiquali_can_manage_control_actions(Control $control): bool
+{
+    if ($control->isModifiable()) {
+        return true;
+    }
+
+    return (int) $control->status === Control::STATUS_LOCKED && getDolGlobalInt('DIGIQUALI_CONTROL_MANAGE_ACTIONS_ON_LOCKED_CONTROL') > 0;
+}
+
+/**
+ * Get the action plan of a control : the tasks carried by the answers of its questions.
+ *
+ * An action is a project task linked to a control line, the line being the answer given to one question
+ * of the control. The link lives in llx_element_element and can have been written in either direction,
+ * hence the union. Everything the action plan displays about an action is gathered here : the question
+ * it answers, the answer given to that question, and the users it is assigned to.
+ *
+ * @param  Control $control Control the action plan belongs to
+ * @return array            List of ['task' => SaturneTask, 'line' => ControlLine, 'question' => Question|null, 'answer' => Answer|null, 'assignees' => User[]]
+ * @throws Exception
+ */
+function digiquali_get_control_actions(Control $control): array
+{
+    global $db;
+
+    if (empty($control->id)) {
+        return [];
+    }
+
+    // Load Dolibarr libraries
+    require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+
+    // Load Saturne libraries
+    require_once __DIR__ . '/../../saturne/class/task/saturnetask.class.php';
+
+    // Load DigiQuali libraries
+    require_once __DIR__ . '/../class/answer.class.php';
+    require_once __DIR__ . '/../class/question.class.php';
+
+    $controlLine = new ControlLine($db);
+    $lines       = $controlLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_control = ' . $control->id . ' AND t.status > 0']);
+    if (!is_array($lines) || empty($lines)) {
+        return [];
+    }
+
+    // Tasks linked to those lines. The link is written from the task or from the line depending on the
+    // code path that created it, so both directions are read
+    $lineIds = implode(',', array_map('intval', array_keys($lines)));
+    $sql     = 'SELECT fk_target AS line_id, fk_source AS task_id FROM ' . $db->prefix() . 'element_element';
+    $sql    .= " WHERE sourcetype = 'project_task' AND targettype = 'controldet' AND fk_target IN (" . $lineIds . ')';
+    $sql    .= ' UNION ';
+    $sql    .= 'SELECT fk_source AS line_id, fk_target AS task_id FROM ' . $db->prefix() . 'element_element';
+    $sql    .= " WHERE sourcetype = 'controldet' AND targettype = 'project_task' AND fk_source IN (" . $lineIds . ')';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_get_control_actions ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+    $taskIdsByLine = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $taskIdsByLine[(int) $obj->line_id][] = (int) $obj->task_id;
+    }
+    $db->free($resql);
+
+    if (empty($taskIdsByLine)) {
+        return [];
+    }
+
+    $questions = [];
+    $answers   = [];
+    $users     = [];
+    $actions   = [];
+
+    foreach ($taskIdsByLine as $lineId => $taskIds) {
+        $line = $lines[$lineId] ?? null;
+        if (empty($line)) {
+            continue;
+        }
+
+        // Question of the line, and the answer given to it. The line holds the positions of the chosen
+        // answers, not their ids, which is how the whole module reads an answer back
+        $questionId = (int) $line->fk_question;
+        if (!isset($questions[$questionId])) {
+            $question              = new Question($db);
+            $questions[$questionId] = ($question->fetch($questionId) > 0 ? $question : null);
+
+            $answerObject        = new Answer($db);
+            $questionAnswers     = $answerObject->fetchAll('', 'position', 0, 0, ['customsql' => 't.fk_question = ' . $questionId]);
+            $answers[$questionId] = is_array($questionAnswers) ? $questionAnswers : [];
+        }
+
+        $givenAnswer = null;
+        if (!empty($line->answer) && $line->answer !== '0') {
+            $positions = array_map('trim', explode(',', (string) $line->answer));
+            foreach ($answers[$questionId] as $questionAnswer) {
+                if (in_array((string) $questionAnswer->position, $positions, true)) {
+                    $givenAnswer = $questionAnswer;
+                    break;
+                }
+            }
+        }
+
+        foreach ($taskIds as $taskId) {
+            $task = new SaturneTask($db);
+            if ($task->fetch($taskId) <= 0) {
+                continue;
+            }
+
+            $assignees = [];
+            foreach ($task->getListContactId('internal') as $contactId) {
+                if (!isset($users[$contactId])) {
+                    $assignee          = new User($db);
+                    $users[$contactId] = ($assignee->fetch($contactId) > 0 ? $assignee : null);
+                }
+                if (is_object($users[$contactId])) {
+                    $assignees[$contactId] = $users[$contactId];
+                }
+            }
+
+            $actions[$taskId] = [
+                'task'      => $task,
+                'line'      => $line,
+                'question'  => $questions[$questionId],
+                'answer'    => $givenAnswer,
+                'assignees' => $assignees
+            ];
+        }
+    }
+
+    return $actions;
+}
+
+/**
+ * Tell where an action of a control action plan stands.
+ *
+ * Dolibarr tasks carry a progress and a deadline but no state of their own, so the three states the
+ * action plan speaks of are read from those : a fully progressed action is done, an action past its
+ * deadline is late, anything else is running.
+ *
+ * @param  Task   $task Action to qualify
+ * @return string       'done', 'late' or 'ongoing'
+ */
+function digiquali_get_control_action_status(Task $task): string
+{
+    if ((float) $task->progress >= 100) {
+        return 'done';
+    }
+    if (!empty($task->date_end) && $task->date_end < dol_now()) {
+        return 'late';
+    }
+
+    return 'ongoing';
+}
+
+/**
+ * Count the actions of a control action plan by state, and how far it has gone.
+ *
+ * @param  array $actions Actions as returned by digiquali_get_control_actions()
+ * @return array          ['total' => int, 'done' => int, 'ongoing' => int, 'late' => int, 'progress' => int]
+ */
+function digiquali_get_control_action_stats(array $actions): array
+{
+    $stats = ['total' => count($actions), 'done' => 0, 'ongoing' => 0, 'late' => 0, 'progress' => 0];
+
+    foreach ($actions as $action) {
+        $stats[digiquali_get_control_action_status($action['task'])]++;
+    }
+
+    if ($stats['total'] > 0) {
+        $stats['progress'] = (int) round($stats['done'] * 100 / $stats['total']);
+    }
+
+    return $stats;
+}
+
+/**
+ * Count the actions of the action plan of a control.
+ *
+ * The tab badge only needs how many there are : this counts them in one query instead of building
+ * every action the way digiquali_get_control_actions() does.
+ *
+ * @param  int $controlId Id of the control
+ * @return int            Number of actions carried by the answers of the control
+ */
+function digiquali_count_control_actions(int $controlId): int
+{
+    global $db;
+
+    if ($controlId <= 0) {
+        return 0;
+    }
+
+    $lines  = '(SELECT rowid FROM ' . $db->prefix() . 'digiquali_controldet WHERE fk_control = ' . $controlId . ' AND status > 0)';
+    $sql    = 'SELECT COUNT(*) AS nb FROM (';
+    $sql   .= "SELECT fk_source AS task_id FROM " . $db->prefix() . "element_element WHERE sourcetype = 'project_task' AND targettype = 'controldet' AND fk_target IN " . $lines;
+    $sql   .= ' UNION ';
+    $sql   .= "SELECT fk_target AS task_id FROM " . $db->prefix() . "element_element WHERE sourcetype = 'controldet' AND targettype = 'project_task' AND fk_source IN " . $lines;
+    $sql   .= ') AS controlactions';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_count_control_actions ' . $db->lasterror(), LOG_ERR);
+        return 0;
+    }
+    $obj = $db->fetch_object($resql);
+    $db->free($resql);
+
+    return (int) ($obj->nb ?? 0);
+}
+
+/**
+ * Ids of the tasks that make up the action plan of a control.
+ *
+ * The public answer interface has no logged in user to check rights against : what it is allowed to
+ * touch is what the control behind the track_id carries. This lists it in one query, without building
+ * every action the way digiquali_get_control_actions() does.
+ *
+ * @param  int   $controlId Id of the control
+ * @return int[]            Ids of the tasks carried by the answers of the control
+ */
+function digiquali_get_control_action_task_ids(int $controlId): array
+{
+    global $db;
+
+    if ($controlId <= 0) {
+        return [];
+    }
+
+    $lines  = '(SELECT rowid FROM ' . $db->prefix() . 'digiquali_controldet WHERE fk_control = ' . $controlId . ' AND status > 0)';
+    $sql    = "SELECT fk_source AS task_id FROM " . $db->prefix() . "element_element WHERE sourcetype = 'project_task' AND targettype = 'controldet' AND fk_target IN " . $lines;
+    $sql   .= ' UNION ';
+    $sql   .= "SELECT fk_target AS task_id FROM " . $db->prefix() . "element_element WHERE sourcetype = 'controldet' AND targettype = 'project_task' AND fk_source IN " . $lines;
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('digiquali_get_control_action_task_ids ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $taskIds = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $taskIds[] = (int) $obj->task_id;
+    }
+    $db->free($resql);
+
+    return $taskIds;
+}
+
+/**
+ * Keep the actions of a control action plan matching the filters of the page.
+ *
+ * An action is spread over a task, the control line it answers and the answer given to that line, so
+ * no single query holds every criteria : the plan is filtered once built.
+ *
+ * @param  array $actions Actions as returned by digiquali_get_control_actions()
+ * @param  array $filters ['question' => int, 'status' => string, 'verdict' => string, 'assignee' => int, 'text' => string], empty values matching everything
+ * @return array          The actions the filters keep
+ */
+function digiquali_filter_control_actions(array $actions, array $filters): array
+{
+    $questionId = (int) ($filters['question'] ?? 0);
+    $status     = (string) ($filters['status'] ?? '');
+    $verdict    = (string) ($filters['verdict'] ?? '');
+    $assigneeId = (int) ($filters['assignee'] ?? 0);
+    $text       = dol_strtolower(trim((string) ($filters['text'] ?? '')));
+
+    return array_filter($actions, function (array $action) use ($questionId, $status, $verdict, $assigneeId, $text) {
+        if ($questionId > 0 && (!is_object($action['question']) || $action['question']->id != $questionId)) {
+            return false;
+        }
+        if ($status !== '' && digiquali_get_control_action_status($action['task']) !== $status) {
+            return false;
+        }
+        if ($verdict !== '' && (!is_object($action['answer']) || $action['answer']->value !== $verdict)) {
+            return false;
+        }
+        if ($assigneeId > 0 && !isset($action['assignees'][$assigneeId])) {
+            return false;
+        }
+        if ($text !== '') {
+            $haystack = dol_strtolower($action['task']->ref . ' ' . $action['task']->label . ' ' . $action['task']->description);
+            if (is_object($action['question'])) {
+                $haystack .= ' ' . dol_strtolower($action['question']->ref . ' ' . $action['question']->label);
+            }
+            if (strpos($haystack, $text) === false) {
+                return false;
+            }
+        }
+
+        return true;
+    });
 }

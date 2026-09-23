@@ -37,6 +37,7 @@ if (isModEnabled('categorie')) {
 
 // load DigiQuali libraries
 require_once __DIR__ . '/../../class/sheet.class.php';
+require_once __DIR__ . '/../../../saturne/lib/object.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -94,13 +95,14 @@ if (!$sortorder) {
 }
 
 // Definition of custom fields for columns
+$conf->cache['objectsMetadata'] = saturne_get_objects_metadata(); // Read back by the saturnePrintFieldListLoopObject hook to render the element_linked column
 $object->fields['nb_questions'] = ['label' => 'NbQuestions', 'enabled' => 1, 'visible' => 2, 'position' => 16, 'disablesort' => 1, 'csslist' => 'center'];
 $excludeFields                  = ['nb_questions'];
 
 // Initialize array of search criterias
 $searchAll        = trim(GETPOST('search_all'));
 $search           = [];
-$search['status'] = [1,2];
+$search['status'] = saturne_get_status_search_filter([Sheet::STATUS_VALIDATED, Sheet::STATUS_LOCKED]);
 foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');

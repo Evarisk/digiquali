@@ -34,7 +34,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
             }
         }
     ?>
-    <div class="question<?php echo $questionWithCorrectAnswerCssClass ?> table-id-<?php echo $question->id ?> <?php echo !empty($objectLine->answer) ? 'question-complete' : ''; ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>">
+    <div class="question<?php echo $questionWithCorrectAnswerCssClass ?> table-id-<?php echo $question->id ?> <?php echo !empty($objectLine->answer) ? 'question-complete' : ''; ?>" data-autoSave="<?php echo getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . 'DET_AUTO_SAVE_ACTION'); ?>" data-type="<?php echo dol_escape_htmltag($question->type); ?>" data-points="<?php echo (float)$question->points; ?>" data-grading-policy="<?php echo dol_escape_htmltag($question->grading_policy); ?>" data-min="<?php echo dol_escape_htmltag($question->question_answer_min_value); ?>" data-max="<?php echo dol_escape_htmltag($question->question_answer_max_value); ?>" data-correct-answers="<?php echo dol_escape_htmltag($question->correct_answers); ?>">
         <?php if ($question->show_photo > 0 && getDolGlobalInt('DIGIQUALI_' . dol_strtoupper($object->element) . '_DISPLAY_MEDIAS') && !empty($user->conf->DIGIQUALI_SHOW_OK_KO_PHOTOS)) { ?>
             <div class="question__header-medias">
                 <div class="question__photo-ref-ok">
@@ -50,60 +50,67 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
         <div class="question__container">
             <div class="question__header">
                 <div class="question__header-content">
-                    <div class="question-title"><?php echo $question->getNomUrl(1, '', 0, '', -1, 1); ?></div>
+                    <div class="question-title">
+                        <span class="question-ref"><?php echo $question->getNomUrl(1, '', 0, '', -1, 1); ?></span>
+                        <span class="question-type"><?php echo $langs->trans($question->type); ?></span>
+                    </div>
                     <div class="question-description"><?php echo $question->description; ?></div>
-                    <div class="question-points"><?php echo ($showCorrection ? $question->formatSingleQuestionScore($questionWithCorrectAnswer, $objectLine->answer) : '') ?></div>
+                    <div class="question-points"><strong><?php echo $langs->trans('Scoring'); ?> : </strong><span class="score-value"><?php echo $question->formatSingleQuestionScore($questionWithCorrectAnswer, $objectLine->answer ?? '') ?></span></div>
                 </div>
                 <div class="question__header-answer">
                     <?php print show_answer_from_question($question, $object, $questionAnswer, $questionGroupId, $showCorrection); ?>
-                </div>
-            </div>
-            <div class="question__footer">
-                <?php if ($question->enter_comment > 0) : ?>
-                    <label class="question__footer-comment">
-                        <i class="far fa-comment-dots question-comment-icon"></i>
-                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($object->status == $object::STATUS_VALIDATED ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
-                    </label>
-                <?php endif; ?>
-                <?php if ($question->authorize_answer_photo > 0) : ?>
-                    <div class="question__footer-linked-medias">
-                        <div class="linked-medias linked-medias-list answer_photo_<?php echo $question->id ?>">
-                            <?php if ($object->status == 0) : ?>
-                                <input hidden multiple class="fast-upload<?php echo getDolGlobalInt('SATURNE_USE_FAST_UPLOAD_IMPROVEMENT') ? '-improvement' : ''; ?>" id="fast-upload-answer-photo<?php echo $question->id ?>" type="file" name="userfile[]" capture="environment" accept="image/*">
-                                <input type="hidden" class="question-answer-photo" id="answer_photo_<?php echo $question->id ?>" name="answer_photo_<?php echo $question->id ?>" value=""/>
-                                <input type="hidden" class="fast-upload-options" data-from-subtype="answer_photo_<?php echo $question->id ?>" data-from-subdir="answer_photo/<?php echo $question->ref ?>"/>
-                                <label for="fast-upload-answer-photo<?php echo $question->id ?>">
-                                    <div class="wpeo-button button-square-50">
-                                        <i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>
-                                    </div>
-                                </label>
-                                <div class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="<?php echo $question->id ?>">
-                                    <input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="<?php echo $object->id ?>" data-from-type="<?php echo $object->element ?>" data-from-subtype="answer_photo_<?php echo $question->id ?>" data-from-subdir="answer_photo/<?php echo $question->ref ?>"/>
-                                    <i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>
+                    <?php if ($question->authorize_answer_photo > 0 || !empty($permissionToAddTask)) : ?>
+                        <div class="question__answer-sep"></div>
+                        <div class="question__answer-actions">
+                            <?php if ($question->authorize_answer_photo > 0) : ?>
+                                <?php echo saturne_render_media_block('digiquali', $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'answer_photo_' . $question->id, '', [
+                                    'show_photo'       => true,
+                                    'show_audio'       => false,
+                                    'show_file'        => $object->element === 'control' && !getDolGlobalInt('DIGIQUALI_CONTROL_DISABLE_ATTACHED_FILES'),
+                                    'file_sub_dir'     => ($objectLine->id > 0 ? 'controldet/' . dol_sanitizeFileName($objectLine->ref) : ''),
+                                    'file_upload_data' => ['fk_control' => $object->id, 'fk_question' => $question->id],
+                                    'show_upload'      => $object->status == 0,
+                                ]); ?>
+                            <?php endif; ?>
+                            <?php if (!empty($object->project) && !empty($permissionToAddTask)) : ?>
+                                <div class="wpeo-button button-square-50 add-action modal-open">
+                                    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
+                                    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
                                 </div>
                             <?php endif; ?>
+                            <?php // The frontend has nowhere to go and attach a project : an inert button would only puzzle the user
+                            if (empty($object->project) && !empty($permissionToAddTask) && empty($isFrontend)) :
+                                print '<div class="wpeo-button button-square-50 wpeo-tooltip-event" aria-label="' . $langs->transnoentities('AddProject') . '" id="task-disable" style="background-color: #ececec; border-color: #ececec; color: rgba(0, 0, 0, 0.4) !important;">';
+                                print '    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="' . $objectLine->id . '" data-from-type="' . $objectLine->element . '"/>';
+                                print '    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>';
+                                print '</div>';
+                            endif; ?>
                         </div>
-                    </div>
-                <?php endif; ?>
-                <?php if (!empty($object->project) && !empty($permissionToAddTask)) : ?>
-                    <div class="wpeo-button button-square-50 add-action modal-open">
-                        <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="<?php echo $objectLine->id ?>" data-from-type="<?php echo $objectLine->element ?>"/>
-                        <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>
-                    </div>
-                <?php endif;
-                if (empty($object->project) && !empty($permissionToAddTask)) {
-                    print '<div class="wpeo-button button-square-50 wpeo-tooltip-event" aria-label="' . $langs->transnoentities('AddProject') . '" id="task-disable" style="background-color: #ececec; border-color: #ececec; color: rgba(0, 0, 0, 0.4) !important;">';
-                    print '    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="' . $objectLine->id . '" data-from-type="' . $objectLine->element . '"/>';
-                    print '    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>';
-                    print '</div>';
-                }
-                ?>
-            </div>
-            <?php if ($question->authorize_answer_photo > 0) : ?>
-                <div class="question__list-medias">
-                    <?php echo saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, $question, '', 0, $object->status == 0, 1); ?>
+                    <?php endif; ?>
                 </div>
-            <?php endif;
+            </div>
+            <?php if ($question->enter_comment > 0) :
+                $commentDisabled = ($object->status == $object::STATUS_VALIDATED);
+                // Predefined comments of the dictionary, dropped into the comment with a single click
+                $commentLibrary = digiquali_get_comment_library(); ?>
+                <div class="question__footer">
+                    <label class="question__footer-comment">
+                        <i class="far fa-comment-dots question-comment-icon"></i>
+                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
+                    </label>
+                    <?php if (!$commentDisabled && !empty($commentLibrary)) : ?>
+                        <div class="question__comment-library">
+                            <?php foreach ($commentLibrary as $commentLibraryEntry) :
+                                $commentLibraryText = digiquali_get_comment_library_text($commentLibraryEntry); ?>
+                                <button type="button" class="question-comment-suggestion wpeo-tooltip-event" data-question-id="<?php echo $question->id; ?>" data-comment-text="<?php echo dol_escape_htmltag($commentLibraryText); ?>" aria-label="<?php echo dol_escape_htmltag($commentLibraryText); ?>" data-direction="top">
+                                    <i class="fas fa-plus question-comment-suggestion-icon"></i><?php echo dol_escape_htmltag($commentLibraryEntry->label); ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            <?php
             if (!empty($permissionToReadTask)) :
                 require __DIR__ . '/answers/answers_task_view.tpl.php';
             endif; ?>

@@ -71,6 +71,10 @@ window.digiquali.task.event = function initializeEvents() {
 
   $(document).on('change', '.question__action-check input[type="checkbox"]', window.digiquali.task.checkTask);
 
+  // Task progress event
+  $(document).on('input', '.task-progress-slider, #answer-task-progress', window.digiquali.task.refreshProgressLabel);
+  $(document).on('change', '.task-progress-slider', window.digiquali.task.updateTaskProgress);
+
   $(document).on('click', '.modal-open', window.digiquali.task.autoFocusLabel);
 
   // Task timespent event
@@ -139,10 +143,10 @@ window.saturne.modal.addMoreOpenModalData = function(modalToOpen, elementFrom) {
   if (modalToOpen.match(/timespent_edit/)) {
     action = 'fetch_task_timespent';
   }
-  if (modalToOpen === 'activity_edit' || modalToOpen === 'riskassessment_list') {
+  if (modalToOpen === 'activity_edit') {
     action = 'fetch_activity';
   }
-  if (modalToOpen === 'riskassessment_update') {
+  if (modalToOpen === 'riskassessment_update' || modalToOpen === 'riskassessment_list') {
     action = 'fetch_riskassessment';
   }
 
@@ -182,8 +186,9 @@ window.digiquali.task.createTask = function() {
   const label     = $modal.find('#answer-task-label').val();
   const startDate = $modal.find('#answer-task-start-date').val();
   const endDate   = $modal.find('#answer-task-end-date').val();
-  const budget    = $modal.find('#answer-task-budget').val();
-  const projectId = $modal.data('project-id');
+  const budget         = $modal.find('#answer-task-budget').val();
+  const projectId      = $modal.data('project-id');
+  const assignedUserId = $modal.find('[name="answer-task-assigned-user"]').val();
 
   $.ajax({
     url: `${document.URL}&action=add_task&token=${token}`,
@@ -196,7 +201,8 @@ window.digiquali.task.createTask = function() {
       date_start:         startDate,
       date_end:           endDate,
       budget_amount:      budget,
-      fk_project:         projectId
+      fk_project:         projectId,
+      fk_user_assign:     assignedUserId
     }),
     success: function(resp) {
       $modal.replaceWith($(resp).find('#answer_task_add'));
@@ -220,27 +226,31 @@ window.digiquali.task.updateTask = function() {
   const $modal = $this.closest('#answer_task_edit');
   const $form  = $modal.find('.answer-task-content');
   const taskId = $this.data('task-id');
-  const $list  = $(document).find(`#answer_task${taskId} .question__action-body`);
+  const $task  = $(document).find(`#answer_task${taskId}`);
 
-  const label     = $form.find('#answer-task-label').val();
-  const startDate = $form.find('#answer-task-start-date').val();
-  const endDate   = $form.find('#answer-task-end-date').val();
-  const budget    = $form.find('#answer-task-budget').val();
+  const label          = $form.find('#answer-task-label').val();
+  const startDate       = $form.find('#answer-task-start-date').val();
+  const endDate         = $form.find('#answer-task-end-date').val();
+  const budget          = $form.find('#answer-task-budget').val();
+  const progress        = $form.find('#answer-task-progress').val();
+  const assignedUserId  = $form.find('[name="answer-task-edit-assigned-user"]').val();
 
   $.ajax({
     url: `${document.URL}&action=update_task&token=${token}`,
     type: 'POST',
     contentType: 'application/json; charset=utf-8',
     data: JSON.stringify({
-      task_id:    taskId,
-      label:      label,
-      date_start: startDate,
-      date_end:   endDate,
-      budget:     budget
+      task_id:        taskId,
+      label:          label,
+      date_start:     startDate,
+      date_end:       endDate,
+      budget:         budget,
+      progress:       progress,
+      fk_user_assign: assignedUserId
     }),
     success: function(resp) {
       $modal.removeClass('modal-active');
-      $list.replaceWith($(resp).find(`#answer_task${taskId} .question__action-body`));
+      $task.replaceWith($(resp).find(`#answer_task${taskId}`));
     }
   });
 };
@@ -303,6 +313,50 @@ window.digiquali.task.checkTask = function() {
   $.ajax({
     url: `${document.URL}&action=check_task&task_id=${taskId}&token=${token}`,
     type: 'POST',
+    success: function(resp) {
+      $task.replaceWith($(resp).find(`#answer_task${taskId}`));
+    }
+  });
+};
+
+/**
+ * Refresh the displayed progress value while dragging the slider
+ *
+ * @since   20.2.0
+ * @version 20.2.0
+ *
+ * @return {void}
+ */
+window.digiquali.task.refreshProgressLabel = function() {
+  const $this = $(this);
+  $this.siblings('.task-progress-value').text(`${$this.val()} %`);
+};
+
+/**
+ * Update task progress on the fly from the inline slider
+ *
+ * @since   20.2.0
+ * @version 20.2.0
+ *
+ * @return {void}
+ */
+window.digiquali.task.updateTaskProgress = function() {
+  const token = window.saturne.toolbox.getToken();
+
+  const $this    = $(this);
+  const taskId   = $this.data('task-id');
+  const progress = $this.val();
+  const $task    = $(document).find(`#answer_task${taskId}`);
+
+  window.saturne.loader.display($task);
+  $.ajax({
+    url: `${document.URL}&action=update_task_progress&token=${token}`,
+    type: 'POST',
+    contentType: 'application/json; charset=utf-8',
+    data: JSON.stringify({
+      task_id:  taskId,
+      progress: progress
+    }),
     success: function(resp) {
       $task.replaceWith($(resp).find(`#answer_task${taskId}`));
     }

@@ -1,0 +1,15 @@
+// Score badges (ActualScore / TargetScore) show a "%" sign after the value.
+// The value stays editable (contenteditable), but the sign is rendered as a
+// pseudo-element so it can never be edited or saved as part of the value.
+.badge-percent {
+  .badge__detail::after {
+    content: '\00a0%';
+  }
+}
+
+// The Dolibarr theme rule "div.fiche > table.table-fiche-title:first-of-type div"
+// overrides the wpeo-button text color with the title color, which is close to the
+// button primary background: the "+" icon of the activity create button was invisible.
+.mod-digiquali-digiqualielement .table-fiche-title .wpeo-button .button-icon {
+  color: $color__primary-text;
+}

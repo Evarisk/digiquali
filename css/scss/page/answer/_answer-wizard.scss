@@ -1,0 +1,435 @@
+// Mobile answer screen, shared by the public QR page and the connected PWA screen.
+// One continuous scroll: the sticky bar is the only navigation aid.
+// --answer-wizard-top: 0 on the public page, height of the PWA header when embedded.
+.answer-wizard {
+  --answer-wizard-top: 0px;
+
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  box-sizing: border-box;
+
+  // Corollary of the max-width: on a wide screen the host page does not always center us
+  // (the public card does, the PWA page does not)
+  margin-inline: auto;
+
+  // Inside the PWA the sticky bar must sit below the fixed app header
+  &--pwa {
+    --answer-wizard-top: 60px;
+  }
+
+  // No group to name and no jump menu to open: the bar would only repeat the page title
+  &--unnamed .answer-wizard__bar-content {
+    display: none;
+  }
+}
+
+.answer-wizard__bar {
+  position: sticky;
+  top: var(--answer-wizard-top);
+  z-index: 20;
+  background: #fff;
+  border-bottom: 1px solid rgba($color__public-secondary, 0.6);
+  box-shadow: 0 2px 6px rgba(27, 100, 168, 0.08);
+}
+
+.answer-wizard__bar-content {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.7em 0.9em;
+}
+
+.answer-wizard__current-group {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: $color__public-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.answer-wizard__counter {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.3em 0.7em;
+  border: none;
+  border-radius: 12px;
+  background: rgba($color__public-secondary, 0.3);
+  color: $color__public-primary;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  i {
+    font-size: 10px;
+  }
+}
+
+.answer-wizard__progress {
+  height: 4px;
+  background: rgba($color__public-secondary, 0.35);
+}
+
+.answer-wizard__progress-bar {
+  width: 0;
+  height: 100%;
+  background: $color__primary;
+  transition: width 0.25s ease;
+}
+
+.answer-wizard__intro {
+  padding-top: 1em;
+}
+
+.answer-wizard__step {
+  padding-top: 1.2em;
+
+  // Long labels and descriptions must never push the layout wider than the viewport
+  * {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+.answer-wizard__step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin-bottom: 0.4em;
+  padding-top: 0.6em;
+  border-top: 2px solid rgba($color__public-secondary, 0.5);
+}
+
+.answer-wizard__step-picto {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: $color__public-primary;
+}
+
+.answer-wizard__step-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: $color__public-primary;
+}
+
+.answer-wizard__step-count,
+.answer-wizard__picker-item-count {
+  flex-shrink: 0;
+  padding: 0.2em 0.6em;
+  border-radius: 10px;
+  background: rgba($color__public-secondary, 0.3);
+  color: $color__public-primary;
+  font-size: 12px;
+  font-weight: 600;
+
+  &.is-complete {
+    background: rgba($color__green, 0.25);
+    color: #1c7a45;
+  }
+}
+
+.answer-wizard__step-description {
+  margin-bottom: 0.8em;
+  color: #6b7a90;
+  font-size: 13px;
+}
+
+// The section header already names and describes the group: drop the duplicated title and
+// description of the root group. Sub-groups keep theirs, they structure the inside of it.
+.answer-wizard__step > .digiquali-question-group > h3,
+.answer-wizard__step > .digiquali-question-group > .group-description {
+  display: none;
+}
+
+.answer-wizard__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.9em 1.2em;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &--primary {
+    background: $color__primary;
+    color: #fff;
+  }
+
+  &--ghost {
+    background: rgba($color__public-secondary, 0.25);
+    color: $color__public-primary;
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.answer-wizard__summary {
+  padding-top: 1.5em;
+}
+
+.answer-wizard__summary-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.9em 1em;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 4px rgba(27, 100, 168, 0.15);
+  font-weight: 500;
+
+  &[data-state="remaining"] .answer-wizard__summary-icon--warning,
+  &[data-state="complete"] .answer-wizard__summary-icon--ok {
+    display: inline;
+  }
+}
+
+.answer-wizard__summary-icon {
+  display: none;
+  font-size: 20px;
+
+  &--ok {
+    color: $color__green;
+  }
+
+  &--warning {
+    color: $color__yellow;
+  }
+}
+
+.answer-wizard__summary-list {
+  margin: 1em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.answer-wizard__summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.8em 1em;
+  margin-bottom: 0.5em;
+  border-radius: 10px;
+  border-left: 3px solid $color__yellow;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(27, 100, 168, 0.1);
+  cursor: pointer;
+
+  i {
+    margin-left: auto;
+    color: $color__public-secondary;
+  }
+}
+
+.answer-wizard__summary-item-label {
+  font-size: 14px;
+  color: $color__text-main;
+}
+
+.answer-wizard__summary-item-step {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #6b7a90;
+}
+
+.answer-wizard__summary-extra {
+  margin-top: 1.5em;
+
+  // The public page prints its own submit button: make it fill the width like the wizard ones
+  .wpeo-button {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+  }
+}
+
+.answer-wizard__summary-actions {
+  margin-top: 1.5em;
+
+  .answer-wizard__button {
+    width: 100%;
+  }
+}
+
+// Floating save badge: invisible while idle, so it only shows up when something is saved
+.answer-wizard__save-state {
+  position: fixed;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 25;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(27, 100, 168, 0.25);
+  text-align: center;
+  font-size: 14px;
+
+  &[data-state="idle"] {
+    display: none;
+  }
+
+  .answer-wizard__save-icon {
+    display: none;
+  }
+
+  &[data-state="saved"] .answer-wizard__save-icon--saved {
+    display: inline;
+    color: $color__green;
+  }
+
+  &[data-state="saving"] .answer-wizard__save-icon--saving {
+    display: inline;
+    color: $color__public-secondary;
+  }
+
+  &[data-state="error"] .answer-wizard__save-icon--error {
+    display: inline;
+    color: $color__red;
+  }
+}
+
+.answer-wizard__picker,
+.answer-wizard__confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.answer-wizard__picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 36, 117, 0.45);
+}
+
+.answer-wizard__picker-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1em 1em calc(1em + env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+}
+
+.answer-wizard__picker-title {
+  margin-bottom: 0.8em;
+  font-size: 16px;
+  font-weight: 600;
+  color: $color__public-primary;
+}
+
+.answer-wizard__picker-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.answer-wizard__picker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.8em 0.4em;
+  border-bottom: 1px solid rgba($color__public-secondary, 0.35);
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.answer-wizard__picker-item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.answer-wizard__confirm-text {
+  margin: 0 0 1.2em;
+  color: $color__text-main;
+  font-size: 14px;
+}
+
+.answer-wizard__confirm-actions {
+  display: flex;
+  gap: 0.6em;
+
+  .answer-wizard__button {
+    flex: 1;
+  }
+}
+
+// The question card is the widest element of the page: it drives the horizontal overflow
+.answer-wizard {
+  .question,
+  .question__container,
+  .question__header,
+  .question__header-content {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .question__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  // The question reference links to a back-office card that a public visitor cannot open
+  .question-ref a {
+    pointer-events: none;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .question-points:empty {
+    display: none;
+  }
+
+  // No media may overflow the card, whatever size the host page or Saturne gives it
+  img,
+  .linked-medias img,
+  .saturne-media-block img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+// The PWA shell reserves room at the bottom for the nav bar, which the answer screen does not
+// display: without this the page ends on 64px of dead space.
+body.pwa-answer {
+  padding-bottom: 0 !important;
+}
+
+// The media gallery modal is printed in the flow of the answer pages, and its search input
+// carries the Dolibarr "minwidth400" class. On a phone that single input floors the page
+// content at ~490px and pushes every card past the right edge of the viewport.
+#add_media_to_gallery,
+.modal-add-media {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: $media__small) {
+  .answer-wizard__summary-item-step {
+    display: none;
+  }
+}

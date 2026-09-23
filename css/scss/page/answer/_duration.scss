@@ -1,0 +1,48 @@
+// Answer input of a Duration question: three fields feeding the hidden total in seconds.
+// Rendered on the backoffice card, the public page and the PWA wizard alike, so it stays
+// self-contained and carries no outer margin.
+.question-duration {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5em;
+
+  .question-duration__unit {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25em;
+  }
+
+  .question-duration__input {
+    // The answer containers stretch every input to width: 100% with a selector this rule cannot
+    // outweigh. flex-basis is what sizes a flex item, so it settles the width without a fight.
+    flex: 0 0 3.2em;
+    min-width: 0;
+    text-align: center;
+
+    // Chrome keeps room for the spin buttons inside the field. In a box this narrow the two
+    // digits end up clipped, and the arrows appearing on hover shift the value sideways.
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  .question-duration__label {
+    opacity: 0.6;
+  }
+}
+
+// Padding is a plain property, so it has to win the specificity fight against the container rules
+// that pad every answer input for full width text. Mirroring their own ancestors is what puts this
+// above both of them, the public one being the more specific of the two.
+.page-public-card .question-answer-container-pwa,
+.question-answer-container {
+  .question-duration .question-duration__unit input.question-duration__input {
+    padding: 0.3em 0.4em;
+  }
+}

@@ -38,6 +38,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 // Load DigiQuali libraries.
 require_once __DIR__ . '/../lib/digiquali.lib.php';
 require_once __DIR__ . '/../lib/digiquali_sheet.lib.php';
+require_once __DIR__ . '/../lib/digiquali_linked_object.lib.php';
 require_once __DIR__ . '/../class/sheet.class.php';
 
 // Global variables definitions.
@@ -85,6 +86,47 @@ require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.p
 
 // Extrafields actions.
 require DOL_DOCUMENT_ROOT.'/core/actions_extrafields.inc.php';
+
+// Linked objects actions.
+if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links']) && $user->admin) {
+    $db->begin();
+
+    if ($action == 'toggle_link') {
+        $objectType = GETPOST('objecttype', 'aZ09');
+        $value      = GETPOSTINT('value');
+
+        $linkableObjects = digiquali_get_linkable_objects();
+        if (isset($linkableObjects[$objectType])) {
+            $constName = DIGIQUALI_LINKED_OBJECT_CONST_PREFIX . strtoupper($objectType);
+            dolibarr_set_const($db, $constName, $value, 'integer', 0, '', $conf->entity);
+        }
+    } elseif ($action == 'toggle_all_links') {
+        $value = GETPOSTINT('value');
+
+        foreach (array_keys(digiquali_get_linkable_objects()) as $objectType) {
+            $constName = DIGIQUALI_LINKED_OBJECT_CONST_PREFIX . strtoupper($objectType);
+            dolibarr_set_const($db, $constName, $value, 'integer', 0, '', $conf->entity);
+        }
+    }
+
+    // clean_unused_links has no branch of its own : realigning on the constants is its whole job.
+    $report = digiquali_sync_linked_objects();
+
+    if ($report['errors'] > 0) {
+        $db->rollback();
+        setEventMessages($langs->trans('LinkedObjectSyncError'), [], 'errors');
+    } else {
+        $db->commit();
+
+        $addedCount   = count($report['added']);
+        $deletedCount = count($report['deleted']);
+
+        setEventMessage($langs->trans('LinkedObjectSyncDone', $report['tabs'], $report['hooks'], $addedCount, $deletedCount));
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
 
 // Generate default categories
 if ($action == 'generateCategories') {
@@ -204,13 +246,22 @@ $constArray[$moduleNameLowerCase] = [
 		'description' => 'UniqueLinkedElementDescription',
 		'code'        => 'DIGIQUALI_SHEET_UNIQUE_LINKED_ELEMENT',
 	],
+	'SheetLinkedObjectSelect2' => [
+		'name'        => 'SheetLinkedObjectSelect2',
+		'description' => 'SheetLinkedObjectSelect2Description',
+		'code'        => 'DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2',
+	],
 ];
 
-//@todo add only wanted keys
-$objectsMetadata                  = saturne_get_objects_metadata();
-$constArray[$moduleNameLowerCase] = array_merge($constArray[$moduleNameLowerCase], $objectsMetadata);
-
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+
+// Linkable elements, driven by the DIGIQUALI_SHEET_LINK_* constants.
+$linkableObjects            = digiquali_get_linkable_objects();
+$enabledObjectTypes         = digiquali_get_enabled_linked_object_types();
+$linkedObjectExtraFieldName = 'qc_frequency';
+$linkedObjectUsage          = digiquali_get_linked_object_usage();
+
+require_once __DIR__ . '/../../saturne/core/tpl/admin/object/linked_object_view.tpl.php';
 
 // Generate categories.
 print load_fiche_titre($langs->trans('SheetCategories'), '', '', 0, 'sheetCategories');
@@ -246,9 +297,9 @@ print '<input type="hidden" name="action" value="generate_main_categories">';
 
 print '<tr class="oddeven"><td>' . $langs->transnoentities('GenerateMainSheetCategories') . '</td>';
 print '<td class="center">';
-print $conf->global->DIGIQUALI_SHEET_MAIN_CATEGORIES_SET ? $langs->transnoentities('AlreadyGenerated') : $langs->transnoentities('NotCreated');
+print getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET') ? $langs->transnoentities('AlreadyGenerated') : $langs->transnoentities('NotCreated');
 print '</td><td class="center">';
-print $conf->global->DIGIQUALI_SHEET_MAIN_CATEGORIES_SET ? '<a type="" class=" butActionRefused" value="">' . $langs->transnoentities('Create') . '</a>' : '<input type="submit" class="button" value="' . $langs->transnoentities('Create') . '">';
+print getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET') ? '<a type="" class=" butActionRefused" value="">' . $langs->transnoentities('Create') . '</a>' : '<input type="submit" class="button" value="' . $langs->transnoentities('Create') . '">';
 print '</td><td class="center">';
 print $form->textwithpicto('', $langs->trans('MainSheetCategoriesDescription'));
 print '</td></tr>';
@@ -261,7 +312,7 @@ print '<input type="hidden" name="action" value="set_main_category">';
 // Set default main category
 print '<tr class="oddeven"><td>' . $langs->transnoentities('SheetMainCategory') . '</td>';
 print '<td class="center">';
-print $formOther->select_categories('sheet', $conf->global->DIGIQUALI_SHEET_MAIN_CATEGORY, 'main_category');
+print $formOther->select_categories('sheet', getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORY'), 'main_category');
 print '</td><td class="center">';
 print '<div><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
 print '</td><td class="center">';

@@ -1,0 +1,26 @@
+/* #2442 — Make the DigiQuali list pages (control / sheet / question) more usable on a phone.
+ * Conservative first pass: smooth horizontal scroll + denser cells + wrapping filter row.
+ * A full card-based mobile-first layout is a follow-up to validate on a real device. */
+
+@media ( max-width: $media__small ) {
+  .page-list[class*="mod-digiquali-"] {
+
+    // Smooth, contained horizontal scroll instead of a page that overflows sideways
+    .div-table-responsive,
+    .div-table-responsive-no-min {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    // Denser cells so more of the row fits on a narrow screen
+    table.liste th,
+    table.liste td {
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+
+    // Let the search / filter row wrap rather than forcing the table even wider
+    .liste_titre_filter td {
+      white-space: normal;
+    }
+  }
+}

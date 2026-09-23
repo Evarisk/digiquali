@@ -33,11 +33,22 @@ $controlInfoArray      = get_control_infos($linkedObject); ?>
     <div class="header-information">
         <div class="information-thumbnail"><?php echo $linkedObjectInfoArray['images']; ?></div>
         <div>
-            <div class="information-type"><?php echo $linkedObjectInfoArray['linkedObject']['title']; ?></div>
-            <div class="information-label size-l"><?php echo $linkedObjectInfoArray['linkedObject']['name_field']; ?></div>
-            <div class="information-label objet-label"><?php echo $linkedObjectInfoArray['linkedObject']['qc_frequency']; ?></div>
-            <div class="information-type"><?php echo $linkedObjectInfoArray['parentLinkedObject']['title']; ?></div>
-            <div class="information-label"><?php echo $linkedObjectInfoArray['parentLinkedObject']['name_field']; ?></div>
+            <?php
+            $parameters = ['linkedObjectInfoArray' => $linkedObjectInfoArray, 'linkableElements' => $linkableElements];
+            $resHook    = $hookmanager->executeHooks('printPublicControlLinkedObjectIdentity', $parameters, $linkedObject);
+            if ($resHook > 0) {
+                print $hookmanager->resPrint;
+            } else { ?>
+                <div class="information-type"><?php echo $linkedObjectInfoArray['linkedObject']['title']; ?></div>
+                <div class="information-label size-l"><?php echo $linkedObjectInfoArray['linkedObject']['name_field']; ?></div>
+            <?php } ?>
+            <?php if (!empty($linkedObjectInfoArray['linkedObject']['qc_frequency'])) : ?>
+                <div class="information-label objet-label"><?php echo $linkedObjectInfoArray['linkedObject']['qc_frequency']; ?></div>
+            <?php endif;
+            if (!empty($linkedObjectInfoArray['parentLinkedObject']['title'])) : ?>
+                <div class="information-type"><?php echo $linkedObjectInfoArray['parentLinkedObject']['title']; ?></div>
+                <div class="information-label"><?php echo $linkedObjectInfoArray['parentLinkedObject']['name_field']; ?></div>
+            <?php endif; ?>
         </div>
     </div>
     <div class="header-objet">

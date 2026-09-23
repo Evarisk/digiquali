@@ -33,6 +33,7 @@ require_once __DIR__ . '/../../../../../lib/digiquali_sheet.lib.php';
 require_once __DIR__ . '/../../../../../class/question.class.php';
 require_once __DIR__ . '/../../../../../class/sheet.class.php';
 require_once __DIR__ . '/../../../../../class/answer.class.php';
+require_once __DIR__ . '/../../../../../lib/digiquali_answer.lib.php';
 
 /**
  * Class to build documents using ODF templates generator
@@ -140,6 +141,9 @@ class doc_surveydocument_odt extends SaturneDocumentModel
                                         case 'Percentage' :
                                             $tmpArray['answer'] = $line->answer . ' %';
                                             break;
+                                        case 'Duration' :
+                                            $tmpArray['answer'] = digiquali_format_duration($line->answer);
+                                            break;
                                         case 'MultipleChoices' :
                                             $tmpArray['answer'] = '';
                                             $answers            = explode(',', $line->answer);
@@ -226,9 +230,11 @@ class doc_surveydocument_odt extends SaturneDocumentModel
      * @return int                               1 if OK, <=0 if KO
      * @throws Exception
      */
-    public function write_file(SaturneDocuments $objectDocument, Translate $outputLangs, string $srcTemplatePath, int $hideDetails = 0, int $hideDesc = 0, int $hideRef = 0, array $moreParam): int
+    public function write_file(SaturneDocuments $objectDocument, Translate $outputLangs, string $srcTemplatePath, int $hideDetails = 0, int $hideDesc = 0, int $hideRef = 0, array $moreParam = []): int
     {
         global $conf;
+
+        $moreParam = self::getMoreParam($objectDocument, $moreParam);
 
         $object = $moreParam['object'];
 
@@ -303,8 +309,9 @@ class doc_surveydocument_odt extends SaturneDocumentModel
 
             $percentQuestionCounter++;
             foreach ($object->lines as $line) {
-                if ($line->fk_question === $questionLinked->id) {
-                    $averagePercentageQuestions += $line->answer;
+                // A line submitted with a blank percentage holds an empty string, which is a fatal in PHP 8: 0 + '' is a TypeError
+                if ($line->fk_question === $questionLinked->id && is_numeric($line->answer)) {
+                    $averagePercentageQuestions += (float) $line->answer;
                 }
             }
         }

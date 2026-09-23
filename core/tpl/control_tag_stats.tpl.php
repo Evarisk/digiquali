@@ -34,24 +34,25 @@ if (empty($object->lines) || !isModEnabled('categorie')) {
     return;
 }
 
-// Build flat question map from already-loaded questionsAndGroups
-$allQuestionsMap = [];
-if (is_array($questionsAndGroups)) {
-    foreach ($questionsAndGroups as $item) {
+// Build flat question map from questionsAndGroups, recursing into nested sub-groups so that
+// questions located inside groups (and their sub-groups) are included in the tag statistics.
+$allQuestionsMap  = [];
+$collectQuestions = function ($items) use (&$collectQuestions, &$allQuestionsMap, $db) {
+    if (!is_array($items)) {
+        return;
+    }
+    foreach ($items as $item) {
         if ($item->element == 'question') {
             $allQuestionsMap[$item->id] = $item;
         } elseif ($item->element == 'questiongroup') {
             $qg = new QuestionGroup($db);
             $qg->fetch($item->id);
-            $gqs = $qg->fetchQuestionsOrderedByPosition();
-            if (is_array($gqs)) {
-                foreach ($gqs as $gq) {
-                    $allQuestionsMap[$gq->id] = $gq;
-                }
-            }
+            $collectQuestions($qg->fetchQuestionsOrderedByPosition());
+            $collectQuestions($qg->fetchQuestionGroupsOrderedByPosition());
         }
     }
-}
+};
+$collectQuestions($questionsAndGroups);
 
 $typesWithAnswers = ['UniqueChoice', 'OkKo', 'OkKoToFixNonApplicable', 'MarqueNF', 'MultipleChoices'];
 

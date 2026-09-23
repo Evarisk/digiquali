@@ -86,7 +86,7 @@ print load_fiche_titre($title, $linkBack, 'title_setup');
 
 // Configuration header
 $head = digiquali_admin_prepare_head();
-print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
+print dol_get_fiche_head($head, 'mapping', $title, -1, 'digiquali_color@digiquali');
 
 print load_fiche_titre($langs->trans("TasksManagement"), '', '');
 

@@ -99,7 +99,7 @@ if (empty($reshook)) {
             if (empty($object->id) && (($action != 'add' && $action != 'create') || $cancel)) {
                 $backtopage = $backurlforlist;
             } else {
-                $backtopage = dol_buildpath($object->module . '/view/' . $object->element . '/' . $object->element . '_card.php', 1) . '?id=' . ($object->id > 0 ? $object->id : '__ID__');
+                $backtopage = dol_buildpath($object->module . '/view/' . $object->element . '/' . $object->element . '_view.php', 1) . '?id=' . ($object->id > 0 ? $object->id : '__ID__');
             }
         }
     }
@@ -141,6 +141,12 @@ if (empty($reshook)) {
 /*
  * View
  */
+
+// Process infos and activities are merged on digiqualielement_view.php, this page only handles create/edit forms
+if ($action != 'edit' && $action != 'create') {
+    header('Location: ' . dol_buildpath($object->module . '/view/' . $object->element . '/' . $object->element . '_view.php', 1) . '?id=' . $object->id);
+    exit;
+}
 
 if ( $object->element_type == 'groupment' ) {
     $title         = $langs->trans("Groupment");
@@ -251,133 +257,6 @@ if (($id || $ref) && $action == 'edit') {
     print $form->buttonsSaveCancel();
 
     print '</form>';
-}
-
-if ( ! $object->id) {
-	$object->ref    = $conf->global->MAIN_INFO_SOCIETE_NOM;
-	$object->label  = $langs->trans('Society');
-	$object->entity = $conf->entity;
-	unset($object->fields['element_type']);
-}
-
-// Part to show record
-if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
-    saturne_get_fiche_head($object, 'card', $title);
-    saturne_banner_tab($object,'ref','none', 0, 'ref', 'ref', '', true);
-
-    $formConfirm = '';
-    // Confirmation to delete
-    if ($action == 'delete') {
-        $formConfirm = $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->transnoentities('DeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->transnoentities('ConfirmDeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), 'confirm_delete', '', 'yes', 'actionButtonDelete');
-    }
-
-    // Call Hook formConfirm
-    $parameters = ['formConfirm' => $formConfirm];
-    $resHook    = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-    if (empty($resHook)) {
-        $formConfirm .= $hookmanager->resPrint;
-    } elseif ($resHook > 0) {
-        $formConfirm = $hookmanager->resPrint;
-    }
-
-    // Print form confirm
-    print $formConfirm;
-
-    print '<div class="fichecenter">';
-    print '<div class="fichehalfleft">';
-    print '<table class="border centpercent tableforfield">';
-
-    print '<tr class="linked-medias digirisk-element-photo-'. $object->id .'"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list" style="display: flex; gap: 10px; height: auto;">';
-    print '<span class="add-medias" '. (($object->status != $object::STATUS_VALIDATED) ? "" : "style='display:none'") . '>';
-    print '<input hidden multiple class="fast-upload" id="fast-upload-photo-default" type="file" name="userfile[]" capture="environment" accept="image/*">';
-    print '<label for="fast-upload-photo-default">';
-    print '<div title="'. $langs->trans('AddPhotoFromComputer') .'" class="wpeo-button button-square-50">';
-    print '<i class="fas fa-camera"></i><i class="fas fa-plus-circle button-add"></i>';
-    print '</div>';
-    print '</label>';
-    print '&nbsp';
-    print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="<?php echo $object->photo ?>"/>';
-    print '<div title="'. $langs->trans('AddPhotoFromMediaGallery') .'" class="wpeo-button button-square-50 open-media-gallery add-media modal-open" value="0">';
-    print '<input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="'. $object->id .'" data-from-type="'. $object->element_type .'" data-from-subtype="photo" data-from-subdir="" data-photo-class="digirisk-element-photo-'. $object->id .'"/>';
-    print '<i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>';
-    print '</div>';
-    print '</span>';
-    print '&nbsp';
-    print saturne_show_medias_linked('digiriskdolibarr', $conf->digiriskdolibarr->multidir_output[$conf->entity] . '/' . $object->element_type . '/' . $object->ref, 'small', 5, 0, 0, 0, 50, 50, 0, 0, 0, $object->element_type . '/'. $object->ref . '/', $object, 'photo', $object->status != $object::STATUS_VALIDATED, $permissiontodelete && $object->status != $object::STATUS_VALIDATED);
-    print '</td></tr>';
-
-    // Common attributes
-    require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_view.tpl.php';
-
-    // Other attributes. Fields from hook formObjectOptions and Extrafields
-    require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_view.tpl.php';
-
-    print '</table>';
-    print '</div>';
-    print '</div>';
-
-    print '<div class="clearboth"></div>';
-
-    print dol_get_fiche_end();
-
-    // Buttons for actions
-    if ($action != 'presend') {
-        print '<div class="tabsAction">';
-        $parameters = [];
-        $resHook    = $hookmanager->executeHooks('addMoreActionsButtons', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-        if ($resHook < 0) {
-            setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
-        }
-
-        if (empty($resHook)) {
-            // Modify
-            $displayButton = $conf->browser->layout != 'classic' ? '<i class="fas fa-edit fa-2x"></i>' : '<i class="fas fa-edit"></i>' . ' ' . $langs->transnoentities('Modify');
-            if ($permissiontoadd) {
-                print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=edit' . '">' . $displayButton . '</a>';
-            } else {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->transnoentities('NotEnoughPermissions')) . '">' . $displayButton . '</span>';
-            }
-
-            // Delete
-            $displayButton = $conf->browser->layout != 'classic' ? '<i class="fas fa-trash fa-2x"></i>' : '<i class="fas fa-trash"></i>' . ' ' . $langs->transnoentities('Delete');
-            if ($permissiontodelete && $object->status != SaturneElement::STATUS_TRASHED) {
-                print '<span class="butAction butActionDelete" id="actionButtonDelete">' . $displayButton . '</span>';
-            }
-        }
-        print '</div>';
-    }
-
-    if ($action != 'presend') {
-        print '<div class="fichecenter"><div class="fichehalfleft">';
-
-        $objRef    = dol_sanitizeFileName($object->ref);
-        $dirFiles  = $document->element . '/' . $objRef;
-        $fileDir   = $upload_dir . '/' . $dirFiles;
-        $urlSource = $_SERVER['PHP_SELF'] . '?id=' . $id;
-
-        if ($document->element == 'groupmentdocument') {
-            $modulePart   = 'GroupmentDocument';
-            $defaultmodel = $conf->global->DIGIRISKDOLIBARR_GROUPMENTDOCUMENT_DEFAULT_MODEL;
-            $title        = $langs->trans('GroupmentDocument');
-        } elseif ($document->element == 'workunitdocument') {
-            $modulePart   = 'WorkUnitDocument';
-            $defaultmodel = $conf->global->DIGIRISKDOLIBARR_WORKUNITDOCUMENT_DEFAULT_MODEL;
-            $title        = $langs->trans('WorkUnitDocument');
-        }
-
-        print saturne_show_documents($object->module . ':' . $modulePart, $dirFiles, $fileDir, $urlSource, $permissiontoadd,$permissiontodelete, getDolGlobalString(dol_strtoupper($object->module) . '_' . dol_strtoupper($document->element) . '_DEFAULT_MODEL'), 1, 0, 0, 0, '', '', '', $langs->defaultlang, '', $object);
-
-        print '</div><div class="fichehalfright">';
-
-        $moreHtmlCenter = dolGetButtonTitle($langs->trans('SeeAll'), '', 'fa fa-bars imgforviewmode', dol_buildpath('saturne/view/saturne_agenda.php', 1) . '?id=' . $object->id . '&module_name=' . $object->module . '&object_type=' . $object->element);
-
-        // List of actions on element
-        require_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
-        $formActions = new FormActions($db);
-        $formActions->showactions($object, $object->element . '@' . $object->module, 0, 1, '', 10, '', $moreHtmlCenter);
-
-        print '</div></div>';
-    }
 }
 
 // End of page

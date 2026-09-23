@@ -27,15 +27,17 @@
  * Parameters : $action
  * Objects    : $task
  * Variables  : $permissionToAddTask, $permissionToDeleteTask, $permissionToManageTaskTimeSpent, $taskNextValue
+ * Optional   : $taskForcedProjectId, the only project the caller accepts to create into
  */
 
 // Task action
 if ($action == 'add_task' && !empty($permissionToAddTask)) {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $task->ref        = $taskNextValue;
-    $task->label      = $data['label'];
-    $task->fk_project = $data['fk_project'];
+    $task->ref   = $taskNextValue;
+    $task->label = $data['label'];
+    // The project comes from the page on the public interface, where the posted one cannot be trusted
+    $task->fk_project = !empty($taskForcedProjectId) ? $taskForcedProjectId : $data['fk_project'];
     $task->date_c     = dol_now();
     if (!empty($data['date_start'])) {
         $task->date_start = dol_stringtotime($data['date_start']);
@@ -48,7 +50,10 @@ if ($action == 'add_task' && !empty($permissionToAddTask)) {
     $task->budget_amount  = $data['budget_amount'] ?? null;
     $task->fk_task_parent = !empty($object->fk_master_task) ? $object->fk_master_task : 0;
 
-    $task->create($user);
+    $taskId = $task->create($user);
+    if ($taskId > 0 && !empty($data['fk_user_assign'])) {
+        $task->add_contact($data['fk_user_assign'], 'TASKEXECUTIVE', 'internal');
+    }
     $task->add_object_linked($data['objectLine_element'], $data['objectLine_id']);
     // @todo manage error
 }
@@ -71,10 +76,43 @@ if ($action == 'update_task' && !empty($permissionToAddTask)) {
     if (!empty($data['date_end'])) {
         $task->date_end = dol_stringtotime($data['date_end']);
     }
-    $task->budget_amount = $data['budget'];
+    // The frontend form has no budget field : an absent key must leave the budget alone, not wipe it
+    if (array_key_exists('budget', $data)) {
+        $task->budget_amount = $data['budget'];
+    }
+    if (isset($data['progress'])) {
+        $task->progress = max(0, min(100, (int) $data['progress']));
+    }
 
     $task->update($user);
+
+    // Sync the assigned user (responsable) of the task
+    if (array_key_exists('fk_user_assign', $data)) {
+        $existingContacts = $task->liste_contact(-1, 'internal', 0, 'TASKEXECUTIVE');
+        if (is_array($existingContacts)) {
+            foreach ($existingContacts as $existingContact) {
+                $task->delete_contact($existingContact['rowid']);
+            }
+        }
+        if ($data['fk_user_assign'] > 0) {
+            $task->add_contact($data['fk_user_assign'], 'TASKEXECUTIVE', 'internal');
+        }
+    }
     // @todo manage error
+}
+
+if ($action == 'update_task_progress' && !empty($permissionToAddTask)) {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $task->fetch($data['task_id']);
+
+    $task->progress = max(0, min(100, (int) $data['progress']));
+
+    $result = $task->update($user);
+    if ($result < 0) {
+        // Update task progress KO
+        header('HTTP/1.1 500 Internal Server');
+        die(json_encode(['message' => $langs->transnoentities($task->error), 'code' => '1337']));
+    }
 }
 
 if ($action == 'delete_task' && !empty($permissionToDeleteTask)) {

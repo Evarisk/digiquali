@@ -37,6 +37,7 @@ if (isModEnabled('categorie')) {
 
 // load DigiQuali libraries
 require_once __DIR__ . '/../../class/survey.class.php';
+require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -96,25 +97,36 @@ if (!$sortorder) {
 }
 
 // Definition of custom fields for columns
-$nbLinkableElements = 0;
-$objectPosition     = 21;
-$excludeFields      = [];
-$objectsMetadata    = saturne_get_objects_metadata();
+$nbLinkableElements             = 0;
+$objectPosition                 = 21;
+$excludeFields                  = [];
+$objectsMetadata                = saturne_get_objects_metadata();
+$conf->cache['objectsMetadata'] = $objectsMetadata; // Read back by the saturnePrintFieldListLoopObject hook to render the linked element columns
+
+// The tab is opened with the link name of the element (fromtype=commande), which is not always the key the
+// metadata array is indexed with (order) : resolve the entry once instead of reading the array with a key
+// that does not exist. Stays empty for the fromtype values that designate no object, ex. fk_sheet
+$fromObjectMetadata = digiquali_get_object_metadata_from_link_name($objectsMetadata, $fromType);
 foreach($objectsMetadata as $objectMetadata) {
-    if ($objectMetadata['conf'] == 0) {
+    // conf holds the raw constant value : absent or empty means the link is off. A == 0 test would
+    // let those through, since PHP 8 compares '' to 0 as strings
+    if (empty($objectMetadata['conf'])) {
         continue;
     }
 
     if (empty($fromType) || $fromType == $objectMetadata['link_name']) {
         $object->fields[$objectMetadata['post_name']] = [
-            'type'        => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
-            'label'       => $langs->trans($objectMetadata['langs']),
-            'enabled'     => 1,
-            'position'    => $objectPosition,
-            'visible'     => 2,
-            'disablesort' => 1
+            'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
+            'label'      => $langs->trans($objectMetadata['langs']),
+            'enabled'    => 1,
+            'position'   => $objectPosition,
+            'visible'    => 2,
+            'csslist'    => 'minwidth150 maxwidth200',
+            // Sort on the aliases the printFieldListSelect hook builds from llx_element_element, not on a
+            // t.<key> column that does not exist. The empty flag comes first so the surveys without any
+            // linked element stay at the bottom in both directions
+            'otheralias' => 'sortempty_' . $objectMetadata['post_name'] . ',sortvalue_'
         ];
-        //@TODO minwidth100 maxwidth125 widthcentpercentminusxx css
 
         $objectPosition++;
         $nbLinkableElements++;
@@ -127,18 +139,23 @@ $conf->cache['signatoriesInDictionary'] = $signatoriesInDictionary;
 if (is_array($signatoriesInDictionary) && !empty($signatoriesInDictionary)) {
     $customFieldsPosition = 111;
     foreach ($signatoriesInDictionary as $signatoryInDictionary) {
-        $object->fields[$signatoryInDictionary->ref] = ['label' => $signatoryInDictionary->ref, 'enabled' => 1, 'position' => $customFieldsPosition++, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx right'];
+        // Signatory role columns are computed from the signatures, they have no t.<ref> column in the
+        // survey table: offering a sort link would let saturne silently drop the ORDER BY (disablesort)
+        $object->fields[$signatoryInDictionary->ref] = ['label' => $signatoryInDictionary->ref, 'enabled' => 1, 'position' => $customFieldsPosition++, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx right', 'disablesort' => 1];
         $excludeFields[]                             = $signatoryInDictionary->ref;
     }
 }
 
-$object->fields['question_answered']           = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
-$object->fields['last_status_date']            = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx'];
-$object->fields['society_attendants']          = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx'];
-$object->fields['average_percentage_qestions'] = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
-$object->fields['verdict_object']              = ['label' => 'VerdictObject',              'enabled' => 1, 'position' => 200, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
+// Computed columns: their value is built by the saturnePrintFieldListLoopObject hook, not selected from
+// the survey table. They must declare disablesort, otherwise the title offers a sort link that the
+// invalid-sortfield guard of objectfields_list_build_sql_select silently discards
+$object->fields['question_answered']            = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['last_status_date']             = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['society_attendants']           = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx',        'disablesort' => 1];
+$object->fields['average_percentage_questions'] = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['verdict_object']               = ['label' => 'VerdictObject',              'enabled' => 1, 'position' => 200, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
 
-$excludeFields = array_merge($excludeFields, ['question_answered', 'last_status_date', 'society_attendants', 'average_percentage_qestions', 'verdict_object']);
+$excludeFields = array_merge($excludeFields, ['question_answered', 'last_status_date', 'society_attendants', 'average_percentage_questions', 'verdict_object']);
 
 // Initialize array of search criterias
 $searchAll = trim(GETPOST('search_all'));
@@ -153,8 +170,20 @@ foreach ($object->fields as $key => $val) {
     }
 }
 
+// A survey carries its project on one of its own columns as well as through a link in llx_element_element :
+// the project tab must show the union of the two. See the comment in view/control/control_list.php
+$columnMatchingLinkedElement = ['project' => 'projectid'];
+
 if (!empty($fromType)) {
-    $search[$objectsMetadata[$fromType]['post_name']] = $fromId;
+    if (isset($columnMatchingLinkedElement[$fromType])) {
+        $conf->cache['digiqualiLinkedElementOrColumn'] = [
+            'link_name' => $fromType,
+            'column'    => $columnMatchingLinkedElement[$fromType],
+            'id'        => $fromId
+        ];
+    } elseif (!empty($fromObjectMetadata)) {
+        $search[$fromObjectMetadata['post_name']] = $fromId;
+    }
     if ($fromType == 'fk_sheet') {
         $search['fk_sheet'] = $fromId;
     }
@@ -195,6 +224,9 @@ $permissiontodelete = $user->hasRight($object->module, $object->element, 'delete
 
 // Security check
 saturne_check_access($permissiontoread, $object);
+
+// Enable the "Validate" mass action offered by the saturne list templates
+$enableMassValidate = 1;
 
 /*
  * Actions
@@ -251,11 +283,15 @@ if (empty($resHook)) {
 $title = $langs->trans(ucfirst($object->element) . 'List');
 saturne_header(0,'', $title, $helpUrl ?? '', '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
 
-if (!empty($fromType) && !empty($fromId)) {
-    $objectsMetadata[$fromType]['object']->fetch($fromId);
-    saturne_get_fiche_head($objectsMetadata[$fromType]['object'], $object->element, $langs->trans(ucfirst($object->element)));
-    $linkBack = '<a href="' . dol_buildpath($fromType . '/list.php?restore_lastsearch_values=1', 1) . '">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($objectsMetadata[$fromType]['object'], 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
+if (!empty($fromObjectMetadata) && !empty($fromId)) {
+    $fromObject = $fromObjectMetadata['object'];
+    $fromObject->fetch($fromId);
+    saturne_get_fiche_head($fromObject, $object->element, $langs->trans(ucfirst($object->element)));
+
+    // The list of the element is reached through its own path : fromtype is a link name, not a directory
+    $backUrl  = $fromObjectMetadata['list_url'] ?: $fromType . '/list.php';
+    $linkBack = '<a href="' . dol_buildpath($backUrl . '?restore_lastsearch_values=1', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    saturne_banner_tab($fromObject, 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
 
     $moreUrlParameters = '&fromtype=' . $fromType . '&fromid=' . $fromId;
     $formMoreParams    = ['fromtype' => $fromType, 'fromid' => $fromId];

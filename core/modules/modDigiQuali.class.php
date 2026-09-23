@@ -77,7 +77,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '23.0.0';
+		$this->version = '23.1.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -122,6 +122,7 @@ class modDigiQuali extends DolibarrModules
 				'categoryindex',
 				'mainloginpage',
                 'controlcard',
+                'controllist',
                 'publiccontrol',
                 'publicsurvey',
                 'digiqualiadmindocuments',
@@ -152,7 +153,8 @@ class modDigiQuali extends DolibarrModules
 		// A condition to hide module
 		$this->hidden = false;
 		// List of module class names as string that must be enabled if this module is enabled. Example: array('always1'=>'modModuleToEnable1','always2'=>'modModuleToEnable2', 'FR1'=>'modModuleToEnableFR'...)
-		$this->depends = ['modFckeditor', 'modProduct', 'modProductBatch', 'modECM', 'modProjet', 'modCategorie', 'modSaturne', 'modTicket', 'modCron'];
+		// ECM, Agenda, Fckeditor et Categorie sont declares par Saturne et herites de lui
+		$this->depends = ['modSaturne', 'modProjet'];
 		$this->requiredby = []; // List of module class names as string to disable if this one is disabled. Example: array('modModuleToDisable1', ...)
 		$this->conflictwith = []; // List of module class names as string this module is in conflict with. Example: array('modModuleToDisable1', ...)
 
@@ -200,6 +202,7 @@ class modDigiQuali extends DolibarrModules
 //            $i++ => ['DIGIQUALI_SHEET_LINK_SUPPLIER_INVOICE', 'integer', 0, '', 0, 'current'],
 			$i++ => ['DIGIQUALI_SHEET_DEFAULT_TAG', 'integer', 0, '', 0, 'current'],
             $i++ => ['DIGIQUALI_SHEET_BACKWARD_COMPATIBILITY', 'integer', 0, '', 0, 'current'],
+            $i++ => ['DIGIQUALI_LINKED_OBJECT_BACKWARD', 'integer', 0, '', 0, 'current'],
 
 			// CONST QUESTION
 			$i++ => ['DIGIQUALI_QUESTION_ADDON', 'chaine', 'mod_question_standard', '', 0, 'current'],
@@ -241,7 +244,7 @@ class modDigiQuali extends DolibarrModules
 			$i++ => ['DIGIQUALI_CONTROLDOCUMENT_ADDON', 'chaine', 'mod_controldocument_standard', '', 0, 'current'],
 			$i++ => ['DIGIQUALI_CONTROLDOCUMENT_ADDON_ODT_PATH', 'chaine', 'DOL_DOCUMENT_ROOT/custom/digiquali/documents/doctemplates/controldocument/', '', 0, 'current'],
 			$i++ => ['DIGIQUALI_CONTROLDOCUMENT_CUSTOM_ADDON_ODT_PATH', 'chaine', 'DOL_DATA_ROOT' . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'ecm/digiquali/controldocument/', '', 0, 'current'],
-			$i++ => ['DIGIQUALI_CONTROLDOCUMENT_DEFAULT_MODEL', 'chaine', 'template_controldocument_photo' ,'', 0, 'current'],
+			$i++ => ['DIGIQUALI_CONTROLDOCUMENT_DEFAULT_MODEL', 'chaine', 'controldocument' ,'', 0, 'current'],
 			$i++ => ['DIGIQUALI_DOCUMENT_MEDIA_VIGNETTE_USED', 'chaine', 'small','', 0, 'current'],
 
             //CONST SURVEY DOCUMENT
@@ -316,19 +319,43 @@ class modDigiQuali extends DolibarrModules
 		$this->tabs   = [];
 		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
-        $objectsMetadata = saturne_get_objects_metadata();
+        // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
+        dol_include_once('/saturne/lib/object.lib.php');
+        dol_include_once('/saturne/lib/linked_object.lib.php');
+        
+        $linkableObjects    = [];
+        if (function_exists('saturne_get_objects_metadata') && function_exists('saturne_filter_linkable_objects')) {
+            $linkableObjects = saturne_filter_linkable_objects(saturne_get_objects_metadata(), ['digiquali_']);
+        }
+        
+        // Dolibarr does not always name the tab type after the object: the intervention card completes
+        // its head with 'intervention', not 'fichinter'. And the supplier order key holds an underscore,
+        // so it would otherwise be split as if it came from an external module. Saturne's tab_type is
+        // left untouched, EasyURL stores it as the element type of its shortened links
+        $dolibarrTabTypes = ['ficheinter' => 'intervention', 'supplier_order' => 'supplier_order'];
 
-        foreach($objectsMetadata as $objectType => $objectMetadata) {
-            if (preg_match('/_/', $objectType)) {
+        $enabledObjectTypes = [];
+        if (function_exists('saturne_get_enabled_linked_object_types')) {
+            $enabledObjectTypes = saturne_get_enabled_linked_object_types($linkableObjects, 'DIGIQUALI_SHEET_LINK_');
+        }
+
+        foreach ($enabledObjectTypes as $objectType) {
+            $objectMetadata = $linkableObjects[$objectType];
+
+            if (isset($dolibarrTabTypes[$objectType])) {
+                $tabType = $dolibarrTabTypes[$objectType];
+            } elseif (preg_match('/_/', $objectType)) {
                 $splittedElementType = explode('_', $objectType);
                 $moduleName = $splittedElementType[0];
                 $objectName = dol_strtolower($objectMetadata['class_name']);
-                $objectType = $objectName . '@' . $moduleName;
+                $tabType    = $objectName . '@' . $moduleName;
             } else {
-                $objectType = $objectMetadata['tab_type'];
+                $tabType = $objectMetadata['tab_type'];
             }
-            $this->tabs[] = ['data' => $objectType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
-            $this->tabs[] = ['data' => $objectType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            if ($objectMetadata['link_name'] !== 'propal') {
+                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            }
+            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
 
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_list'];
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_card'];
@@ -342,27 +369,32 @@ class modDigiQuali extends DolibarrModules
                 MAIN_DB_PREFIX . 'c_question_type',
                 MAIN_DB_PREFIX . 'c_control_attendants_role',
                 MAIN_DB_PREFIX . 'c_survey_attendants_role',
+                MAIN_DB_PREFIX . 'c_question_comment',
             ],
             // Label of tables
             'tablib' => [
                 'Question',
                 'Control',
-                'Survey'
+                'Survey',
+                'CommentLibrary'
             ],
             // Request to select fields
             'tabsql' => [
                 'SELECT f.rowid as rowid, f.ref, f.label, f.description, f.position, f.active  FROM ' . MAIN_DB_PREFIX . 'c_question_type as f',
                 'SELECT f.rowid as rowid, f.ref, f.label, f.description, f.position, f.active FROM ' . MAIN_DB_PREFIX . 'c_control_attendants_role as f',
-                'SELECT f.rowid as rowid, f.ref, f.label, f.description, f.position, f.active FROM ' . MAIN_DB_PREFIX . 'c_survey_attendants_role as f'
+                'SELECT f.rowid as rowid, f.ref, f.label, f.description, f.position, f.active FROM ' . MAIN_DB_PREFIX . 'c_survey_attendants_role as f',
+                'SELECT f.rowid as rowid, f.ref, f.label, f.description, f.position, f.active FROM ' . MAIN_DB_PREFIX . 'c_question_comment as f'
             ],
             // Sort order
             'tabsqlsort' => [
                 'label ASC',
                 'label ASC',
-                'label ASC'
+                'label ASC',
+                'position ASC'
             ],
             // List of fields (result of select to show dictionary)
             'tabfield' => [
+                'ref,label,description,position',
                 'ref,label,description,position',
                 'ref,label,description,position',
                 'ref,label,description,position'
@@ -371,10 +403,12 @@ class modDigiQuali extends DolibarrModules
             'tabfieldvalue' => [
                 'ref,label,description,position',
                 'ref,label,description,position',
+                'ref,label,description,position',
                 'ref,label,description,position'
             ],
             // List of fields (list of fields for insert)
             'tabfieldinsert' => [
+                'ref,label,description,position',
                 'ref,label,description,position',
                 'ref,label,description,position',
                 'ref,label,description,position'
@@ -383,10 +417,12 @@ class modDigiQuali extends DolibarrModules
             'tabrowid' => [
                 'rowid',
                 'rowid',
+                'rowid',
                 'rowid'
             ],
             // Condition to show each dictionary
             'tabcond' => [
+                $conf->digiquali->enabled,
                 $conf->digiquali->enabled,
                 $conf->digiquali->enabled,
                 $conf->digiquali->enabled
@@ -588,6 +624,9 @@ class modDigiQuali extends DolibarrModules
 		$this->menu = [];
 		$r = 0;
 
+		// Since Dolibarr 22, categories/index.php only lists the tag types and ignores the type parameter, the page dedicated to a single type is categorie_list.php
+		$tagListUrl = ((float) DOL_VERSION >= 22.0 ? '/categories/categorie_list.php?type=' : '/categories/index.php?type=');
+
 		// Add here entries to declare new menus
 		$this->menu[$r++] = [
 			'fk_menu'  => 'fk_mainmenu=digiquali',
@@ -602,6 +641,22 @@ class modDigiQuali extends DolibarrModules
 			'enabled'  => '$conf->digiquali->enabled && $user->rights->digiquali->lire',
 			'perms'    => '$user->rights->digiquali->lire',
 			'target'   => '',
+			'user'     => 0,
+		];
+
+		$this->menu[$r++] = [
+			'fk_menu'  => 'fk_mainmenu=digiquali',
+			'type'     => 'left',
+			'titre'    => $langs->trans('MobileApp'),
+			'prefix'   => '<i class="fas fa-mobile-alt pictofixedwidth"></i>',
+			'mainmenu' => 'digiquali',
+			'leftmenu' => 'digiquali_pwa',
+			'url'      => '/digiquali/view/frontend/pwa_home.php?source=pwa',
+			'langs'    => 'digiquali@digiquali',
+			'position' => 1000 + $r,
+			'enabled'  => '$conf->digiquali->enabled && $user->rights->digiquali->lire',
+			'perms'    => '$user->rights->digiquali->lire',
+			'target'   => '_blank',
 			'user'     => 0,
 		];
 
@@ -627,7 +682,7 @@ class modDigiQuali extends DolibarrModules
 			'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
 			'mainmenu' => 'digiquali',
 			'leftmenu' => 'digiquali_questiontags',
-			'url'      => '/categories/index.php?type=question',
+			'url'      => $tagListUrl . 'question',
 			'langs'    => 'digiquali@digiquali',
 			'position' => 1000 + $r,
 			'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->question->read',
@@ -658,7 +713,7 @@ class modDigiQuali extends DolibarrModules
         //     'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
         //     'mainmenu' => 'digiquali',
         //     'leftmenu' => 'digiquali_questiongrouptags',
-        //     'url'      => '/categories/index.php?type=question_group',
+        //     'url'      => $tagListUrl . 'question_group',
         //     'langs'    => 'digiquali@digiquali',
         //     'position' => 1000 + $r,
         //     'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->questiongroup->read',
@@ -689,7 +744,7 @@ class modDigiQuali extends DolibarrModules
 			'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
 			'mainmenu' => 'digiquali',
 			'leftmenu' => 'digiquali_sheettags',
-			'url'      => '/categories/index.php?type=sheet',
+			'url'      => $tagListUrl . 'sheet',
 			'langs'    => 'digiquali@digiquali',
 			'position' => 1000 + $r,
 			'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->sheet->read',
@@ -735,7 +790,7 @@ class modDigiQuali extends DolibarrModules
 			'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
 			'mainmenu' => 'digiquali',
 			'leftmenu' => 'digiquali_controltags',
-			'url'      => '/categories/index.php?type=control',
+			'url'      => $tagListUrl . 'control',
 			'langs'    => 'digiquali@digiquali',
 			'position' => 1000 + $r,
 			'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->control->read',
@@ -766,7 +821,7 @@ class modDigiQuali extends DolibarrModules
             'titre'    => '<i class="fas fa-tags pictofixedwidth" style="padding-right: 4px;"></i>' . $langs->transnoentities('Categories'),
             'mainmenu' => 'digiquali',
             'leftmenu' => 'digiquali_surveytags',
-            'url'      => '/categories/index.php?type=survey',
+            'url'      => $tagListUrl . 'survey',
             'langs'    => 'digiquali@digiquali',
             'position' => 1000 + $r,
             'enabled'  => '$conf->digiquali->enabled && $conf->categorie->enabled && $user->rights->digiquali->survey->read',
@@ -890,21 +945,6 @@ class modDigiQuali extends DolibarrModules
 
 			dolibarr_set_const($this->db, 'DIGIQUALI_QUESTION_NF_TAGS_SET', 1, 'integer', 0, '', $conf->entity);
 		}
-        // Create extrafields during init.
-        include_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
-        $extraFields = new ExtraFields($this->db);
-
-        $objectsMetadata = saturne_get_objects_metadata();
-        foreach($objectsMetadata as $objectMetadataType => $objectMetadata) {
-            $extraFields->addExtraField('qc_frequency', 'QcFrequency', 'int', 100, 10, $objectMetadata['table_element'], 0, 0, '', 'a:1:{s:7:"options";a:1:{s:0:"";N;}}', 1, '', 1, '','',0, 'digiquali@digiquali', '$conf->digiquali->enabled');
-            if ($objectMetadataType == 'productlot') {
-                $extraFields->update('control_history_link', 'ControlHistoryLink', 'varchar', 255, $objectMetadata['table_element'], 0, 0, 110, '', 0, '', 5, '', '', '', 0, 'digiquali@digiquali', '$conf->digiquali->enabled');
-                $extraFields->addExtraField('control_history_link', 'ControlHistoryLink', 'varchar', 110, 255, $objectMetadata['table_element'], 0, 0, '', '', 0, '', 5, '','',0, 'digiquali@digiquali', '$conf->digiquali->enabled');
-            } else {
-                $extraFields->delete('control_history_link', $objectMetadata['table_element']);
-            }
-        }
-
 		if ($result < 0) {
 			return -1;
 		} // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
@@ -918,7 +958,7 @@ class modDigiQuali extends DolibarrModules
             $digiqualiStandard->description = $langs->transnoentities('ISO9001Description');
 
             $digiqualiStandardId = $digiqualiStandard->create($user);
-            if ($digiqualiStandardId > 1) {
+            if ($digiqualiStandardId > 0) {
 //                require_once __DIR__ . '/../../class/digiqualielement.class.php';
 //
 //                $digiqualiElement = new DigiqualiElement($this->db);
@@ -988,10 +1028,21 @@ class modDigiQuali extends DolibarrModules
             dolibarr_set_const($this->db, 'DIGIQUALI_SHEET_LINK_PROJECT_DEFAULT', 1, 'integer', 0, '', $conf->entity);
         }
 
+        require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
+
+        // Constants must be written before _init(), which inserts the tabs the constructor computed.
+        if (getDolGlobalInt('DIGIQUALI_LINKED_OBJECT_BACKWARD') == 0) {
+            digiquali_run_linked_object_backward();
+            dolibarr_set_const($this->db, 'DIGIQUALI_LINKED_OBJECT_BACKWARD', 1, 'integer', 0, '', $conf->entity);
+        }
+
 		// Permissions
 		$this->remove($options);
 
 		$result = $this->_init($sql, $options);
+
+        // Replayed on a fresh descriptor, so that the constants written above are taken into account.
+        digiquali_sync_linked_objects();
 
 		if (getDolGlobalInt('DIGIQUALI_QUESTION_BACKWARD_COMPATIBILITY') == 0 && $result > 0) {
 			require_once __DIR__ . '/../../class/question.class.php';

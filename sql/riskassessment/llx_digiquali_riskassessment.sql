@@ -30,5 +30,6 @@ CREATE TABLE llx_digiquali_riskassessment
   control_percentage   DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
   fk_user_creat        integer NOT NULL,
   fk_user_modif        integer,
-  fk_activity          integer NOT NULL
+  fk_activity          integer NOT NULL,
+  fk_parent            integer DEFAULT 0 NOT NULL
 ) ENGINE = INNODB;

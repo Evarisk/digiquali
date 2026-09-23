@@ -22,7 +22,7 @@
     //padding: 1.4em;
     border-radius: 12px;
     box-shadow: 0 4px 4px rgba(27,100,168,0.15);
-    margin-bottom: 1em;
+    margin-bottom: 0.5em;
     position: relative;
     //overflow: hidden;
     display: flex;
@@ -99,7 +99,7 @@
       }
     }
     .question__container {
-      padding: 1em;
+      padding: 0.3em 0.6em 0.25em;
       width: 100%;
     }
 
@@ -108,18 +108,38 @@
       flex-direction: row;
       flex-wrap: nowrap;
       gap: 0.5em;
-      margin-bottom: 1.5em;
+      margin-bottom: 0.3em;
+
+      @media (max-width: $media__small) {
+        flex-direction: column;
+      }
 
       .question__header-content {
         width: 100%;
       }
       .question-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: $color__public-primary;
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        flex-wrap: wrap;
+
+        .question-ref {
+          font-size: 16px;
+          font-weight: 600;
+          color: $color__public-primary;
+        }
+        .question-type {
+          font-size: 13px;
+          font-weight: 500;
+          color: #666;
+          background: #edf0f5;
+          border-radius: 4px;
+          padding: 1px 6px;
+          white-space: nowrap;
+        }
       }
       .question-description {
-        font-size: 14px;
+        font-size: 16px;
         color: #777777;
       }
       .question__header-medias {
@@ -143,6 +163,65 @@
     }
 
     .question__header-answer {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+
+      .question__answer-sep {
+        width: 1px;
+        align-self: stretch;
+        background: rgba($color__public-secondary, 0.5);
+        flex-shrink: 0;
+      }
+
+      .question__answer-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        flex-shrink: 0;
+
+        .linked-medias {
+          gap: 0;
+          margin-bottom: 0;
+        }
+        .saturne-media-upload-block {
+          gap: 4px;
+        }
+        // #2442: slightly larger action buttons (+2px) so they are easier to tap on a field device
+        .button-square-50,
+        .saturne-media-btn,
+        .saturne-upload-label {
+          width: 52px;
+          min-width: 52px;
+          height: 52px;
+          min-height: 52px;
+        }
+        .button-linked-medias {
+          overflow: visible;
+
+          .button-badge {
+            position: absolute;
+            top: -11px;
+            left: -11px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: $color__red;
+            text-align: center;
+            line-height: 22px;
+            font-weight: 600;
+            font-size: 11px;
+          }
+        }
+      }
+
+      // #2442: on the field device the answer box must take the full width, below the question
+      @media ( max-width: $media__small ) {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
       .percentage-cell {
         width: 100%;
         display: flex;
@@ -231,14 +310,18 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 1em;
+        gap: 0.6em;
         width: auto;
+
+        @media (max-width: $media__small) {
+          justify-content: flex-start;
+        }
 
         .answer {
           border: 4px solid #fff;
           border-radius: 8px;
-          padding: 0.4em 0.8em;
-          font-size: 18px;
+          padding: 0.3em 0.6em;
+          font-size: 16px;
           transition: all 0.2s ease-out;
           display: flex;
           align-items: center;
@@ -283,11 +366,7 @@
     }
 
     .question__footer {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      gap: 0.5em;
-      align-items: flex-start;
+      margin-top: 0.4em;
 
       .question__footer-comment {
         width: 100%;
@@ -331,40 +410,40 @@
         }
       }
 
-      .linked-medias {
-        gap: 1px;
-        width: 101px;
-        margin-bottom: 0;
+      .question__comment-library {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4em;
+        margin-top: 0.4em;
 
-        label .wpeo-button {
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
-        }
-        .open-media-gallery {
-          border-top-left-radius: 0;
-          border-bottom-left-radius: 0;
-        }
-      }
-      .add-action {
-        min-width: 50px;
-      }
-      .button-linked-medias {
-        overflow: visible;
+        .question-comment-suggestion {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4em;
+          max-width: 100%;
+          padding: 0.35em 0.8em;
+          border: 1px solid rgba($color__public-secondary, 0.8);
+          border-radius: 20px;
+          background: rgba($color__public-secondary, 0.15);
+          color: $color__public-primary;
+          font-size: 13px;
+          line-height: 1.3;
+          cursor: pointer;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
 
-        .button-badge {
-          position: absolute;
-          top: -11px;
-          left: -11px;
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          background: $color__red;
-          text-align: center;
-          line-height: 22px;
-          font-weight: 600;
-          font-size: 11px;
+          &:hover {
+            background: rgba($color__public-secondary, 0.5);
+          }
+
+          .question-comment-suggestion-icon {
+            font-size: 10px;
+            opacity: 0.6;
+          }
         }
       }
+
     }
 
     .question__list-medias {
@@ -414,6 +493,61 @@
             i {
               color: rgba($color__public-primary, 0.5)
             }
+
+            .question__action-metas-progress {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.35em;
+
+              .task-progress-slider {
+                width: 70px;
+                appearance: none;
+                -webkit-appearance: none;
+                height: 6px;
+                padding: 0;
+                border: 0;
+                outline: none;
+                margin: 0;
+                background: transparent;
+                cursor: pointer;
+
+                &::-webkit-slider-runnable-track {
+                  height: 6px;
+                  border-radius: 50px;
+                  background: linear-gradient(90deg, #D53C3D 0%, #ED911D 25%, #F2C32E 50%, #92D444 75%, #57AD39 100%);
+                }
+                &::-webkit-slider-thumb {
+                  appearance: none;
+                  -webkit-appearance: none;
+                  width: 14px;
+                  height: 14px;
+                  margin-top: -4px;
+                  border: 2px solid #fff;
+                  border-radius: 50%;
+                  background: $color__primary;
+                  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                }
+                &::-moz-range-track {
+                  height: 6px;
+                  border-radius: 50px;
+                  background: linear-gradient(90deg, #D53C3D 0%, #ED911D 25%, #F2C32E 50%, #92D444 75%, #57AD39 100%);
+                }
+                &::-moz-range-thumb {
+                  width: 14px;
+                  height: 14px;
+                  border: 2px solid #fff;
+                  border-radius: 50%;
+                  background: $color__primary;
+                  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                }
+              }
+
+              .task-progress-value {
+                font-weight: 600;
+                color: $color__public-primary;
+                white-space: nowrap;
+              }
+            }
           }
         }
         .question__action-buttons {
@@ -439,6 +573,39 @@
   }
 
   .digiquali-question-group {
+    margin: 0 0 0.6em;
+    padding: 0.5em 0.6em;
+
+    > h3 {
+      font-size: 18px;
+      margin: 0 0 0.3em;
+      padding: 0.3em 0.5em;
+      background: rgba($color__public-secondary, 0.15);
+      border-radius: 8px;
+    }
+
+    > .group-description {
+      font-size: 15px;
+      color: #666;
+      margin: 0 0 0.3em;
+      padding: 0 0.5em;
+    }
+
+    > p {
+      margin: 0 0 0.2em;
+      padding: 0 0.5em;
+      font-size: 15px;
+    }
+
+    .group-questions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4em;
+      padding-top: 0;
+      border: none;
+      background: none;
+    }
+
     &.correct {
       border-color: $color__correct;
     }
@@ -521,3 +688,5 @@
 
 @import "backend-answer";
 @import "frontend-answer";
+@import "answer-wizard";
+@import "duration";

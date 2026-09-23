@@ -53,6 +53,7 @@ window.digiquali.activity.init = function init() {
 window.digiquali.activity.event = function initializeEvents() {
   $(document).on('input', '#label', window.digiquali.activity.updateModalActivityButton);
   $(document).on('blur', '.activity-list-container [contenteditable="true"]', window.digiquali.activity.updateContentEditable);
+  $(document).on('keydown', '.activity-list-container [contenteditable="true"]', window.digiquali.activity.preventLineBreak);
 
   // Events for create activity
   $(document).on('click', '#activity_add', function createActivity() {
@@ -78,6 +79,23 @@ window.digiquali.activity.updateModalActivityButton = function() {
     $button.removeClass('button-disable');
   } else {
     $button.addClass('button-disable');
+  }
+};
+
+/**
+ * Prevent line breaks in editable badges: Enter exits the field (which triggers the save on blur)
+ * instead of inserting a new line that would break the badge layout.
+ *
+ * @since   21.3.0
+ * @version 21.3.0
+ *
+ * @param  {Event} e - The keydown event
+ * @return {void}
+ */
+window.digiquali.activity.preventLineBreak = function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    $(this).blur();
   }
 };
 
@@ -115,7 +133,7 @@ window.digiquali.activity.updateContentEditable = function() {
       value:     contentText
     }),
     success: function ( resp ) {
-      $.jnotify($(resp).find('#success_message').val());
+      $.jnotify($(resp).find('#success_message').val(), 'success', true, {autoHide: true, TimeShown: 2000, ShowTimeEffect: 200, HideTimeEffect: 200, HorizontalPosition: 'right', VerticalPosition: 'top', ShowOverlay: false});
     },
   });
 };

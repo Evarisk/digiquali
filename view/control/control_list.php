@@ -37,6 +37,7 @@ if (isModEnabled('categorie')) {
 
 // load DigiQuali libraries
 require_once __DIR__ . '/../../class/control.class.php';
+require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
 require_once __DIR__ . '/../../core/boxes/digiqualiwidget1.php';
 
 // Global variables definitions
@@ -103,20 +104,32 @@ $objectPosition                 = 21;
 $excludeFields                  = [];
 $objectsMetadata                = saturne_get_objects_metadata();
 $conf->cache['objectsMetadata'] = $objectsMetadata;
+
+// The tab is opened with the link name of the element (fromtype=commande), which is not always the key the
+// metadata array is indexed with (order) : resolve the entry once instead of reading the array with a key
+// that does not exist. Stays empty for the fromtype values that designate no object, ex. fk_sheet
+$fromObjectMetadata = digiquali_get_object_metadata_from_link_name($objectsMetadata, $fromType);
 foreach($objectsMetadata as $objectMetadata) {
-    if ($objectMetadata['conf'] == 0) {
+    // conf holds the raw constant value : absent or empty means the link is off. A == 0 test would
+    // let those through, since PHP 8 compares '' to 0 as strings
+    if (empty($objectMetadata['conf'])) {
         continue;
     }
 
-    if (empty($fromType) || $fromType == $objectMetadata['link_name']) {
+    // A tab shows the column of the element it filters on, plus, on a product, the lot/serial each
+    // control concerns : that one belongs to another metadata than the one the tab was opened from
+    if (empty($fromType) || $fromType == $objectMetadata['link_name'] || ($fromType == 'product' && $objectMetadata['link_name'] == 'productlot')) {
         $object->fields[$objectMetadata['post_name']] = [
-            'type'        => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
-            'label'       => $langs->trans($objectMetadata['langs']),
-            'enabled'     => 1,
-            'position'    => $objectPosition,
-            'visible'     => 2,
-            'csslist'     => 'minwidth150 maxwidth200',
-            'disablesort' => 1
+            'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
+            'label'      => $langs->trans($objectMetadata['langs']),
+            'enabled'    => 1,
+            'position'   => $objectPosition,
+            'visible'    => 2,
+            'csslist'    => 'minwidth150 maxwidth200',
+            // Sort on the aliases the printFieldListSelect hook builds from llx_element_element, not on a
+            // t.<key> column that does not exist. The empty flag comes first so the controls without any
+            // linked element stay at the bottom in both directions
+            'otheralias' => 'sortempty_' . $objectMetadata['post_name'] . ',sortvalue_'
         ];
 
         $objectPosition++;
@@ -130,23 +143,31 @@ $conf->cache['signatoriesInDictionary'] = $signatoriesInDictionary;
 if (is_array($signatoriesInDictionary) && !empty($signatoriesInDictionary)) {
     $customFieldsPosition = 111;
     foreach ($signatoriesInDictionary as $signatoryInDictionary) {
-        $object->fields[$signatoryInDictionary->ref] = ['label' => $signatoryInDictionary->ref, 'enabled' => 1, 'position' => $customFieldsPosition++, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx right'];
+        // Signatory role columns are computed from the signatures (no real t.<ref> column in
+        // the control table), so they cannot be ordered as a base-table column (disablesort).
+        // Search IS supported: printFieldListSearch() filters on the signatory's name.
+        $object->fields[$signatoryInDictionary->ref] = ['label' => $signatoryInDictionary->ref, 'enabled' => 1, 'position' => $customFieldsPosition++, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx right', 'disablesort' => 1];
         $excludeFields[]                             = $signatoryInDictionary->ref;
     }
 }
 
+// Computed columns are built by the saturnePrintFieldListLoopObject hook, not selected from the control
+// table, so they must declare disablesort: the invalid-sortfield guard of
+// objectfields_list_build_sql_select would silently discard the ORDER BY they advertise.
+// days_remaining_before_next_control is the exception: printFieldListSelect adds it as a real SELECT
+// alias, and its empty otheralias makes the title sort on that alias instead of t.<key>
 $object->fields['days_remaining_before_next_control'] = ['label' => 'DaysBeforeNextControl',      'enabled' => 1, 'position' => 66,  'visible' => 2, 'csslist' => 'center', 'otheralias' => ''];
-$object->fields['question_answered']                  = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
-$object->fields['last_status_date']                   = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx'];
-$object->fields['society_attendants']                 = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx', 'disablesort' => 1];
-$object->fields['average_percentage_qestions']        = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx'];
+$object->fields['question_answered']                  = ['label' => 'QuestionAnswered',           'enabled' => 1, 'position' => 66,  'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['last_status_date']                   = ['label' => 'LastStatusDate',             'enabled' => 1, 'position' => 67,  'visible' => 2, 'css' => 'center minwidth200 maxwidth300 widthcentpercentminusxx', 'disablesort' => 1];
+$object->fields['society_attendants']                 = ['label' => 'SocietyAttendants',          'enabled' => 1, 'position' => 115, 'visible' => 2, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx',        'disablesort' => 1];
+$object->fields['average_percentage_questions']       = ['label' => 'AveragePercentageQuestions', 'enabled' => 1, 'position' => 220, 'visible' => 2, 'css' => 'center minwidth200 maxwidth250 widthcentpercentminusxx', 'disablesort' => 1];
 
-$excludeFields = array_merge($excludeFields, ['days_remaining_before_next_control', 'question_answered', 'last_status_date', 'society_attendants', 'average_percentage_qestions']);
+$excludeFields = array_merge($excludeFields, ['days_remaining_before_next_control', 'question_answered', 'last_status_date', 'society_attendants', 'average_percentage_questions']);
 
 // Initialize array of search criterias
 $searchAll = trim(GETPOST('search_all'));
 $search    = [];
-$search['status'] = [0, 1,2];
+$search['status'] = saturne_get_status_search_filter([Control::STATUS_DRAFT, Control::STATUS_VALIDATED, Control::STATUS_LOCKED]);
 foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');
@@ -157,15 +178,25 @@ foreach ($object->fields as $key => $val) {
     }
 }
 
+// An element can be tied to a control twice : by a link in llx_element_element and by a column of the
+// control itself (the user who carried it out, the project it belongs to). Its tab must show the union of
+// the two, and $search only knows how to AND its criterias, so the OR is emitted by the printFieldListWhere
+// hook. The element travels through the cache rather than through $search : the latter lands in the URL,
+// where the purge of the search criterias would drop it and leave the tab showing every control
+$columnMatchingLinkedElement = ['user' => 'fk_user_controller', 'project' => 'projectid'];
+
 if (!empty($fromType)) {
-    $search[$objectsMetadata[$fromType]['post_name']] = $fromId;
-    switch ($fromType) {
-        case 'fk_sheet':
-            $search['fk_sheet'] = $fromId;
-            break;
-        case 'user':
-            $search['fk_user_controller'] = $fromId;
-            break;
+    if (isset($columnMatchingLinkedElement[$fromType])) {
+        $conf->cache['digiqualiLinkedElementOrColumn'] = [
+            'link_name' => $fromType,
+            'column'    => $columnMatchingLinkedElement[$fromType],
+            'id'        => $fromId
+        ];
+    } elseif (!empty($fromObjectMetadata)) {
+        $search[$fromObjectMetadata['post_name']] = $fromId;
+    }
+    if ($fromType == 'fk_sheet') {
+        $search['fk_sheet'] = $fromId;
     }
 }
 
@@ -204,6 +235,9 @@ $permissiontodelete = $user->hasRight($object->module, $object->element, 'delete
 
 // Security check
 saturne_check_access($permissiontoread, $object);
+
+// Enable the "Validate" mass action offered by the saturne list templates
+$enableMassValidate = 1;
 
 /*
  * Actions
@@ -265,13 +299,27 @@ if ($mode == 'pwa') {
 $title = $langs->trans(ucfirst($object->element) . 'List');
 saturne_header(0,'', $title, $helpUrl ?? '', '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
 
-if (!empty($fromType)) {
-    $objectsMetadata[$fromType]['object']->fetch($fromId);
-    saturne_get_fiche_head($objectsMetadata[$fromType]['object'], $object->element, $langs->trans(ucfirst($object->element)));
-    $linkBack = '<a href="' . dol_buildpath($fromType . '/list.php?restore_lastsearch_values=1', 1) . '">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($objectsMetadata[$fromType]['object'], 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
+if (!empty($fromObjectMetadata)) {
+    $fromObject = $fromObjectMetadata['object'];
+    $fromObject->fetch($fromId);
+    saturne_get_fiche_head($fromObject, $object->element, $langs->trans(ucfirst($object->element)));
+
+    // The list of the element is reached through its own path : fromtype is a link name, not a directory
+    $backUrl  = $fromObjectMetadata['list_url'] ?: $fromType . '/list.php';
+    $linkBack = '<a href="' . dol_buildpath($backUrl . '?restore_lastsearch_values=1', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    saturne_banner_tab($fromObject, 'fromtype=' . $fromType . '&fromid', $linkBack, 1, 'rowid', ($fromType == 'productlot' ? 'batch' : 'ref'));
 
     $moreUrlParameters = '&fromtype=' . $fromType . '&fromid=' . $fromId . '&mode=' . $mode;
+
+    // Sort links, pagination and the search form all post to this very page : without these, the tab
+    // loses the element it is opened from as soon as one of them is used
+    $formMoreParams = ['fromtype' => $fromType, 'fromid' => $fromId];
+
+    // The product tab shows two lists : the controls of the product itself and, below, the ones carried
+    // out on its lots/serials. Naming the first one keeps them apart
+    if ($fromType == 'product' && isModEnabled('productbatch')) {
+        $title = $langs->trans('ControlsOnParentProduct');
+    }
 }
 
 if ($fromId) {
@@ -317,6 +365,12 @@ if ($nbLinkableElements == 0) {
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
+}
+
+// Controls carried out on the lots/serials of the product, grouped by warehouse : they are linked to the
+// lots, not to the product, so the list above never shows them
+if ($fromType == 'product' && isModEnabled('productbatch')) {
+    require_once __DIR__ . '/../../core/tpl/control/control_product_lot_list.tpl.php';
 }
 
 // End of page

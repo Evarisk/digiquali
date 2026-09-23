@@ -34,8 +34,15 @@ $controlInfoArray = get_control_infos($linkedObject); ?>
         <div class="card has-margin">
             <div class="card-thumbnail"><?php echo $controlInfo['image']; ?></div>
             <div class="card-container">
-                <div class="information-type"><?php echo $linkedObjectInfoArray['linkedObject']['title']; ?></div>
-                <div class="information-label size-l"><?php echo $linkedObjectInfoArray['linkedObject']['name_field']; ?></div>
+                <?php
+                $parameters = ['linkedObjectInfoArray' => $linkedObjectInfoArray, 'linkableElements' => $linkableElements];
+                $resHook    = $hookmanager->executeHooks('printPublicControlLinkedObjectIdentity', $parameters, $linkedObject);
+                if ($resHook > 0) {
+                    print $hookmanager->resPrint;
+                } else { ?>
+                    <div class="information-type"><?php echo $linkedObjectInfoArray['linkedObject']['title']; ?></div>
+                    <div class="information-label size-l"><?php echo $linkedObjectInfoArray['linkedObject']['name_field']; ?></div>
+                <?php } ?>
                 <div class="wpeo-grid grid-no-margin">
                     <div>
                         <div class="information-type"><?php echo $controlInfo['title']; ?></div>
