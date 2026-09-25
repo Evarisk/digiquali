@@ -1,0 +1,3019 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Offset 0 does not exist on array\{browser\: ''Browser'', email\: ''Email'', sms\: ''SMS''\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: admin/control.php
+
+		-
+			message: '#^Parameter \#11 \$cols of class DolEditor constructor expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: admin/publicinterface.php
+
+		-
+			message: '#^Variable \$moduleName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/question.php
+
+		-
+			message: '#^Variable \$moduleNameLowerCase might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/question.php
+
+		-
+			message: '#^Variable \$moduleName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/questiongroup.php
+
+		-
+			message: '#^Variable \$moduleNameLowerCase might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/questiongroup.php
+
+		-
+			message: '#^Variable \$hookmanager might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/sheet.php
+
+		-
+			message: '#^Variable \$moduleName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/sheet.php
+
+		-
+			message: '#^Variable \$moduleNameLowerCase might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/sheet.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$contact_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Access to property \$short_url on an unknown class Shortener\.$#'
+			identifier: class.notFound
+			count: 2
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:prefix\(\)\.$#'
+			identifier: method.notFound
+			count: 10
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:sanitize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Call to method fetch\(\) on an unknown class Shortener\.$#'
+			identifier: class.notFound
+			count: 2
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Instantiated class Shortener not found\.$#'
+			identifier: class.notFound
+			count: 2
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Method ActionsDigiquali\:\:completeTabsHead\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Method ActionsDigiquali\:\:printFieldListSearch\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_digiquali.class.php
+
+		-
+			message: '#^Method Activity\:\:getActivityInfos\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/activity.class.php
+
+		-
+			message: '#^Method Activity\:\:getNbActivities\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/activity.class.php
+
+		-
+			message: '#^PHPDoc type array of property Activity\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/activity.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^PHPDoc type array of property Answer\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^PHPDoc type int of property Answer\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^PHPDoc type int of property Answer\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Answer\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Answer\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/answer.class.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$firstname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$lastname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:sanitize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''control_date'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''date_creation'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''label'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''next_control_date'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''ref'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''status'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''track_id'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Control and ''verdict'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with ControlEquipment and ''date_creation'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with ControlEquipment and ''fk_control'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with ControlEquipment and ''ref'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with ControlEquipment and ''status'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: class/control.class.php
+
+		-
+			message: '#^Method Control\:\:displayAnswers\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Method Control\:\:fetchAllWithLeftJoin\(\) has parameter \$fetchCategories with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Method Control\:\:fetchAllWithLeftJoin\(\) has parameter \$leftJoin with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Method ControlEquipment\:\:fetchFromParent\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Method SaturneObject\:\:fetchAll\(\) invoked with 7 parameters, 0\-6 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(array\|int             \<0 if KO, \>0 if OK\)\: Unexpected token "if", expected ''\>'' at offset 248 on line 6$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type array of property Control\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type array of property ControlEquipment\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type array of property ControlLine\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int of property Control\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int of property Control\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int of property ControlLine\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int of property ControlLine\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Control\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Control\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property ControlLine\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property ControlLine\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: class/control.class.php
+
+		-
+			message: '#^Parameter \#1 \$type of method Categorie\:\:get_all_categories\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Parameter \#3 \$newmask of function dolCopyDir expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Parameter \#3 \$targetid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: class/control.class.php
+
+		-
+			message: '#^Parameter \#4 \$id of method CommonObject\:\:setValueFrom\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: class/control.class.php
+
+		-
+			message: '#^Property ActionCommReminder\:\:\$offsetvalue \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Unary operation "\-" on string results in an error\.$#'
+			identifier: unaryOp.invalid
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Variable \$categoryIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/question.class.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: class/question.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Question and ''date_creation'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Question and ''label'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Question and ''ref'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Question and ''status'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:checkAnswerIsCorrect\(\) has parameter \$answerValue with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:displayInSheetCard\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:isAnswerInQuestionRange\(\) has parameter \$answerValue with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:isLinkedToOtherObjects\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:is_erasable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:selectQuestionList\(\) has parameter \$alreadyAdded with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:selectQuestionList\(\) should return string but returns list\<array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Method Question\:\:updateAnswersPosition\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Offset ''default_points'' on array\{default_points\: 0, correctable\: false\}\|array\{default_points\: 0, correctable\: true, bounds\: true\}\|array\{default_points\: 1, correctable\: true, only_one_correct_answer\?\: true, answers_enable_actions\?\: true\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int         \<\=0 if no, \>0 if yes\)\: Unexpected token "\=", expected type at offset 78 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int         \<\=0 if no, \>0 if yes\)\: Unexpected token "\=", expected type at offset 91 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc tag @return with type int is incompatible with native type float\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc type array of property Question\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc type int of property Question\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc type int of property Question\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Question\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Question\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Parameter \#6 \$alsosametype of method CommonObject\:\:fetchObjectLinked\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Property Question\:\:\$entity \(int\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Variable \$categoryIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Variable \$error might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: class/question.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with QuestionGroup and ''date_creation'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with QuestionGroup and ''label'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with QuestionGroup and ''ref'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with QuestionGroup and ''status'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:addQuestion\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:createFromClone\(\) invoked with 3 parameters, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:displayInSheetCard\(\) has parameter \$positionPath with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:displayInSheetCard\(\) has parameter \$sheetObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:displayInSheetCard\(\) has parameter \$subLevel with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:isCorrectFromPoints\(\) has parameter \$correctPoints with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:isCorrectFromPoints\(\) has parameter \$totalPoints with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:isLinkedToOtherObjects\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:is_erasable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:selectQuestionGroupList\(\) has parameter \$alreadyAdded with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:selectQuestionGroupList\(\) should return string but returns list\<array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:updateQuestionGroupsPositions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:updateQuestionsPositions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int         \<\=0 if no, \>0 if yes\)\: Unexpected token "\=", expected type at offset 84 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int         \<\=0 if no, \>0 if yes\)\: Unexpected token "\=", expected type at offset 97 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc type array of property QuestionGroup\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc type int of property QuestionGroup\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc type int of property QuestionGroup\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc type string of property QuestionGroup\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^PHPDoc type string of property QuestionGroup\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Parameter \#3 \$targetid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Parameter \#6 \$alsosametype of method CommonObject\:\:fetchObjectLinked\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 3
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Property QuestionGroup\:\:\$date_creation \(string\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Undefined variable\: \$options$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Variable \$categoryIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Variable \$error might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Variable \$options in empty\(\) is never defined\.$#'
+			identifier: empty.variable
+			count: 2
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/riskassessment.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/riskassessment.class.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: class/riskassessment.class.php
+
+		-
+			message: '#^Method Digiquali\\RiskAssessment\:\:fetchCurrentLines\(\) should return array\<Digiquali\\RiskAssessment\> but returns array\<int, SaturneObject\>\.$#'
+			identifier: return.type
+			count: 1
+			path: class/riskassessment.class.php
+
+		-
+			message: '#^Method Digiquali\\RiskAssessment\:\:fetchLineHistory\(\) should return array\<Digiquali\\RiskAssessment\> but returns array\<int, SaturneObject\>\.$#'
+			identifier: return.type
+			count: 1
+			path: class/riskassessment.class.php
+
+		-
+			message: '#^PHPDoc type array of property Digiquali\\RiskAssessment\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/riskassessment.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Sheet and ''date_creation'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Sheet and ''ref'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Sheet and ''status'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method QuestionGroup\:\:createFromClone\(\) invoked with 3 parameters, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:displayGroupsAndQuestions\(\) has parameter \$questionsAndGroups with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:fetchAllQuestions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:getQuestionAndGroupsTree\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:getQuestionAndGroupsTree\(\) has parameter \$idSelected with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:getQuestionAndGroupsTree\(\) has parameter \$parentGroupId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:getQuestionAndGroupsTree\(\) has parameter \$typeSelected with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:is_erasable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:selectSheetList\(\) should return string but returns list\<array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:updateQuestionsAndGroupsPosition\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:updateQuestionsAndGroupsPosition\(\) has parameter \$reindexLast with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Method Sheet\:\:updateQuestionsPosition\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$question$#'
+			identifier: parameter.notFound
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int         \<\=0 if no, \>0 if yes\)\: Unexpected token "\=", expected type at offset 75 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc tag @return with type mixed is not subtype of native type int\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc type array of property Sheet\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc type int of property Sheet\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc type int of property Sheet\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Sheet\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Sheet\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Survey and ''date_creation'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Survey and ''ref'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Survey and ''status'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Call to function property_exists\(\) with Survey and ''track_id'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Method Survey\:\:displayAnswers\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Method Survey\:\:getStatus\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Method Survey\:\:isCorrectFromPoints\(\) has parameter \$correctPoints with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Method Survey\:\:isCorrectFromPoints\(\) has parameter \$totalPoints with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc tag @var has invalid value \(\?int\|null Question ID\)\: Unexpected token "\|", expected TOKEN_OTHER at offset 20 on line 2$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type array of property Survey\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type array of property SurveyLine\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int of property Survey\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int of property Survey\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int of property SurveyLine\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int of property SurveyLine\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Survey\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Survey\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property SurveyLine\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property SurveyLine\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Parameter \#3 \$newmask of function dolCopyDir expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Parameter \#4 \$id of method CommonObject\:\:setValueFrom\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Variable \$categoryIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Method digiqualiwidget1\:\:showBox\(\) should return string but returns int\.$#'
+			identifier: return.type
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^PHPDoc type array of property digiqualiwidget1\:\:\$info_box_contents is not covariant with PHPDoc type array\<array\<array\{td\?\: string, text\: string, asis\?\: int\<0, 1\>, maxlength\?\: int\}\|int\|string\>\> of overridden property ModeleBoxes\:\:\$info_box_contents\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^PHPDoc type array of property digiqualiwidget1\:\:\$info_box_head is not covariant with PHPDoc type array\<array\{text\: string, nbcol\?\: int, limit\?\: int, graph\?\: int\<0, 1\>, sublink\?\: string, subtext\?\: string, picto\?\: string, target\?\: string, \.\.\.\}\|int\|string\> of overridden property ModeleBoxes\:\:\$info_box_head\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^PHPDoc type mixed of property digiqualiwidget1\:\:\$param is not covariant with PHPDoc type string of overridden property ModeleBoxes\:\:\$param\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<array\{text\: mixed, sublink\: '''', subpicto\: ''filter\.png'', subtext\: '''', target\: ''none'', subclass\: ''linkobject boxfilter'', limit\: mixed, graph\: false\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_values contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Return type of call to function array_values contains unresolvable type\.$#'
+			identifier: function.unresolvableReturnType
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Variable \$boxContent might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Variable \$contentArray might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Variable \$score might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Variable \$textHead might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/boxes/digiqualiwidget1.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<non\-falsy\-string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{''actionPreventionUnc…'', ''actionPreventionCom…''\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Class Productlot referenced with incorrect case\: ProductLot\.$#'
+			identifier: class.nameCase
+			count: 2
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$listFiles might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$nameField might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$objectInfo might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$path might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$photoPath might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$photos might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Variable \$questionIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:convToOutputCharset\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has parameter \$defaultFontSize with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has parameter \$project with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:_pagehead\(\) has parameter \$sheet with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:buildAuditorsText\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawActionPlanSection\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawActionPlanSection\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawAnswerCircle\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawGroupBanner\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawPageFooter\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawQuestionCard\(\) has parameter \$controlLine with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawQuestionCard\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawQuestionCard\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawQuestionCard\(\) has parameter \$question with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawQuestionTasks\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawQuestionTasks\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSectionBanner\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSectionTitle\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSignatureSection\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSignatureSection\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$control with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$linkedElement with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$linkedObject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$project with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawSynthesisSection\(\) has parameter \$sheet with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawTitleArea\(\) has parameter \$control with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawTitleArea\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawTitleArea\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawTitleArea\(\) has parameter \$project with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawTitleArea\(\) has parameter \$sheet with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:drawTopRight\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:fillRect\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:getAbbrevConfig\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:getStatusBadge\(\) has parameter \$control with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:getStatusBadge\(\) has parameter \$outputLangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Method pdf_controldocument\:\:truncateToWidth\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Offset ''label2'' on array\{label\: ''Auditeurs''\|''Projet'', value\: string, height\: mixed, multiline\: true\}\|array\{label\: mixed, value\: mixed, teal\?\: true\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Offset ''split'' on array\{label\: ''Auditeurs''\|''Projet'', value\: string, height\: mixed, multiline\: true\}\|array\{label\: mixed, value\: mixed, teal\?\: true\} in empty\(\) does not exist\.$#'
+			identifier: empty.offset
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Offset ''value2'' on array\{label\: ''Auditeurs''\|''Projet'', value\: string, height\: mixed, multiline\: true\}\|array\{label\: mixed, value\: mixed, teal\?\: true\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Parameter \#1 \$auto of method TCPDF\:\:setAutoPageBreak\(\) expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Parameter \#6 \$fill of method TCPDF\:\:MultiCell\(\) expects bool, int given\.$#'
+			identifier: argument.type
+			count: 6
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed~\(0\|0\.0\|''''\|''0''\|array\{\}\|false\|null\) and ''0'' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
+			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<non\-falsy\-string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
+
+		-
+			message: '#^Variable \$previousRef might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$boxes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$config_page_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$conflictwith\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$const\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$const_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$cronjobs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$db\.$#'
+			identifier: property.notFound
+			count: 24
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$depends\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$descriptionlong\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$dictionaries\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$dirs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$editor_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$error\.$#'
+			identifier: property.notFound
+			count: 3
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$errors\.$#'
+			identifier: property.notFound
+			count: 2
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$family\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$familyinfo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$hidden\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$langfiles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$max_dolibarr_version\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$menu\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$module_parts\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$module_position\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$need_dolibarr_version\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$phpmin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$picto\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$requiredby\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$rights\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$rights_class\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$tabs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$warnings_activation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to an undefined property modDigiQuali\:\:\$warnings_activation_ext\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Call to an undefined method modDigiQuali\:\:_init\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Call to an undefined method modDigiQuali\:\:_load_tables\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Class DigiQualiStandard referenced with incorrect case\: DigiqualiStandard\.$#'
+			identifier: class.nameCase
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Comparison operation "\>\=" between 0\.0 and 22\.0 is always false\.$#'
+			identifier: greaterOrEqual.alwaysFalse
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:update\(\) expects int\<0, 1\>, true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Parameter \#4 \$id of method CommonObject\:\:setValueFrom\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Access to undefined constant CommonObject\:\:STATUS_DRAFT\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: lib/digiquali_answer.lib.php
+
+		-
+			message: '#^Access to undefined constant CommonObject\:\:STATUS_LOCKED\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: lib/digiquali_answer.lib.php
+
+		-
+			message: '#^Function answer_pictos_dropdown\(\) has parameter \$selected with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/digiquali_answer.lib.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$questionGroupId with type float\|int is not subtype of native type int\.$#'
+			identifier: parameter.phpDocType
+			count: 1
+			path: lib/digiquali_answer.lib.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$object$#'
+			identifier: parameter.notFound
+			count: 2
+			path: lib/digiquali_answer.lib.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/digiquali_answer.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: lib/digiquali_control.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: lib/digiquali_control.lib.php
+
+		-
+			message: '#^Class Productlot referenced with incorrect case\: ProductLot\.$#'
+			identifier: class.nameCase
+			count: 1
+			path: lib/digiquali_control.lib.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: lib/digiquali_control.lib.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed~\(0\|0\.0\|''''\|''0''\|array\{\}\|false\|null\) and ''0'' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/digiquali_control.lib.php
+
+		-
+			message: '#^Class DigiQualiStandard referenced with incorrect case\: DigiqualiStandard\.$#'
+			identifier: class.nameCase
+			count: 2
+			path: lib/digiquali_digiqualistandard.lib.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between mixed and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/digiquali_pwa.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/control/public_control_actionplan.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getrights\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/control/public_control_actionplan.php
+
+		-
+			message: '#^Call to an undefined method User\:\:loadDefaultValues\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/control/public_control_actionplan.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: public/control/public_control_actionplan.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/control/public_control_history.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getrights\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/control/public_control_history.php
+
+		-
+			message: '#^Call to an undefined method User\:\:loadDefaultValues\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/control/public_control_history.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: public/control/public_control_history.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/public_answer.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getrights\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/public_answer.php
+
+		-
+			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: public/public_answer.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: public/public_answer.php
+
+		-
+			message: '#^Variable \$signatory might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: public/public_answer.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getFullName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Call to function is_array\(\) with list will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: view/control/control_card.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Control and ''fetch_thirdparty'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Call to method fetchAll\(\) on an unknown class RegistrationCertificateFr\.$#'
+			identifier: class.notFound
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Class Translate does not have a constructor and must be instantiated without any parameters\.$#'
+			identifier: new.noConstructor
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: view/control/control_card.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Instantiated class RegistrationCertificateFr not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Method User\:\:fetchAll\(\) invoked with 7 parameters, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#10 \$disabled of method Form\:\:selectarray\(\) expects int\<0, 1\>, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method Control\:\:setDraft\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int\<\-1, 1\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#4 \$key_in_label of method Form\:\:multiselectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#4 \$key_in_label of static method Form\:\:multiselectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#4 \$showempty of method Sheet\:\:selectSheetList\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#6 \$delallowed of function saturne_show_documents expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Variable \$files might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Class Productlot referenced with incorrect case\: ProductLot\.$#'
+			identifier: class.nameCase
+			count: 2
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#10 \$disabled of static method Form\:\:selectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#5 \$key_in_label of static method Form\:\:selectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#6 \$value_as_key of static method Form\:\:selectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#8 \$translate of static method Form\:\:selectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#9 \$maxlen of static method Form\:\:selectarray\(\) expects int\<0, max\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Loose comparison using \=\= between '''' and ''pwa'' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 2
+			path: view/control/control_list.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/control/control_list.php
+
+		-
+			message: '#^Parameter \#1 \$head of method digiqualiwidget1\:\:showBox\(\) expects array\|null, int\<0, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_list.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_list.php
+
+		-
+			message: '#^Parameter \#2 \$contents of method digiqualiwidget1\:\:showBox\(\) expects array\|null, int\<0, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_list.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: view/control/control_list.php
+
+		-
+			message: '#^Variable \$categorie might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/control/control_list.php
+
+		-
+			message: '#^Variable \$nbBox might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/control/control_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:close\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/controldet/controldet_card.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:load\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/controldet/controldet_card.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/controldet/controldet_card.php
+
+		-
+			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: view/controldet/controldet_card.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 2
+			path: view/controldet/controldet_card.php
+
+		-
+			message: '#^Loose comparison using \=\= between '''' and ''yes'' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 1
+			path: view/controldet/controldet_list.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/controldet/controldet_list.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:setLocked\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/controldet/controldet_list.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: view/controldet/controldet_list.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: view/digiqualielement/digiqualielement_card.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: view/digiqualielement/digiqualielement_view.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: view/digiqualielement/digiqualielement_view.php
+
+		-
+			message: '#^Parameter \#16 \$show_favorite_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/digiqualielement/digiqualielement_view.php
+
+		-
+			message: '#^Parameter \#17 \$show_unlink_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/digiqualielement/digiqualielement_view.php
+
+		-
+			message: '#^Function json_encode invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/digiqualitools.php
+
+		-
+			message: '#^Parameter \#7 \$sortorder of function dol_dir_list expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/digiqualitools.php
+
+		-
+			message: '#^Variable \$fileDir might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: view/digiqualitools.php
+
+		-
+			message: '#^Variable \$fileName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/digiqualitools.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Question and ''isErasable'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Question and ''setCategories'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Cannot unset offset ''answer\-default\-value'' on array\{step\?\: int\<min, \-1\>\|int\<1, max\>, answer\-min\-value\?\: 0\|float, answer\-max\-value\?\: 100\|float\}\|null\.$#'
+			identifier: unset.offset
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Cannot unset offset ''answer\-max\-value'' on non\-empty\-array\{step\?\: int\<min, \-1\>\|int\<1, max\>, answer\-min\-value\?\: 0\|float\}\|null\.$#'
+			identifier: unset.offset
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Cannot unset offset ''answer\-min\-value'' on array\{step\: int\<min, \-1\>\|int\<1, max\>\}\|null\.$#'
+			identifier: unset.offset
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Cannot unset offset ''step'' on null\.$#'
+			identifier: unset.offset
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Cannot unset offset string on array\{\}\.$#'
+			identifier: unset.offset
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$db of function dol_print_error expects DoliDB\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#17 \$show_unlink_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:delete\(\) expects int\<0, 1\>, true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:setLocked\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int\<\-1, 1\> given\.$#'
+			identifier: argument.type
+			count: 3
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int\<\-1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$replacement of function preg_replace expects array\<float\|int\|string\>\|string, int given\.$#'
+			identifier: argument.type
+			count: 11
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#3 \$socid of method FormActions\:\:showactions\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#4 \$key_in_label of static method Form\:\:multiselectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Property Answer\:\:\$weight_percent \(float\|null\) does not accept string\|null\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Variable \$noback might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Variable \$reIndexedIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Variable \$result might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: view/question/question_card.php
+
+		-
+			message: '#^Loose comparison using \=\= between '''' and ''yes'' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 2
+			path: view/question/question_list.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/question/question_list.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:setLocked\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_list.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 2
+			path: view/question/question_list.php
+
+		-
+			message: '#^Comparison operation "\>" between 0 and 0 is always false\.$#'
+			identifier: greater.alwaysFalse
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Parameter \#3 \$socid of method FormActions\:\:showactions\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Variable \$reIndexedIds might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Loose comparison using \=\= between '''' and ''yes'' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 1
+			path: view/questiongroup/questiongroup_list.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/questiongroup/questiongroup_list.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:setLocked\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/questiongroup/questiongroup_list.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: view/questiongroup/questiongroup_list.php
+
+		-
+			message: '#^Parameter \#1 \$selected of method QuestionGroup\:\:selectQuestionGroupList\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_addforms.tpl.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: view/sheet/sheet_addforms.tpl.php
+
+		-
+			message: '#^Variable \$groupId might not be defined\.$#'
+			identifier: variable.undefined
+			count: 12
+			path: view/sheet/sheet_addforms.tpl.php
+
+		-
+			message: '#^Variable \$langs might not be defined\.$#'
+			identifier: variable.undefined
+			count: 9
+			path: view/sheet/sheet_addforms.tpl.php
+
+		-
+			message: '#^Variable \$object might not be defined\.$#'
+			identifier: variable.undefined
+			count: 8
+			path: view/sheet/sheet_addforms.tpl.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Sheet and ''isErasable'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#1 \$db of function dol_print_error expects DoliDB\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#16 \$show_favorite_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#17 \$show_unlink_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method Sheet\:\:setLocked\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, int given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#3 \$preselected of method Form\:\:editfieldkey\(\) expects string, float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#4 \$key_in_label of static method Form\:\:multiselectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Property Sheet\:\:\$element_linked \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 2
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Variable \$sourceId might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Variable \$sourceType might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/sheet/sheet_list.php
+
+		-
+			message: '#^Variable \$conf might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: view/sheet/sheet_question.tpl.php
+
+		-
+			message: '#^Variable \$langs might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: view/sheet/sheet_question.tpl.php
+
+		-
+			message: '#^Variable \$positionPath might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/sheet/sheet_question.tpl.php
+
+		-
+			message: '#^Variable \$question might not be defined\.$#'
+			identifier: variable.undefined
+			count: 20
+			path: view/sheet/sheet_question.tpl.php
+
+		-
+			message: '#^Variable \$sheetObject might not be defined\.$#'
+			identifier: variable.undefined
+			count: 8
+			path: view/sheet/sheet_question.tpl.php
+
+		-
+			message: '#^Variable \$tdOffsetStyle might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/sheet/sheet_question.tpl.php
+
+		-
+			message: '#^Variable \$object might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: view/sheet/sheet_questiongroup.tpl.php
+
+		-
+			message: '#^Variable \$positionPath might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: view/sheet/sheet_questiongroup.tpl.php
+
+		-
+			message: '#^Variable \$questionOrGroup might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: view/sheet/sheet_questiongroup.tpl.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#10 \$disabled of static method Form\:\:selectarray\(\) expects int\<0, 1\>, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#16 \$show_favorite_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#17 \$show_unlink_button of function saturne_show_medias_linked expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#4 \$key_in_label of static method Form\:\:multiselectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#6 \$delallowed of function saturne_show_documents expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Property Survey\:\:\$entity \(int\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: view/survey/survey_list.php
