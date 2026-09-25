@@ -24,16 +24,16 @@
  *          activity, riskassessment) under the /digiquali endpoint.
  */
 
-require_once DOL_DOCUMENT_ROOT . '/custom/saturne/class/saturneapi.class.php';
+dol_include_once('/saturne/class/saturneapi.class.php');
 
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/control.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/survey.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/sheet.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/question.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/answer.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/questiongroup.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/activity.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/digiquali/class/riskassessment.class.php';
+dol_include_once('/digiquali/class/control.class.php');
+dol_include_once('/digiquali/class/survey.class.php');
+dol_include_once('/digiquali/class/sheet.class.php');
+dol_include_once('/digiquali/class/question.class.php');
+dol_include_once('/digiquali/class/answer.class.php');
+dol_include_once('/digiquali/class/questiongroup.class.php');
+dol_include_once('/digiquali/class/activity.class.php');
+dol_include_once('/digiquali/class/riskassessment.class.php');
 
 use Luracast\Restler\RestException;
 use Digiquali\RiskAssessment;

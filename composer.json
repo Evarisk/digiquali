@@ -1,0 +1,16 @@
+{
+    "name": "evarisk/digiquali",
+    "description": "DigiQuali module for Dolibarr ERP",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0"
+    },
+    "config": {
+        "vendor-dir": "vendor",
+        "optimize-autoloader": true
+    }
+}

@@ -1,57 +1,34 @@
-# [DigiQuali] [23.1.0] - Plan d'action sur les contrôles - Interface publique enrichie - Questions Durée et commentaires prédéfinis
+# [DigiQuali] [23.1.1] - Dolibarr 24 - Conformité Dolistore - Chaîne qualité
 
-Description : Cette version ouvre le **plan d'action** sur les contrôles, avec son onglet, sa vue Gantt et son accès depuis l'interface publique, où les actions correctives peuvent désormais être saisies. Elle ajoute un **type de question Durée**, une **bibliothèque de commentaires prédéfinis**, la liste des contrôles de lots et séries sur la fiche produit, et une première passe **mobile** sur les listes et la saisie des réponses. Les trames gagnent l'affectation multiple de questions et la configuration des options de création de contrôle.
+Description : Cette version corrige les deux motifs pour lesquels le contrôle de paquet du **Dolistore** refusait le zip, déclare le module compatible **Dolibarr 24**, et met en place une **chaîne de contrôles qualité** sur les pull requests — analyse statique, lint PHP et parité des fichiers de langue.
 
-**Cette version demande Saturne 23.2.0 ou supérieur.**
-
-## Nouvelles fonctionnalités et innovations
-
-### Plan d'action
-
-* Nouvel **onglet plan d'action** sur un contrôle, avec **vue Gantt** et accès depuis l'interface publique.
-* Les **actions correctives** se saisissent directement depuis l'interface publique.
-
-### Questions
-
-* Nouveau type de question **Durée**, en heures, minutes et secondes.
-* **Bibliothèque de commentaires prédéfinis**, pour éviter de ressaisir les mêmes remarques.
-* Des **documents s'attachent à la réponse** d'une question.
-
-### Trames
-
-* **Affectation multiple** des questions, en AJAX.
-* Liste déroulante select2 optionnelle pour les objets contrôlés.
-* Options de création de contrôle configurables depuis la trame — affichage du projet, des étiquettes, valeurs par défaut — avec un formulaire réorganisé.
-* Bouton de **désarchivage** sur la fiche, comme sur les contrôles.
-
-### Contrôles
-
-* La fiche produit affiche la **liste des contrôles de ses lots et séries**.
-* Première passe **mobile** sur les listes et sur la zone de réponse, avec une option pour désactiver les fichiers joints.
-* Bloc média du socle intégré à la fiche et aux questions.
-
-### Interface publique
-
-* Les informations de l'objet contrôlé apparaissent dans l'en-tête de la réponse publique.
-* Hooks d'extension sur l'onglet documentation et sur l'identité de l'objet lié, état vide géré.
-
-### Administration
-
-* Gestion des **éléments liables** depuis la page de configuration d'une trame ; onglets et hooks déclarés uniquement pour les liaisons activées.
-* Les liens ne sont plus créés à l'activation du module : ils sont repris et synchronisés.
-
-### Éléments et outils
-
-* Les onglets « Activités » et « Processus » fusionnent en une seule page.
-* Console de diagnostic d'import, avec un rapport d'erreur exploitable.
+**Cette version demande Saturne 23.2.1 ou supérieur.**
 
 ## Améliorations & corrections
 
-* **Dolibarr 24 : la génération de documents est réparée** — le cœur y refuse les modèles livrés avec le module et ne transmet plus ses paramètres au générateur.
-* Appels aux bibliothèques du socle sécurisés (`dol_include_once` et vérification d'existence) : un socle absent ou plus ancien ne provoque plus de fatale.
-* Calcul proportionnel des points d'une question en pourcentage.
-* Propriété typée lue avant initialisation (#2515).
-* Style et mise en page du PDF de contrôle revus.
-* Une trentaine de correctifs sur les contrôles, les trames, les listes, les onglets et les médias.
+### Conformité du paquet Dolistore
 
-## Comparaison des versions [23.0.0](https://github.com/Evarisk/digiquali/compare/23.0.0...23.1.0) et 23.1.0
+* Le contrôle de paquet refusait le zip : `manifest.json.php` chargeait l'environnement Dolibarr par un `require` unique, alors que la règle demande **au moins deux tentatives** — une pour le module à la racine de Dolibarr, une pour le module dans `custom`. C'était le seul fichier du module dans ce cas, les 25 autres points d'entrée étaient déjà conformes.
+* Second motif : la classe d'API incluait ses neuf classes — une de Saturne, huit de DigiQuali — par un chemin `/custom` en dur, qui ne résout pas si les modules sont installés à la racine de Dolibarr. Elles passent par `dol_include_once`, qui cherche dans les deux racines de documents.
+
+### Compatibilité
+
+* Le module déclare **Dolibarr 23 au minimum et 24 au maximum**.
+
+### Intégration continue
+
+* Les pull requests passent désormais **PHPStan**, un **lint PHP** et un contrôle de **parité des fichiers de langue** français / anglais.
+* PHPStan ne scanne plus les classes bouchons des tests de Saturne, qui masquaient les vraies signatures en CI et y laissaient passer des erreurs invisibles en local — 94 erreurs démasquées, absorbées dans la baseline.
+* La baseline figeait le numéro de version du module dans un message d'erreur : la première release aurait cassé la chaîne qualité. Le motif est désormais ignoré indépendamment du numéro.
+* `phpstan.neon` est aligné sur le gabarit commun aux modules du socle.
+
+## Comparaison des versions [23.1.0](https://github.com/Evarisk/digiquali/compare/23.1.0...23.1.1) et 23.1.1
+
+* [#2621] [CI] rework: aligner phpstan.neon sur le gabarit commun [`3fc9e618`](https://github.com/Evarisk/digiquali/commit/3fc9e618)
+* [#2619] [CI] fix: ignorer par motif la version des triggers, figée dans la baseline [`7d8f2c80`](https://github.com/Evarisk/digiquali/commit/7d8f2c80)
+* [#2617] [CI] fix: PHPStan ne scanne plus les stubs de test de Saturne [`1bf7f17e`](https://github.com/Evarisk/digiquali/commit/1bf7f17e)
+* [#2615] [API] fix: inclure les classes du module par dol_include_once [`1b11d636`](https://github.com/Evarisk/digiquali/commit/1b11d636)
+* [#2613] [Module] fix: bootstrap main.inc.php à deux tentatives, exigé par le Dolistore [`3607054e`](https://github.com/Evarisk/digiquali/commit/3607054e)
+* [CI] fix: compléter les dossiers du coeur vus par PHPStan [`7cbc25e8`](https://github.com/Evarisk/digiquali/commit/7cbc25e8)
+* [#2611] [CI] feat: PHPStan, lint PHP et parité des langues [`3aa986a8`](https://github.com/Evarisk/digiquali/commit/3aa986a8)
+* [#2609] [Module] rework: bornes de version Dolibarr 23 minimum, 24 maximum [`d7cf9527`](https://github.com/Evarisk/digiquali/commit/d7cf9527)
