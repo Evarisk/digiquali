@@ -20,12 +20,6 @@ parameters:
             - documents/ (?)
             - langs/ (?)
             - dev/ (?)
-            # Le bootstrap PHPUnit de saturne declare des stubs DoliDB, Conf, Translate,
-            # User et HookManager. Scannes, ils gagnent sur les vraies classes du coeur et
-            # chaque appel de methode remonte en « undefined method ». Saturne exclut deja
-            # ce fichier de sa propre analyse, mais scanDirectories prend ../saturne/ en
-            # entier. NE PAS retirer en alignant ce fichier sur le gabarit commun.
-            - ../saturne/tests/ (?)
             # « test/ » au singulier est le squelette du gabarit de module Dolibarr : un
             # harnais Selenium qui etend PHPUnit_Extensions_Selenium2TestCase, extension
             # retiree de PHPUnit depuis des annees. Ces fichiers ne peuvent plus s'executer
@@ -33,6 +27,19 @@ parameters:
             # classe introuvable, non ignorable, qui empeche toute baseline.
             # « tests/ » au pluriel, lui, porte de vrais tests et reste analyse.
             - test/ (?)
+            # Saturne porte des stubs de classes du coeur a DEUX endroits, et
+            # scanDirectories prend ../saturne/ en entier. Scannees, ces coquilles vides
+            # gagnent sur les vraies classes et chaque acces remonte en « undefined » ;
+            # la baseline gele alors ce bruit au lieu du code reel.
+            # NE PAS RETIRER en alignant ce fichier sur le gabarit commun.
+            #
+            #   dev/phan/stubs.php   -> DolibarrModules, DoliDB, Odf, TCPDF2DBarcode...
+            #                           mesure sur digiboard : 65 entrees avec, 28 sans
+            #   tests/ (bootstrap)   -> DoliDB, Conf, Translate, User, HookManager
+            #
+            # Saturne exclut deja ces fichiers de sa propre analyse.
+            - ../saturne/dev/ (?)
+            - ../saturne/tests/ (?)
         analyse:
             # Les fragments de template sont inclus au milieu de la portee de leur
             # appelant : leurs variables sont indefinies par construction quand on les
@@ -123,8 +130,8 @@ parameters:
         # ('development', 'dolibarr', 'experimental'), alors que tous les modules y
         # mettent leur numero de version. Fige dans la baseline, ce message casse la
         # CI a chaque bump de version : il est ignore par motif.
-        # NE PAS retirer en alignant ce fichier sur le gabarit commun : sans elle, la
-        # baseline refige le numero et la release suivante casse (vu deux fois).
+        # Le trigger redeclare $version avec son type, ce qui suffit ; cette regle reste
+        # en filet si la redeclaration saute lors d'un alignement du fichier.
         - '#^Property DolibarrTriggers\:\:\$version \(.*\) does not accept .*\.$#'
         # Contrepartie de cette redeclaration : le coeur type la propriete plus
         # etroitement que string. Ce message-la ne contient aucun numero, il ne

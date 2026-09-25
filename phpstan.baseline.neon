@@ -3341,3 +3341,26 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: view/survey/survey_card.php
+		-
+			message: '#^Dead catch \- OdfException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 3
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Dead catch \- OdfException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 2
+			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
+
+		-
+			message: '#^Property DolibarrModules\:\:\$dictionaries \(array\{\}\|array\{langs\: string, tabname\: array\<string\>, tablib\: array\<string\>, tabsql\: array\<string\>, tabsqlsort\: array\<string\>, tabfield\: array\<string\>, tabfieldvalue\: array\<string\>, tabfieldinsert\: array\<string\>, \.\.\.\}\) does not accept array\{langs\: ''digiquali@digiquali'', tabname\: array\{''llx_c_question_type'', ''llx_c_control…'', ''llx_c_survey…'', ''llx_c_question…''\}, tablib\: array\{''Question'', ''Control'', ''Survey'', ''CommentLibrary''\}, tabsql\: array\{''SELECT f\.rowid as…'', ''SELECT f\.rowid as…'', ''SELECT f\.rowid as…'', ''SELECT f\.rowid as…''\}, tabsqlsort\: array\{''label ASC'', ''label ASC'', ''label ASC'', ''position ASC''\}, tabfield\: array\{''ref,label…'', ''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldvalue\: array\{''ref,label…'', ''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldinsert\: array\{''ref,label…'', ''ref,label…'', ''ref,label…'', ''ref,label…''\}, \.\.\.\}\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Property DolibarrModules\:\:\$menu \(1\|array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\>\) does not accept non\-empty\-array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\|array\{fk_menu\: ''fk_mainmenu…'', type\: ''top'', titre\: mixed, prefix\: ''\<i class\="fas fa…'', mainmenu\: ''digiquali'', leftmenu\: '''', url\: ''/digiquali…'', langs\: ''digiquali@digiquali'', \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modDigiQuali.class.php
