@@ -3017,3 +3017,314 @@ parameters:
 			identifier: booleanNot.alwaysTrue
 			count: 2
 			path: view/survey/survey_list.php
+		-
+			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/control.class.php
+
+		-
+			message: '#^Cannot access property \$label on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Cannot access property \$ref on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Cannot access property \$rowid on object\|false\.$#'
+			identifier: property.nonObject
+			count: 7
+			path: class/question.class.php
+
+		-
+			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/question.class.php
+
+		-
+			message: '#^Cannot access property \$label on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Cannot access property \$ref on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Cannot access property \$rowid on object\|false\.$#'
+			identifier: property.nonObject
+			count: 7
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: class/questiongroup.class.php
+
+		-
+			message: '#^Cannot access property \$label on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Cannot access property \$ref on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Cannot access property \$rowid on object\|false\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: class/sheet.class.php
+
+		-
+			message: '#^Cannot access property \$status on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/sheet.class.php
+
+		-
+			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/survey.class.php
+
+		-
+			message: '#^Dead catch \- OdfException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 3
+			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
+
+		-
+			message: '#^Dead catch \- OdfException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 2
+			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
+
+		-
+			message: '#^Property DolibarrModules\:\:\$dictionaries \(array\{\}\|array\{langs\: string, tabname\: array\<string\>, tablib\: array\<string\>, tabsql\: array\<string\>, tabsqlsort\: array\<string\>, tabfield\: array\<string\>, tabfieldvalue\: array\<string\>, tabfieldinsert\: array\<string\>, \.\.\.\}\) does not accept array\{langs\: ''digiquali@digiquali'', tabname\: array\{''llx_c_question_type'', ''llx_c_control…'', ''llx_c_survey…'', ''llx_c_question…''\}, tablib\: array\{''Question'', ''Control'', ''Survey'', ''CommentLibrary''\}, tabsql\: array\{''SELECT f\.rowid as…'', ''SELECT f\.rowid as…'', ''SELECT f\.rowid as…'', ''SELECT f\.rowid as…''\}, tabsqlsort\: array\{''label ASC'', ''label ASC'', ''label ASC'', ''position ASC''\}, tabfield\: array\{''ref,label…'', ''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldvalue\: array\{''ref,label…'', ''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldinsert\: array\{''ref,label…'', ''ref,label…'', ''ref,label…'', ''ref,label…''\}, \.\.\.\}\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Property DolibarrModules\:\:\$menu \(1\|array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\>\) does not accept non\-empty\-array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\|array\{fk_menu\: ''fk_mainmenu…'', type\: ''top'', titre\: mixed, prefix\: ''\<i class\="fas fa…'', mainmenu\: ''digiquali'', leftmenu\: '''', url\: ''/digiquali…'', langs\: ''digiquali@digiquali'', \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modDigiQuali.class.php
+
+		-
+			message: '#^Parameter \#1 \$id of method User\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: public/control/public_control_actionplan.php
+
+		-
+			message: '#^Parameter \#1 \$id of method User\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: public/control/public_control_history.php
+
+		-
+			message: '#^Parameter \#1 \$id of method User\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: public/public_answer.php
+
+		-
+			message: '#^Parameter \#1 \$categories of method SaturneObject\:\:setCategories\(\) expects array\<int\>\|int, array\<string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#5 \$filter of method User\:\:fetchAll\(\) expects string, array\<string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Property Control\:\:\$verdict \(int\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: view/control/control_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Product\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Productlot\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Property ControlEquipment\:\:\$fk_lot \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: view/control/control_equipment.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/frontend/pwa_answer.php
+
+		-
+			message: '#^Offset string does not exist on list\<int\|string\>\.$#'
+			identifier: offsetAccess.notFound
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$answerIdToCheck of method Question\:\:hasAtLeastOneCorrectAnswer\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$categories of method SaturneObject\:\:setCategories\(\) expects array\<int\>\|int, array\<string\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$hour of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#2 \$minute of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#3 \$second of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#4 \$month of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#5 \$day of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#6 \$year of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/question/question_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Parameter \#1 \$questionId of method QuestionGroup\:\:addQuestion\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Parameter \#3 \$selected of method Form\:\:multiselectarray\(\) expects array\<string\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/questiongroup/questiongroup_card.php
+
+		-
+			message: '#^Parameter \#1 \$categories of method SaturneObject\:\:setCategories\(\) expects array\<int\>\|int, array\<string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 10
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:fetchObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#1 \$sourceid of method CommonObject\:\:updateObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#3 \$targetid of method SaturneObject\:\:deleteObjectLinked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#4 \$fk_source of method Sheet\:\:updateQuestionsAndGroupsPosition\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/sheet/sheet_card.php
+
+		-
+			message: '#^Parameter \#1 \$categories of method SaturneObject\:\:setCategories\(\) expects array\<int\>\|int, array\<string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/survey/survey_card.php
