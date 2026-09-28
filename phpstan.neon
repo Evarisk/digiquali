@@ -27,19 +27,6 @@ parameters:
             # classe introuvable, non ignorable, qui empeche toute baseline.
             # « tests/ » au pluriel, lui, porte de vrais tests et reste analyse.
             - test/ (?)
-            # Saturne porte des stubs de classes du coeur a DEUX endroits, et
-            # scanDirectories prend ../saturne/ en entier. Scannees, ces coquilles vides
-            # gagnent sur les vraies classes et chaque acces remonte en « undefined » ;
-            # la baseline gele alors ce bruit au lieu du code reel.
-            # NE PAS RETIRER en alignant ce fichier sur le gabarit commun.
-            #
-            #   dev/phan/stubs.php   -> DolibarrModules, DoliDB, Odf, TCPDF2DBarcode...
-            #                           mesure sur digiboard : 65 entrees avec, 28 sans
-            #   tests/ (bootstrap)   -> DoliDB, Conf, Translate, User, HookManager
-            #
-            # Saturne exclut deja ces fichiers de sa propre analyse.
-            - ../saturne/dev/ (?)
-            - ../saturne/tests/ (?)
         analyse:
             # Les fragments de template sont inclus au milieu de la portee de leur
             # appelant : leurs variables sont indefinies par construction quand on les
@@ -62,7 +49,24 @@ parameters:
     # herite (SaturneObject, SaturneSignature, les libs saturne_*).
     # A garder en phase avec le sparse-checkout de .github/workflows/quality.yml.
     scanDirectories:
-        - ../saturne/
+        # Le socle est scanne par dossier, et non en entier, parce qu il porte des
+        # bouchons de classes du coeur pour ses propres outils : dev/phan/stubs.php
+        # (DolibarrModules, DoliDB, Odf...) et le bootstrap PHPUnit de tests/
+        # (DoliDB, Conf, Translate, User, HookManager). Scannes, ils gagnent contre
+        # les vraies classes et toute la baseline se remplit de faux positifs.
+        #
+        # Cette forme est preferee a une liste d exclusions parce qu une exclusion
+        # s efface par accident lors d un alignement de fichier, et la CI redevient
+        # alors verte a tort. Ici il n y a aucune ligne a defendre.
+        #
+        # Contrepartie assumee : si Saturne place un jour une classe hors de ces trois
+        # dossiers, elle remontera en class.notFound. C est un echec visible, donc
+        # preferable a une CI verte qui ne verifie plus rien.
+        # Releve du 2026-09-28 : 17 classes dans class/, 4 dans core/, aucune ailleurs.
+        # lib/ n en porte aucune mais contient les fonctions saturne_*.
+        - ../saturne/class/
+        - ../saturne/core/
+        - ../saturne/lib/
         - ../../ai/class/
         - ../../api/class/
         - ../../bookmarks/class/
