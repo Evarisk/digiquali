@@ -55,81 +55,15 @@ parameters:
 			path: admin/sheet.php
 
 		-
-			message: '#^Access to an undefined property User\:\:\$contact_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: class/actions_digiquali.class.php
-
-		-
 			message: '#^Access to property \$short_url on an unknown class Shortener\.$#'
 			identifier: class.notFound
 			count: 2
 			path: class/actions_digiquali.class.php
 
 		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:prefix\(\)\.$#'
-			identifier: method.notFound
-			count: 10
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:sanitize\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/actions_digiquali.class.php
-
-		-
 			message: '#^Call to method fetch\(\) on an unknown class Shortener\.$#'
 			identifier: class.notFound
 			count: 2
-			path: class/actions_digiquali.class.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
 			path: class/actions_digiquali.class.php
 
 		-
@@ -169,18 +103,6 @@ parameters:
 			path: class/activity.class.php
 
 		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/answer.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/answer.class.php
-
-		-
 			message: '#^PHPDoc type array of property Answer\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
 			identifier: property.phpDocType
 			count: 1
@@ -209,102 +131,6 @@ parameters:
 			identifier: property.phpDocType
 			count: 1
 			path: class/answer.class.php
-
-		-
-			message: '#^Access to an undefined property User\:\:\$firstname\.$#'
-			identifier: property.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Access to an undefined property User\:\:\$lastname\.$#'
-			identifier: property.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:sanitize\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/control.class.php
 
 		-
 			message: '#^Call to function property_exists\(\) with Control and ''control_date'' will always evaluate to true\.$#'
@@ -376,12 +202,6 @@ parameters:
 			message: '#^Call to function property_exists\(\) with ControlEquipment and ''status'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
-			path: class/control.class.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 2
 			path: class/control.class.php
 
 		-
@@ -533,54 +353,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: class/control.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/question.class.php
 
 		-
 			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
@@ -737,54 +509,6 @@ parameters:
 			identifier: variable.undefined
 			count: 2
 			path: class/question.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 4
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/questiongroup.class.php
 
 		-
 			message: '#^Call to function property_exists\(\) with QuestionGroup and ''date_creation'' will always evaluate to true\.$#'
@@ -979,24 +703,6 @@ parameters:
 			path: class/questiongroup.class.php
 
 		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/riskassessment.class.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/riskassessment.class.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 2
-			path: class/riskassessment.class.php
-
-		-
 			message: '#^Method Digiquali\\RiskAssessment\:\:fetchCurrentLines\(\) should return array\<Digiquali\\RiskAssessment\> but returns array\<int, SaturneObject\>\.$#'
 			identifier: return.type
 			count: 1
@@ -1013,54 +719,6 @@ parameters:
 			identifier: property.phpDocType
 			count: 1
 			path: class/riskassessment.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 6
-			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: class/sheet.class.php
 
 		-
 			message: '#^Call to function property_exists\(\) with Sheet and ''date_creation'' will always evaluate to true\.$#'
@@ -1199,24 +857,6 @@ parameters:
 			identifier: property.phpDocType
 			count: 1
 			path: class/sheet.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/survey.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/survey.class.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: class/survey.class.php
 
 		-
 			message: '#^Call to function property_exists\(\) with Survey and ''date_creation'' will always evaluate to true\.$#'
@@ -1429,18 +1069,6 @@ parameters:
 			path: core/boxes/digiqualiwidget1.php
 
 		-
-			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
-
-		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
-
-		-
 			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -1468,12 +1096,6 @@ parameters:
 			message: '#^Class Productlot referenced with incorrect case\: ProductLot\.$#'
 			identifier: class.nameCase
 			count: 2
-			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
 			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
 
 		-
@@ -1517,24 +1139,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: core/modules/digiquali/digiqualidocuments/controldocument/doc_controldocument_odt.modules.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
-
-		-
-			message: '#^Call to an undefined method Translate\:\:convToOutputCharset\(\)\.$#'
-			identifier: method.notFound
-			count: 6
-			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
 
 		-
 			message: '#^If condition is always false\.$#'
@@ -1825,12 +1429,6 @@ parameters:
 			path: core/modules/digiquali/digiqualidocuments/controldocument/pdf_controldocument.modules.php
 
 		-
-			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
-
-		-
 			message: '#^Call to function is_array\(\) with array\<non\-falsy\-string, mixed\> will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -1847,216 +1445,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: core/modules/digiquali/digiqualidocuments/surveydocument/doc_surveydocument_odt.modules.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$boxes\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$config_page_url\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$conflictwith\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$const\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$const_name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$cronjobs\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$db\.$#'
-			identifier: property.notFound
-			count: 24
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$depends\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$description\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$descriptionlong\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$dictionaries\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$dirs\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$editor_url\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$error\.$#'
-			identifier: property.notFound
-			count: 3
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$errors\.$#'
-			identifier: property.notFound
-			count: 2
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$family\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$familyinfo\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$hidden\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$langfiles\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$max_dolibarr_version\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$menu\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$module_parts\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$module_position\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$need_dolibarr_version\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$phpmin\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$picto\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$requiredby\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$rights\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$rights_class\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$tabs\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$warnings_activation\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Access to an undefined property modDigiQuali\:\:\$warnings_activation_ext\.$#'
-			identifier: property.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Call to an undefined method modDigiQuali\:\:_init\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: core/modules/modDigiQuali.class.php
-
-		-
-			message: '#^Call to an undefined method modDigiQuali\:\:_load_tables\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: core/modules/modDigiQuali.class.php
 
 		-
 			message: '#^Class DigiQualiStandard referenced with incorrect case\: DigiqualiStandard\.$#'
@@ -2119,27 +1507,9 @@ parameters:
 			path: lib/digiquali_answer.lib.php
 
 		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 4
-			path: lib/digiquali_control.lib.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: lib/digiquali_control.lib.php
-
-		-
 			message: '#^Class Productlot referenced with incorrect case\: ProductLot\.$#'
 			identifier: class.nameCase
 			count: 1
-			path: lib/digiquali_control.lib.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 2
 			path: lib/digiquali_control.lib.php
 
 		-
@@ -2161,88 +1531,10 @@ parameters:
 			path: lib/digiquali_pwa.lib.php
 
 		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/control/public_control_actionplan.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getrights\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/control/public_control_actionplan.php
-
-		-
-			message: '#^Call to an undefined method User\:\:loadDefaultValues\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/control/public_control_actionplan.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: public/control/public_control_actionplan.php
-
-		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/control/public_control_history.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getrights\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/control/public_control_history.php
-
-		-
-			message: '#^Call to an undefined method User\:\:loadDefaultValues\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/control/public_control_history.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: public/control/public_control_history.php
-
-		-
-			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/public_answer.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getrights\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: public/public_answer.php
-
-		-
-			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: public/public_answer.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: public/public_answer.php
-
-		-
 			message: '#^Variable \$signatory might not be defined\.$#'
 			identifier: variable.undefined
 			count: 3
 			path: public/public_answer.php
-
-		-
-			message: '#^Call to an undefined method User\:\:getFullName\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: view/control/control_card.php
 
 		-
 			message: '#^Call to function is_array\(\) with list will always evaluate to true\.$#'
@@ -2269,18 +1561,6 @@ parameters:
 			path: view/control/control_card.php
 
 		-
-			message: '#^Class Translate does not have a constructor and must be instantiated without any parameters\.$#'
-			identifier: new.noConstructor
-			count: 1
-			path: view/control/control_card.php
-
-		-
-			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 2
-			path: view/control/control_card.php
-
-		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
 			count: 1
@@ -2289,12 +1569,6 @@ parameters:
 		-
 			message: '#^Instantiated class RegistrationCertificateFr not found\.$#'
 			identifier: class.notFound
-			count: 1
-			path: view/control/control_card.php
-
-		-
-			message: '#^Method User\:\:fetchAll\(\) invoked with 7 parameters, 0 required\.$#'
-			identifier: arguments.count
 			count: 1
 			path: view/control/control_card.php
 
@@ -2459,30 +1733,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: view/control/control_list.php
-
-		-
-			message: '#^Call to an undefined method DoliDB\:\:close\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: view/controldet/controldet_card.php
-
-		-
-			message: '#^Call to an undefined method Translate\:\:load\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: view/controldet/controldet_card.php
-
-		-
-			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: view/controldet/controldet_card.php
-
-		-
-			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
-			identifier: method.notFound
-			count: 5
-			path: view/controldet/controldet_card.php
 
 		-
 			message: '#^If condition is always false\.$#'
