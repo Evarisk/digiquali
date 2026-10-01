@@ -208,6 +208,9 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                     case 'Duration' :
                                         $tmpArray['answer'] = digiquali_format_duration($answerResult);
                                         break;
+                                    case 'PhotoMultiple' :
+                                        $tmpArray['answer'] = digiquali_photo_multiple_odt_answer($answerResult);
+                                        break;
                                     case 'MultipleChoices' :
                                         $answers = explode(',', $answerResult);
                                         $tmpArray['answer'] = '';

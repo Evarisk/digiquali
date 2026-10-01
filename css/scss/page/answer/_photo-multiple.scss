@@ -1,0 +1,135 @@
+// Answer table of a PhotoMultiple question: one row per answer photo, with its comment and OK/KO status.
+// Rendered on the backoffice card, the public page and the PWA wizard alike, under the question
+// header across its whole width, so it stays self-contained and carries no outer margin.
+
+// The theme green is too light to carry a label, on white as under white: a darker shade of it
+$photo-multiple__ok: #16964d;
+
+.question__body {
+  margin-top: 0.4em;
+}
+
+.question-photo-multiple {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+
+  .question-photo-multiple__empty {
+    margin: 0;
+    padding: 0.8em;
+    border: 2px dashed rgba($color__public-secondary, 0.8);
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .question-photo-multiple__head,
+  .question-photo-multiple__row {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.6em;
+  }
+
+  .question-photo-multiple__head {
+    padding: 0 0.4em;
+    font-size: 0.85em;
+    font-weight: 600;
+    opacity: 0.6;
+  }
+
+  .question-photo-multiple__row {
+    padding: 0.4em;
+    border: 2px solid $color__public-secondary;
+    border-radius: 10px;
+  }
+
+  .question-photo-multiple__photo {
+    display: block;
+
+    img {
+      display: block;
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+  }
+
+  .question-photo-multiple__status {
+    display: flex;
+    gap: 0.4em;
+  }
+
+  .question-photo-multiple__status-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.5em 0.8em;
+    border: 2px solid currentColor;
+    border-radius: 8px;
+    background: transparent;
+    font-weight: 600;
+    cursor: pointer;
+
+    &--ok {
+      color: $photo-multiple__ok;
+    }
+    &--ko {
+      color: $color__red;
+    }
+    &.active {
+      &.question-photo-multiple__status-button--ok {
+        background: $photo-multiple__ok;
+        border-color: $photo-multiple__ok;
+        color: #fff;
+      }
+      &.question-photo-multiple__status-button--ko {
+        background: $color__red;
+        border-color: $color__red;
+        color: #fff;
+      }
+    }
+    &[disabled] {
+      cursor: default;
+      opacity: 0.5;
+
+      &.active {
+        opacity: 1;
+      }
+    }
+  }
+
+  // On a phone the comment drops under the photo and its status, where it gets the whole width
+  @media (max-width: 600px) {
+    .question-photo-multiple__head {
+      display: none;
+    }
+
+    .question-photo-multiple__row {
+      grid-template-columns: 120px minmax(0, 1fr);
+    }
+
+    .question-photo-multiple__comment {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .question-photo-multiple__status {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+}
+
+// The answer containers pad and size every textarea for the single answer of a Text question;
+// mirroring their ancestors is what lets the comment of a photo row keep its own box.
+.page-public-card .question-answer-container-pwa,
+.question-answer-container {
+  .question-photo-multiple .question-photo-multiple__row textarea.question-photo-multiple__comment {
+    width: 100%;
+    min-height: 3.5em;
+    margin: 0;
+    padding: 0.4em 0.6em;
+    resize: vertical;
+  }
+}

@@ -89,11 +89,18 @@ if ($action == 'save') {
                 }
             } else {
                 if (isset($_POST['answer' . $question->id])) {
-                    $line->answer = GETPOST('answer' . $question->id);
+                    // The default filter strips the quotes, which would break a JSON answer : it is rebuilt below instead
+                    $line->answer = GETPOST('answer' . $question->id, ($question->type == Question::TYPE_PHOTO_MULTIPLE ? 'none' : 'alphanohtml'));
                 }
                 if (isset($_POST['comment' . $question->id])) {
                     $line->comment = GETPOST('comment' . $question->id);
                 }
+            }
+
+            // Only the rows that fit the expected shape are kept, the answer comes from the browser
+            if ($question->type == Question::TYPE_PHOTO_MULTIPLE && $line->answer !== null) {
+                require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
+                $line->answer = digiquali_photo_multiple_sanitize((string) $line->answer);
             }
 
             // Calculate and set the score on the line

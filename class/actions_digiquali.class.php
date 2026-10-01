@@ -840,7 +840,7 @@ class ActionsDigiquali
 
                             if (!empty($questionsLinked['digiquali_question']) && is_array($questionsLinked['digiquali_question'])) {
                                 foreach ($questionsLinked['digiquali_question'] as $questionLinked) {
-                                    if ($questionLinked->authorize_answer_photo > 0) {
+                                    if ($questionLinked->acceptsAnswerPhotos()) {
                                         saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, (getDolGlobalInt($confName) ? 'large' : 'medium'), '', 0, 0, 0, 200, 200, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, $object, '', 0, 0);
                                         $linkedMedias += $object->nbphoto;
                                     }
@@ -1442,6 +1442,10 @@ class ActionsDigiquali
                     if ($question->type == Question::TYPE_DURATION) {
                         require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
                         $out[$parameters['key']] = digiquali_format_duration($object->answer);
+                    } elseif ($question->type == Question::TYPE_PHOTO_MULTIPLE) {
+                        // A JSON of rows per photo : the list only has room for their count
+                        require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+                        $out[$parameters['key']] = dol_escape_htmltag(digiquali_photo_multiple_summary($object->answer));
                     } else {
                         $answer = new Answer($db);
                         $res = $answer->fetch(0, '', ' AND t.position ='.$object->answer.' AND t.fk_question = '.$object->fk_question);

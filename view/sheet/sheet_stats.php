@@ -180,6 +180,13 @@ if (!empty($questions) && !empty($controls)) {
                         'duration' => $controlAnswer->answer,
                     ];
                 }
+            } else if ($questionLinked->type == 'PhotoMultiple') {
+                $photoRows = digiquali_photo_multiple_decode($controlAnswer->answer);
+                if (!empty($photoRows)) {
+                    $questionAnswerStats[$controlAnswer->fk_question][] = [
+                        'photo_statuses' => array_column($photoRows, 'status'),
+                    ];
+                }
             }
         }
         $i++;

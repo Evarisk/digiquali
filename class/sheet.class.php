@@ -1024,6 +1024,23 @@ class Sheet extends SaturneObject
                 print '</div>';
                 break;
 
+            case 'PhotoMultiple':
+                // Every photo of every answer counts, each with the status it was given
+                $photoStatuses = [];
+                foreach ($questionAnswerStats[$question->id] ?? [] as $questionAnswer) {
+                    $photoStatuses = array_merge($photoStatuses, $questionAnswer['photo_statuses'] ?? []);
+                }
+                $statusCounts = array_count_values($photoStatuses);
+
+                print '<div class="range-bar-container">';
+                print '<div class="range-average-indicator">';
+                print '<div class="range-average-value">';
+                print '<i class="fa fa-images" aria-hidden="true"></i> ' . $langs->trans('PhotoMultipleSummary', count($photoStatuses), $statusCounts['OK'] ?? 0, $statusCounts['KO'] ?? 0);
+                print '</div>';
+                print '</div>';
+                print '</div>';
+                break;
+
             default:
                 print '<span class="opacitymedium">' . $langs->trans('UnsupportedQuestionType') . '</span>';
                 break;

@@ -57,12 +57,19 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                     <div class="question-description"><?php echo $question->description; ?></div>
                     <div class="question-points"><strong><?php echo $langs->trans('Scoring'); ?> : </strong><span class="score-value"><?php echo $question->formatSingleQuestionScore($questionWithCorrectAnswer, $objectLine->answer ?? '') ?></span></div>
                 </div>
+                <?php
+                $answerWidget = show_answer_from_question($question, $object, $questionAnswer, $questionGroupId, $showCorrection);
+                // A table of photos does not fit the answer column : it takes the whole width under the header
+                $answerWidgetIsWide = ($question->type == Question::TYPE_PHOTO_MULTIPLE);
+                ?>
                 <div class="question__header-answer">
-                    <?php print show_answer_from_question($question, $object, $questionAnswer, $questionGroupId, $showCorrection); ?>
-                    <?php if ($question->authorize_answer_photo > 0 || !empty($permissionToAddTask)) : ?>
-                        <div class="question__answer-sep"></div>
+                    <?php print $answerWidgetIsWide ? '' : $answerWidget; ?>
+                    <?php if ($question->acceptsAnswerPhotos() || !empty($permissionToAddTask)) : ?>
+                        <?php if (!$answerWidgetIsWide) : ?>
+                            <div class="question__answer-sep"></div>
+                        <?php endif; ?>
                         <div class="question__answer-actions">
-                            <?php if ($question->authorize_answer_photo > 0) : ?>
+                            <?php if ($question->acceptsAnswerPhotos()) : ?>
                                 <?php echo saturne_render_media_block('digiquali', $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref, 'answer_photo_' . $question->id, '', [
                                     'show_photo'       => true,
                                     'show_audio'       => false,
@@ -71,6 +78,15 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                                     'file_upload_data' => ['fk_control' => $object->id, 'fk_question' => $question->id],
                                     'show_upload'      => $object->status == 0,
                                 ]); ?>
+                                <?php // Photos already in the media library of the module, copied into the answer photos by the gallery modal.
+                                // Back office only : the frontend pages do not load that modal, and the library is not for anonymous eyes
+                                if ($object->status == 0 && empty($isFrontend) && !defined('NOLOGIN')) : ?>
+                                    <div class="wpeo-button button-square-50 modal-open wpeo-tooltip-event question__media-library" aria-label="<?php echo dol_escape_htmltag($langs->trans('AddFromMediaLibrary')); ?>" data-direction="top">
+                                        <?php // The subtype is the class of the photo block of the media block, the one the modal refreshes after adding ?>
+                                        <input type="hidden" class="modal-options" data-modal-to-open="media_gallery" data-from-id="<?php echo $object->id; ?>" data-from-type="<?php echo $object->element; ?>" data-from-subtype="<?php echo dol_escape_htmltag($question->ref); ?>" data-from-subdir="answer_photo/<?php echo dol_escape_htmltag($question->ref); ?>"/>
+                                        <i class="fas fa-folder-open"></i><i class="fas fa-plus-circle button-add"></i>
+                                    </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <?php if (!empty($object->project) && !empty($permissionToAddTask)) : ?>
                                 <div class="wpeo-button button-square-50 add-action modal-open">
@@ -89,6 +105,9 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                     <?php endif; ?>
                 </div>
             </div>
+            <?php if ($answerWidgetIsWide) : ?>
+                <div class="question__body"><?php print $answerWidget; ?></div>
+            <?php endif; ?>
             <?php if ($question->enter_comment > 0) :
                 $commentDisabled = ($object->status == $object::STATUS_VALIDATED);
                 // Predefined comments of the dictionary, dropped into the comment with a single click

@@ -41,6 +41,7 @@ window.digiquali.question = {};
 window.digiquali.question.init = function() {
   window.digiquali.question.event();
   window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
+  window.digiquali.question.lockAnswerPhotoCheckbox();
 };
 
 /**
@@ -152,6 +153,36 @@ window.digiquali.question.changeQuestionType = function() {
   }
 
   window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
+  window.digiquali.question.lockAnswerPhotoCheckbox();
+};
+
+/**
+ * Tick and lock the answer photo checkbox for the question types made of answer photos
+ *
+ * Those types show the photos whatever the checkbox says : leaving it free would only show a choice
+ * that does nothing. Its own state comes back when another type is picked.
+ *
+ * @since   23.2.0
+ * @version 23.2.0
+ *
+ * @return {void}
+ */
+window.digiquali.question.lockAnswerPhotoCheckbox = function() {
+  const $typeSelect = $('select[data-type="question-type"]');
+  const $checkbox   = $('#authorize_answer_photo');
+  if (!$typeSelect.length || !$checkbox.length || !$typeSelect.attr('data-question-types-with-answer-photos')) {
+    return;
+  }
+
+  const typesWithAnswerPhotos = JSON.parse($typeSelect.attr('data-question-types-with-answer-photos'));
+  const isLocked              = typesWithAnswerPhotos.includes($typeSelect.val());
+
+  if (isLocked && !$checkbox.prop('disabled')) {
+    $checkbox.data('unlocked-checked', $checkbox.prop('checked'));
+    $checkbox.prop('checked', true).prop('disabled', true);
+  } else if (!isLocked && $checkbox.prop('disabled')) {
+    $checkbox.prop('checked', !!$checkbox.data('unlocked-checked')).prop('disabled', false);
+  }
 };
 
 window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType = function() {

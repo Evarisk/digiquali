@@ -981,7 +981,7 @@ if ($action == 'create') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\'');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
 	print '</td></tr>';
 
 	// Points
@@ -1143,7 +1143,7 @@ if (($id || $ref) && $action == 'edit') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\'');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
 	print '</td></tr>';
 
 	// Points -- Nombre de points
@@ -1386,7 +1386,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print $langs->trans("AuthorizeAnswerPhoto");
 	print '</td>';
 	print '<td>';
-	print '<input type="checkbox" id="authorize_answer_photo" name="authorize_answer_photo"' . ($object->authorize_answer_photo ? ' checked=""' : '') . '" disabled> ';
+	print '<input type="checkbox" id="authorize_answer_photo" name="authorize_answer_photo"' . ($object->acceptsAnswerPhotos() ? ' checked=""' : '') . '" disabled> ';
 	print '</td></tr>';
 
 	// ShowPhoto -- Utiliser les photos

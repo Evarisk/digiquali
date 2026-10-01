@@ -144,6 +144,9 @@ class doc_surveydocument_odt extends SaturneDocumentModel
                                         case 'Duration' :
                                             $tmpArray['answer'] = digiquali_format_duration($line->answer);
                                             break;
+                                        case 'PhotoMultiple' :
+                                            $tmpArray['answer'] = digiquali_photo_multiple_odt_answer($line->answer);
+                                            break;
                                         case 'MultipleChoices' :
                                             $tmpArray['answer'] = '';
                                             $answers            = explode(',', $line->answer);

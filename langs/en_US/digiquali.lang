@@ -186,3 +186,17 @@ ActivityOutputDataSpecimen = Roles and responsibilities assigned<br>Health, Safe
 #
 
 ISO9001Description = ISO 9001 standard - Quality management systems
+
+#
+# PhotoMultiple question type
+#
+
+PhotoMultiple         = Multiple photos
+PhotoMultipleEmpty    = Take or add photos: each one gets its own comment and status.
+PhotoMultipleImage    = Image
+PhotoMultipleComment  = Comment
+PhotoMultipleStatus   = Status
+PhotoMultipleSummary  = %s photo(s) - %s OK - %s KO
+PhotoMultipleNoAnswer = No photo
+MediaLibrary          = Media library
+AddFromMediaLibrary   = Add from the media library

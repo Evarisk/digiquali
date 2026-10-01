@@ -963,6 +963,110 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetDrawColor(128, 128, 128);
     }
 
+    /**
+     * Draw the answer of a PhotoMultiple question : a table with one row per photo, its comment and its status
+     *
+     * @param  TCPDF      $pdf         PDF
+     * @param  array      $rows        Rows returned by digiquali_photo_multiple_get_rows()
+     * @param  Translate  $outputLangs Output langs
+     * @return void
+     */
+    private function drawPhotoMultipleTable($pdf, array $rows, $outputLangs): void
+    {
+        if (empty($rows)) {
+            return;
+        }
+
+        $pageW   = $pdf->getPageWidth();
+        $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
+        $x       = $this->marge_gauche;
+        $photoW  = 40;
+        $statusW = 22;
+        $commentW = $usableW - $photoW - $statusW;
+        $headerH = 6;
+        $minRowH = 32;
+        $pad     = 2;
+
+        $statusColors = ['OK' => [56, 161, 105], 'KO' => [220, 53, 69]];
+
+        $drawHeader = function () use ($pdf, $x, $photoW, $commentW, $statusW, $headerH, $outputLangs) {
+            $y = $pdf->GetY();
+            $this->fillRect($pdf, $x, $y, $photoW + $commentW + $statusW, $headerH, $this->colorLight);
+            $pdf->SetDrawColor(220, 224, 228);
+            $pdf->SetTextColor(...$this->colorNavy);
+            $pdf->SetFont('', 'B', 7.5);
+            $pdf->SetXY($x, $y);
+            $pdf->Cell($photoW, $headerH, $outputLangs->transnoentities('PhotoMultipleImage'), 1, 0, 'C');
+            $pdf->Cell($commentW, $headerH, $outputLangs->transnoentities('PhotoMultipleComment'), 1, 0, 'C');
+            $pdf->Cell($statusW, $headerH, $outputLangs->transnoentities('PhotoMultipleStatus'), 1, 0, 'C');
+            $pdf->SetY($y + $headerH);
+        };
+
+        $this->checkPageBreak($pdf, $headerH + $minRowH);
+        $drawHeader();
+
+        foreach ($rows as $row) {
+            $comment = $this->cleanText($row['comment']);
+
+            $pdf->SetFont('', '', 7.5);
+            $rowH = max($minRowH, ($comment !== '' ? $pdf->getStringHeight($commentW - 2 * $pad, $comment) : 0) + 2 * $pad);
+
+            // A row is never split, and the header follows it onto the new page
+            $pageBefore = $pdf->getPage();
+            $this->checkPageBreak($pdf, $rowH);
+            if ($pdf->getPage() != $pageBefore) {
+                $drawHeader();
+            }
+            $y = $pdf->GetY();
+
+            $pdf->SetDrawColor(220, 224, 228);
+            $pdf->Rect($x, $y, $photoW, $rowH);
+            $pdf->Rect($x + $photoW, $y, $commentW, $rowH);
+            $pdf->Rect($x + $photoW + $commentW, $y, $statusW, $rowH);
+
+            // The small thumb is enough at this size, and keeps the document light
+            $thumbName = saturne_get_thumb_name($row['name'], 'small', dirname($row['path']));
+            $image     = is_string($thumbName) && is_readable(dirname($row['path']) . '/thumbs/' . $thumbName) ? dirname($row['path']) . '/thumbs/' . $thumbName : $row['path'];
+            $info      = @getimagesize($image);
+            if ($info && $info[0] > 0 && $info[1] > 0) {
+                $boxW  = $photoW - 2 * $pad;
+                $boxH  = $rowH - 2 * $pad;
+                $scale = min($boxW / $info[0], $boxH / $info[1]);
+                $imgW  = $info[0] * $scale;
+                $imgH  = $info[1] * $scale;
+                $pdf->Image($image, $x + ($photoW - $imgW) / 2, $y + ($rowH - $imgH) / 2, $imgW, $imgH, '', '', '', false, 300);
+            }
+
+            $pdf->SetTextColor(...$this->colorBlack);
+            $pdf->SetFont('', '', 7.5);
+            $pdf->MultiCell($commentW - 2 * $pad, $rowH - 2 * $pad, ($comment !== '' ? $comment : '-'), 0, 'L', false, 0, $x + $photoW + $pad, $y + $pad, true, 0, false, true, $rowH - 2 * $pad, 'M', false);
+
+            if (isset($statusColors[$row['status']])) {
+                $badgeW = $statusW - 6;
+                $badgeH = 6;
+                $badgeX = $x + $photoW + $commentW + 3;
+                $badgeY = $y + ($rowH - $badgeH) / 2;
+                $pdf->SetFillColor(...$statusColors[$row['status']]);
+                $pdf->RoundedRect($badgeX, $badgeY, $badgeW, $badgeH, 1.5, '1111', 'F');
+                $pdf->SetTextColor(255, 255, 255);
+                $pdf->SetFont('', 'B', 8);
+                $pdf->SetXY($badgeX, $badgeY);
+                $pdf->Cell($badgeW, $badgeH, $row['status'], 0, 0, 'C');
+            } else {
+                $pdf->SetTextColor(...$this->colorGray);
+                $pdf->SetFont('', '', 8);
+                $pdf->SetXY($x + $photoW + $commentW, $y);
+                $pdf->Cell($statusW, $rowH, '-', 0, 0, 'C');
+            }
+
+            $pdf->SetY($y + $rowH);
+        }
+
+        $pdf->SetY($pdf->GetY() + 1);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetDrawColor(128, 128, 128);
+    }
+
     private function drawQuestionTasks($pdf, array $tasks, $outputLangs): void
     {
         if (empty($tasks)) {
@@ -1526,7 +1630,13 @@ class pdf_controldocument extends SaturneDocumentModel
                         }
                     }
                 }
-                $this->drawQuestionCard($pdf, $question, $cl, $pictogram, $answerColor, $questionPhotosMap[$question->id] ?? [], $outputLangs, $answersByQuestion[$question->id] ?? []);
+                if ($question->type == Question::TYPE_PHOTO_MULTIPLE) {
+                    // The photos are the answer : they come in its table, each with its comment and status, not in the strip of thumbs
+                    $this->drawQuestionCard($pdf, $question, $cl, $pictogram, $answerColor, [], $outputLangs, $answersByQuestion[$question->id] ?? []);
+                    $this->drawPhotoMultipleTable($pdf, digiquali_photo_multiple_get_rows($control, $question, $cl->answer ?? ''), $outputLangs);
+                } else {
+                    $this->drawQuestionCard($pdf, $question, $cl, $pictogram, $answerColor, $questionPhotosMap[$question->id] ?? [], $outputLangs, $answersByQuestion[$question->id] ?? []);
+                }
                 $this->drawQuestionTasks($pdf, $questionTasksMap[$question->id] ?? [], $outputLangs);
             }
 
