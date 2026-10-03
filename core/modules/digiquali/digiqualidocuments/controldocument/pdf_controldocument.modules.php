@@ -1535,7 +1535,7 @@ class pdf_controldocument extends SaturneDocumentModel
         $faFontPath = DOL_DOCUMENT_ROOT . '/public/theme/common/fontawesome-5/webfonts/fa-solid-900.ttf';
         if (file_exists($faFontPath) && class_exists('TCPDF_FONTS')) {
             try {
-                $this->faFontName = TCPDF_FONTS::addTTFfont($faFontPath, 'TrueTypeUnicode', '', 32);
+                $this->faFontName = @TCPDF_FONTS::addTTFfont($faFontPath, 'TrueTypeUnicode', '', 32);
             } catch (Exception $e) {
                 $this->faFontName = '';
             }

@@ -288,8 +288,8 @@ class doc_controldocument_odt extends SaturneDocumentModel
 
 						$jsonArray = json_decode($equipment->json);
 
-						if (!empty($jsonArray->dluo)) {
-                            $expirationDate = dol_time_plus_duree($jsonArray->dluo, $jsonArray->lifetime, 'd');
+						if (!empty($jsonArray) && !empty($jsonArray->dluo)) {
+                            $expirationDate = dol_time_plus_duree($jsonArray->dluo, $jsonArray->lifetime ?? 0, 'd');
                             $remainingDays  = num_between_day(dol_now(), $expirationDate, 1) ?: '- ' . num_between_day($expirationDate, dol_now(), 1);
 							$remainingDays .= ' ' . strtolower(dol_substr($langs->trans("Day"), 0, 1)) . '.';
 						} else {
@@ -297,10 +297,10 @@ class doc_controldocument_odt extends SaturneDocumentModel
 						}
 
 						$tmpArray['equipment_ref']         = $equipment->ref;
-						$tmpArray['productlot_batch']      = $productLot->batch;
-						$tmpArray['equipment_label']       = $jsonArray->label;
-						$tmpArray['equipment_description'] = strip_tags($jsonArray->description);
-						$tmpArray['dluo']                  = dol_print_date($jsonArray->dluo);
+						$tmpArray['productlot_batch']      = !empty($productLot->batch) ? $productLot->batch : '';
+						$tmpArray['equipment_label']       = !empty($jsonArray->label) ? $jsonArray->label : '';
+						$tmpArray['equipment_description'] = !empty($jsonArray->description) ? strip_tags($jsonArray->description) : '';
+						$tmpArray['dluo']                  = !empty($jsonArray->dluo) ? dol_print_date($jsonArray->dluo) : '';
 						$tmpArray['lifetime']              = $remainingDays;
 
 						$this->setTmpArrayVars($tmpArray, $listLines, $outputLangs);
