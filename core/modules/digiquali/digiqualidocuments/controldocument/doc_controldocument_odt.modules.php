@@ -403,6 +403,8 @@ class doc_controldocument_odt extends SaturneDocumentModel
         $projecttmp->fetch($object->projectid);
 
         $object->fetchObjectLinked('', '', $object->id, 'digiquali_control',  'OR', 1, 'sourcetype', 0);
+        $tmpArray['object_label_ref'] = '';
+        $tmpArray['object_type'] = '';
 		$linkableElements = saturne_get_objects_metadata();
 
 		if (is_array($linkableElements) && !empty($linkableElements)) {
