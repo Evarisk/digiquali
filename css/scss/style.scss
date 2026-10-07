@@ -3,6 +3,8 @@
 @import "page/page";
 @import "page/sheet-stats";
 @import "page/pwa";
+@import "page/public-control"; // after the PWA shell, whose variables it uses
+@import "page/pwa-control-create";
 @import "page/import-console";
 @import "modal/modal";
 

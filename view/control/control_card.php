@@ -58,10 +58,6 @@ require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
 
-if (isModEnabled('dolicar')) {
-    require_once __DIR__ . '/../../../dolicar/class/registrationcertificatefr.class.php';
-}
-
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
 
@@ -501,7 +497,6 @@ if ($action == 'create') {
 
         foreach($objectsMetadata as $objectType => $objectMetadata) {
             if (!empty($objectMetadata['conf'] && (!empty(GETPOST('fromtype')) && GETPOST('fromtype') == $objectMetadata['link_name']) || (preg_match('/"'. $objectType .'":1/',$sheet->element_linked)))) {
-                $objectArray    = [];
                 $objectPostName = $objectMetadata['post_name'];
                 $objectPost     = GETPOST($objectPostName) ?: (GETPOST('fromtype') == $objectMetadata['link_name'] ? GETPOST('fromid') : '');
 
@@ -511,44 +506,7 @@ if ($action == 'create') {
                 } elseif (!empty($objectMetadata['filter'])) {
                     $objectFilter = ['customsql' => $objectMetadata['filter']];
                 }
-                $objectList = saturne_fetch_all_object_type($objectMetadata['class_name'], '', '', 0, 0, $objectFilter);
-
-                if (is_array($objectList) && !empty($objectList)) {
-                    foreach ($objectList as $objectSingle) {
-                        $objectName = '';
-                        $nameField = $objectMetadata['name_field'];
-                        if (strstr($nameField, ',')) {
-                            $nameFields = explode(', ', $nameField);
-                            if (is_array($nameFields) && !empty($nameFields)) {
-                                foreach ($nameFields as $subnameField) {
-                                    $objectName .= $objectSingle->$subnameField . ' ';
-                                }
-                            }
-                        } elseif ($objectType == 'productlot') {
-                            $product->fetch($objectSingle->fk_product);
-                            $objectName = $objectSingle->$nameField . ' - ' . $product->ref;
-                            if (isModEnabled('dolicar')) {
-                                $registrationCertificate      = new RegistrationCertificateFr($db);
-                                $registrationCertificatesList = $registrationCertificate->fetchAll('', '', 0, 0, ['customsql' => 'fk_lot = ' . ((int) $objectSingle->id)]);
-                                if (is_array($registrationCertificatesList) && !empty($registrationCertificatesList)) {
-                                    $registrationCertificate = reset($registrationCertificatesList);
-                                    $parts = [];
-                                    if (!empty($registrationCertificate->a_registration_number)) {
-                                        $parts[] = $registrationCertificate->a_registration_number;
-                                    }
-                                    if (!empty($registrationCertificate->e_vehicle_serial_number)) {
-                                        $parts[] = $registrationCertificate->e_vehicle_serial_number;
-                                    }
-                                    $parts[]    = $product->ref;
-                                    $objectName = implode(' - ', $parts);
-                                }
-                            }
-                        } else {
-                            $objectName = $objectSingle->$nameField;
-                        }
-                        $objectArray[$objectSingle->id] = $objectName;
-                    }
-                }
+                $objectArray = digiquali_get_controllable_object_options($objectType, $objectMetadata, $objectFilter);
 
                 print '<tr><td class="titlefieldcreate">' . ($source != 'pwa' ? $langs->transnoentities($objectMetadata['langs']) : img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth fa-3x"')) . '</td><td>';
                 print($source != 'pwa' ? img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth"') : '');

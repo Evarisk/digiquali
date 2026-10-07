@@ -126,12 +126,17 @@ $title = $langs->transnoentities('ActionPlan');
 
 // A wide Gantt must scroll inside its container rather than stretch the page, which the theme bounds
 // through this body class
-saturne_header(0, '', $title, '', '', 0, 0, [], [], '', 'page-public-card' . ($view == 'gantt' ? ' classforhorizontalscrolloftabs' : ''));
+saturne_header(0, '', $title, '', '', 0, 0, [], [], '', 'template-pwa page-public-control page-public-control--no-nav' . ($view == 'gantt' ? ' classforhorizontalscrolloftabs' : ''));
 
+$pwaHeaderTitle = $title;
+$pwaHeaderIcon  = 'fa-tasks';
+require_once __DIR__ . '/../../core/tpl/frontend/digiquali_public_pwa_header.tpl.php';
+
+print '<div class="pwa-container public-control-screen">';
 if (!getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
-    print '<div class="public-card__container">' . saturne_show_notice($langs->transnoentities('PublicActionPlanDisabled'), '', 'error', 'notice-infos', true) . '</div>';
+    print '<div class="public-control-sheet">' . saturne_show_notice($langs->transnoentities('PublicActionPlanDisabled'), '', 'error', 'notice-infos', true) . '</div>';
 } elseif (empty($trackId) || $object->fetch(0, '', " AND track_id = '" . $db->escape($trackId) . "'") <= 0) {
-    print '<div class="public-card__container">' . saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true) . '</div>';
+    print '<div class="public-control-sheet">' . saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true) . '</div>';
 } else {
     $actions = digiquali_get_control_actions($object);
 
@@ -171,12 +176,11 @@ if (!getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
     $actionPlanUrl            = $_SERVER['PHP_SELF'];
     $actionPlanFormParameters = ['track_id' => $trackId, 'entity' => $entity];
 
-    print '<div class="public-card__container">';
-
-    print '<div class="public-card__header">';
-    print '<h1>' . $langs->transnoentities('ActionPlan') . '</h1>';
-    print '<span class="opacitymedium">' . dol_escape_htmltag($object->ref . ' - ' . $object->label) . '</span>';
-    print '</div>';
+    print '<h2 class="pwa-section-title"><i class="fas fa-clipboard-check"></i> ' . dol_escape_htmltag($object->ref) . '</h2>';
+    print '<div class="public-control-sheet">';
+    if (!empty($object->label)) {
+        print '<div class="public-control-sheet__subtitle">' . dol_escape_htmltag($object->label) . '</div>';
+    }
 
     require_once __DIR__ . '/../../core/tpl/control/control_actionplan_view_switch.tpl.php';
 
@@ -188,6 +192,7 @@ if (!getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
 
     print '</div>';
 }
+print '</div>';
 
 // End of page
 llxFooter();

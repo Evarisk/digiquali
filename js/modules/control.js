@@ -196,8 +196,9 @@ window.digiquali.control.switchPublicControlView = function() {
     processData: false,
     contentType: false,
     success: function (resp) {
-      $('.public-card__container').children().fadeOut(300, function () {
+      $('.public-control-content').fadeOut(200, function () {
         $('#publicControlHistory').replaceWith($(resp).find('#publicControlHistory'));
+        window.scrollTo(0, 0);
       });
     },
     error: function () {}

@@ -55,8 +55,15 @@ global $conf, $db, $hookmanager, $langs, $user;
 saturne_load_langs();
 
 // Get parameters
-$id     = GETPOST('id', 'int');
-$action = GETPOST('action', 'aZ09');
+$id         = GETPOST('id', 'int');
+$action     = GETPOST('action', 'aZ09');
+$backtopage = GETPOST('backtopage', 'alpha');
+
+// The page to go back to once done: the list, unless the control was started from another page of this site
+if (!preg_match('/^\/[^\/]/', $backtopage)) {
+    $backtopage = '';
+}
+$pwaBackUrl = $backtopage ?: dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
 
 // Initialize technical objects
 $className  = ucfirst($objectType);
@@ -103,7 +110,7 @@ if ($action == 'save' && !empty($permissionToWrite)) {
         }
 
         setEventMessages($langs->trans('AnswerSaved'), []);
-        header('Location: ' . dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa');
+        header('Location: ' . $pwaBackUrl);
         exit;
     }
 }
@@ -131,7 +138,7 @@ $conf->dol_hide_leftmenu = 1;
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-answer');
 
 // Installed as an app there is no browser back button, so the header carries the way out
-$pwaHeaderBackUrl    = dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
+$pwaHeaderBackUrl    = $pwaBackUrl;
 $pwaHeaderCenterHtml = '<div class="pwa-header-indicator"><i class="fas fa-clipboard-check"></i> ' . dol_escape_htmltag($object->ref) . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_header.tpl.php';
 
@@ -139,7 +146,7 @@ $sheet->fetch($object->fk_sheet);
 $questionsAndGroups = $sheet->fetchQuestionsAndGroups();
 $wizardSteps        = digiquali_answer_wizard_build_steps($object, $questionsAndGroups);
 
-print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?action=save&id=' . $object->id . '&object_type=' . $object->element . '" id="saveObject" enctype="multipart/form-data">';
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?action=save&id=' . $object->id . '&object_type=' . $object->element . (!empty($backtopage) ? '&backtopage=' . urlencode($backtopage) : '') . '" id="saveObject" enctype="multipart/form-data">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="save">';
 
