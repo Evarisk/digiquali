@@ -320,11 +320,18 @@ function get_control_infos(CommonObject $linkedObject): array
             $moreParams = '&fromtype=' . $linkedObject->element . '&fromid=' . $linkedObject->id . '&fk_sheet=' . $lastControl->fk_sheet . (!empty($lastControl->projectid) ? '&projectid=' . $lastControl->projectid : '') . $arraySelected;
             $out['nextControl']['create_button'] = '<a class="wpeo-button button-square-60 button-radius-1 button-primary button-flex" href="' . dol_buildpath('custom/digiquali/view/control/control_card.php?action=create' . $moreParams, 1) . '" target="_blank"><i class="button-icon fas fa-plus"></i></a>';
         }
-        $verdictControlColor           = $lastControl->verdict == 1 ? 'green' : 'red';
-        $pictoControlColor             = $lastControl->verdict == 1 ? 'check' : 'exclamation';
-        $out['nextControl']['verdict'] = '<div class="wpeo-button button-square-60 button-radius-1 button-' . $verdictControlColor . ' button-disable-hover button-flex"><i class="button-icon fas fa-' . $pictoControlColor . '"></i></div>';
-        if (!empty($lastControl->next_control_date)) {
-            $nextControl                                   = (int) round(($lastControl->next_control_date - dol_now('tzuser'))/(3600 * 24));
+        $nextControl         = !empty($lastControl->next_control_date) ? (int) round(($lastControl->next_control_date - dol_now('tzuser'))/(3600 * 24)) : null;
+        $verdictControlColor = $lastControl->verdict == 1 ? 'green' : 'red';
+        $pictoControlColor   = $lastControl->verdict == 1 ? 'check' : 'exclamation';
+        $verdictControlTitle = '';
+        // An OK verdict no longer holds once the next control date is reached (same threshold as getNextControlDateColor)
+        if ($lastControl->verdict == 1 && $nextControl !== null && $nextControl <= 0) {
+            $verdictControlColor = 'orange';
+            $pictoControlColor   = 'hourglass-end';
+            $verdictControlTitle = ' title="' . dol_escape_htmltag($langs->transnoentities('ControlOverdue')) . '"';
+        }
+        $out['nextControl']['verdict'] = '<div class="wpeo-button button-square-60 button-radius-1 button-' . $verdictControlColor . ' button-disable-hover button-flex"' . $verdictControlTitle . '><i class="button-icon fas fa-' . $pictoControlColor . '"></i></div>';
+        if ($nextControl !== null) {
             $out['nextControl']['title']                   = $langs->transnoentities('NextControl');
             $out['nextControl']['next_control_date']       = '<i class="objet-icon far fa-calendar"></i>' . dol_print_date($lastControl->next_control_date, 'day');
             $out['nextControl']['next_control_date_color'] = $lastControl->getNextControlDateColor();

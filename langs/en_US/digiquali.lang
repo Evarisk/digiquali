@@ -24,6 +24,7 @@ ControlDocumentPDF                      = Control Sheet PDF with photo
 #
 
 NoDocumentation                         = No linked document
+ControlOverdue                          = Last control passed, but the next control date is past
 
 # Deletion errors
 ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
