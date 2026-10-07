@@ -241,98 +241,183 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 /**
  * Get control infos
  *
+ * Returns data only, the public templates render it: the status of the linked object, drawn from its last locked
+ * control, and the list of its locked controls.
+ *
  * @param  CommonObject $linkedObject Linked object (product, productlot, project, etc.)
- * @return array  $out                Array of control infos to display on public interface
+ * @return array        $out          ['status' => [...], 'control' => [id => [...]]]
+ * @throws Exception
  */
 function get_control_infos(CommonObject $linkedObject): array
 {
     global $conf, $db, $langs, $user;
 
-    $out               = [];
-    $lastControl       = null;
-
-    $permissionToReadSheet    = $user->hasRight('digiquali', 'sheet', 'read');
     $permissionToReadControl  = $user->hasRight('digiquali', 'control', 'read');
     $permissionToWriteControl = $user->hasRight('digiquali', 'control', 'write');
 
-    if (!is_array($linkedObject->linkedObjects['digiquali_control']) || empty($linkedObject->linkedObjects['digiquali_control'])) {
-        $out['nextControl']['title'] = $langs->transnoentities('NoControl');
-        if (getDolGlobalInt('DIGIQUALI_SHOW_ADD_CONTROL_BUTTON_ON_PUBLIC_INTERFACE') && $permissionToWriteControl) {
-            $out['nextControl']['create_button'] = '<a class="wpeo-button button-square-60 button-radius-1 button-primary button-flex" href="' . dol_buildpath('custom/digiquali/view/control/control_card.php?action=create&fromtype=' . $linkedObject->element . '&fromid=' . $linkedObject->id, 1). '" target="_blank"><i class="button-icon fas fa-plus"></i></a>';
-        }
+    // Every key read by the public templates is defined, whatever the linked object holds
+    $out = [
+        'status'  => [
+            'key'                => 'none',
+            'last_control'       => [],
+            'next_control_date'  => 0,
+            'next_control_days'  => null,
+            'next_control_color' => '',
+            'create_url'         => ''
+        ],
+        'control' => []
+    ];
 
-        return $out;
-    }
-
-    // Remove controls with status < 2 and empty control_date
-    $filteredControls = array_filter($linkedObject->linkedObjects['digiquali_control'], function ($control) {
+    // Only a locked control carries a verdict
+    $controls = array_filter($linkedObject->linkedObjects['digiquali_control'] ?? [], function ($control) {
         return $control->status == Control::STATUS_LOCKED && !empty($control->control_date);
     });
 
-    // Sort controls by control_date desc
-    usort($filteredControls, function ($a, $b) {
+    // Most recent first
+    usort($controls, function ($a, $b) {
         return $b->control_date - $a->control_date;
     });
 
-    $out['control'] = [];
-    foreach ($filteredControls as $control) {
-        if ($lastControl === null || $control->control_date > $lastControl->control_date) {
-            $lastControl = $control;
-        }
+    // The project names the customer or the site: only a user allowed to read projects sees it
+    $permissionToReadProject = $user->hasRight('projet', 'lire');
 
-        $out['control'][$control->id]['image']        = saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $control->element . '/'. $control->ref . '/photos/', 'small', '', 0, 0, 0, 100, 100, 0, 0, 1, $control->element . '/'. $control->ref . '/photos/', $control, 'photo', 0, 0,0, 1);
-        $out['control'][$control->id]['title']        = $langs->transnoentities(dol_ucfirst($control->element));
-        $out['control'][$control->id]['ref']          = $control->getNomUrl(1, !$permissionToReadControl ? 'nolink' : 'blank', 1);
-        $out['control'][$control->id]['control_date'] = '<i class="objet-icon far fa-calendar"></i>' . dol_print_date($control->control_date, 'day');
-
+    $controllers = [];
+    foreach ($controls as $control) {
         $sheet = new Sheet($db);
-
         $sheet->fetch($control->fk_sheet);
 
-        $out['control'][$control->id]['sheet_title'] = $langs->transnoentities('BasedOnModel');
-        $out['control'][$control->id]['sheet_ref']   = $sheet->getNomUrl(1, !$permissionToReadSheet ? 'nolink' : 'blank', 1);
+        // No link on the thumbnail: it would open the photo editor, and the whole card is already a link
+        $image = saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $control->element . '/'. $control->ref . '/photos/', 'small', '', 0, 0, 0, 100, 100, 1, 0, 1, $control->element . '/'. $control->ref . '/photos/', $control, 'photo', 0, 0,0, 1);
 
-        if ($permissionToReadControl) {
-            $out['control'][$control->id]['view_button'] = '<a class="wpeo-button button-square-60 button-radius-1 button-flex" href="' . dol_buildpath('custom/digiquali/view/control/control_card.php', 1) . '?id=' . $control->id . '" target="_blank"><i class="button-icon fas fa-eye"></i></a>';
+        if ($control->fk_user_controller > 0 && !isset($controllers[$control->fk_user_controller])) {
+            $controller = new User($db);
+            $controller->fetch($control->fk_user_controller);
+            $controllers[$control->fk_user_controller] = $controller->getFullName($langs);
         }
-        $verdictControlColor                     = $control->verdict == 1 ? 'green' : 'red';
-        $pictoControlColor                       = $control->verdict == 1 ? 'check' : 'exclamation';
-        $out['control'][$control->id]['verdict'] = '<div class="wpeo-button button-square-60 button-radius-1 button-' . $verdictControlColor . ' button-disable-hover button-flex"><i class="button-icon fas fa-' . $pictoControlColor . '"></i></div>';
+
+        $project = '';
+        if ($permissionToReadProject && $control->projectid > 0) {
+            $control->fk_project = $control->projectid;
+            $control->fetch_project();
+            $project = $control->project->ref . ' - ' . $control->project->title;
+        }
+
+        $out['control'][$control->id] = [
+            'ref'               => $control->ref,
+            'url'               => $permissionToReadControl ? dol_buildpath('custom/digiquali/view/control/control_card.php', 1) . '?id=' . $control->id : '',
+            'control_date'      => $control->control_date,
+            'next_control_date' => $control->next_control_date ?: 0,
+            'sheet'             => $sheet->label ?: $sheet->ref,
+            'controller'        => $controllers[$control->fk_user_controller] ?? '',
+            'project'           => $project,
+            'note'              => dol_trunc(trim(dol_string_nohtmltag($control->note_public ?? '', 1)), 160),
+            'verdict'           => $control->verdict == 1 ? 'ok' : 'ko',
+            'image'             => strpos($image, 'nophoto') === false ? $image : ''
+        ];
 
         if (getDolGlobalInt('DIGIQUALI_SHOW_LAST_CONTROL_FIRST_ON_PUBLIC_HISTORY')) {
             break;
         }
     }
 
+    $lastControl = reset($controls);
     if (!empty($lastControl)) {
-        $out['nextControl']['title'] = $langs->transnoentities('NoPeriodicityControl');
-        if (getDolGlobalInt('DIGIQUALI_SHOW_ADD_CONTROL_BUTTON_ON_PUBLIC_INTERFACE') && $permissionToWriteControl) {
-            $arraySelected = '';
+        $out['status']['key']          = $out['control'][$lastControl->id]['verdict'];
+        $out['status']['last_control'] = $out['control'][$lastControl->id];
+        if (!empty($lastControl->next_control_date)) {
+            $out['status']['next_control_date']  = $lastControl->next_control_date;
+            $out['status']['next_control_days']  = (int) round(($lastControl->next_control_date - dol_now('tzuser')) / (3600 * 24));
+            $out['status']['next_control_color'] = $lastControl->getNextControlDateColor();
+
+            // An OK verdict no longer holds once the next control date is reached (same threshold as getNextControlDateColor)
+            if ($out['status']['key'] == 'ok' && $out['status']['next_control_days'] <= 0) {
+                $out['status']['key'] = 'overdue';
+            }
+        }
+    }
+
+    // The control is created in the PWA, without going through the back office
+    if (getDolGlobalInt('DIGIQUALI_SHOW_ADD_CONTROL_BUTTON_ON_PUBLIC_INTERFACE') && $permissionToWriteControl) {
+        $createParameters = ['fromtype' => $linkedObject->element, 'fromid' => $linkedObject->id];
+        // The next control starts from the last one: same sheet, project and tags
+        if (!empty($lastControl)) {
+            $createParameters['fk_sheet']  = $lastControl->fk_sheet;
+            $createParameters['projectid'] = $lastControl->projectid > 0 ? $lastControl->projectid : '';
             if (isModEnabled('categorie')) {
                 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
                 $category   = new Categorie($db);
                 $categories = $category->containing($lastControl->id, $lastControl->element);
                 if (is_array($categories) && !empty($categories)) {
-                    $arraySelected = '&categories=' . implode(',', array_column($categories, 'id'));
+                    $createParameters['categories'] = implode(',', array_column($categories, 'id'));
                 }
             }
-
-            $moreParams = '&fromtype=' . $linkedObject->element . '&fromid=' . $linkedObject->id . '&fk_sheet=' . $lastControl->fk_sheet . (!empty($lastControl->projectid) ? '&projectid=' . $lastControl->projectid : '') . $arraySelected;
-            $out['nextControl']['create_button'] = '<a class="wpeo-button button-square-60 button-radius-1 button-primary button-flex" href="' . dol_buildpath('custom/digiquali/view/control/control_card.php?action=create' . $moreParams, 1) . '" target="_blank"><i class="button-icon fas fa-plus"></i></a>';
         }
-        $verdictControlColor           = $lastControl->verdict == 1 ? 'green' : 'red';
-        $pictoControlColor             = $lastControl->verdict == 1 ? 'check' : 'exclamation';
-        $out['nextControl']['verdict'] = '<div class="wpeo-button button-square-60 button-radius-1 button-' . $verdictControlColor . ' button-disable-hover button-flex"><i class="button-icon fas fa-' . $pictoControlColor . '"></i></div>';
-        if (!empty($lastControl->next_control_date)) {
-            $nextControl                                   = (int) round(($lastControl->next_control_date - dol_now('tzuser'))/(3600 * 24));
-            $out['nextControl']['title']                   = $langs->transnoentities('NextControl');
-            $out['nextControl']['next_control_date']       = '<i class="objet-icon far fa-calendar"></i>' . dol_print_date($lastControl->next_control_date, 'day');
-            $out['nextControl']['next_control_date_color'] = $lastControl->getNextControlDateColor();
-            $out['nextControl']['next_control']            = '<i class="objet-icon far fa-clock"></i>' . $nextControl . ' ' . $langs->transnoentities('Days');
-        }
+        $out['status']['create_url'] = dol_buildpath('custom/digiquali/view/frontend/pwa_control_create.php', 1) . '?' . http_build_query(array_filter($createParameters));
     }
 
     return $out;
+}
+
+/**
+ * Get the objects of a type a control can be linked to, as the options of a select
+ *
+ * A lot is named after its product, and after its vehicle when DoliCar knows it, so that it can be found by any of them.
+ *
+ * @param  string $objectType     Object type, key of saturne_get_objects_metadata()
+ * @param  array  $objectMetadata Metadata of this object type
+ * @param  array  $objectFilter   Filter passed to saturne_fetch_all_object_type()
+ * @return array  $objectArray    Object names, by object id
+ * @throws Exception
+ */
+function digiquali_get_controllable_object_options(string $objectType, array $objectMetadata, array $objectFilter = []): array
+{
+    global $db;
+
+    $objectArray = [];
+    $objectList  = saturne_fetch_all_object_type($objectMetadata['class_name'], '', '', 0, 0, $objectFilter);
+    if (!is_array($objectList) || empty($objectList)) {
+        return $objectArray;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+    if ($objectType == 'productlot' && isModEnabled('dolicar')) {
+        require_once __DIR__ . '/../../dolicar/class/registrationcertificatefr.class.php';
+    }
+
+    $product = new Product($db);
+    foreach ($objectList as $objectSingle) {
+        $objectName = '';
+        $nameField  = $objectMetadata['name_field'];
+        if (strstr($nameField, ',')) {
+            foreach (explode(', ', $nameField) as $subnameField) {
+                $objectName .= $objectSingle->$subnameField . ' ';
+            }
+        } elseif ($objectType == 'productlot') {
+            $product->fetch($objectSingle->fk_product);
+            $objectName = $objectSingle->$nameField . ' - ' . $product->ref;
+            if (isModEnabled('dolicar')) {
+                $registrationCertificate      = new RegistrationCertificateFr($db);
+                $registrationCertificatesList = $registrationCertificate->fetchAll('', '', 0, 0, ['customsql' => 'fk_lot = ' . ((int) $objectSingle->id)]);
+                if (is_array($registrationCertificatesList) && !empty($registrationCertificatesList)) {
+                    $registrationCertificate = reset($registrationCertificatesList);
+                    $parts = [];
+                    if (!empty($registrationCertificate->a_registration_number)) {
+                        $parts[] = $registrationCertificate->a_registration_number;
+                    }
+                    if (!empty($registrationCertificate->e_vehicle_serial_number)) {
+                        $parts[] = $registrationCertificate->e_vehicle_serial_number;
+                    }
+                    $parts[]    = $product->ref;
+                    $objectName = implode(' - ', $parts);
+                }
+            }
+        } else {
+            $objectName = $objectSingle->$nameField;
+        }
+        $objectArray[$objectSingle->id] = $objectName;
+    }
+
+    return $objectArray;
 }
 
 /**

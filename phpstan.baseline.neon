@@ -1537,12 +1537,6 @@ parameters:
 			path: view/control/control_card.php
 
 		-
-			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: view/control/control_card.php
-
-		-
 			message: '#^Call to function method_exists\(\) with Control and ''fetch_thirdparty'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -1552,7 +1546,7 @@ parameters:
 			message: '#^Call to method fetchAll\(\) on an unknown class RegistrationCertificateFr\.$#'
 			identifier: class.notFound
 			count: 1
-			path: view/control/control_card.php
+			path: lib/digiquali_control.lib.php
 
 		-
 			message: '#^If condition is always true\.$#'
@@ -1564,7 +1558,7 @@ parameters:
 			message: '#^Instantiated class RegistrationCertificateFr not found\.$#'
 			identifier: class.notFound
 			count: 1
-			path: view/control/control_card.php
+			path: lib/digiquali_control.lib.php
 
 		-
 			message: '#^Negated boolean expression is always false\.$#'

@@ -24,6 +24,23 @@ ControlDocumentPDF                      = Control Sheet PDF with photo
 #
 
 NoDocumentation                         = No linked document
+PublicControlTracking                   = Control tracking
+ControlStatusOk                         = Compliant
+ControlStatusKo                         = Non-compliant
+ControlStatusOverdue                    = Overdue
+ControlStatusOverdueDetail              = A new control is due
+NoControlYet                            = No control has been carried out yet
+LastControlOn                           = Last control on %s
+NextControlDeadline                     = Due
+NextControlInDays                       = In %s days
+NextControlTomorrow                     = Tomorrow
+NextControlToday                        = Today
+NextControlOverdueOneDay                = Overdue by 1 day
+NextControlOverdueSince                 = Overdue by %s days
+ChooseControlSheet                      = Choose a sheet
+NoControlSheetAvailable                 = No control sheet available
+ControlledObject                        = Controlled object
+StartControl                            = Start the control
 
 # Deletion errors
 ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.

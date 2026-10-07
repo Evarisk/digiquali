@@ -163,45 +163,36 @@ $title = $langs->transnoentities('PublicControl');
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 
-saturne_header(0,'', $title, '', '', 0, 0, [], [], '', 'page-public-card'); ?>
+$controlInfoArray = get_control_infos($linkedObject);
+$showNavigation   = getDolGlobalInt('DIGIQUALI_ENABLE_PUBLIC_CONTROL_HISTORY');
+
+saturne_header(0, '', $title, '', '', 0, 0, [], [], '', 'template-pwa page-public-control' . (!$showNavigation ? ' page-public-control--no-nav' : ''));
+
+$pwaHeaderTitle = $langs->transnoentities('PublicControlTracking');
+require_once __DIR__ . '/../../core/tpl/frontend/digiquali_public_pwa_header.tpl.php'; ?>
 
 <div id="publicControlHistory">
-    <div class="public-card__tab">
-        <?php if (getDolGlobalInt('DIGIQUALI_ENABLE_PUBLIC_CONTROL_HISTORY')) : ?>
-            <div class="tab switch-public-control-view <?php echo ($route == 'linkedObjectAndControl' ? 'tab-active' : ''); ?>" data-route="linkedObjectAndControl">
-                <?php echo $langs->transnoentities('Status') . ' : ' . $langs->transnoentities($linkableElement['langs']); ?>
-            </div>
-            <?php if (is_array($linkedObject->linkedObjects['digiquali_control']) && !empty($linkedObject->linkedObjects['digiquali_control'])) : ?>
-                <div class="tab switch-public-control-view <?php echo ($route == 'controlList' ? 'tab-active' : ''); ?>" data-route="controlList">
-                    <?php
-                        echo $langs->transnoentities('ControlList');
-                        $controlInfoArray = get_control_infos($linkedObject);
-                        echo '<span class="badge badge-secondary marginleftonlyshort">' . count($controlInfoArray['control']) . '</span>';
-                    ?>
-                </div>
-            <?php endif; ?>
-            <div class="tab switch-public-control-view <?php echo ($route == 'controlDocumentation' ? 'tab-active' : ''); ?>" data-route="controlDocumentation">
-                <?php echo $langs->transnoentities('Documentation'); ?>
-            </div>
-            <?php
-                $parameters = ['trackId' => $trackId, 'entity' => $entity, 'linkedObject' => $linkedObject, 'linkableElements' => $linkableElements, 'linkableElement' => $linkableElement, 'objectType' => $objectType, 'objectId' => $objectId, 'routes' => &$routes, 'route' => $route, 'externals' => &$externals];
-                $hookmanager->executeHooks('digiqualiPublicControlTab', $parameters, $object);
-                print $hookmanager->resPrint;
-            ?>
-        <?php endif; ?>
-    </div>
+    <?php
+    // The navigation runs the digiqualiPublicControlTab hook, which registers the views of other modules: it
+    // must come before the view is picked
+    if ($showNavigation) {
+        require __DIR__ . '/../../core/tpl/frontend/public_control_nav.tpl.php';
+    } ?>
 
-    <div class="public-card__container">
+    <div class="public-control-content">
         <?php
-            if (isset($routes[$route])) {
-                if (in_array($route, $externals)) {
-                    $fromExternModule = true;
-                }
-                require_once __DIR__ . $routes[$route];
-            } else {
-                require_once __DIR__ . $routes[$defaultRoute];
-            }
-        ?>
+        if (!isset($routes[$route])) {
+            $route = $defaultRoute;
+        }
+        if (in_array($route, $externals)) {
+            // A view of another module renders without its own container: it gets the one of this page
+            $fromExternModule = true;
+            print '<div class="pwa-container public-control-screen"><div class="public-control-sheet">';
+            require_once __DIR__ . $routes[$route];
+            print '</div></div>';
+        } else {
+            require_once __DIR__ . $routes[$route];
+        } ?>
     </div>
 </div><?php
 
