@@ -159,6 +159,13 @@ NbQuestionsAlreadyInSheet     = %d question(s) already in it
 QuestionsInSheetWillBeIgnored = Questions already in the selected template will not be added.
 
 #
+# Questions removed from a template or a group - Agenda events
+#
+
+ObjectRemovequestionTrigger      = Question %s removed
+ObjectRemovequestiongroupTrigger = Question group %s removed
+
+#
 # Public interface
 #
 

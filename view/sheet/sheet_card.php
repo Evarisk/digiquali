@@ -198,43 +198,44 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'unlinkQuestion' && $permissiontoadd) {
-		$questionId = GETPOST('questionId');
-		$question->fetch($questionId);
+		$questionId    = GETPOSTINT('questionId');
+		$parentGroupId = GETPOSTINT('parentGroupId');
 
-		$question->fetchObjectLinked();
+		if ($questionId > 0 && $question->fetch($questionId) > 0) {
+			// Remove only the link of the clicked line: the question can also belong to other sheets and groups
+			$sourceId   = $parentGroupId > 0 ? $parentGroupId : $object->id;
+			$sourceType = $parentGroupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet';
 
-		$linkedObjectsIds = $question->linkedObjectsIds;
-		if (isset($linkedObjectsIds['digiquali_questiongroup'])) {
-			$sourceId = array_shift($linkedObjectsIds['digiquali_questiongroup']);
-			$sourceType = 'digiquali_questiongroup';
+			if ($question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question') > 0) {
+				$object->context['removed_ref'] = $question->ref;
+				$object->call_trigger('SHEET_REMOVEQUESTION', $user);
+				setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, []);
+			} else {
+				setEventMessages($question->error, $question->errors, 'errors');
+			}
 		}
-		if (isset($linkedObjectsIds['digiquali_sheet'])) {
-			$sourceId = array_shift($linkedObjectsIds['digiquali_sheet']);
-			$sourceType = 'digiquali_sheet';
-		}
-
-		$question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question');
-
-		setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, array());
 
 		header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id') . '&page_y=' . GETPOST('page_y'));
 		exit;
 	}
 
     if ($action == 'unlinkQuestionGroup' && $permissiontoadd) {
-        $questionGroupId = GETPOST('questionGroupId');
-        $questionGroup->fetch($questionGroupId);
+        $questionGroupId = GETPOSTINT('questionGroupId');
+        $parentGroupId   = GETPOSTINT('parentGroupId');
 
+        if ($questionGroupId > 0 && $questionGroup->fetch($questionGroupId) > 0) {
+            // Remove only the link of the clicked line: the group can also belong to other sheets and groups
+            $sourceId   = $parentGroupId > 0 ? $parentGroupId : $object->id;
+            $sourceType = $parentGroupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet';
 
-		$parentGroupId = $questionGroup->getParentGroupId();
-		if ($parentGroupId == 0) {
-			$sourceElementType = 'sheet';
-		} else {
-			$sourceElementType = $questionGroup->element;
-		}
-		$questionGroup->deleteObjectLinked($parentGroupId, 'digiquali_' . $sourceElementType, $questionGroup->id, 'digiquali_questiongroup');
-
-        setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, array());
+            if ($questionGroup->deleteObjectLinked($sourceId, $sourceType, $questionGroup->id, 'digiquali_questiongroup') > 0) {
+                $object->context['removed_ref'] = $questionGroup->ref;
+                $object->call_trigger('SHEET_REMOVEQUESTIONGROUP', $user);
+                setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, []);
+            } else {
+                setEventMessages($questionGroup->error, $questionGroup->errors, 'errors');
+            }
+        }
 
         header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id') . '&page_y=' . GETPOST('page_y'));
         exit;

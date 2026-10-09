@@ -149,6 +149,14 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
                 $actionComm->create($user);
                 break;
 
+            case 'SHEET_REMOVEQUESTION' :
+            case 'SHEET_REMOVEQUESTIONGROUP' :
+            case 'QUESTIONGROUP_REMOVEQUESTION' :
+                // Name the removed question or group, the event is attached to its parent
+                $actionComm->label = $langs->transnoentities('Object' . $triggerType . 'Trigger', $object->context['removed_ref'] ?? '');
+                $actionComm->create($user);
+                break;
+
             case 'CONTROL_CREATE' :
                 if (isModEnabled('projet') && !empty($object->projectid)) {
                     require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
