@@ -40,7 +40,7 @@ window.digiquali.object = {};
  * @memberof DigiQuali_Object
  *
  * @since   1.11.0
- * @version 1.11.0
+ * @version 23.2.0
  *
  * @returns {void}
  */
@@ -49,6 +49,7 @@ window.digiquali.object.init = function() {
 
   window.digiquali.object.placePercents();
   window.digiquali.object.updateGlobalScore();
+  $('textarea.question-answer').each(window.digiquali.object.fitTextAnswer);
 };
 
 /**
@@ -57,11 +58,18 @@ window.digiquali.object.init = function() {
  * @memberof DigiQuali_Object
  *
  * @since   1.11.0
- * @version 1.11.0
+ * @version 23.2.0
  *
  * @returns {void}
  */
 window.digiquali.object.event = function() {
+  $(document).on( 'input focus', 'textarea.question-answer', window.digiquali.object.fitTextAnswer);
+  // The display toggles of the card reload the questions through AJAX : fit the text answers that came with them
+  $(document).ajaxComplete(function() {
+    $('textarea.question-answer').filter(function() {
+      return this.style.height === '';
+    }).each(window.digiquali.object.fitTextAnswer);
+  });
   $(document).on( 'change', '.object-table.linked-objects select', window.digiquali.object.disableOtherSelectors);
   $(document).on( 'click', '.answer:not(.disable)', window.digiquali.object.selectAnswer);
   $(document).on( 'input', '.input-answer:not(.disable)', window.digiquali.object.selectAnswer);
@@ -76,6 +84,34 @@ window.digiquali.object.event = function() {
   $(document).on('input', '.question-answer[type="range"]', function () {
     window.digiquali.object.rangePercent.call(this, false);
   });
+};
+
+/**
+ * Fit the height of a text answer to its text, so a pasted text shows whole without scrolling in the field
+ *
+ * @memberof DigiQuali_Object
+ *
+ * @since   23.2.0
+ * @version 23.2.0
+ *
+ * @returns {void}
+ */
+window.digiquali.object.fitTextAnswer = function() {
+  // A hidden field has no height to measure : it keeps the height of its rows until it is shown and focused
+  if (!this.offsetParent) {
+    return;
+  }
+
+  // Back to the height of its rows first, so the field also shrinks when text is removed
+  this.style.height = 'auto';
+
+  // scrollHeight counts the padding but not the borders, which a border-box height includes
+  const style  = getComputedStyle(this);
+  const height = style.boxSizing === 'border-box'
+    ? this.scrollHeight + this.offsetHeight - this.clientHeight
+    : this.scrollHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+
+  this.style.height = height + 'px';
 };
 
 /**

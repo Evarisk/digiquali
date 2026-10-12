@@ -349,10 +349,6 @@
         }
       }
 
-      .question-textarea {
-        margin-bottom: 0;
-      }
-
       .question-number {
         text-align: center;
 
@@ -363,6 +359,18 @@
         @include answer-correction;
       }
 
+    }
+
+    // Answers too wide for the answer column (text, table of photos), under the question header across its whole width
+    .question__body {
+      margin-top: 0.4em;
+
+      textarea.question-answer {
+        display: block;
+        margin-bottom: 0;
+        // Already as wide as the question, and it grows with its text : only its height is left to resize
+        resize: vertical;
+      }
     }
 
     .question__footer {

@@ -440,7 +440,8 @@ function show_answer_from_question(Question $question, CommonObject $object, str
     switch ($question->type) {
         case 'Text':
             $out .= '<div>';
-            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
+            // Opens on a few lines, then grows with its text (see window.digiquali.object.fitTextAnswer)
+            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" rows="4" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
             $out .= '</div>';
             break;
         case 'Percentage':
