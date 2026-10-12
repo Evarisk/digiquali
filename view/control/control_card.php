@@ -43,9 +43,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../../saturne/lib/medias.lib.php';
-require_once __DIR__ . '/../../../saturne/class/saturnesignature.class.php';
-require_once __DIR__ . '/../../../saturne/class/task/saturnetask.class.php';
+dol_include_once('/saturne/lib/medias.lib.php');
+dol_include_once('/saturne/class/saturnesignature.class.php');
+dol_include_once('/saturne/class/task/saturnetask.class.php');
 
 require_once __DIR__ . '/../../class/control.class.php';
 require_once __DIR__ . '/../../class/sheet.class.php';
@@ -235,7 +235,7 @@ if (empty($resHook)) {
     include DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
     // Actions set_thirdparty, set_project
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
     // Move linked tasks to the new project so they follow the control
     if ($action == 'set_project' && $permissiontoadd) {
@@ -263,10 +263,10 @@ if (empty($resHook)) {
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_task_action.tpl.php';
 
     // Actions builddoc, forcebuilddoc, remove_file.
-    require_once __DIR__ . '/../../../saturne/core/tpl/documents/documents_action.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/documents/documents_action.tpl.php');
 
     // Action to generate pdf from odt file
-    require_once __DIR__ . '/../../../saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php');
 
     if ($action == 'confirm_setVerdict' && $permissiontosetverdict && !GETPOST('cancel', 'alpha')) {
         $object->fetch($id);
@@ -313,7 +313,7 @@ if (empty($resHook)) {
     require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
 
     // Actions confirm_lock, confirm_archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
 
     // Actions to send emails
     $triggersendname = 'CONTROL_SENTBYMAIL';
@@ -1225,7 +1225,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 }
 
 // Photo editor modal (required by saturne_render_media_block)
-require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 // End of page
 llxFooter();

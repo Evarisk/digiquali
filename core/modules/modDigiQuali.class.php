@@ -41,8 +41,8 @@ class modDigiQuali extends DolibarrModules
 
 		$this->db = $db;
 
-		if (file_exists(__DIR__ . '/../../../saturne/lib/saturne_functions.lib.php')) {
-			require_once __DIR__ . '/../../../saturne/lib/saturne_functions.lib.php';
+		if (file_exists(dol_buildpath('/saturne/lib/saturne_functions.lib.php'))) {
+			dol_include_once('/saturne/lib/saturne_functions.lib.php');
 			saturne_load_langs(['digiquali@digiquali']);
 		} else {
 			$this->error++;

@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Sheet.
@@ -926,7 +926,7 @@ class Sheet extends SaturneObject
     {
         global $langs;
 
-        require_once __DIR__ . '/../../saturne/class/saturnedashboard.class.php';
+        dol_include_once('/saturne/class/saturnedashboard.class.php');
 
         switch ($question->type) {
             case 'UniqueChoice':

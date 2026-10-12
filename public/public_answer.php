@@ -58,7 +58,7 @@ $documentType = GETPOST('document_type', 'alpha');
 
 // Load Saturne libraries
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
-    require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+    dol_include_once('/saturne/class/saturnesignature.class.php');
 }
 
 // Load DigiQuali libraries
@@ -157,7 +157,7 @@ if ($publicInterfaceActions) {
     require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
     // Load Saturne libraries
-    require_once __DIR__ . '/../../saturne/class/task/saturnetask.class.php';
+    dol_include_once('/saturne/class/task/saturnetask.class.php');
 
     if (!empty($object->projectid)) {
         $object->fk_project = $object->projectid; // Need special case because projectid is only on control object
@@ -188,7 +188,7 @@ if ($resHook < 0) {
 if (empty($resHook)) {
     if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signatory->id > 0) {
         // Actions add_signature, builddoc, remove_file
-        require_once __DIR__ . '/../../saturne/core/tpl/actions/signature_actions.tpl.php';
+        require_once dol_buildpath('/saturne/core/tpl/actions/signature_actions.tpl.php');
     }
 
     // Set user for action update and insert for prevent error on public interface
@@ -284,7 +284,7 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signa
     $previousStatus        = $object->status;
     $object->status        = $object::STATUS_VALIDATED; // Special case because public answer need draft status object to complete question
     $moreParams['moreCSS'] = 'hidden';                  // Needed for prevent click on signature button action
-    require_once __DIR__ . '/../../saturne/core/tpl/signature/public_signature_view.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/signature/public_signature_view.tpl.php');
     $object->status = $previousStatus;
 }
 if ($object->status == $object::STATUS_DRAFT) {
@@ -299,7 +299,7 @@ print '</div>';
 print '</form>';
 
 // Required by the media block: without it, picking a photo silently does nothing
-require_once __DIR__ . '/../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 llxFooter('', 'public');
 $db->close();

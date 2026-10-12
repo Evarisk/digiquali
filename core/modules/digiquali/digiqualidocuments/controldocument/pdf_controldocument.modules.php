@@ -32,8 +32,8 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../../../../../saturne/core/modules/saturne/modules_saturne.php';
-require_once __DIR__ . '/../../../../../../saturne/class/saturnesignature.class.php';
+dol_include_once('/saturne/core/modules/saturne/modules_saturne.php');
+dol_include_once('/saturne/class/saturnesignature.class.php');
 
 // Load DigiQuali libraries
 require_once __DIR__ . '/../../../../../../digiquali/class/sheet.class.php';
