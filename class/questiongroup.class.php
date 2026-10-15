@@ -558,6 +558,28 @@ class QuestionGroup extends SaturneObject
     }
 
     /**
+     * Remove question from question group
+     *
+     * @param  int $questionId ID of question
+     * @return int             > 0 if OK, <= 0 if KO
+     */
+    public function removeQuestion(int $questionId): int
+    {
+        global $user;
+
+        $question = new Question($this->db);
+        $question->fetch($questionId);
+
+        $result = $this->deleteObjectLinked($this->id, 'digiquali_questiongroup', $questionId, 'digiquali_question');
+        if ($result > 0) {
+            $this->context['removed_ref'] = $question->ref;
+            $this->call_trigger('QUESTIONGROUP_REMOVEQUESTION', $user);
+        }
+
+        return $result;
+    }
+
+    /**
      * Move questions
      */
     public function updateQuestionsPositions(array $questionIds)
@@ -691,9 +713,13 @@ class QuestionGroup extends SaturneObject
     /**
      * Display question group in sheet card
      *
+     * @param  Sheet  $sheetObject      The sheet of the group
+     * @param  string $positionPath     The path of the group based on positions
+     * @param  int    $subLevel         Depth of the group in the tree
+     * @param  int    $containerGroupId Id of the group the group is displayed in, 0 for the sheet root
      * @return void
      */
-    public function displayInSheetCard($sheetObject, $positionPath, $subLevel = 0)
+    public function displayInSheetCard($sheetObject, $positionPath, $subLevel = 0, int $containerGroupId = 0)
     {
         global $langs, $db;
 
@@ -709,7 +735,7 @@ class QuestionGroup extends SaturneObject
         print '</td>';
         if ($sheetObject->status < $sheetObject::STATUS_LOCKED) {
             print '<td class="center">';
-            print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $sheetObject->id . '&amp;action=unlinkQuestionGroup&questionGroupId=' . $this->id . '&token=' . newToken() . '">';
+            print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $sheetObject->id . '&amp;action=unlinkQuestionGroup&questionGroupId=' . $this->id . '&parentGroupId=' . $containerGroupId . '&token=' . newToken() . '">';
             print '<i class="fa fa-unlink" aria-hidden="true"></i>';
             print '</a>';
             print '</td>';
@@ -731,10 +757,10 @@ class QuestionGroup extends SaturneObject
         foreach ($questionsAndGroups as $questionOrGroup) {
             if ($questionOrGroup instanceof Question) {
                 $question = $questionOrGroup;
-                $question->displayInSheetCard($sheetObject, $positionPath . '/' . $position, $tdOffsetStyle);
+                $question->displayInSheetCard($sheetObject, $positionPath . '/' . $position, $tdOffsetStyle, $this->id);
             } else {
                 $questionGroup = $questionOrGroup;
-                $questionGroup->displayInSheetCard($sheetObject, $positionPath . '/' . $position, $subLevel);
+                $questionGroup->displayInSheetCard($sheetObject, $positionPath . '/' . $position, $subLevel, $this->id);
             }
             $position++;
         }

@@ -146,15 +146,17 @@ if (empty($reshook)) {
 		$object->updateQuestionsPositions($reIndexedIds);
 	}
 
-    if ($action == 'removeQuestion') {
-        $questionId = GETPOST('questionId', 'int');
-        if ($questionId > 0) {
-            $question->fetch($questionId);
-			$object->deleteObjectLinked($object->id, 'digiquali_questiongroup', $question->id, 'digiquali_question');
-
-            setEventMessages($langs->trans('RemoveQuestionFromGroup') . ' ' . $question->ref, array());
+    if ($action == 'removeQuestion' && $permissiontoadd) {
+        $questionId = GETPOSTINT('questionId');
+        if ($questionId > 0 && $question->fetch($questionId) > 0) {
+            if ($object->removeQuestion($questionId) > 0) {
+                setEventMessages($langs->trans('RemoveQuestionFromGroup') . ' ' . $question->ref, []);
+            } else {
+                setEventMessages($object->error, $object->errors, 'errors');
+            }
         }
         header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id  . ($sheetId ? '&sheet_id=' . $sheetId : ''));
+        exit;
     }
 
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen

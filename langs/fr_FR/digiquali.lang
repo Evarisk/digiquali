@@ -215,6 +215,8 @@ RemoveQuestionGroupLink       = Groupe de questions retiré du modèle :
 TheQuestiongroup              = groupe de questions
 ObjectAddquestionTrigger      = Question ajoutée
 ObjectAddquestiongroupTrigger = Groupe de questions ajouté
+ObjectRemovequestionTrigger      = Question %s retirée
+ObjectRemovequestiongroupTrigger = Groupe de questions %s retiré
 
 
 #
