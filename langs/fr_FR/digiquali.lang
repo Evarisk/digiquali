@@ -272,6 +272,7 @@ CreateNewQuestionGroup         = Créer un nouveau groupe de questions
 # Notice - notice
 MissingConfigElementTypeTitle   = Configuration manquante pour les éléments liés
 MissingConfigElementTypeMessage = Veuillez cliquer sur le lien pour configurer les éléments liés
+MissingConfigElementTypeAskAdmin = Aucun élément ne peut encore être lié : demandez à un administrateur de les activer dans la configuration du module DigiQuali.
 LineMovedOutsideParentError     = Il n'est pas possible de déplacer un élément en dehors de son parent
 
 
@@ -533,6 +534,7 @@ BeCarefullVerdictKO                            = Attention si le statut de votre
 ShowQcFrequencyPublicInterface                 = Afficher la période de validé (en jours) sur l'interface publique de contrôle
 ShowQcFrequencyPublicInterfaceDescription      = Option permettant l'affichage la période de validé (en jours) sur l'interface publique de contrôle
 GenerateSheetTags                              = Vous n'avez pas généré de catégories principales, veuillez cliquer ici pour vous rendre sur la page de configuration
+GenerateSheetTagsAskAdmin                      = Les catégories principales n'ont pas encore été générées : demandez à un administrateur de les créer dans la configuration du module DigiQuali.
 ObjectReadyToValidate                          = Le %s est prêt à être validé
 QuestionAnswered                               = Réponse/Question
 LastStatusDate                                 = Dernières dates de statut

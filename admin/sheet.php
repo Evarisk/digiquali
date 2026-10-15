@@ -74,7 +74,8 @@ $error = 0; // Error counter.
 $hookmanager->initHooks([$object->element . 'admin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user.
-$permissiontoread = $user->rights->digiquali->adminpage->read;
+$permissiontoread  = $user->rights->digiquali->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
 /*
@@ -85,10 +86,18 @@ saturne_check_access($permissiontoread);
 require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
 
 // Extrafields actions.
-require DOL_DOCUMENT_ROOT.'/core/actions_extrafields.inc.php';
+if ($permissiontowrite) {
+    require DOL_DOCUMENT_ROOT.'/core/actions_extrafields.inc.php';
+}
+
+// A user without the write permission may read this page, changing a setting is refused
+if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links', 'generateCategories', 'generate_main_categories', 'set_main_category'], true) && !$permissiontowrite) {
+    setEventMessages($langs->trans('ReadOnlyAdminAccessMessage'), [], 'errors');
+    $action = '';
+}
 
 // Linked objects actions.
-if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links']) && $user->admin) {
+if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links']) && $permissiontowrite) {
     $db->begin();
 
     if ($action == 'toggle_link') {
@@ -238,6 +247,9 @@ print load_fiche_titre($title, $linkback, 'title_setup');
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
 
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 
 $constArray[$moduleNameLowerCase] = [
@@ -284,7 +296,7 @@ print '<td class="center">';
 print $conf->global->DIGIQUALI_SHEET_TAGS_SET ? $langs->trans('AlreadyGenerated') : $langs->trans('NotCreated');
 print '</td>';
 print '<td class="center">';
-print $conf->global->DIGIQUALI_SHEET_TAGS_SET ? '<a type="" class=" butActionRefused" value="">'.$langs->trans('Create') . '</a>' : '<input type="submit" class="button" value="'. $langs->trans('Create') .'">' ;
+print ($conf->global->DIGIQUALI_SHEET_TAGS_SET || !$permissiontowrite) ? '<a type="" class=" butActionRefused" value="">'.$langs->trans('Create') . '</a>' : '<input type="submit" class="button" value="'. $langs->trans('Create') .'">' ;
 print '</td>';
 print '<td class="center">';
 print $form->textwithpicto('', $langs->trans('CategoriesGeneration'));
@@ -299,7 +311,7 @@ print '<tr class="oddeven"><td>' . $langs->transnoentities('GenerateMainSheetCat
 print '<td class="center">';
 print getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET') ? $langs->transnoentities('AlreadyGenerated') : $langs->transnoentities('NotCreated');
 print '</td><td class="center">';
-print getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET') ? '<a type="" class=" butActionRefused" value="">' . $langs->transnoentities('Create') . '</a>' : '<input type="submit" class="button" value="' . $langs->transnoentities('Create') . '">';
+print (getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET') || !$permissiontowrite) ? '<a type="" class=" butActionRefused" value="">' . $langs->transnoentities('Create') . '</a>' : '<input type="submit" class="button" value="' . $langs->transnoentities('Create') . '">';
 print '</td><td class="center">';
 print $form->textwithpicto('', $langs->trans('MainSheetCategoriesDescription'));
 print '</td></tr>';
@@ -314,7 +326,7 @@ print '<tr class="oddeven"><td>' . $langs->transnoentities('SheetMainCategory') 
 print '<td class="center">';
 print $formOther->select_categories('sheet', getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORY'), 'main_category');
 print '</td><td class="center">';
-print '<div><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print $permissiontowrite ? '<div><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>' : '<a class="butActionRefused">' . $langs->trans('Save') . '</a>';
 print '</td><td class="center">';
 print $form->textwithpicto('', $langs->trans('SheetMainCategoryDescription'));
 print '</td></tr>';
@@ -327,20 +339,20 @@ print load_fiche_titre($langs->trans('ExtrafieldsSheetManagement'), '', '');
 require DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_view.tpl.php';
 
 // Buttons.
-if ($action != 'create' && $action != 'edit') {
+if ($permissiontowrite && $action != 'create' && $action != 'edit') {
     print '<div class="tabsAction">';
     print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=create">' . $langs->trans('NewAttribute') . '</a></div>';
     print '</div>';
 }
 
 // Creation of an optional field.
-if ($action == 'create') {
+if ($permissiontowrite && $action == 'create') {
     print load_fiche_titre($langs->trans('NewAttribute'));
     require DOL_DOCUMENT_ROOT.'/core/tpl/admin_extrafields_add.tpl.php';
 }
 
 // Edition of an optional field.
-if ($action == 'edit' && !empty($attrname)) {
+if ($permissiontowrite && $action == 'edit' && !empty($attrname)) {
     print load_fiche_titre($langs->trans('FieldEdition', $attrname));
     require DOL_DOCUMENT_ROOT.'/core/tpl/admin_extrafields_edit.tpl.php';
 }

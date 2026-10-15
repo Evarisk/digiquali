@@ -46,3 +46,23 @@ function sheet_prepare_head(Sheet $object): array
 
     return saturne_object_prepare_head($object, $head);
 }
+
+/**
+ * Build the message of a notice sending the user to the sheet configuration.
+ *
+ * Only a user allowed to change the configuration gets the link: the others would be sent to a
+ * page that refuses them or shows its settings read only, they are asked to call an administrator.
+ *
+ * @param  string $linkMessage     Message shown as a link to the configuration
+ * @param  string $askAdminMessage Message shown, without link, to the users who may not change it
+ * @param  string $anchor          Anchor of the configuration page, with its leading #
+ * @return string                  HTML of the message
+ */
+function digiquali_sheet_config_notice_message(string $linkMessage, string $askAdminMessage, string $anchor = ''): string
+{
+    if (saturne_check_admin_write_access()) {
+        return '<a href="' . dol_buildpath('custom/digiquali/admin/sheet.php', 1) . $anchor . '">' . $linkMessage . '</a>';
+    }
+
+    return $askAdminMessage;
+}

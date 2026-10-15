@@ -221,3 +221,13 @@ PhotoMultipleSummary  = %s photo(s) - %s OK - %s KO
 PhotoMultipleNoAnswer = No photo
 MediaLibrary          = Media library
 AddFromMediaLibrary   = Add from the media library
+
+#
+# Notice
+#
+
+MissingConfigElementTypeTitle    = Missing configuration for the linked elements
+MissingConfigElementTypeMessage  = Please click the link to set up the linked elements
+MissingConfigElementTypeAskAdmin = No element can be linked yet: ask an administrator to enable them in the DigiQuali module configuration.
+GenerateSheetTags                = You have not generated the main categories, click here to go to the configuration page
+GenerateSheetTagsAskAdmin        = The main categories have not been generated yet: ask an administrator to create them in the DigiQuali module configuration.

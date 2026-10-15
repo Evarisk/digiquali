@@ -38,6 +38,7 @@ if (isModEnabled('categorie')) {
 // load DigiQuali libraries
 require_once __DIR__ . '/../../class/survey.class.php';
 require_once __DIR__ . '/../../lib/digiquali_linked_object.lib.php';
+require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -298,7 +299,7 @@ if (!empty($fromObjectMetadata) && !empty($fromId)) {
 }
 
 if ($nbLinkableElements == 0) {
-    $noticeMessage = '<a href="' . dol_buildpath('custom/digiquali/admin/sheet.php', 1) . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+    $noticeMessage = digiquali_sheet_config_notice_message($langs->transnoentities('MissingConfigElementTypeMessage'), $langs->transnoentities('MissingConfigElementTypeAskAdmin'));
     print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
 } else {
     require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php';

@@ -620,6 +620,12 @@ class modDigiQuali extends DolibarrModules
 		$this->rights[$r][1] = $langs->transnoentities('ChangeUserController');
 		$this->rights[$r][4] = 'adminpage';
 		$this->rights[$r][5] = 'changeusercontroller';
+		$r++;
+		// Declared last: a permission id is its position in this list, inserting it above would shift the granted ones
+		$this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+		$this->rights[$r][1] = $langs->transnoentities('WriteAdminPage', 'DigiQuali');
+		$this->rights[$r][4] = 'adminpage';
+		$this->rights[$r][5] = 'write';
 
 		// Main menu entries to add
 		$this->menu = [];

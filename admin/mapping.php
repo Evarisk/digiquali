@@ -52,12 +52,19 @@ $backtopage = GETPOST('backtopage', 'alpha');
 $hookmanager->initHooks(['mappingadmin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread  = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
 /*
  * Actions
  */
+
+// A user without the write permission may read this page, changing a setting is refused
+if (in_array($action, ['update_mapping_project'], true) && !$permissiontowrite) {
+    setEventMessages($langs->trans('ReadOnlyAdminAccessMessage'), [], 'errors');
+    $action = '';
+}
 
 if ($action == 'update_mapping_project') {
     $mappingProjectId = GETPOSTINT('mappingProjectId');
@@ -88,6 +95,9 @@ print load_fiche_titre($title, $linkBack, 'title_setup');
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, 'mapping', $title, -1, 'digiquali_color@digiquali');
 
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+
 print load_fiche_titre($langs->trans("TasksManagement"), '', '');
 
 // Project
@@ -107,7 +117,7 @@ if (isModEnabled('project')) {
     $formProjects->select_projects(-1,  getDolGlobalInt('DIGIQUALI_MAPPING_PROJECT'), 'mappingProjectId', 0, 0, 0, 0, 0, 0, 0, '', 0, 0, 'maxwidth500');
     print '<a href="' . DOL_URL_ROOT . '/projet/card.php?leftmenu=projects&action=create&status=1&usage_opportunity=0&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '"><span class="fa fa-plus-circle valignmiddle" title="' . $langs->trans('AddProject') . '"></span></a>';
     print '</td><td class="center">';
-    print '<button type="submit" class="butAction reposition">' . $langs->trans('Save') . '</button>';
+    print $permissiontowrite ? '<button type="submit" class="butAction reposition">' . $langs->trans('Save') . '</button>' : '<a class="butActionRefused">' . $langs->trans('Save') . '</a>';
     print '</td></tr>';
 
     print '</table>';

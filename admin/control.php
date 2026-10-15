@@ -64,15 +64,27 @@ $hookmanager->initHooks(['controladmin', 'globalcard']); // Note that conf->hook
 $elementtype = $moduleNameLowerCase . '_' . $object->element; // Must be the $table_element of the class that manage extrafield
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread  = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
 /*
  * Actions
  */
 
+// Actions set_mod, update_mask and the switches of the module constants
+require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+
 //Extrafields actions
-require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
+if ($permissiontowrite) {
+    require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
+}
+
+// A user without the write permission may read this page, changing a setting is refused
+if (in_array($action, ['update_control_reminder', 'update_next_control_date_color'], true) && !$permissiontowrite) {
+    setEventMessages($langs->trans('ReadOnlyAdminAccessMessage'), [], 'errors');
+    $action = '';
+}
 
 if ($action == 'update_control_reminder') {
     $reminderFrequency = GETPOST('control_reminder_frequency');
@@ -129,6 +141,9 @@ print load_fiche_titre($title, $linkback, 'title_setup');
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
 
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+
 /*
  *  Numbering module
  */
@@ -173,7 +188,7 @@ print $langs->trans('ControlReminderDescription');
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('DIGIQUALI_CONTROL_REMINDER_ENABLED');
+print saturne_constant_onoff('DIGIQUALI_CONTROL_REMINDER_ENABLED', $permissiontowrite);
 print '</td></tr>';
 
 // Define control reminder frequency in days (ex: 30,60,90)
@@ -206,11 +221,11 @@ print '</td><td>';
 print $langs->trans('DisableControlAttachedFilesDescription');
 print '</td>';
 print '<td class="center">';
-print ajax_constantonoff('DIGIQUALI_CONTROL_DISABLE_ATTACHED_FILES');
+print saturne_constant_onoff('DIGIQUALI_CONTROL_DISABLE_ATTACHED_FILES', $permissiontowrite);
 print '</td></tr>';
 
 print '</table>';
-print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print $permissiontowrite ? '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>' : '<div class="tabsAction"><a class="butActionRefused">' . $langs->trans('Save') . '</a></div>';
 print '</form>';
 print '</table>';
 
@@ -238,7 +253,7 @@ foreach ($nextControlDateFrequencies as $nextControlDateFrequency => $nextContro
 }
 
 print '</table>';
-print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print $permissiontowrite ? '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>' : '<div class="tabsAction"><a class="butActionRefused">' . $langs->trans('Save') . '</a></div>';
 print '</form>';
 
 // Extrafields control management
@@ -248,20 +263,20 @@ $textobject = dol_strtolower($langs->transnoentities('Control'));
 require DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_view.tpl.php';
 
 // Buttons
-if ($action != 'create' && $action != 'edit') {
+if ($permissiontowrite && $action != 'create' && $action != 'edit') {
     print '<div class="tabsAction">';
     print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=create">' . $langs->trans('NewAttribute') . '</a></div>';
     print '</div>';
 }
 
 // Creation of an optional field
-if ($action == 'create') {
+if ($permissiontowrite && $action == 'create') {
     print load_fiche_titre($langs->trans('NewAttribute'));
     require DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_add.tpl.php';
 }
 
 // Edition of an optional field
-if ($action == 'edit' && !empty($attrname)) {
+if ($permissiontowrite && $action == 'edit' && !empty($attrname)) {
     print load_fiche_titre($langs->trans('FieldEdition', $attrname));
     require DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_edit.tpl.php';
 }

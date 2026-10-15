@@ -55,12 +55,22 @@ $form = new Form($db);
 $hookmanager->initHooks(['publicinterfaceadmin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread  = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
 /*
  * Actions
  */
+
+// Actions set_mod, update_mask and the switches of the module constants
+require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+
+// A user without the write permission may read this page, changing a setting is refused
+if (in_array($action, ['set_public_interface_title'], true) && !$permissiontowrite) {
+    setEventMessages($langs->trans('ReadOnlyAdminAccessMessage'), [], 'errors');
+    $action = '';
+}
 
 if ($action == 'set_public_interface_title') {
     $answerPublicInterfaceTitle = GETPOST('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_TITLE', 'none');
@@ -87,6 +97,9 @@ print load_fiche_titre($title, $linkBack, 'title_setup');
 // Configuration header
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, 'publicinterface', $title, -1, 'digiquali_color@digiquali');
+
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
 
 print load_fiche_titre($langs->trans('Config'), '', '');
 
@@ -125,7 +138,9 @@ $dolEditor->Create();
 print '</td></tr>';
 
 print '</table>';
-print $form->buttonsSaveCancel('Save', '');
+if ($permissiontowrite) {
+    print $form->buttonsSaveCancel('Save', '');
+}
 print '</form>';
 
 $constArray['digiquali'] = [

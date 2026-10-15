@@ -48,12 +48,22 @@ $backtopage = GETPOST('backtopage', 'alpha');
 $form       = new Form($db);
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->digiquali->adminpage->read;
+$permissiontoread  = $user->rights->digiquali->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 
 saturne_check_access($permissiontoread);
 /*
  * Actions
  */
+
+// Actions set_mod, update_mask and the switches of the module constants
+require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+
+// A user without the write permission may read this page, changing a setting is refused
+if (in_array($action, ['setMediaInfos'], true) && !$permissiontowrite) {
+    setEventMessages($langs->trans('ReadOnlyAdminAccessMessage'), [], 'errors');
+    $action = '';
+}
 
 if ($action == 'setMediaInfos') {
 	$error = 0;
@@ -103,6 +113,9 @@ print load_fiche_titre($title, $linkback, 'title_setup');
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, 'settings', $title, -1, 'digiquali_color@digiquali');
 
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+
 print load_fiche_titre($langs->trans('GeneralConfig'), '', '');
 
 print '<table class="noborder centpercent">';
@@ -119,7 +132,7 @@ print $langs->trans('RedirectAfterConnectionDescription');
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('DIGIQUALI_REDIRECT_AFTER_CONNECTION');
+print saturne_constant_onoff('DIGIQUALI_REDIRECT_AFTER_CONNECTION', $permissiontowrite);
 print '</td>';
 print '</tr>';
 
@@ -130,7 +143,7 @@ print $langs->trans('AdvancedTriggersDescription', $moduleName);
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('DIGIQUALI_ADVANCED_TRIGGER');
+print saturne_constant_onoff('DIGIQUALI_ADVANCED_TRIGGER', $permissiontowrite);
 print '</td>';
 print '</tr>';
 
@@ -192,7 +205,9 @@ print '<td><input type="number" name="DisplayNumberMediaGallery" value="' . $con
 print '</td></tr>';
 
 print '</table>';
-print $form->buttonsSaveCancel('Save', '');
+if ($permissiontowrite) {
+    print $form->buttonsSaveCancel('Save', '');
+}
 print '</form>';
 
 // Page end

@@ -67,15 +67,27 @@ $elementtype = $moduleNameLowerCase . '_' . $objectType; // Must be the $table_e
 $form = new Form($db);
 
 // Access control
-$permissiontoread = $user->rights->digiquali->adminpage->read;
+$permissiontoread  = $user->rights->digiquali->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
 /*
  * Actions
  */
 
+// Actions set_mod, update_mask and the switches of the module constants
+require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+
 //Extrafields actions
-require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
+if ($permissiontowrite) {
+    require DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
+}
+
+// A user without the write permission may read this page, changing a setting is refused
+if (in_array($action, ['setmod'], true) && !$permissiontowrite) {
+    setEventMessages($langs->trans('ReadOnlyAdminAccessMessage'), [], 'errors');
+    $action = '';
+}
 
 //Set numering modele for control object
 if ($action == 'setmod') {
@@ -100,6 +112,9 @@ print load_fiche_titre($title, $linkback, 'title_setup');
 // Configuration header
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, 'questiongroup', $title, -1, "digiquali_color@digiquali");
+
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
 
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 

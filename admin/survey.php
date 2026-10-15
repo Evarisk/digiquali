@@ -64,15 +64,21 @@ $hookmanager->initHooks(['surveyadmin', 'globalcard']); // Note that conf->hooks
 $elementtype = $moduleNameLowerCase . '_' . $object->element; // Must be the $table_element of the class that manage extrafield
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread  = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
 /*
  * Actions
  */
 
+// Actions set_mod, update_mask and the switches of the module constants
+require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+
 // Extrafields actions
-require_once DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
+if ($permissiontowrite) {
+    require_once DOL_DOCUMENT_ROOT . '/core/actions_extrafields.inc.php';
+}
 
 /*
  * View
@@ -90,6 +96,9 @@ print load_fiche_titre($title, $linkBack, 'title_setup');
 // Configuration header
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
+
+// Warns a user allowed to read the settings but not to change them
+require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
 
 /*
  * Numbering module
@@ -115,20 +124,20 @@ $textobject = dol_strtolower($langs->transnoentities('Survey'));
 require_once DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_view.tpl.php';
 
 // Buttons
-if ($action != 'create' && $action != 'edit') {
+if ($permissiontowrite && $action != 'create' && $action != 'edit') {
     print '<div class="tabsAction">';
     print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?action=create">' . $langs->trans('NewAttribute') . '</a></div>';
     print '</div>';
 }
 
 // Creation of an optional field
-if ($action == 'create') {
+if ($permissiontowrite && $action == 'create') {
     print load_fiche_titre($langs->trans('NewAttribute'));
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_add.tpl.php';
 }
 
 // Edition of an optional field
-if ($action == 'edit' && !empty($attrname)) {
+if ($permissiontowrite && $action == 'edit' && !empty($attrname)) {
     print load_fiche_titre($langs->trans('FieldEdition', $attrname));
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/admin_extrafields_edit.tpl.php';
 }

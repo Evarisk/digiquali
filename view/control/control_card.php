@@ -386,7 +386,7 @@ if ($action == 'create') {
         if (!getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET')) {
             print '<div class="wpeo-notice notice-warning notice-red">';
             print '<div class="notice-content">';
-            print '<a href="' . dol_buildpath('/custom/digiquali/admin/sheet.php#sheetCategories', 2) . '">' . '<b><div class="notice-subtitle">' . $langs->trans('GenerateSheetTags') . ' : ' . $langs->trans('ConfigSheet') . '</div></b></a>';
+            print '<b><div class="notice-subtitle">' . digiquali_sheet_config_notice_message($langs->trans('GenerateSheetTags'), $langs->trans('GenerateSheetTagsAskAdmin'), '#sheetCategories') . '</div></b>';
             print '</div></div>';
             print '</table>';
             print dol_get_fiche_end();
