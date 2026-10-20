@@ -20,3 +20,6 @@
 :where(:root) {
   background: none;
 }
+
+// Modern back office theme, imported last so that it wins over the legacy rules above
+@import "theme/theme";

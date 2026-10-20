@@ -1,0 +1,199 @@
+/* DigiQuali modern theme: sheet card (list of the linked questions and question groups) and the
+   question / group tree along the sheet pages (same look as the Digirisk GP/UT tree) */
+
+#{$dq-scope} {
+  /* ---- Linked questions of a sheet: question group rows ---- */
+
+  #tablelines tr.question-group {
+    background: transparent;
+    font-weight: 600;
+
+    > td {
+      padding-top: 6px !important;
+      padding-bottom: 6px !important;
+    }
+  }
+
+  #tablelines .group-header {
+    margin: 2px 0;
+    padding: 8px 12px;
+    border: 1px solid $dq-border;
+    border-radius: $dq-radius;
+    background: $dq-surface-soft;
+    transition: border-color $dq-transition, background-color $dq-transition;
+
+    &:hover {
+      border-color: $dq-primary-line;
+      background: $dq-primary-soft;
+    }
+
+    .group-title {
+      color: $dq-text;
+      font-size: 14px;
+    }
+
+    .toggle-icon {
+      width: 24px;
+      height: 24px;
+      background-color: $dq-surface;
+      border: 1px solid $dq-border;
+      color: $dq-muted;
+      font-size: 15px;
+    }
+  }
+
+  /* Add a question / a group under the list */
+  .addChoice {
+    gap: 8px;
+    margin-left: 0;
+
+    /* The cell is narrower than the four buttons: they keep their labels on one line */
+    .butAction {
+      flex-shrink: 0;
+      margin: 0 !important;
+      white-space: nowrap;
+    }
+
+    .butAction:hover {
+      transform: none;
+    }
+  }
+
+  /* ---- Question / group tree of the sheet pages ---- */
+
+  .question-and-group-tree .side-nav {
+    border-right: 1px solid $dq-border;
+    background: $dq-surface;
+
+    #id-left {
+      background: transparent;
+    }
+
+    .sheet-header {
+      padding: 22px 14px 12px;
+      border-bottom: 1px solid $dq-border;
+      background: transparent;
+
+      &.selected {
+        background: transparent;
+
+        .title {
+          color: $dq-primary-strong;
+        }
+      }
+
+      .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: $dq-radius-sm;
+        background: $dq-primary-soft;
+        color: $dq-primary;
+        font-size: 13px;
+      }
+
+      .title {
+        color: $dq-text;
+        font-size: 14px;
+      }
+    }
+
+    .tree-toggle-all {
+      padding: 8px 14px 6px;
+
+      .tree-toggle-all-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border: 1px solid $dq-border;
+        border-radius: $dq-radius-sm;
+        color: $dq-muted;
+        font-size: 13px;
+
+        &:hover,
+        &:focus-visible {
+          border-color: $dq-primary;
+          color: $dq-primary;
+          opacity: 1;
+        }
+      }
+    }
+
+    .question-list {
+      padding: 0 8px 10px;
+    }
+
+    .group-item,
+    .question-item {
+      align-items: center;
+      margin-bottom: 2px;
+      border-left: none;
+      border-radius: $dq-radius;
+      background: transparent;
+      transition: background-color $dq-transition;
+
+      &:hover {
+        background: $dq-surface-soft;
+      }
+
+      &.selected {
+        border-left: none;
+        background: $dq-primary-soft;
+
+        .title-container .label {
+          color: $dq-primary-strong;
+        }
+      }
+    }
+
+    .group-item {
+      padding: 7px 10px;
+    }
+
+    .question-item {
+      padding: 6px 10px;
+    }
+
+    .icon {
+      color: $dq-faint;
+    }
+
+    .group-item .toggle-group-in-tree {
+      margin-right: 6px;
+      color: $dq-faint;
+      font-size: 12px;
+    }
+
+    .group-item .title-container,
+    .question-item .title-container {
+      gap: 2px;
+      margin-left: 8px;
+    }
+
+    .group-item .title-container .ref,
+    .question-item .title-container .ref {
+      border-radius: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .group-item .title-container .label {
+      color: $dq-text;
+      font-weight: 600;
+    }
+
+    .question-item .title-container .label {
+      color: $dq-text-soft;
+    }
+
+    .sub-questions {
+      margin-left: 14px;
+      padding-left: 6px;
+      border-left: 1px dashed $dq-border;
+    }
+  }
+}

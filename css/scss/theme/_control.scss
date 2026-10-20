@@ -1,0 +1,203 @@
+/* DigiQuali modern theme: control and survey cards around the questions (verdict, next control
+   chips, questions / statistics switch, progress bar) and the lists of controls */
+
+#{$dq-scope} {
+  /* ---- Verdict of a control (card field, list column, dashboard widget) ---- */
+
+  /* A wpeo-button only shows the verdict: it becomes a tinted pill, like the status badges */
+  td.fieldname_verdict > .wpeo-button,
+  td[data-colkey="verdict"] > .wpeo-button,
+  td.dashboard-control > .wpeo-button:not([style]) {
+    @include dq-pill;
+    min-width: 44px;
+    padding: 3px 11px;
+    font-size: 12px;
+    cursor: default;
+
+    &:hover {
+      box-shadow: none;
+    }
+
+    &.button-green {
+      background: $dq-success-soft;
+      border-color: $dq-success-line;
+      color: $dq-success-text;
+    }
+
+    &.button-red {
+      background: $dq-danger-soft;
+      border-color: $dq-danger-line;
+      color: $dq-danger-text;
+    }
+
+    &.button-grey {
+      background: $dq-bg;
+      border-color: $dq-border-strong;
+      color: $dq-muted;
+    }
+  }
+
+  /* Days before the next control: the colour stays the one set in the configuration (inline style),
+     only the shape follows the theme */
+  td[data-colkey="days_remaining_before_next_control"] > .wpeo-button[style],
+  td.dashboard-control > .wpeo-button[style] {
+    min-width: 46px;
+    padding: 4px 10px;
+    border-width: 1px;
+    border-radius: $dq-radius-sm;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 1px rgba(15, 23, 42, 0.18);
+    cursor: default;
+
+    &:hover {
+      box-shadow: none;
+    }
+  }
+
+  /* The dashboard cell was sized for the old square chips */
+  td.dashboard-control {
+    width: auto;
+    height: auto;
+    padding: 8px 6px;
+    line-height: 1.25;
+  }
+
+  /* ---- Questions / tag statistics switch of a control card ---- */
+
+  .control-view-nav {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 6px 0 14px;
+    padding: 5px;
+    border: 1px solid $dq-border;
+    border-radius: $dq-radius-lg;
+    background: $dq-surface;
+    box-shadow: $dq-shadow-sm;
+
+    .control-view-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      padding: 7px 13px;
+      border: none;
+      border-radius: $dq-radius;
+      background: transparent;
+      color: $dq-text-soft;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background-color $dq-transition, color $dq-transition;
+
+      i {
+        margin-right: 0;
+        opacity: 0.85;
+      }
+
+      &:hover {
+        background: $dq-surface-soft;
+        color: $dq-text;
+      }
+
+      &.active {
+        margin-bottom: 0;
+        border: none;
+        background: $dq-primary-soft;
+        color: $dq-primary-strong;
+      }
+    }
+  }
+
+  /* ---- Progress of the answers (control and survey cards) ---- */
+
+  /* The counter and the bar keep their inline right margin as spacing */
+  .progress-info {
+    margin: 2px 0 8px;
+
+    .badge {
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-bar {
+      height: 8px;
+      overflow: hidden;
+      border-radius: $dq-radius-pill;
+      background: $dq-border;
+    }
+
+    /* Control card: a <progress> element */
+    progress.progress {
+      display: block;
+      height: 100%;
+      border: none;
+      border-radius: $dq-radius-pill;
+      background: transparent;
+      appearance: none;
+
+      &::-webkit-progress-bar {
+        background: transparent;
+      }
+
+      &::-webkit-progress-value {
+        border-radius: $dq-radius-pill;
+      }
+    }
+
+    .progress.progress-bar-success::-webkit-progress-value {
+      background-color: $dq-success;
+    }
+
+    .progress.progress-bar-warning::-webkit-progress-value {
+      background-color: $dq-warning;
+    }
+
+    .progress.progress-bar-danger::-webkit-progress-value {
+      background-color: $dq-danger;
+    }
+
+    .progress.progress-bar-success::-moz-progress-bar {
+      background-color: $dq-success;
+    }
+
+    .progress.progress-bar-warning::-moz-progress-bar {
+      background-color: $dq-warning;
+    }
+
+    .progress.progress-bar-danger::-moz-progress-bar {
+      background-color: $dq-danger;
+    }
+
+    /* Survey card: a <div> whose width is the progress */
+    div.progress {
+      border-radius: $dq-radius-pill;
+
+      &.progress-bar-success {
+        background-color: $dq-success;
+      }
+
+      &.progress-bar-warning {
+        background-color: $dq-warning;
+      }
+
+      &.progress-bar-danger {
+        background-color: $dq-danger;
+      }
+    }
+
+    .fa-toggle-off,
+    .fa-toggle-on {
+      font-size: 18px;
+    }
+  }
+
+  /* ---- Creation of a control: "images / list" view mode buttons next to the title ---- */
+
+  .titre_right > a.btnTitle.butActionNew > .fa-3x {
+    padding-left: 0;
+    font-size: 16px;
+  }
+}

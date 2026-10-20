@@ -1,0 +1,70 @@
+/* DigiQuali modern theme: photo gallery of the answers (object_medias.php), example photos of the
+   sheets and the risk assessments of the mapping elements */
+
+#{$dq-scope} {
+  /* ---- Photo gallery of the answers: one card per question ---- */
+
+  .element-list-medias {
+    .question-section {
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      @include dq-card;
+    }
+
+    .question-ref {
+      font-weight: 600;
+      color: $dq-text-soft;
+
+      a {
+        font-weight: 700;
+      }
+    }
+
+    .linked-medias:not(:empty) {
+      margin-top: 10px;
+    }
+
+    .media-container .photo,
+    .media-container img {
+      border-radius: $dq-radius;
+    }
+  }
+
+  .sheet-images-container .sheet-grid-images img {
+    border: none;
+    border-radius: $dq-radius-sm;
+  }
+
+  /* ---- Risk assessments and tasks of a mapping element ---- */
+
+  .riskassessment-list .riskassessment-list__header .riskassessment-list__title {
+    @include dq-label;
+  }
+
+  .riskassessment-list__container {
+    border: 1px solid $dq-border;
+    border-radius: $dq-radius;
+
+    .riskassessment__content,
+    .riskassessment-task__content {
+      background: $dq-surface;
+    }
+
+    .riskassessment__content .riskassessment__content-heading .riskassessment-tags {
+      border-radius: $dq-radius-pill;
+      background: $dq-bg;
+      color: $dq-text-soft;
+    }
+
+    .riskassessment-list__actions,
+    .riskassessment-task__actions {
+      background: $dq-surface-soft;
+      box-shadow: $dq-shadow-sm;
+
+      .wpeo-button {
+        border-color: $dq-surface;
+        color: $dq-text-soft;
+      }
+    }
+  }
+}

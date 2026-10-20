@@ -197,7 +197,8 @@ if ($action == 'create') {
 }
 $help_url = '';
 
-llxHeader('', $title, $help_url, '', 0, 0, '', '', '', 'mod-controldet page-card');
+// Not built with saturne_header(): the modern back office theme of Saturne is loaded by hand
+llxHeader('', $title, $help_url, '', 0, 0, '', ['/saturne/css/saturne.min.css', '/digiquali/css/digiquali.min.css'], '', 'saturne-theme mod-controldet page-card');
 
 // Example : Adding jquery code
 // print '<script type="text/javascript">
