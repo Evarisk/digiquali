@@ -65,13 +65,20 @@ window.digiquali.pwa.onSearchInput = function onSearchInput() {
 /**
  * Prevent the search form from reloading the page (search is done via AJAX).
  *
+ * A search form without live search, as the sheet picker of the control creation, submits as usual.
+ *
  * @param  {Event} event Submit event
  * @return {void}
  */
 window.digiquali.pwa.onSearchSubmit = function onSearchSubmit(event) {
+  let $input = $(this).find('[data-pwa-search]').first();
+  if (!$input.length) {
+    return;
+  }
+
   event.preventDefault();
   clearTimeout(window.digiquali.pwa.searchTimer);
-  window.digiquali.pwa.runSearch($(this).find('[data-pwa-search]').first());
+  window.digiquali.pwa.runSearch($input);
 };
 
 /**

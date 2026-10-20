@@ -69,6 +69,7 @@ window.digiquali.sheet.initLinkedObjectSelect = function() {
 window.digiquali.sheet.event = function() {
 
     $(document).on('click', '.toggle-group-in-tree', window.digiquali.sheet.toggleGroupInTree);
+    $(document).on('click', '.tree-toggle-all-button', window.digiquali.sheet.toggleAllGroupsInTree);
     $(document).on('click', '.addQuestionButton, .addGroupButton', window.digiquali.sheet.buttonActions);
     $(document).on('click', '.addExistingQuestion', window.digiquali.sheet.addQuestions);
     $(document).on('change', '#mandatory-all', window.digiquali.sheet.toggleAllMandatory);
@@ -80,25 +81,40 @@ window.digiquali.sheet.event = function() {
  * Restore the collapsed/expanded state of the navigation tree groups from localStorage.
  *
  * @since   21.2.0
- * @version 21.3.0
+ * @version 23.1.1
  *
  * @return {void}
  */
 window.digiquali.sheet.restoreTreeState = function() {
   const savedState = JSON.parse(localStorage.getItem('digiqualiGroupStates') || '{}');
 
-  $('.group-item').each(function () {
+  $('.question-and-group-tree .group-item').each(function () {
     const groupId = $(this).data('id');
-    const subQuestions = $(this).next('.sub-questions');
 
-    if (savedState[groupId] === false) {
-      subQuestions.addClass('collapsed');
-      $(this).find('.toggle-group-in-tree').removeClass('fa-chevron-right').addClass('fa-chevron-down');
-    } else if (savedState[groupId] === true) {
-      subQuestions.removeClass('collapsed');
-      $(this).find('.toggle-group-in-tree').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+    if (typeof savedState[groupId] === 'boolean') {
+      window.digiquali.sheet.setGroupInTreeOpened($(this), savedState[groupId]);
     }
   });
+};
+
+/**
+ * Open or close a group of the navigation tree, chevron included (right = closed, down = opened)
+ *
+ * @since   23.1.1
+ * @version 23.1.1
+ *
+ * @param  {jQuery}  groupItem The .group-item element of the tree
+ * @param  {boolean} opened    True to open the group, false to close it
+ * @return {void}
+ */
+window.digiquali.sheet.setGroupInTreeOpened = function(groupItem, opened) {
+  const subQuestions = groupItem.next('.sub-questions');
+  if (!subQuestions.length) {
+    return;
+  }
+
+  subQuestions.toggleClass('collapsed', !opened);
+  groupItem.find('.toggle-group-in-tree').toggleClass('fa-chevron-right', !opened).toggleClass('fa-chevron-down', opened);
 };
 
 /**
@@ -287,18 +303,36 @@ window.digiquali.sheet.closeAllGroups = function () {
  * Show or hide the sub-questions of a group
  *
  * @since   20.1.0
- * @version 20.1.0
+ * @version 23.1.1
  */
 window.digiquali.sheet.toggleGroupInTree = function () {
   const groupItem = $(this).closest('.group-item');
-  const groupId = groupItem.data('id');
-  const subQuestions = groupItem.next('.sub-questions');
+  const opened = groupItem.next('.sub-questions').hasClass('collapsed');
 
-  $(this).toggleClass('fa-chevron-up fa-chevron-down');
-  subQuestions.toggleClass('collapsed');
+  window.digiquali.sheet.setGroupInTreeOpened(groupItem, opened);
+  window.digiquali.sheet.saveGroupState(groupItem.data('id'), opened);
+};
 
-  const isCollapsed = subQuestions.hasClass('collapsed');
-  window.digiquali.sheet.saveGroupState(groupId, !isCollapsed);
+/**
+ * Open or close every group of the navigation tree at once
+ *
+ * @since   23.1.1
+ * @version 23.1.1
+ *
+ * @return {void}
+ */
+window.digiquali.sheet.toggleAllGroupsInTree = function () {
+  const opened = $(this).data('open') === 1;
+  const groupStates = JSON.parse(localStorage.getItem('digiqualiGroupStates') || '{}');
+
+  $('.question-and-group-tree .group-item').each(function () {
+    if ($(this).next('.sub-questions').length) {
+      window.digiquali.sheet.setGroupInTreeOpened($(this), opened);
+      groupStates[$(this).data('id')] = opened;
+    }
+  });
+
+  localStorage.setItem('digiqualiGroupStates', JSON.stringify(groupStates));
 };
 
 /**

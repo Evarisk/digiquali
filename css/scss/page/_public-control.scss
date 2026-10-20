@@ -1,293 +1,429 @@
-#publicControlHistory {
-  .public-card__container {
-    .public-card__header {
-      margin-bottom: 0;
+/* DigiQuali public control pages (control history, action plan) — built on the PWA shell of _pwa.scss */
 
-      .objet-container {
-        .objet-label.color-1 {
-          color: #FF3535;
-        }
-        .objet-label.color-2 {
-          color: #FD7E00;
-        }
-        .objet-label.color-3 {
-          color: #FFB700;
-        }
-        .objet-label.color-4 {
-          color: #C7BA10;
-        }
-      }
-    }
-  }
+$public-control-ok: #16a34a;
+$public-control-ko: $color__red;
+$public-control-overdue: $color__orange;
+$public-control-none: #94a3b8;
+$public-control-link: #7920d9;
 
-  .public-control-documentation {
-    .card {
-      &:last-child {
-        margin-bottom: 0 !important;
-      }
-      .card-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-    }
-    .documentation-empty {
-      text-align: center;
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.5);
-    }
-  }
-}
-
-
-// @TODO Switch in Saturne.
-#publicControlHistory .public-card__container {
-  .header-information {
-    display: flex;
-    flex-direction: row;
-    gap: 1em;
-    flex-wrap: nowrap;
-
-    .information-thumbnail {
-      max-width: 100px;
-      min-width: 100px;
-
-      img {
-        border-radius: 6px;
-      }
-    }
-    .information-type {
-      font-size: 12px;
-      color: #0d8aff;
-      font-weight: 600;
-    }
-    .information-label {
-      &.size-l {
-        font-size: 1.1em;
-        font-weight: 600;
-      }
-      span {
-        word-break: break-all;
-      }
-      .nowraponall {
-        white-space: normal;
-      }
-    }
-  }
-  .header-objet {
-    .objet-info {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .objet-notification {
-      height: 100%;
-      align-content: center;
-      font-size: 14px;
-      color: rgba(0,0,0,0.5);
-    }
-    .objet-actions {
-      display: flex;
-      gap: 0.5em;
-
-      @media ( max-width: $media__small ) {
-        flex-direction: column;
-      }
-
-      .wpeo-button {
-        span {
-          font-size: 13px;
-        }
-        .button-icon {
-          font-size: 28px;
-        }
-      }
-    }
-  }
-
-  .objet-label {
-    font-weight: 400;
-    &.size-l {
-      font-size: 1.1em;
-      font-weight: 600;
-    }
-    .objet-icon {
-      color: rgba(0,0,0,0.4);
-      margin-right: 0.2em;
-    }
-  }
-}
-
-#publicControlHistory .public-card__tab {
-  display: flex;
-  flex-flow: row wrap;
-  margin: auto;
-  width: 100%;
-  max-width: 910px;
-  gap: 0.5em;
-  padding: 0 2em;
-
-  .tab {
-    padding: 1em;
-    margin: 0;
-    font-size: 12px;
-    background: #fff;
-    opacity: 0.6;
-    transition: opacity 0.2s ease-out;
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
-    font-weight: 600;
-    line-height: 1.2;
-
-    &:hover {
-      opacity: 1;
-      cursor: pointer;
-    }
-    &.tab-active {
-      border-top: 2px solid $color__primary;
-      color: $color__primary;
-      opacity: 1;
-    }
-  }
-}
-
-.wpeo-grid {
-  &.grid-no-margin {
-    > * {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-    }
-  }
-}
+/* Dolibarr's a:link color would otherwise win over the white text of a link button, on every DigiQuali page */
 a.wpeo-button:link {
   color: #fff;
 }
-.wpeo-button {
-  &.button-disable-hover {
-    &:hover {
-      box-shadow: none !important;
-      cursor: auto !important;
-    }
-  }
-  &.button-flex {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    line-height: 1;
 
-    .button-icon {
-      line-height: 1;
-      margin: 0;
-    }
+/* ----- Shell ----- */
+body.page-public-control {
+  &.page-public-control--no-nav {
+    padding-bottom: 0 !important;
   }
-  &.button-square-60 {
-    min-width: 60px;
+
+  .fiche {
+    margin: 0 !important;
   }
 }
-#publicControlHistory .public-card__container .card {
+
+/* The header has no user part: a three columns grid keeps the title centered whatever the logo width */
+.pwa-header--public {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+
+  .pwa-header-logo {
+    justify-self: start;
+  }
+}
+
+.public-control-screen {
   width: 100%;
-  border: 1px solid rgba(13, 138, 255, .2);
-  box-shadow: 0 4px 1px 0 rgba(13, 138, 255, .2);
-  border-radius: 6px;
+  margin: 0 auto;
+}
+
+#publicControlHistory .public-control-screen {
+  max-width: 720px;
+}
+
+/* ----- Controlled object ----- */
+.public-control-object {
   display: flex;
-  gap: 1em;
-  padding: 0 1em 0 0;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: $pwa-card-bg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
 
-  &.has-margin {
-    margin-bottom: 1em;
+.public-control-object__thumbnail {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  overflow: hidden;
+
+  img {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    object-fit: cover;
   }
-  .card-thumbnail {
-    max-width: 100px;
-    min-width: 100px;
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
 
-
-    &.size-min {
-      max-width: 60px;
-      min-width: 60px;
-      aspect-ratio: 1/1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    img {
-      aspect-ratio: 1 / 1;
-      object-fit: cover;
-      border-top-left-radius: 6px;
-      border-bottom-left-radius: 6px;
-      width: 100%;
-      height: 100%;
-
-      @media ( max-width: $media__small ) {
-        height: auto;
-      }
-    }
-    .card-thumbnail-icon {
-      font-size: 20px;
-      color: #fff;
-    }
-  }
-  .card-container {
-    padding: 0.4em 0;
-    width: 100%;
-
-    .information-type {
-      font-size: 12px;
-      color: #0d8aff;
-      font-weight: 600;
-    }
-    .information-label {
-      &.size-l {
-        font-size: 1.1em;
-        font-weight: 600;
-      }
-      .objet-icon {
-        color: rgba(0,0,0,0.4);
-        margin-right: 0.2em;
-      }
-    }
-  }
-  .card-actions {
-    margin: auto 0;
-    padding: 0.4em 0;
+  &--placeholder {
     display: flex;
-    gap: 0.5em;
+    align-items: center;
+    justify-content: center;
+    background: $pwa-bg;
+    font-size: 26px;
 
-    @media ( max-width: $media__small ) {
-      flex-direction: column;
-    }
-
-    .wpeo-button {
-      .button-icon {
-        color: #fff !important;
-        opacity: 1 !important;
-      }
+    img {
+      width: 30px !important;
+      height: 30px !important;
+      object-fit: contain;
     }
   }
 }
 
-/**
-* Mobile
- */
+/* .information-* also style the identity printed by the printPublicControlLinkedObjectIdentity hook */
+.public-control-object__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 
-@media ( max-width: $media__small ) {
+  .information-type {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: $pwa-muted;
 
-  // @TODO Switch in Saturne.
-  .page-public-card .fiche {
-    margin-left: 0px !important;
-    margin-right: 0px !important;
-  }
-  #publicControlHistory .public-card__tab {
-    margin-bottom: 1em;
-    padding: 0;
-    justify-content: center;
-
-    .tab {
-      border-radius: 3px;
+    &:first-child {
+      margin-top: 0;
     }
   }
-  #publicControlHistory .public-card__container {
-    padding: 1em;
+
+  .information-label {
+    font-size: 14px;
+    color: $pwa-text;
+    word-break: break-word;
+
+    &.size-l {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
   }
+}
+
+/* ----- Status ----- */
+.public-control-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 16px 14px;
+  border-radius: 14px;
+  background: $pwa-card-bg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  &--ok { --status-color: #{$public-control-ok}; }
+  &--ko { --status-color: #{$public-control-ko}; }
+  &--overdue { --status-color: #{$public-control-overdue}; }
+  &--none { --status-color: #{$public-control-none}; }
+}
+
+.public-control-status__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--status-color);
+  color: #fff;
+  font-size: 22px;
+}
+
+.public-control-status__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.public-control-status__label {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--status-color);
+}
+
+.public-control-status__detail {
+  font-size: 13px;
+  color: $pwa-muted;
+}
+
+/* ----- Next control ----- */
+.public-control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: $pwa-card-bg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  .pwa-card-field {
+    font-size: 14px;
+  }
+
+  .pwa-card-field-label {
+    flex-basis: 40%;
+  }
+
+  .objet-icon {
+    margin-right: 4px;
+    color: $pwa-muted;
+  }
+}
+
+.public-control-panel__strong {
+  font-weight: 700;
+}
+
+/* The deadline color comes from the module setup, hence the custom property */
+.public-control-panel__deadline {
+  font-weight: 700;
+  color: var(--deadline-color, #{$pwa-text});
+}
+
+.public-control-panel__muted {
+  display: block;
+  color: $pwa-muted;
+}
+
+.public-control-create {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px !important;
+  border-radius: 12px !important;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* ----- Control list and documents ----- */
+.public-control-card {
+  position: relative;
+  align-items: flex-start;
+
+  .pwa-card-field-label {
+    flex-basis: 44%;
+  }
+}
+
+/* The whole card opens the link: inner links stay above it */
+.public-control-card__link {
+  display: flex;
+  align-self: center;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+  }
+}
+
+.public-control-document__source a,
+.public-control-card a:not(.public-control-card__link) {
+  position: relative;
+  z-index: 1;
+}
+
+.public-control-card__thumbnail {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 19px;
+
+  &--ok {
+    background: rgba($public-control-ok, 0.12);
+    color: $public-control-ok;
+  }
+
+  &--ko {
+    background: rgba($public-control-ko, 0.12);
+    color: $public-control-ko;
+  }
+
+  .media-container,
+  .inline-block {
+    width: 100%;
+    height: 100%;
+  }
+
+  img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    object-fit: cover;
+  }
+}
+
+.public-control-card__note {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: $pwa-bg;
+  font-size: 12px;
+  line-height: 1.35;
+  color: $pwa-muted;
+  word-break: break-word;
+}
+
+.public-control-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &--ok {
+    background: rgba($public-control-ok, 0.12);
+    color: $public-control-ok;
+  }
+
+  &--ko {
+    background: rgba($public-control-ko, 0.12);
+    color: $public-control-ko;
+  }
+}
+
+.public-control-document {
+  position: relative;
+}
+
+.public-control-document__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba($color__primary, 0.1);
+  color: $color__primary;
+  font-size: 19px;
+
+  &--link {
+    background: rgba($public-control-link, 0.1);
+    color: $public-control-link;
+  }
+}
+
+.public-control-document__source {
+  overflow: hidden;
+  font-size: 12px;
+  color: $pwa-muted;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----- Free content (action plan, views of other modules) ----- */
+.public-control-sheet {
+  padding: 14px;
+  border-radius: 14px;
+  background: $pwa-card-bg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+}
+
+.public-control-sheet__subtitle {
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: $pwa-text;
+}
+
+/* ----- Bottom navigation ----- */
+.public-control-nav {
+  /* Same width for every item, whatever the length of the label a module gives its own */
+  .pwa-nav-item,
+  > .tab {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0 !important;
+    white-space: normal !important;
+    line-height: 1.15;
+  }
+
+  .pwa-nav-item {
+    position: relative;
+    padding: 0 4px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* Items added by other modules through the digiqualiPublicControlTab hook */
+  > .tab {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 4px;
+    color: $pwa-muted;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+
+    i {
+      font-size: 19px;
+    }
+
+    /* A module that gives no icon gets a generic one */
+    &:not(:has(i))::before {
+      content: '\f12e';
+      font-family: 'Font Awesome 5 Free';
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    &.tab-active {
+      color: $color__primary;
+    }
+  }
+}
+
+.public-control-nav__count {
+  position: absolute;
+  top: 7px;
+  left: calc(50% + 6px);
+  min-width: 17px;
+  padding: 1px 5px;
+  border-radius: 9px;
+  background: $color__primary;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
 }

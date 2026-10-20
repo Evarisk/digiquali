@@ -77,7 +77,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '23.1.1';
+		$this->version = '23.2.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -846,6 +846,25 @@ class modDigiQuali extends DolibarrModules
             'target'   => '',
             'user'     => 0
         ];
+
+		// The media library page belongs to Saturne : no entry while the installed Saturne does not ship it yet
+		if (file_exists(dol_buildpath('/saturne/view/saturne_medias.php'))) {
+			$this->menu[$r++] = [
+				'fk_menu'  => 'fk_mainmenu=digiquali',
+				'type'     => 'left',
+				'titre'    => 'MediaLibrary',
+				'prefix'   => '<i class="fas fa-images pictofixedwidth"></i>',
+				'mainmenu' => 'digiquali',
+				'leftmenu' => 'digiquali_medias',
+				'url'      => '/saturne/view/saturne_medias.php?module_name=digiquali',
+				'langs'    => 'digiquali@digiquali',
+				'position' => 1000 + $r,
+				'enabled'  => 'isModEnabled("digiquali")',
+				'perms'    => '$user->rights->digiquali->control->read',
+				'target'   => '',
+				'user'     => 0,
+			];
+		}
 
 		$this->menu[$r++] = [
 			'fk_menu'  => 'fk_mainmenu=digiquali',

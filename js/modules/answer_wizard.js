@@ -250,6 +250,14 @@ window.digiquali.answerWizard.isQuestionAnswered = function($question) {
     return duration !== undefined && duration !== null && String(duration).trim() !== '';
   }
 
+  // A photo table answer lives in the hidden JSON, filled as soon as a photo is added
+  const $photoMultiple = $question.find('.question-photo-multiple');
+  if ($photoMultiple.length) {
+    const photoMultiple = $photoMultiple.find('.question-answer').val();
+
+    return photoMultiple !== undefined && photoMultiple !== null && String(photoMultiple).trim() !== '';
+  }
+
   const $input = $question.find('.question-answer').not('[type="hidden"]');
   if (!$input.length) {
     return false;

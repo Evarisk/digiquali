@@ -187,6 +187,7 @@ class Question extends SaturneObject
 	public const TYPE_OK_KO_TOFIX_NA = 'OkKoToFixNonApplicable';
 	public const TYPE_MARQUE_NF = 'MarqueNF';
 	public const TYPE_ISO9001 = 'Iso9001';
+	public const TYPE_PHOTO_MULTIPLE = 'PhotoMultiple';
 
     public const QUESTION_TYPES = [
 		self::TYPE_UNIQUE_CHOICE => [
@@ -237,6 +238,12 @@ class Question extends SaturneObject
 			'default_points' => 1,
 			'correctable' => true,
 			'only_one_correct_answer' => true,
+		],
+		// The answer is made of the answer photos : one row per photo, each with its comment and OK/KO status
+		self::TYPE_PHOTO_MULTIPLE => [
+			'default_points' => 0,
+			'correctable' => false,
+			'answer_photos' => true,
 		],
 	];
 
@@ -867,6 +874,17 @@ class Question extends SaturneObject
 	}
 
 	/**
+	 * To know if the answer photos are shown on the question : either the question allows them, or
+	 * its type is made of them and they cannot be turned off
+	 *
+	 * @return bool
+	 */
+	public function acceptsAnswerPhotos(): bool
+	{
+		return $this->authorize_answer_photo > 0 || (self::QUESTION_TYPES[$this->type]['answer_photos'] ?? false);
+	}
+
+	/**
 	 * To know if the question has at least one answer which is set as a correct answer
 	 *
 	 * @return bool
@@ -910,7 +928,7 @@ class Question extends SaturneObject
 	public static function getAllDefaultPoints(): array
 	{
 		return array_map(function($questionTypeConfig) {
-			return ($questionTypeConfig['default_points'] ?? 0);
+			return $questionTypeConfig['default_points'];
 		}, self::QUESTION_TYPES);
 	}
 
@@ -928,6 +946,18 @@ class Question extends SaturneObject
 			}
 		}
 		return $questionTypesWithBounds;
+	}
+
+	/**
+	 * List of question types whose answer is made of the answer photos, which cannot be turned off
+	 *
+	 * @return array ['PhotoMultiple', etc...]
+	 */
+	public static function getQuestionTypesWithAnswerPhotos(): array
+	{
+		return array_keys(array_filter(self::QUESTION_TYPES, function ($questionTypeConfig) {
+			return !empty($questionTypeConfig['answer_photos']);
+		}));
 	}
 
 	/**

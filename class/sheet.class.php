@@ -776,52 +776,63 @@ class Sheet extends SaturneObject
         $out .= '  <div id="id-left">';
         $out .= '    <div class="nav-wrapper wpeo-wrap">';
         $out .= '      <div class="navigation-container">';
-        $out .= '      <a href="'. $sheetCardUrl . '?id=' . $this->id . '" class="sheet-item-link">';
+        // The add buttons are links too, so they stay outside the sheet link: nested links are invalid HTML and break the header layout
         $out .= '        <div class="sheet-header '. ($typeSelected == 'sheet' ? 'selected' : '') .'" data-id="'. $this->id .'">';
+        $out .= '          <a href="'. $sheetCardUrl . '?id=' . $this->id . '" class="sheet-item-link">';
         $out .= '            <span class="icon fas fa-list fa-fw"></span>';
-        $out .= '            <div class="title">&nbsp;' . $this->label .'</div>';
-        $out .= '            <div class="add-object-container">';
-        $out .= '              <a id="newGroup" href="' . $questionGroupCardUrl . '?action=create&sheet_id='. $this->id . '">';
-        $out .= '                <div class="wpeo-button button-square-40 button-secondary wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestionGroup') . '">';
-        $out .= '                  <strong>'. $modQuestionGroup->prefix .'</strong><span class="button-add animated fas fa-plus-circle"></span>';
-        $out .= '                </div>';
-        $out .= '              </a>';
-        $out .= '              <a id="newQuestion" href="' . $questionCardUrl . '?action=create&sheet_id='. $this->id . '">';
-        $out .= '                <div class="wpeo-button button-square-40 wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestion') . '">';
-        $out .= '                  <strong>'. $modQuestion->prefix .'</strong><span class="button-add animated fas fa-plus-circle"></span>';
-        $out .= '                </div>';
-        $out .= '              </a>';
-        $out .= '            </div>';
+        $out .= '            <span class="title">' . $this->label .'</span>';
+        $out .= '          </a>';
+        $out .= '          <div class="add-object-container">';
+        $out .= '            <a id="newGroup" href="' . $questionGroupCardUrl . '?action=create&sheet_id='. $this->id . '">';
+        $out .= '              <div class="wpeo-button button-square-40 button-secondary wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestionGroup') . '">';
+        $out .= '                <strong>'. $modQuestionGroup->prefix .'</strong><span class="button-add animated fas fa-plus-circle"></span>';
+        $out .= '              </div>';
+        $out .= '            </a>';
+        $out .= '            <a id="newQuestion" href="' . $questionCardUrl . '?action=create&sheet_id='. $this->id . '">';
+        $out .= '              <div class="wpeo-button button-square-40 wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestion') . '">';
+        $out .= '                <strong>'. $modQuestion->prefix .'</strong><span class="button-add animated fas fa-plus-circle"></span>';
+        $out .= '              </div>';
+        $out .= '            </a>';
+        $out .= '          </div>';
         $out .= '        </div>';
 
-
-        $out .= '      </a>';
-
         if (!empty($questionAndGroups)) {
+            $questionsByGroup = [];
+            foreach ($questionAndGroups as $questionOrGroup) {
+                if ($questionOrGroup->element == 'questiongroup') {
+                    $questionsByGroup[$questionOrGroup->id] = $questionOrGroup->fetchQuestionsOrderedByPosition();
+                }
+            }
+
+            // Expand / collapse all is only useful when at least one group can be opened
+            if (!empty(array_filter($questionsByGroup))) {
+                $out .= '        <div class="tree-toggle-all">';
+                $out .= '          <button type="button" class="tree-toggle-all-button wpeo-tooltip-event" data-open="1" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('ExpandAllGroups') . '"><span class="fas fa-plus-square"></span></button>';
+                $out .= '          <button type="button" class="tree-toggle-all-button wpeo-tooltip-event" data-open="0" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('CollapseAllGroups') . '"><span class="fas fa-minus-square"></span></button>';
+                $out .= '        </div>';
+            }
 
             $out .= '        <ul class="question-list">';
             foreach ($questionAndGroups as $questionOrGroup) {
                 if ($questionOrGroup->element == 'questiongroup') {
-                    $questionsInGroup = $questionOrGroup->fetchQuestionsOrderedByPosition();
+                    $questionsInGroup = $questionsByGroup[$questionOrGroup->id];
                     $groupHasQuestions = !empty($questionsInGroup);
                     $out .= '  <li class="group-item ' . ($typeSelected == 'questiongroup' && $idSelected == $questionOrGroup->id ? 'selected' : '') . '" data-id="' . $questionOrGroup->id . '">';
-                    $out .= '    <span class="icon fas ' . ($groupHasQuestions ? 'fa-chevron-right' : '') . ' fa-fw toggle-group-in-tree" style="margin-right: 10px;"></span>';
+                    $out .= '    <span class="icon fas ' . ($groupHasQuestions ? 'fa-chevron-right' : '') . ' fa-fw toggle-group-in-tree"></span>';
                     $out .= '    <span class="icon fas fa-folder fa-2x"></span>';
                     $out .= '    <a href="' . $questionGroupCardUrl . '?id=' . $questionOrGroup->id . '&sheet_id=' . $this->id . '" class="group-item-link">';
                     $out .= '      <div class="title-container">';
                     $out .= '        <span class="ref">' . $questionOrGroup->ref . '</span>';
                     $out .= '        <span class="label">' . $questionOrGroup->label . '</span>';
                     $out .= '      </div>';
-                    $out .= '      <div class="add-object-container">';
-                    $out .= '        <a id="newQuestion" href="' . $questionCardUrl . '?action=create&sheet_id=' . $this->id . '">';
-                    $out .= '          <div class="wpeo-button button-square-30 wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestion') . '">';
-                    $out .= '            <strong>' . $modQuestion->prefix . '</strong><span class="button-add animated fas fa-plus-circle"></span>';
-                    $out .= '          </div>';
-                    $out .= '        </a>';
-                    $out .= '      </div>';
                     $out .= '    </a>';
-                    $out .= '  </li>';
-
+                    $out .= '    <div class="add-object-container">';
+                    $out .= '      <a id="newQuestion" href="' . $questionCardUrl . '?action=create&sheet_id=' . $this->id . '">';
+                    $out .= '        <div class="wpeo-button button-square-30 wpeo-tooltip-event" data-direction="bottom" data-color="light" aria-label="' . $langs->trans('NewQuestion') . '">';
+                    $out .= '          <strong>' . $modQuestion->prefix . '</strong><span class="button-add animated fas fa-plus-circle"></span>';
+                    $out .= '        </div>';
+                    $out .= '      </a>';
+                    $out .= '    </div>';
                     $out .= '  </li>';
 
                     if ($groupHasQuestions) {
@@ -1020,6 +1031,23 @@ class Sheet extends SaturneObject
                 print '<i class="fa fa-stopwatch" aria-hidden="true"></i> ' . digiquali_format_duration($averageSeconds);
                 print '</div>';
                 print '<div class="range-average-label">' . $langs->trans("AverageValue") . '</div>';
+                print '</div>';
+                print '</div>';
+                break;
+
+            case 'PhotoMultiple':
+                // Every photo of every answer counts, each with the status it was given
+                $photoStatuses = [];
+                foreach ($questionAnswerStats[$question->id] ?? [] as $questionAnswer) {
+                    $photoStatuses = array_merge($photoStatuses, $questionAnswer['photo_statuses'] ?? []);
+                }
+                $statusCounts = array_count_values($photoStatuses);
+
+                print '<div class="range-bar-container">';
+                print '<div class="range-average-indicator">';
+                print '<div class="range-average-value">';
+                print '<i class="fa fa-images" aria-hidden="true"></i> ' . $langs->trans('PhotoMultipleSummary', count($photoStatuses), $statusCounts['OK'] ?? 0, $statusCounts['KO'] ?? 0);
+                print '</div>';
                 print '</div>';
                 print '</div>';
                 break;

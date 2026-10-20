@@ -201,6 +201,12 @@ if (empty($resHook)) {
 
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_save_action.tpl.php';
 
+    // Actions uploadPhoto, deletePhoto posted by the Saturne media block of the answer photos.
+    // It replays the HTML of the response to refresh itself, so this must not redirect
+    if (in_array($action, ['uploadPhoto', 'deletePhoto']) && $permissiontoadd && $object->status == Survey::STATUS_DRAFT) {
+        require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    }
+
     // Actions builddoc, forcebuilddoc, remove_file
     require_once __DIR__ . '/../../../saturne/core/tpl/documents/documents_action.tpl.php';
 
@@ -742,6 +748,9 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/card_presend.tpl.php';
 }
+
+// Photo editor modal (required by saturne_render_media_block)
+require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
 
 // End of page
 llxFooter();

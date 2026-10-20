@@ -60,6 +60,10 @@ require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_header.tpl.php';
 
 require __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_list.tpl.php';
 
+if ($user->hasRight('digiquali', 'control', 'write')) {
+    print '<a class="pwa-fab" href="' . dol_buildpath('/custom/digiquali/view/frontend/pwa_control_create.php', 1) . '" aria-label="' . dol_escape_htmltag($langs->trans('NewControl')) . '"><i class="fas fa-plus"></i></a>';
+}
+
 require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_bottom_nav.tpl.php';
 
 llxFooter();

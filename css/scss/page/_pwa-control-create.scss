@@ -1,0 +1,132 @@
+/* DigiQuali PWA — control creation (view/frontend/pwa_control_create.php) and its entry button */
+
+/* Floating button of the control list, above the bottom navigation */
+.pwa-fab {
+  position: fixed;
+  right: 18px;
+  bottom: $pwa-nav-height + 18px;
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: $color__primary;
+  color: #fff !important;
+  font-size: 22px;
+  box-shadow: 0 4px 12px rgba(13, 138, 255, 0.35);
+  text-decoration: none;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.pwa-control-create {
+  max-width: 720px;
+  margin: 0 auto;
+
+  .pwa-section-title {
+    margin-top: 20px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+}
+
+.pwa-control-create__object {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  background: $pwa-card-bg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  .pwa-card-title {
+    white-space: normal;
+  }
+}
+
+.pwa-control-create__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba($color__primary, 0.1);
+  color: $color__primary;
+  font-size: 18px;
+
+  &--object {
+    background: $pwa-bg;
+  }
+}
+
+.pwa-control-create__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: $pwa-muted;
+}
+
+.pwa-control-create__muted {
+  font-size: 12px;
+  color: $pwa-muted;
+}
+
+.pwa-control-create__change {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: $pwa-bg;
+  color: $color__primary;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pwa-control-create__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: $pwa-card-bg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pwa-control-create__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 13px;
+    font-weight: 700;
+    color: $pwa-text;
+  }
+
+  .select2-container {
+    width: 100% !important;
+  }
+}
+
+.pwa-control-create__submit {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 22px;
+  padding: 13px !important;
+  border-radius: 12px !important;
+  font-size: 16px;
+  font-weight: 700;
+}

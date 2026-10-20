@@ -51,6 +51,234 @@ function digiquali_format_duration($answer): string
 }
 
 /**
+ * Read the answer of a PhotoMultiple question
+ *
+ * The answer is a JSON object keyed by the name of each answer photo, so a row follows its photo
+ * whatever the order of the gallery: {"photo_1.jpg": {"comment": "...", "status": "KO"}, ...}.
+ * Everything that does not fit that shape is dropped, the answer also comes back from the browser.
+ *
+ * @param  string|null $answer Answer of the line
+ * @return array               Rows keyed by photo file name, each with a comment and a status (OK, KO or empty)
+ */
+function digiquali_photo_multiple_decode(?string $answer): array
+{
+    $decodedAnswer = ($answer !== null && $answer !== '') ? json_decode($answer, true) : null;
+    if (!is_array($decodedAnswer)) {
+        return [];
+    }
+
+    $rows = [];
+    foreach ($decodedAnswer as $fileName => $row) {
+        $fileName = (string) $fileName;
+        // The key is only ever matched against the names of the photo directory : a path is never one of them
+        if ($fileName === '' || strpbrk($fileName, '/\\') !== false || strpos($fileName, '..') !== false || !is_array($row)) {
+            continue;
+        }
+
+        $status = dol_strtoupper((string) ($row['status'] ?? ''));
+
+        $rows[$fileName] = [
+            'comment' => dol_substr(dol_string_nohtmltag((string) ($row['comment'] ?? ''), 0, 'UTF-8', 0, 0), 0, 2000),
+            'status'  => in_array($status, ['OK', 'KO'], true) ? $status : '',
+        ];
+    }
+
+    return $rows;
+}
+
+/**
+ * Write the answer of a PhotoMultiple question
+ *
+ * @param  array  $rows Rows keyed by photo file name, as returned by digiquali_photo_multiple_decode()
+ * @return string       JSON answer, empty string when there is no photo so the question stays unanswered
+ */
+function digiquali_photo_multiple_encode(array $rows): string
+{
+    // The object cast keeps a JSON object even if a photo name would read as a number
+    return empty($rows) ? '' : (json_encode((object) $rows) ?: '');
+}
+
+/**
+ * Clean an answer of a PhotoMultiple question posted by the browser
+ *
+ * @param  string $answer Posted answer
+ * @return string         Answer rebuilt from its valid rows only
+ */
+function digiquali_photo_multiple_sanitize(string $answer): string
+{
+    return digiquali_photo_multiple_encode(digiquali_photo_multiple_decode($answer));
+}
+
+/**
+ * Get the directory, relative to the module output, holding the answer photos of a question
+ *
+ * @param  CommonObject $object   Answered object (control or survey)
+ * @param  Question     $question Question
+ * @return string                 Sub-directory, the same the media block of the question uploads into
+ */
+function digiquali_get_answer_photo_sub_dir(CommonObject $object, Question $question): string
+{
+    return $object->element . '/' . $object->ref . '/answer_photo/' . $question->ref;
+}
+
+/**
+ * List the rows of a PhotoMultiple answer : one per answer photo, oldest first, with its comment and status
+ *
+ * The photos are the reference, the answer only completes them : a photo with nothing written yet
+ * still gets its row, and what the answer holds about a photo deleted since is ignored.
+ *
+ * @param  CommonObject $object   Answered object (control or survey)
+ * @param  Question     $question Question
+ * @param  string|null  $answer   Answer of the line
+ * @return array                  Rows keyed by photo file name : name, path, sub_dir, comment and status
+ */
+function digiquali_photo_multiple_get_rows(CommonObject $object, Question $question, ?string $answer): array
+{
+    global $conf;
+
+    // Not loaded by every host page, and this library is included from public pages too
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/images.lib.php';
+
+    $subDir     = digiquali_get_answer_photo_sub_dir($object, $question);
+    $photoDir   = $conf->digiquali->dir_output . '/' . $subDir;
+    $answerRows = digiquali_photo_multiple_decode($answer);
+
+    $rows = [];
+    if (dol_is_dir($photoDir)) {
+        $photoFiles = dol_dir_list($photoDir, 'files', 0, '', '(\.meta|_preview.*\.png)$', 'date', SORT_ASC);
+        foreach ($photoFiles as $photoFile) {
+            if (image_format_supported($photoFile['name']) < 0) {
+                continue;
+            }
+
+            $rows[$photoFile['name']] = [
+                'name'    => $photoFile['name'],
+                'path'    => $photoFile['fullname'],
+                'sub_dir' => $subDir,
+                'comment' => $answerRows[$photoFile['name']]['comment'] ?? '',
+                'status'  => $answerRows[$photoFile['name']]['status'] ?? '',
+            ];
+        }
+    }
+
+    return $rows;
+}
+
+/**
+ * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ *
+ * @param  string|null $answer Answer of the line
+ * @return string              Number of photos and of OK and KO, empty string when there is no photo
+ */
+function digiquali_photo_multiple_summary(?string $answer): string
+{
+    global $langs;
+
+    $rows = digiquali_photo_multiple_decode($answer);
+    if (empty($rows)) {
+        return '';
+    }
+
+    $statuses = array_count_values(array_column($rows, 'status'));
+
+    return $langs->transnoentities('PhotoMultipleSummary', (string) count($rows), (string) ($statuses['OK'] ?? 0), (string) ($statuses['KO'] ?? 0));
+}
+
+/**
+ * Write a PhotoMultiple answer as text for an ODT document : the summary, then one line per photo
+ *
+ * The ODT models have a single answer field per question and print the photos in a segment of their
+ * own : the answer can only carry the status and comment of each photo, in the order they were taken.
+ *
+ * @param  string|null $answer Answer of the line
+ * @return string              Text answer, a blank when there is no photo so the ODT field is still replaced
+ */
+function digiquali_photo_multiple_odt_answer(?string $answer): string
+{
+    $summary = digiquali_photo_multiple_summary($answer);
+    if ($summary === '') {
+        return ' ';
+    }
+
+    $lines    = [$summary];
+    $position = 1;
+    foreach (digiquali_photo_multiple_decode($answer) as $row) {
+        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? $row['status'] : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
+    }
+
+    return implode("\n", $lines);
+}
+
+/**
+ * Render the answer widget of a PhotoMultiple question : a table with one row per answer photo
+ *
+ * The photos themselves are added and deleted by the media block of the question. The answer is
+ * carried by the hidden input, the only field named answer<id>, which the save action and the
+ * auto-save both read : the comment and status fields of each row are only there to fill it.
+ *
+ * @param  Question     $question       Question
+ * @param  CommonObject $object         Answered object (control or survey)
+ * @param  string       $questionAnswer Answer of the line
+ * @param  bool         $readOnly       True once the object is no longer a draft : the rows can only be read
+ * @return string                       HTML output
+ */
+function digiquali_render_photo_multiple_answer(Question $question, CommonObject $object, string $questionAnswer, bool $readOnly = false): string
+{
+    global $conf, $langs;
+
+    $disabled = ($readOnly ? ' disabled' : '');
+    $rows     = digiquali_photo_multiple_get_rows($object, $question, $questionAnswer);
+
+    // The rows only keep the photos still in the directory : the stored answer is cleaned the same way
+    $answerRows = [];
+    foreach ($rows as $fileName => $row) {
+        $answerRows[$fileName] = ['comment' => $row['comment'], 'status' => $row['status']];
+    }
+
+    $out  = '<div class="question-photo-multiple" id="question-photo-multiple-' . $question->id . '" data-question-id="' . $question->id . '" data-sub-dir="' . dol_escape_htmltag(digiquali_get_answer_photo_sub_dir($object, $question)) . '" data-saved-answer="' . dol_escape_htmltag($questionAnswer) . '">';
+    $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '" value="' . dol_escape_htmltag(digiquali_photo_multiple_encode($answerRows)) . '">';
+
+    if (empty($rows)) {
+        $out .= '<p class="question-photo-multiple__empty opacitymedium">' . $langs->trans('PhotoMultipleEmpty') . '</p>';
+    } else {
+        $out .= '<div class="question-photo-multiple__head">';
+        $out .= '<span>' . $langs->trans('PhotoMultipleImage') . '</span>';
+        $out .= '<span>' . $langs->trans('PhotoMultipleComment') . '</span>';
+        $out .= '<span>' . $langs->trans('PhotoMultipleStatus') . '</span>';
+        $out .= '</div>';
+
+        // Without a session document.php answers the login page : the public answer page goes through the
+        // image wrapper of Saturne, like the reference photos of the questions
+        $imageUrl = (defined('NOLOGIN') ? dol_buildpath('/saturne/utils/viewimage.php', 1) : DOL_URL_ROOT . '/document.php') . '?modulepart=digiquali&entity=' . $conf->entity . '&file=';
+
+        foreach ($rows as $row) {
+            $thumbName = saturne_get_thumb_name($row['name'], 'small', dirname($row['path']));
+            $photoUrl  = $imageUrl . urlencode($row['sub_dir'] . '/' . $row['name']);
+            $thumbUrl  = is_string($thumbName) ? $imageUrl . urlencode($row['sub_dir'] . '/thumbs/' . $thumbName) : $photoUrl;
+
+            $out .= '<div class="question-photo-multiple__row" data-file-name="' . dol_escape_htmltag($row['name']) . '">';
+            $out .= '<a class="question-photo-multiple__photo" href="' . dol_escape_htmltag($photoUrl) . '" target="_blank" rel="noopener">';
+            $out .= '<img src="' . dol_escape_htmltag($thumbUrl) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
+            $out .= '</a>';
+            $out .= '<textarea class="question-textarea question-photo-multiple__comment" rows="2" placeholder="' . $langs->transnoentities('WriteComment') . '"' . $disabled . '>' . dol_escape_htmltag($row['comment']) . '</textarea>';
+            $out .= '<div class="question-photo-multiple__status">';
+            foreach (['OK' => 'fa-check', 'KO' => 'fa-times'] as $status => $statusIcon) {
+                $out .= '<button type="button" class="question-photo-multiple__status-button question-photo-multiple__status-button--' . dol_strtolower($status) . ($row['status'] == $status ? ' active' : '') . '" data-status="' . $status . '" aria-pressed="' . ($row['status'] == $status ? 'true' : 'false') . '"' . $disabled . '>';
+                $out .= '<i class="fas ' . $statusIcon . '"></i> ' . $status;
+                $out .= '</button>';
+            }
+            $out .= '</div>';
+            $out .= '</div>';
+        }
+    }
+
+    $out .= '</div>';
+
+    return $out;
+}
+
+/**
  * Load the comment library, the dictionary of comments that can be dropped into a question comment
  *
  * The result is kept in a static : the question template is included once per question, so
@@ -297,6 +525,9 @@ function show_answer_from_question(Question $question, CommonObject $object, str
                 }
             }
             $out .= '</div>';
+            break;
+        case 'PhotoMultiple':
+            $out .= digiquali_render_photo_multiple_answer($question, $object, $questionAnswer, $disabled !== '');
             break;
     }
 

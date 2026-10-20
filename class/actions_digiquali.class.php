@@ -199,12 +199,11 @@ class ActionsDigiquali
             require_once __DIR__ . '/../class/survey.class.php';
         }
 
-        if (strpos($parameters['context'], 'productlotcard') !== false) {
-            if (isModEnabled('easyurl') && $action == 'set_easy_url_link') {
-                //set_easy_url_link($object);
-
-                header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
-                exit;
+        $qrCodeObjectMetadata = $this->getQRCodeObjectMetadata($parameters['context']);
+        if (!empty($qrCodeObjectMetadata) && $action == 'generate_qrcodes' && GETPOST('confirm', 'alpha') == 'yes') {
+            $objectIds = array_map('intval', GETPOST('toselect', 'array'));
+            if ($this->generateQRCodeLabels($qrCodeObjectMetadata, $objectIds, GETPOST('modellabel', 'aZ09')) < 0) {
+                setEventMessages($this->error, $this->errors, 'errors');
             }
         }
 
@@ -267,7 +266,7 @@ class ActionsDigiquali
      */
     public function formObjectOptions(array $parameters, ?object $object): int
     {
-        global $conf, $extrafields, $langs, $user;
+        global $conf, $extrafields, $langs;
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
             require_once __DIR__ . '/../../saturne/lib/object.lib.php';
@@ -292,35 +291,7 @@ class ActionsDigiquali
         }
 
         if (strpos($parameters['context'], 'productlotcard') !== false) {
-            $objectB64                 = base64_encode(json_encode(['type' => $object->element, 'id' => (int) $object->id]));
-            $publicControlInterfaceUrl = dol_buildpath('custom/digiquali/public/control/public_control_history.php?track_id=' . $objectB64 . '&entity=' . $conf->entity, 3);
-            $setEasyUrlLinkButton      =  '';
-            $assignEasyUrlButton       = '';
-            if (isModEnabled('easyurl')) {
-                require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
-                $shortener = new Shortener($this->db);
-                $result    = $shortener->fetch(0, '', ' AND t.original_url = \'' . $publicControlInterfaceUrl . '\'');
-                if ($result > 0) {
-                    $publicControlInterfaceUrl = $shortener->short_url;
-                } else {
-                    if ($user->hasRight('easyurl', 'shortener', 'write')) {
-                        $setEasyUrlLinkButton .= '<a class="reposition editfielda" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=set_easy_url_link&token=' . newToken() . '">';
-                        $setEasyUrlLinkButton .= img_picto($langs->trans('SetEasyURLLink'), 'fontawesome_fa-redo_fas_#444', 'class="paddingright pictofixedwidth valignmiddle"') . '</a>';
-                        $setEasyUrlLinkButton .= '<span>' . img_picto($langs->trans('GetEasyURLErrors'), 'fontawesome_fa-exclamation-triangle_fas_#bc9526') . '</span>';
-                    }
-                    if ($user->hasRight('easyurl', 'shortener', 'assign')) {
-                        //@Todo assign button
-                        //$assignEasyUrlButton .= dolButtonToOpenUrlInDialogPopup('assignShortener', $langs->transnoentities('AssignShortener'), '<span class="fas fa-link" title="' . $langs->trans('Assign') . '"></span>', '/custom/easyurl/view/shortener/shortener_card.php?element_type=' . $object->element . '&fk_element=' . $object->id . '&from_element=1&original_url=' . $publicControlInterfaceUrl . '&action=edit_assign', '', 'btnTitle', 'window.saturne.toolbox.checkIframeCreation();') . '</td>';
-                    }
-                }
-            }
-
-            $out  = '<a href="' . $publicControlInterfaceUrl . '" target="_blank" title="URL : ' . $publicControlInterfaceUrl . '"><i class="fas fa-external-link-alt paddingrightonly"></i>' . dol_trunc($publicControlInterfaceUrl) . '</a>';
-            $out .= showValueWithClipboardCPButton($publicControlInterfaceUrl, 0, 'none');
-//            $out .= $setEasyUrlLinkButton;
-//            $out .= $assignEasyUrlButton;
-
-            $object->array_options['options_control_history_link'] = $out;
+            $object->array_options['options_control_history_link'] = $this->getPublicControlHistoryLink($object);
         }
 
         return 0; // or return 1 to replace standard code
@@ -747,36 +718,8 @@ class ActionsDigiquali
      */
     public function printFieldListValue(array $parameters): int
     {
-        global $conf, $langs, $user;
-
         if (strpos($parameters['context'], 'product_lotlist') !== false) {
-            $trackId                   = base64_encode(json_encode(['type' => $parameters['object']->element, 'id' => (int) $parameters['object']->id]));
-            $publicControlInterfaceUrl = dol_buildpath('custom/digiquali/public/control/public_control_history.php?track_id=' . $trackId . '&entity=' . $conf->entity, 3);
-            $setEasyUrlLinkButton      =  '';
-            $assignEasyUrlButton       = '';
-            if (isModEnabled('easyurl')) {
-                require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
-                $shortener = new Shortener($this->db);
-                $result    = $shortener->fetch(0, '', ' AND t.original_url = \'' . $publicControlInterfaceUrl . '\'');
-                if ($result > 0) {
-                    $publicControlInterfaceUrl = $shortener->short_url;
-                } else {
-                    if ($user->hasRight('easyurl', 'shortener', 'write')) {
-                        $setEasyUrlLinkButton .= '<a class="reposition editfielda" href="' . $_SERVER['PHP_SELF'] . '?id=' . $parameters['object']->id . '&action=set_easy_url_link&token=' . newToken() . '">';
-                        $setEasyUrlLinkButton .= img_picto($langs->trans('SetEasyURLLink'), 'fontawesome_fa-redo_fas_#444', 'class="paddingright pictofixedwidth valignmiddle"') . '</a>';
-                        $setEasyUrlLinkButton .= '<span>' . img_picto($langs->trans('GetEasyURLErrors'), 'fontawesome_fa-exclamation-triangle_fas_#bc9526') . '</span>';
-                    }
-                    if ($user->hasRight('easyurl', 'shortener', 'assign')) {
-                        //@Todo assign button
-                        //$assignEasyUrlButton .= dolButtonToOpenUrlInDialogPopup('assignShortener', $langs->transnoentities('AssignShortener'), '<span class="fas fa-link" title="' . $langs->trans('Assign') . '"></span>', '/custom/easyurl/view/shortener/shortener_card.php?element_type=' . $parameters['object']->element . '&fk_element=' . $parameters['object']->id . '&from_element=1&original_url=' . $publicControlInterfaceUrl . '&action=edit_assign', '', 'btnTitle', 'window.saturne.toolbox.checkIframeCreation();') . '</td>';
-                    }
-                }
-            }
-
-            $out  = '<a href="' . $publicControlInterfaceUrl . '" target="_blank" title="URL : ' . $publicControlInterfaceUrl . '"><i class="fas fa-external-link-alt paddingrightonly"></i>' . dol_trunc($publicControlInterfaceUrl) . '</a>';
-            $out .= showValueWithClipboardCPButton($publicControlInterfaceUrl, 0, 'none');
-//            $out .= $setEasyUrlLinkButton;
-//            $out .= $assignEasyUrlButton; ?>
+            $out = $this->getPublicControlHistoryLink($parameters['object']); ?>
             <script>
                 var outJS             = <?php echo json_encode($out); ?>;
                 var publicControlCell = $('.liste > tbody > tr.oddeven').find('td[data-key="product_lot.control_history_link"]').last();
@@ -840,7 +783,7 @@ class ActionsDigiquali
 
                             if (!empty($questionsLinked['digiquali_question']) && is_array($questionsLinked['digiquali_question'])) {
                                 foreach ($questionsLinked['digiquali_question'] as $questionLinked) {
-                                    if ($questionLinked->authorize_answer_photo > 0) {
+                                    if ($questionLinked->acceptsAnswerPhotos()) {
                                         saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, (getDolGlobalInt($confName) ? 'large' : 'medium'), '', 0, 0, 0, 200, 200, 0, 0, 0, $object->element . '/' . $object->ref . '/answer_photo/' . $questionLinked->ref, $object, '', 0, 0);
                                         $linkedMedias += $object->nbphoto;
                                     }
@@ -1036,6 +979,14 @@ class ActionsDigiquali
             $this->resprints = $out;
         }
 
+        if (!empty($this->getQRCodeObjectMetadata($parameters['context']))) {
+            $langs->load('digiquali@digiquali');
+
+            $label = '<span class="fas fa-qrcode paddingrightonly"></span>' . $langs->transnoentities('GenerateQRCodes');
+
+            $this->resprints = '<option value="pre_generate_qrcodes" data-html="' . dol_escape_htmltag($label) . '">' . $label . '</option>';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
@@ -1080,6 +1031,24 @@ class ActionsDigiquali
                     setEventMessages('<a href="' . dol_buildpath('custom/digiquali/view/sheet/sheet_list.php', 1) . '">' . $langs->transnoentities('ObjectNotFound', img_picto('', $sheet->picto, 'class="paddingrightonly"') . $langs->transnoentities(ucfirst($sheet->element))) . '</a>', [], 'warnings');
                 }
             }
+        }
+
+        if ($parameters['massaction'] == 'pre_generate_qrcodes' && !empty($this->getQRCodeObjectMetadata($parameters['context']))) {
+            // format_cards.lib.php fills $_Avery_Labels at include time with the $db of the including scope
+            global $_Avery_Labels, $db;
+
+            require_once DOL_DOCUMENT_ROOT . '/core/lib/format_cards.lib.php';
+
+            $langs->load('digiquali@digiquali');
+
+            $labelFormats = [];
+            foreach ($_Avery_Labels as $code => $labelFormat) {
+                $labelFormats[$code] = $labelFormat['name'];
+            }
+            $formQuestion = [
+                ['type' => 'select', 'name' => 'modellabel', 'label' => $langs->trans('QRCodeLabelFormat'), 'values' => $labelFormats, 'default' => getDolGlobalString('ADHERENT_ETIQUETTE_TYPE', 'L7163'), 'morecss' => 'maxwidth400 maxwidth200onsmartphone']
+            ];
+            $this->resprints = $form->formconfirm($_SERVER['PHP_SELF'], $langs->trans('GenerateQRCodes'), $langs->trans('ConfirmMassGenerateQRCodes', count($parameters['toselect'])), 'generate_qrcodes', $formQuestion, '', 0, 200, 500, 1);
         }
 
         return 0; // or return 1 to replace standard code
@@ -1442,6 +1411,10 @@ class ActionsDigiquali
                     if ($question->type == Question::TYPE_DURATION) {
                         require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
                         $out[$parameters['key']] = digiquali_format_duration($object->answer);
+                    } elseif ($question->type == Question::TYPE_PHOTO_MULTIPLE) {
+                        // A JSON of rows per photo : the list only has room for their count
+                        require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+                        $out[$parameters['key']] = dol_escape_htmltag(digiquali_photo_multiple_summary($object->answer));
                     } else {
                         $answer = new Answer($db);
                         $res = $answer->fetch(0, '', ' AND t.position ='.$object->answer.' AND t.fk_question = '.$object->fk_question);
@@ -1557,5 +1530,174 @@ class ActionsDigiquali
         }
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Get the URL of the public control history of an object, as short as possible for QR codes
+     *
+     * An EasyURL link set for this page wins, whether it leads to the signed URL or to the former unsigned one (QR codes
+     * stuck before signing), otherwise a Saturne short URL of the signed URL is created on first call.
+     * The full signed URL is kept only when Saturne is too old to provide short URLs.
+     *
+     * @param  CommonObject $object Object whose controls are shown (product lot, ...)
+     * @return string               Public URL
+     * @throws Exception
+     */
+    protected function getPublicControlHistoryUrl(CommonObject $object): string
+    {
+        global $user;
+
+        require_once __DIR__ . '/../lib/digiquali_control.lib.php';
+
+        $fullUrl = digiquali_public_control_history_url($object);
+
+        if (isModEnabled('easyurl')) {
+            require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
+
+            $urls      = "'" . $this->db->escape($fullUrl) . "', '" . $this->db->escape(digiquali_public_control_history_url($object, false)) . "'";
+            $shortener = new Shortener($this->db);
+            if ($shortener->fetch(0, '', ' AND t.original_url IN (' . $urls . ')') > 0 && !empty($shortener->short_url)) {
+                return $shortener->short_url;
+            }
+        }
+
+        // Saturne provides short URLs since its s/ entry point
+        if (is_file(__DIR__ . '/../../saturne/s/index.php')) {
+            require_once __DIR__ . '/../../saturne/class/saturneredirection.class.php';
+
+            $saturneRedirection = new SaturneRedirection($this->db);
+
+            $shortUrl = $saturneRedirection->getShortUrl($fullUrl, $user);
+            if ($shortUrl !== '') {
+                return $shortUrl;
+            }
+        }
+
+        return $fullUrl;
+    }
+
+    /**
+     * Get the link to the public control history of an object, with its copy button
+     *
+     * @param  CommonObject $object Object whose controls are shown (product lot, ...)
+     * @return string               HTML link
+     * @throws Exception
+     */
+    protected function getPublicControlHistoryLink(CommonObject $object): string
+    {
+        $url = $this->getPublicControlHistoryUrl($object);
+
+        $out  = '<a href="' . dol_escape_htmltag($url) . '" target="_blank" title="URL : ' . dol_escape_htmltag($url) . '"><i class="fas fa-external-link-alt paddingrightonly"></i>' . dol_escape_htmltag(dol_trunc($url, 64)) . '</a>';
+        $out .= showValueWithClipboardCPButton($url, 0, 'none');
+
+        return $out;
+    }
+
+    /**
+     * Get the registry entry of the object listed in a hook context, when it can get QR code labels
+     *
+     * Product lots always can, other objects once DigiQuali may control them (DIGIQUALI_SHEET_LINK_<TYPE>). Contexts are
+     * compared whole: a substring test would take supplierinvoicelist for invoicelist
+     *
+     * @param  string               $context Hook context, contexts joined by ":"
+     * @return array<string, mixed>          Registry entry of the object, empty if none
+     * @throws Exception
+     */
+    protected function getQRCodeObjectMetadata(string $context): array
+    {
+        require_once __DIR__ . '/../lib/digiquali_linked_object.lib.php';
+
+        $contexts     = explode(':', $context);
+        $enabledTypes = array_merge(['productlot'], digiquali_get_enabled_linked_object_types());
+        foreach (digiquali_get_linkable_objects() as $objectType => $objectMetadata) {
+            if (in_array($objectType, $enabledTypes) && !empty($objectMetadata['hook_name_list']) && in_array($objectMetadata['hook_name_list'], $contexts)) {
+                return $objectMetadata;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Send a PDF sheet of labels, one QR code to the public control history per object
+     *
+     * The label engine of Dolibarr core (printsheet, tcpdflabel template) does the layout on the chosen label format.
+     * Next to the QR code: the name of the object, and the product of a product lot.
+     * On success the PDF is streamed and the script ends.
+     *
+     * @param  array<string, mixed> $objectMetadata Registry entry of the objects
+     * @param  int[]                $objectIds      Object ids
+     * @param  string               $modelLabel     Label format code (llx_c_format_cards)
+     * @return int                                  -1 on error, the script ends on success
+     * @throws Exception
+     */
+    protected function generateQRCodeLabels(array $objectMetadata, array $objectIds, string $modelLabel): int
+    {
+        // format_cards.lib.php fills $_Avery_Labels at include time with the $db of the including scope
+        global $_Avery_Labels, $conf, $db, $langs;
+
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/format_cards.lib.php';
+        require_once DOL_DOCUMENT_ROOT . '/core/modules/printsheet/modules_labels.php';
+        require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+        if (!empty($objectMetadata['class_path'])) {
+            require_once DOL_DOCUMENT_ROOT . '/' . $objectMetadata['class_path'];
+        }
+
+        $langs->loadLangs(['errors', 'digiquali@digiquali']);
+
+        if (!isset($_Avery_Labels[$modelLabel])) {
+            $this->error = $langs->trans('ErrorFieldRequired', $langs->transnoentities('QRCodeLabelFormat'));
+            return -1;
+        }
+
+        $className = (string) ($objectMetadata['class_name'] ?? '');
+        $nameField = (string) ($objectMetadata['name_field'] ?? 'ref');
+        if ($className === '' || !class_exists($className)) {
+            $this->error = $langs->trans('ErrorRecordNotFound');
+            return -1;
+        }
+
+        $records = [];
+        foreach ($objectIds as $objectId) {
+            $object = new $className($this->db);
+            if ($objectId <= 0 || $object->fetch($objectId) <= 0) {
+                continue;
+            }
+
+            $text = (string) ($object->$nameField ?? $object->ref);
+            if ($object->element == 'productlot') {
+                $product = new Product($this->db);
+                if ($product->fetch($object->fk_product) > 0) {
+                    $text .= "\n" . $product->ref;
+                }
+            }
+
+            $records[] = [
+                'textleft'   => '%BARCODE%',
+                'textheader' => '',
+                'textfooter' => '',
+                'textright'  => $text,
+                'code'       => $this->getPublicControlHistoryUrl($object),
+                'encoding'   => 'QRCODE,M',
+                'is2d'       => 1,
+            ];
+        }
+
+        if (empty($records)) {
+            $this->error = $langs->trans('ErrorRecordNotFound');
+            return -1;
+        }
+
+        $outputDir = $conf->digiquali->multidir_output[$conf->entity] . '/temp';
+        dol_mkdir($outputDir);
+
+        $fileName = 'qrcodes_' . dol_print_date(dol_now(), 'dayhourlog') . '.pdf';
+        if (doc_label_pdf_create($this->db, $records, $modelLabel, $langs, $outputDir, 'tcpdflabel', $fileName) <= 0) {
+            $this->error = $langs->trans('ErrorFailToCreateFile', $fileName);
+            return -1;
+        }
+
+        $this->db->close();
+        exit;
     }
 }

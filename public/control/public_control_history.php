@@ -122,18 +122,43 @@ $conf->setEntityValues($db, $entity);
 // Load linkable elements
 $linkableElements = saturne_get_objects_metadata();
 
-// Load object
-$objectDataJson = base64_decode($trackId);
-$objectData     = json_decode($objectDataJson);
-$objectType     = $objectData->type;
-$objectId       = $objectData->id;
+// Load object: the track id carries the element and the id of the controlled object. It comes from the URL of a
+// public page, so it is decoded defensively and only a Dolibarr object can be instantiated from it. Signed track ids
+// are base64 "URL safe" (- and _), the former unsigned ones plain base64: both decode once - and _ are put back
+$objectData = json_decode((string) base64_decode(strtr($trackId, '-_', '+/'), true));
+$objectType = (is_object($objectData) && isset($objectData->type) && is_string($objectData->type)) ? $objectData->type : '';
+$objectId   = (is_object($objectData) && isset($objectData->id)) ? (int) $objectData->id : 0;
+$objectKey  = (is_object($objectData) && isset($objectData->key) && is_string($objectData->key)) ? $objectData->key : '';
+
+if ($objectType === '' || $objectId <= 0 || !class_exists($objectType) || !is_subclass_of($objectType, 'CommonObject')) {
+    httponly_accessforbidden($langs->trans('ErrorRecordNotFound'), 404);
+}
+
+// Without its key, a track id can be guessed from one object to the next: only a signed one opens the page, apart
+// from the links that were not guessed (see digiquali_public_control_unsigned_allowed())
+$isSigned = $objectKey !== '' && hash_equals(digiquali_public_control_key($objectType, $objectId), $objectKey);
+if (!$isSigned && !digiquali_public_control_unsigned_allowed($trackId, $user)) {
+    httponly_accessforbidden($langs->trans('ErrorRecordNotFound'), 404);
+}
 
 $linkedObject = new $objectType($db);
+if ($linkedObject->fetch($objectId) <= 0) {
+    httponly_accessforbidden($langs->trans('ErrorRecordNotFound'), 404);
+}
 
-$linkedObject->fetch($objectId);
-
-$linkableElement = $linkableElements[$linkedObject->element];
-$linkedObject->fetchObjectLinked($objectId, $linkedObject->element, '', 'digiquali_control');
+// The registry of Saturne is keyed by type (thirdparty, productlot...), not by element (societe...): look the
+// entry up by key, then by class. An object missing from the registry keeps an empty entry, its optional parts
+// (picto, parent object) being skipped
+$linkableElement = $linkableElements[$linkedObject->element] ?? [];
+if (empty($linkableElement)) {
+    foreach ($linkableElements as $metadata) {
+        if (isset($metadata['class_name']) && strcasecmp($metadata['class_name'], get_class($linkedObject)) === 0) {
+            $linkableElement = $metadata;
+            break;
+        }
+    }
+}
+$linkedObject->fetchObjectLinked($objectId, $linkedObject->element, null, 'digiquali_control');
 
 // Routes to display different views
 $routes = [
@@ -163,45 +188,36 @@ $title = $langs->transnoentities('PublicControl');
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 
-saturne_header(0,'', $title, '', '', 0, 0, [], [], '', 'page-public-card'); ?>
+$controlInfoArray = get_control_infos($linkedObject);
+$showNavigation   = getDolGlobalInt('DIGIQUALI_ENABLE_PUBLIC_CONTROL_HISTORY');
+
+saturne_header(0, '', $title, '', '', 0, 0, [], [], '', 'template-pwa page-public-control' . (!$showNavigation ? ' page-public-control--no-nav' : ''));
+
+$pwaHeaderTitle = $langs->transnoentities('PublicControlTracking');
+require_once __DIR__ . '/../../core/tpl/frontend/digiquali_public_pwa_header.tpl.php'; ?>
 
 <div id="publicControlHistory">
-    <div class="public-card__tab">
-        <?php if (getDolGlobalInt('DIGIQUALI_ENABLE_PUBLIC_CONTROL_HISTORY')) : ?>
-            <div class="tab switch-public-control-view <?php echo ($route == 'linkedObjectAndControl' ? 'tab-active' : ''); ?>" data-route="linkedObjectAndControl">
-                <?php echo $langs->transnoentities('Status') . ' : ' . $langs->transnoentities($linkableElement['langs']); ?>
-            </div>
-            <?php if (is_array($linkedObject->linkedObjects['digiquali_control']) && !empty($linkedObject->linkedObjects['digiquali_control'])) : ?>
-                <div class="tab switch-public-control-view <?php echo ($route == 'controlList' ? 'tab-active' : ''); ?>" data-route="controlList">
-                    <?php
-                        echo $langs->transnoentities('ControlList');
-                        $controlInfoArray = get_control_infos($linkedObject);
-                        echo '<span class="badge badge-secondary marginleftonlyshort">' . count($controlInfoArray['control']) . '</span>';
-                    ?>
-                </div>
-            <?php endif; ?>
-            <div class="tab switch-public-control-view <?php echo ($route == 'controlDocumentation' ? 'tab-active' : ''); ?>" data-route="controlDocumentation">
-                <?php echo $langs->transnoentities('Documentation'); ?>
-            </div>
-            <?php
-                $parameters = ['trackId' => $trackId, 'entity' => $entity, 'linkedObject' => $linkedObject, 'linkableElements' => $linkableElements, 'linkableElement' => $linkableElement, 'objectType' => $objectType, 'objectId' => $objectId, 'routes' => &$routes, 'route' => $route, 'externals' => &$externals];
-                $hookmanager->executeHooks('digiqualiPublicControlTab', $parameters, $object);
-                print $hookmanager->resPrint;
-            ?>
-        <?php endif; ?>
-    </div>
+    <?php
+    // The navigation runs the digiqualiPublicControlTab hook, which registers the views of other modules: it
+    // must come before the view is picked
+    if ($showNavigation) {
+        require __DIR__ . '/../../core/tpl/frontend/public_control_nav.tpl.php';
+    } ?>
 
-    <div class="public-card__container">
+    <div class="public-control-content">
         <?php
-            if (isset($routes[$route])) {
-                if (in_array($route, $externals)) {
-                    $fromExternModule = true;
-                }
-                require_once __DIR__ . $routes[$route];
-            } else {
-                require_once __DIR__ . $routes[$defaultRoute];
-            }
-        ?>
+        if (!isset($routes[$route])) {
+            $route = $defaultRoute;
+        }
+        if (in_array($route, $externals)) {
+            // A view of another module renders without its own container: it gets the one of this page
+            $fromExternModule = true;
+            print '<div class="pwa-container public-control-screen"><div class="public-control-sheet">';
+            require_once __DIR__ . $routes[$route];
+            print '</div></div>';
+        } else {
+            require_once __DIR__ . $routes[$route];
+        } ?>
     </div>
 </div><?php
 
