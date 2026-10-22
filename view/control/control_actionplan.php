@@ -34,8 +34,8 @@ if (file_exists('../digiquali.main.inc.php')) {
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../../saturne/lib/object.lib.php';
-require_once __DIR__ . '/../../../saturne/class/task/saturnetask.class.php';
+dol_include_once('/saturne/lib/object.lib.php');
+dol_include_once('/saturne/class/task/saturnetask.class.php');
 
 // Load DigiQuali libraries
 require_once __DIR__ . '/../../class/control.class.php';

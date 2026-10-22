@@ -166,7 +166,7 @@ if (empty($reshook)) {
 	}
 
     // Actions confirm_lock, confirm_archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
 }
 
 /*

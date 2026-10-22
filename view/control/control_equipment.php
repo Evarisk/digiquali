@@ -36,7 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
 
 require_once __DIR__ . '/../../class/control.class.php';
 require_once __DIR__ . '/../../lib/digiquali_control.lib.php';
-require_once __DIR__ . '/../../../saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -84,7 +84,7 @@ if ($resHook < 0) {
 
 if (empty($resHook)) {
     // Actions set_thirdparty, set_project
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
 	// Action to add or link equipment to control
 	if ($action == 'add_equipment' && $permissiontoadd) {

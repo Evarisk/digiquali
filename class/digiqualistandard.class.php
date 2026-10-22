@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../saturne/class/saturnestandard.class.php';
+dol_include_once('/saturne/class/saturnestandard.class.php');
 
 /**
  * Class for DigiQualiStandard

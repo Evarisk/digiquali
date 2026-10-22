@@ -269,7 +269,7 @@ class ActionsDigiquali
         global $conf, $extrafields, $langs;
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata                = saturne_get_objects_metadata();
             $conf->cache['objectsMetadata'] = $objectsMetadata;
         } else {
@@ -358,7 +358,7 @@ class ActionsDigiquali
         }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
         }
 
@@ -536,7 +536,7 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
             if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+                dol_include_once('/saturne/lib/object.lib.php');
                 $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
             }
             $objectsMetadata = $conf->cache['objectsMetadata'];
@@ -684,7 +684,7 @@ class ActionsDigiquali
         }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata = saturne_get_objects_metadata();
             $conf->cache['objectsMetadata'] = $objectsMetadata;
         } else {
@@ -1067,7 +1067,7 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
             // Load Saturne libraries
-            require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+            dol_include_once('/saturne/class/saturnesignature.class.php');
 
             // Load DigiQuali libraries
             require_once __DIR__ . '/sheet.class.php';
