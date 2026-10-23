@@ -899,6 +899,11 @@ class modDigiQuali extends DolibarrModules
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
+        // Dolibarr runs init() before activating $this->depends : activate them first, their tables (saturne_object_standard...) are filled below
+        if (function_exists('saturne_activate_module_dependencies') && saturne_activate_module_dependencies($this) < 0) {
+            return -1;
+        }
+
 		$sql    = [];
 		$result = $this->_load_tables('/digiquali/sql/');
 
