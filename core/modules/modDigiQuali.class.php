@@ -949,15 +949,22 @@ class modDigiQuali extends DolibarrModules
         addDocumentModel('controldocument', 'controldocument', $langs->transnoentities('ControlDocumentPDF'));
 
 		if (!empty($conf->global->DIGIQUALI_SHEET_TAGS_SET) && empty($conf->global->DIGIQUALI_SHEET_DEFAULT_TAG)) {
-			global $user, $langs;
-			require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+			// saturne_create_category() declares the sheet type itself : the constructCategory hook is not loaded while the module is being enabled
+			$defaultTagId = saturne_create_category($langs->transnoentities('Default'), 'sheet');
+			if ($defaultTagId > 0) {
+				dolibarr_set_const($this->db, 'DIGIQUALI_SHEET_DEFAULT_TAG', $defaultTagId, 'integer', 0, '', $conf->entity);
+			}
+		}
 
-			$tags = new Categorie($this->db);
-			$tags->label = $langs->transnoentities('Default');
-			$tags->type  = 'sheet';
-			$tags->create($user);
+		// The default tag used to be created without its type, so as a product tag : give it back the sheet type (436301002, see constructCategory) when no product uses it
+		if (getDolGlobalInt('DIGIQUALI_SHEET_DEFAULT_TAG') > 0) {
+			$defaultTagId = getDolGlobalInt('DIGIQUALI_SHEET_DEFAULT_TAG');
 
-			dolibarr_set_const($this->db, 'DIGIQUALI_SHEET_DEFAULT_TAG', $tags->id, 'integer', 0, '', $conf->entity);
+			// Not $sql : init() hands that one to _init() as an array
+			$sqlDefaultTagType  = 'UPDATE ' . MAIN_DB_PREFIX . 'categorie SET type = 436301002';
+			$sqlDefaultTagType .= ' WHERE rowid = ' . $defaultTagId . ' AND type = 0';
+			$sqlDefaultTagType .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'categorie_product AS cp WHERE cp.fk_categorie = ' . $defaultTagId . ')';
+			$this->db->query($sqlDefaultTagType);
 		}
 
 		if (empty($conf->global->DIGIQUALI_QUESTION_NF_TAGS_SET)) {
