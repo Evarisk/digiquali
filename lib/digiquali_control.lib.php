@@ -186,7 +186,7 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
         }
 
         if (!empty($linkedObjectParentData['class_path'])) {
-            require_once DOL_DOCUMENT_ROOT . '/' . $linkedObjectParentData['class_path'];
+            require_once dol_buildpath('/' . $linkedObjectParentData['class_path']);
 
             $parentLinkedObject = new $linkedObjectParentData['class_name']($db);
 
