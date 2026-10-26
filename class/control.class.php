@@ -739,6 +739,10 @@ class Control extends SaturneObject
         if (property_exists($object, 'track_id')) {
             $object->track_id = generate_random_id();
         }
+        // #2687: the controller is chosen in the clone modal, a clone is often made for someone else.
+        if (!empty($options['fk_user_controller']) && (int) $options['fk_user_controller'] > 0) {
+            $object->fk_user_controller = (int) $options['fk_user_controller'];
+        }
 
         $object->context['createfromclone'] = 'createfromclone';
 
@@ -774,15 +778,18 @@ class Control extends SaturneObject
                 // Load signatory from source object.
                 $signatories = $signatory->fetchSignatory('', $fromID, $this->element);
                 if (is_array($signatories) && !empty($signatories)) {
-                    foreach ($signatories as $arrayRole) {
+                    foreach ($signatories as $role => $arrayRole) {
+                        // The controller may have been changed in the clone modal, it is set below.
+                        if ($role == 'Controller') {
+                            continue;
+                        }
                         foreach ($arrayRole as $signatoryRole) {
                             $signatory->createFromClone($user, $signatoryRole->id, $controlID);
                         }
                     }
                 }
-            } else {
-                $signatory->setSignatory($objectFromClone->id, $this->element, 'user', [$objectFromClone->fk_user_controller], 'Controller', 1);
             }
+            $signatory->setSignatory($objectFromClone->id, $this->element, 'user', [$objectFromClone->fk_user_controller], 'Controller', 1);
 
             // Add Photos.
             if (!empty($options['photos'])) {
@@ -790,6 +797,42 @@ class Control extends SaturneObject
                 $path = $dir . '/' . $objectRef . '/photos';
                 dol_mkdir($dir . '/' . $objectFromClone->ref . '/photos');
                 dolCopyDir($path,$dir . '/' . $objectFromClone->ref . '/photos', 0, 1);
+            }
+
+            // #2687: create() rebuilds the lines from the sheet with empty answers, fill them back from the source.
+            if (!empty($options['answers'])) {
+                $controlLine = new ControlLine($this->db);
+                $sourceLines = $controlLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_control = ' . $fromID . ' AND t.status > 0']);
+                if (is_array($sourceLines) && !empty($sourceLines)) {
+                    foreach ($sourceLines as $sourceLine) {
+                        $clonedLines = $controlLine->fetchFromParentWithQuestion($controlID, (int) $sourceLine->fk_question);
+                        // A question removed from the sheet since has no line on the clone.
+                        if (!is_array($clonedLines) || empty($clonedLines)) {
+                            continue;
+                        }
+
+                        // Typed properties without default stay uninitialized when the column is NULL.
+                        $clonedLine                = array_shift($clonedLines);
+                        $clonedLine->answer        = $sourceLine->answer ?? null;
+                        $clonedLine->comment       = $sourceLine->comment ?? null;
+                        $clonedLine->answer_photo  = $sourceLine->answer_photo ?? null;
+                        $clonedLine->earned_points = $sourceLine->earned_points ?? null;
+                        $clonedLine->score_rate    = $sourceLine->score_rate ?? null;
+                        if ($clonedLine->update($user, 1) < 0) {
+                            $error++;
+                            $this->error  = $clonedLine->error;
+                            $this->errors = $clonedLine->errors;
+                        }
+                    }
+                }
+
+                // Answer photos belong to the answers, PhotoMultiple answers even reference them by file name.
+                $dir  = $conf->digiquali->multidir_output[$conf->entity] . '/control';
+                $path = $dir . '/' . $objectRef . '/answer_photo';
+                if (dol_is_dir($path)) {
+                    dol_mkdir($dir . '/' . $objectFromClone->ref . '/answer_photo');
+                    dolCopyDir($path, $dir . '/' . $objectFromClone->ref . '/answer_photo', '0', 1);
+                }
             }
 
             // Add control equipments
