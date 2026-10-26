@@ -1640,7 +1640,7 @@ class ActionsDigiquali
         require_once DOL_DOCUMENT_ROOT . '/core/modules/printsheet/modules_labels.php';
         require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
         if (!empty($objectMetadata['class_path'])) {
-            require_once DOL_DOCUMENT_ROOT . '/' . $objectMetadata['class_path'];
+            require_once dol_buildpath('/' . $objectMetadata['class_path']);
         }
 
         $langs->loadLangs(['errors', 'digiquali@digiquali']);
