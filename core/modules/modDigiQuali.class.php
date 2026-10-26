@@ -46,7 +46,7 @@ class modDigiQuali extends DolibarrModules
 			saturne_load_langs(['digiquali@digiquali']);
 		} else {
 			$this->error++;
-			$this->errors[] = $langs->trans('activateModuleDependNotSatisfied', 'DigiQuali', 'Saturne');
+			$this->errors[] = $langs->trans('activateModuleDependNotSatisfied', 'DigiQuali', 'Saturne', 'DigiQuali');
 		}
 
 		// Id for module (must be unique).
@@ -315,7 +315,6 @@ class modDigiQuali extends DolibarrModules
 		}
 
 		// Array to add new pages in new tabs
-		require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
 
 		$this->tabs   = [];
 		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
