@@ -545,6 +545,7 @@ LockingDate                                    = Date de verrouillage
 ArchivingDate                                  = Date d'archivage
 DraftValidatedLocked                           = -- (Brouillon + validé + verrouillé) --
 CloneControlEquipments                         = Cloner les moyens de contrôle
+CloneAnswers                                   = Cloner les réponses (commentaires et photos compris)
 NoControl                                      = Aucun contrôle
 NoPeriodicityControl                           = Aucune périodicité de contrôle
 NoDocumentation                                = Aucun document lié
@@ -793,6 +794,17 @@ ControlObservationList  = Liste des points contrôlés, observations et réponse
 LinkedContactsControl   = Contact(s) associés au contrôle
 LinkedControllerControl = Contrôleur(s) associés au contrôle
 NoEquipmentFound        = Aucun équipement trouvé.
+
+PDFControlSummary             = Synthèse du contrôle & détails des questions
+PDFControlQuestionDetails     = Détails des questions et réponses
+PDFControlAuditors            = Auditeurs
+PDFControlResult              = Résultat du contrôle
+PDFControlElectronicallySigned = signés électroniquement
+PDFControlCommentLabel        = Commentaire :
+PDFControlGroup               = Groupe : %s
+PDFControlSheetRef            = Modèle %s
+PDFControlTemplate            = Modèle : %s
+PDFControlCorrectiveAction    = Action corrective
 
 #
 # Question categories - NF

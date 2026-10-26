@@ -1496,9 +1496,9 @@ class ActionsDigiquali
                 'label_field'    => 'label',
                 'hook_name_card' => $objectName . 'list',
                 'hook_name_list' => $objectName . 'card',
-                'create_url'     => 'custom/digiquali/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
-                'class_path'     => 'custom/digiquali/class/' . $objectName . '.class.php',
-                'lib_path'       => 'custom/digiquali/lib/digiquali_' . $objectName . '.lib.php'
+                'create_url'     => 'digiquali/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
+                'class_path'     => 'digiquali/class/' . $objectName . '.class.php',
+                'lib_path'       => 'digiquali/lib/digiquali_' . $objectName . '.lib.php'
             ];
         }
 
@@ -1640,7 +1640,7 @@ class ActionsDigiquali
         require_once DOL_DOCUMENT_ROOT . '/core/modules/printsheet/modules_labels.php';
         require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
         if (!empty($objectMetadata['class_path'])) {
-            require_once DOL_DOCUMENT_ROOT . '/' . $objectMetadata['class_path'];
+            require_once dol_buildpath('/' . $objectMetadata['class_path']);
         }
 
         $langs->loadLangs(['errors', 'digiquali@digiquali']);

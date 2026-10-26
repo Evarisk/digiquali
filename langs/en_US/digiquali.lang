@@ -224,3 +224,30 @@ PhotoMultipleSummary  = %s photo(s) - %s OK - %s KO
 PhotoMultipleNoAnswer = No photo
 MediaLibrary          = Media library
 AddFromMediaLibrary   = Add from the media library
+CloneAnswers          = Clone answers (comments and photos included)
+
+#
+# Control Document PDF
+#
+
+Question                       = Question
+Questions                      = questions
+Answer                         = Answer
+ControlDate                    = Control date
+OptimalExpirationDate          = Best before date
+Equipement                     = Equipment
+EstimatedLife                  = Remaining lifetime
+ControlEquipementList          = List of equipment and control means
+LinkedContactsControl          = Contact(s) linked to the control
+LinkedControllerControl        = Controller(s) linked to the control
+
+PDFControlSummary              = Control summary & question details
+PDFControlQuestionDetails      = Question and answer details
+PDFControlAuditors             = Auditors
+PDFControlResult               = Control result
+PDFControlElectronicallySigned = electronically signed
+PDFControlCommentLabel         = Comment:
+PDFControlGroup                = Group: %s
+PDFControlSheetRef             = Template %s
+PDFControlTemplate             = Template: %s
+PDFControlCorrectiveAction     = Corrective action

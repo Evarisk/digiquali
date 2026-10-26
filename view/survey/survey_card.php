@@ -75,7 +75,7 @@ $sheet         = new Sheet($db);
 $question      = new Question($db);
 $answer        = new Answer($db);
 $questionGroup = new QuestionGroup($db);
-$extraFields   = new ExtraFields($db);
+$extrafields   = new ExtraFields($db);
 $category      = new Categorie($db);
 
 // View objects
@@ -84,9 +84,9 @@ $form = new Form($db);
 $hookmanager->initHooks(['surveycard', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Fetch optionals attributes and labels
-$extraFields->fetch_name_optionals_label($object->table_element);
+$extrafields->fetch_name_optionals_label($object->table_element);
 
-$search_array_options = $extraFields->getOptionalsFromPost($object->table_element, '', 'search_');
+$search_array_options = $extrafields->getOptionalsFromPost($object->table_element, '', 'search_');
 
 // Initialize array of search criterias
 $searchAll = GETPOST('search_all', 'alpha');
@@ -141,6 +141,7 @@ if (empty($resHook)) {
 
     // Action clone object
     if ($action == 'confirm_clone' && $confirm == 'yes') {
+        $options['answers']    = GETPOST('clone_answers');
         $options['attendants'] = GETPOST('clone_attendants');
         $options['photos']     = GETPOST('clone_photos');
         if ($object->id > 0) {
@@ -321,7 +322,7 @@ if ($action == 'create') {
             print '<tr><td class="titlefieldcreate">' . $langs->transnoentities($objectMetadata['langs']) . '</td><td>';
             print img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth"');
             print $form::selectarray($objectPostName, $objectArray, $objectPost, $langs->trans('Select') . ' ' . strtolower($langs->trans($objectMetadata['langs'])), 0, 0, '', 0, 0, dol_strlen(GETPOST('fromtype')) > 0 && GETPOST('fromtype') != $objectMetadata['link_name'], '', 'maxwidth500 widthcentpercentminusxx');
-            print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/' . $objectMetadata['create_url'] . '?action=create&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('Create') . ' ' . strtolower($langs->trans($objectMetadata['langs'])) . '"></span></a>';
+            print '<a class="butActionNew" href="' . dol_buildpath($objectMetadata['create_url'], 1) . '?action=create&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('Create') . ' ' . strtolower($langs->trans($objectMetadata['langs'])) . '"></span></a>';
             print '</td></tr>';
         }
     }
@@ -404,6 +405,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     if (($action == 'clone' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // Define confirmation messages
         $formQuestionClone = [
+            ['type' => 'checkbox', 'name' => 'clone_answers',    'label' => $langs->trans('CloneAnswers'),    'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_attendants', 'label' => $langs->trans('CloneAttendants'), 'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_photos',     'label' => $langs->trans('ClonePhotos'),     'value' => 1]
         ];
