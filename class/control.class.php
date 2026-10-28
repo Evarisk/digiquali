@@ -25,7 +25,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Control.
@@ -347,7 +347,7 @@ class Control extends SaturneObject
                 }
 
                 // Load Saturne libraries
-                require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+                dol_include_once('/saturne/class/saturnesignature.class.php');
 
                 $signatory = new SaturneSignature($this->db, $this->module, $this->element);
                 $signatory->setSignatory($this->id, $this->element, 'user', [$this->fk_user_controller], 'Controller', 1);

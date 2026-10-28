@@ -101,13 +101,13 @@ print load_fiche_titre($title, $linkback, 'title_setup');
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, 'question', $title, -1, "digiquali_color@digiquali");
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 $constArray = $constArray ?? [];
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 if ($object->isextrafieldmanaged > 0) {
-	require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_extrafields_view.tpl.php';
+	require_once dol_buildpath('/saturne/core/tpl/admin/object/object_extrafields_view.tpl.php');
 }
 
 // Page end
