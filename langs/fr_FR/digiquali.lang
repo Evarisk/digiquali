@@ -109,6 +109,9 @@ ConfirmMassAddQuestion        = Confirmation d'ajout en masse de questions au mo
 ConfirmMassAddingQuestion     = Êtes-vous sur de vouloir ajouter les %d question(s) sélectionnée(s) ?
 NbQuestionsAlreadyInSheet     = %d question(s) déjà présente(s)
 QuestionsInSheetWillBeIgnored = Les questions déjà présentes dans le modèle sélectionné ne seront pas ajoutées.
+GenerateQRCodes               = Générer les QR codes (PDF)
+ConfirmMassGenerateQRCodes    = Générer une planche d'étiquettes avec le QR code de l'historique public des contrôles des %d élément(s) sélectionné(s) ?
+QRCodeLabelFormat             = Format des étiquettes
 removeQuestionLink            = Question retirée du modèle :
 LockQuestion                  = La question %s est passée au statut verrouillé
 LockQuestions                 = Toutes les questions sélectionnées sont passées au statut verrouillé
@@ -542,6 +545,7 @@ LockingDate                                    = Date de verrouillage
 ArchivingDate                                  = Date d'archivage
 DraftValidatedLocked                           = -- (Brouillon + validé + verrouillé) --
 CloneControlEquipments                         = Cloner les moyens de contrôle
+CloneAnswers                                   = Cloner les réponses (commentaires et photos compris)
 NoControl                                      = Aucun contrôle
 NoPeriodicityControl                           = Aucune périodicité de contrôle
 NoDocumentation                                = Aucun document lié
@@ -790,6 +794,17 @@ ControlObservationList  = Liste des points contrôlés, observations et réponse
 LinkedContactsControl   = Contact(s) associés au contrôle
 LinkedControllerControl = Contrôleur(s) associés au contrôle
 NoEquipmentFound        = Aucun équipement trouvé.
+
+PDFControlSummary             = Synthèse du contrôle & détails des questions
+PDFControlQuestionDetails     = Détails des questions et réponses
+PDFControlAuditors            = Auditeurs
+PDFControlResult              = Résultat du contrôle
+PDFControlElectronicallySigned = signés électroniquement
+PDFControlCommentLabel        = Commentaire :
+PDFControlGroup               = Groupe : %s
+PDFControlSheetRef            = Modèle %s
+PDFControlTemplate            = Modèle : %s
+PDFControlCorrectiveAction    = Action corrective
 
 #
 # Question categories - NF

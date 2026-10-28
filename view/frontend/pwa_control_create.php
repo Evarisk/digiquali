@@ -84,7 +84,7 @@ foreach ($objectsMetadata as $objectType => $objectMetadata) {
 }
 if (!empty($fixedObjectType) && $fromId > 0) {
     if (!empty($objectsMetadata[$fixedObjectType]['class_path'])) {
-        require_once DOL_DOCUMENT_ROOT . '/' . $objectsMetadata[$fixedObjectType]['class_path'];
+        require_once dol_buildpath('/' . $objectsMetadata[$fixedObjectType]['class_path']);
     }
     $fixedObject = new $objectsMetadata[$fixedObjectType]['class_name']($db);
     if ($fixedObject->fetch($fromId) <= 0) {

@@ -46,7 +46,7 @@ class modDigiQuali extends DolibarrModules
 			saturne_load_langs(['digiquali@digiquali']);
 		} else {
 			$this->error++;
-			$this->errors[] = $langs->trans('activateModuleDependNotSatisfied', 'DigiQuali', 'Saturne');
+			$this->errors[] = $langs->trans('activateModuleDependNotSatisfied', 'DigiQuali', 'Saturne', 'DigiQuali');
 		}
 
 		// Id for module (must be unique).
@@ -77,7 +77,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '23.1.1';
+		$this->version = '23.2.1';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -315,7 +315,6 @@ class modDigiQuali extends DolibarrModules
 		}
 
 		// Array to add new pages in new tabs
-		require_once __DIR__ . '/../../lib/digiquali_sheet.lib.php';
 
 		$this->tabs   = [];
 		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
@@ -899,6 +898,11 @@ class modDigiQuali extends DolibarrModules
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
+        // Dolibarr runs init() before activating $this->depends : activate them first, their tables (saturne_object_standard...) are filled below
+        if (function_exists('saturne_activate_module_dependencies') && saturne_activate_module_dependencies($this) < 0) {
+            return -1;
+        }
+
 		$sql    = [];
 		$result = $this->_load_tables('/digiquali/sql/');
 
@@ -944,15 +948,22 @@ class modDigiQuali extends DolibarrModules
         addDocumentModel('controldocument', 'controldocument', $langs->transnoentities('ControlDocumentPDF'));
 
 		if (!empty($conf->global->DIGIQUALI_SHEET_TAGS_SET) && empty($conf->global->DIGIQUALI_SHEET_DEFAULT_TAG)) {
-			global $user, $langs;
-			require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+			// saturne_create_category() declares the sheet type itself : the constructCategory hook is not loaded while the module is being enabled
+			$defaultTagId = saturne_create_category($langs->transnoentities('Default'), 'sheet');
+			if ($defaultTagId > 0) {
+				dolibarr_set_const($this->db, 'DIGIQUALI_SHEET_DEFAULT_TAG', $defaultTagId, 'integer', 0, '', $conf->entity);
+			}
+		}
 
-			$tags = new Categorie($this->db);
-			$tags->label = $langs->transnoentities('Default');
-			$tags->type  = 'sheet';
-			$tags->create($user);
+		// The default tag used to be created without its type, so as a product tag : give it back the sheet type (436301002, see constructCategory) when no product uses it
+		if (getDolGlobalInt('DIGIQUALI_SHEET_DEFAULT_TAG') > 0) {
+			$defaultTagId = getDolGlobalInt('DIGIQUALI_SHEET_DEFAULT_TAG');
 
-			dolibarr_set_const($this->db, 'DIGIQUALI_SHEET_DEFAULT_TAG', $tags->id, 'integer', 0, '', $conf->entity);
+			// Not $sql : init() hands that one to _init() as an array
+			$sqlDefaultTagType  = 'UPDATE ' . MAIN_DB_PREFIX . 'categorie SET type = 436301002';
+			$sqlDefaultTagType .= ' WHERE rowid = ' . $defaultTagId . ' AND type = 0';
+			$sqlDefaultTagType .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'categorie_product AS cp WHERE cp.fk_categorie = ' . $defaultTagId . ')';
+			$this->db->query($sqlDefaultTagType);
 		}
 
 		if (empty($conf->global->DIGIQUALI_QUESTION_NF_TAGS_SET)) {

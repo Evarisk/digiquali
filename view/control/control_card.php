@@ -185,6 +185,8 @@ if (empty($resHook)) {
 	// Action clone object
 	if ($action == 'confirm_clone' && $confirm == 'yes') {
         $options['label']              = GETPOST('clone_label');
+        $options['fk_user_controller'] = GETPOSTINT('clone_fk_user_controller');
+        $options['answers']            = GETPOST('clone_answers');
         $options['attendants']         = GETPOST('clone_attendants');
         $options['photos']             = GETPOST('clone_photos');
         $options['control_equipments'] = GETPOST('clone_control_equipments');
@@ -229,6 +231,23 @@ if (empty($resHook)) {
             header('Location: ' . $_SERVER['PHP_SELF'] . '?' . $urlParameters);
             exit;
         }
+    }
+
+    // #2687: change the controller, its signatory follows (handled before the generic set action which would skip it)
+    if ($action == 'setfk_user_controller' && $permissiontoadd) {
+        $controllerId = GETPOSTINT('fk_user_controller');
+        if ($controllerId > 0 && $object->fetch((int) $id) > 0) {
+            $object->fk_user_controller = $controllerId;
+            $result = $object->update($user);
+            if ($result > 0) {
+                $signatory->setSignatory($object->id, $object->element, 'user', [$controllerId], 'Controller');
+                header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+                exit;
+            } else {
+                setEventMessages($object->error, $object->errors, 'errors');
+            }
+        }
+        $action = '';
     }
 
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
@@ -512,7 +531,7 @@ if ($action == 'create') {
                 print($source != 'pwa' ? img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth"') : '');
                 print $form->selectArray($objectPostName, $objectArray, $objectPost, $langs->trans('Select') . ' ' . strtolower($langs->trans($objectMetadata['langs'])), 0, 0, '', 0, 0, dol_strlen(GETPOST('fromtype')) > 0 && GETPOST('fromtype') != $objectMetadata['link_name'], '', 'maxwidth500 widthcentpercentminusxx');
                 if ($source != 'pwa') {
-                    print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/' . $objectMetadata['create_url'] . '?action=create&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('Create') . ' ' . strtolower($langs->trans($objectMetadata['langs'])) . '"></span></a>';
+                    print '<a class="butActionNew" href="' . dol_buildpath($objectMetadata['create_url'], 1) . '?action=create&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('Create') . ' ' . strtolower($langs->trans($objectMetadata['langs'])) . '"></span></a>';
                 }
                 print '</td></tr>';
             }
@@ -639,12 +658,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
         $formQuestionClone = [
             ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObjectName, 'size' => 24],
+            ['type' => 'other',    'name' => 'clone_fk_user_controller', 'label' => $langs->trans('Controller'),             'value' => $form->select_dolusers($object->fk_user_controller, 'clone_fk_user_controller', 0, null, 0, '', '', '0', 0, 0, '', 0, '', 'minwidth200', 1)],
+            ['type' => 'checkbox', 'name' => 'clone_answers',            'label' => $langs->trans('CloneAnswers'),           'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_attendants',         'label' => $langs->trans('CloneAttendants'),        'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_photos',             'label' => $langs->trans('ClonePhotos'),            'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_control_equipments', 'label' => $langs->trans('CloneControlEquipments'), 'value' => 1]
         ];
 
-        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('CloneObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmCloneObject', $langs->transnoentities('The' . ucfirst($object->element)), $object->ref), 'confirm_clone', $formQuestionClone, 'yes', 'actionButtonClone', 350, 600);
+        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('CloneObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmCloneObject', $langs->transnoentities('The' . ucfirst($object->element)), $object->ref), 'confirm_clone', $formQuestionClone, 'yes', 'actionButtonClone', 420, 600);
     }
 
     // Delete confirmation
@@ -677,6 +698,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     // Common attributes
     unset($object->fields['label']);     // Hide field already shown in banner
     unset($object->fields['projectid']); // Hide field already shown in banner
+    unset($object->fields['fk_user_controller']); // Shown below with its own edit form
 
     if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
         // Answer public interface
@@ -687,6 +709,25 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
         print '<a href="' . $publicAnswerUrl . '" target="_blank">' . $langs->trans('GoToPublicAnswerPage') . ' <i class="fa fa-external-link"></a>';
         print '</td></tr>';
     }
+
+    // #2687: the controller stays editable until the control is locked, a clone keeps the source one otherwise
+    $permissionToEditController = $permissiontoadd && $object->status < Control::STATUS_LOCKED;
+    print '<tr class="field_fk_user_controller"><td class="titlefield fieldname_fk_user_controller">';
+    print $form->editfieldkey('Controller', 'fk_user_controller', $object->fk_user_controller, $object, $permissionToEditController);
+    print '</td><td class="valuefield fieldname_fk_user_controller">';
+    if ($action == 'editfk_user_controller' && $permissionToEditController) {
+        print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
+        print '<input type="hidden" name="token" value="' . newToken() . '">';
+        print '<input type="hidden" name="action" value="setfk_user_controller">';
+        print img_picto('', 'user', 'class="pictofixedwidth"') . $form->select_dolusers($object->fk_user_controller, 'fk_user_controller', 0, null, 0, '', '', '0', 0, 0, '', 0, '', 'minwidth200', 1);
+        print '<input type="submit" class="button smallpaddingimp valignmiddle" value="' . $langs->trans('Modify') . '">';
+        print '</form>';
+    } elseif ($object->fk_user_controller > 0) {
+        $controller = new User($db);
+        $controller->fetch($object->fk_user_controller);
+        print $controller->getNomUrl(-1);
+    }
+    print '</td></tr>';
 
     print '<tr class="field_control_date"><td class="titlefield fieldname_control_date">';
     print $form->editfieldkey('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
