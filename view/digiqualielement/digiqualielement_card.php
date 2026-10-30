@@ -114,21 +114,6 @@ if (empty($reshook)) {
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     require_once DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
-//	if ($action == 'add' && $permissiontoadd) { ?>
-<!--		<script>-->
-<!--			jQuery( '.digirisk-wrap .navigation-container .unit.active' ).removeClass( 'active' );-->
-<!--			//console.log( this );-->
-<!--			let id = $(this).attr('value');-->
-<!--			jQuery( this ).closest( '.unit' ).addClass( 'active' );-->
-<!---->
-<!--			var unitActive = jQuery( this ).closest( '.unit.active' ).attr('id');-->
-<!--			localStorage.setItem('unitactive', unitActive );-->
-<!---->
-<!--			jQuery( this ).closest( '.unit' ).attr( 'value', id );-->
-<!--		</script>-->
-<!--		--><?php
-//	}
-
 //    $object->element = $object->element_type;
 //
 //	// Actions builddoc, forcebuilddoc, remove_file
