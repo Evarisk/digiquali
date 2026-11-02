@@ -650,6 +650,8 @@ surveydocument           = fiche du questionnaire
 surveydocument.odt       = Fiche du Questionnaire
 surveydocument_photo     = fiche du questionnaire avec photos
 surveydocument_photo.odt = Fiche du Questionnaire avec photos
+SurveyDocumentPDF            = Fiche du Questionnaire PDF avec photo
+SurveyDocumentPDFDescription = Synthèse du questionnaire avec son score, réponses et photos de chaque question, participants
 
 #
 # DigiQualiStandard - Standard DigiQuali
@@ -813,6 +815,8 @@ PDFControlGroup               = Groupe : %s
 PDFControlSheetRef            = Modèle %s
 PDFControlTemplate            = Modèle : %s
 PDFControlCorrectiveAction    = Action corrective
+PDFSurveySummary              = Synthèse du questionnaire & détails des questions
+PDFSurveyResult               = Résultat du questionnaire
 
 #
 # Question categories - NF

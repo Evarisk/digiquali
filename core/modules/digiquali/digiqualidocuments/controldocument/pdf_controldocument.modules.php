@@ -98,9 +98,14 @@ class pdf_controldocument extends SaturneDocumentModel
     private string $generatedFilename = '';
 
     /**
-     * @var Translate Output langs of the document being written, set by write_file() for the page footer
+     * @var Translate Output langs of the document being written, set by prepareDocument() for the page footer
      */
     private Translate $documentLangs;
+
+    /**
+     * @var string Translation key of the model name, written in the page footer
+     */
+    protected string $modelLabelKey = 'ControlDocumentPDF';
 
     /**
      * Constructor
@@ -281,7 +286,7 @@ class pdf_controldocument extends SaturneDocumentModel
         // Row 1: generated filename (left) · model name (right)
         if (!empty($this->generatedFilename)) {
             // $this->name is translated in the language of the user, not of the document
-            $modelLabel = $outputLangs->transnoentities('PDFControlTemplate', $outputLangs->transnoentities('ControlDocumentPDF'));
+            $modelLabel = $outputLangs->transnoentities('PDFControlTemplate', $outputLangs->transnoentities($this->modelLabelKey));
             $pdf->SetXY($this->marge_gauche, $footerY - 5);
             $pdf->Cell($usableW * 0.65, 4, $this->generatedFilename, 0, 0, 'L');
             $pdf->Cell($usableW * 0.35, 4, $modelLabel, 0, 0, 'R');
@@ -313,7 +318,7 @@ class pdf_controldocument extends SaturneDocumentModel
 
     // ─── Drawing blocks ────────────────────────────────────────────────────────
 
-    private function drawTitleArea($pdf, $control, $sheet, $project, int $totalQ, $outputLangs): void
+    protected function drawTitleArea($pdf, $control, $sheet, $project, int $totalQ, $outputLangs): void
     {
         $pageW   = $pdf->getPageWidth();
         $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
@@ -408,7 +413,7 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetTextColor(0, 0, 0);
     }
 
-    private function drawSectionBanner($pdf, string $text): void
+    protected function drawSectionBanner($pdf, string $text): void
     {
         $pageW   = $pdf->getPageWidth();
         $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
@@ -424,23 +429,22 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetY($y + $h);
     }
 
-    private function drawSynthesisSection($pdf, $control, $project, string $linkedObjectText, array $signatures, int $totalQ, int $answeredQ, $outputLangs): void
+    /**
+     * Rows and result of the summary of a control : its date, linked object, project, progress and auditors, then its verdict
+     *
+     * @param  Control      $control          Control
+     * @param  Project      $project          Project of the control
+     * @param  string       $linkedObjectText Object the control is linked to, see getLinkedObjectText()
+     * @param  array        $signatures       Signatories of the control
+     * @param  int          $totalQ           Number of questions
+     * @param  int          $answeredQ        Number of questions answered
+     * @param  Translate    $outputLangs      Output langs
+     * @return array                          Rows and result box, as drawSynthesisSection() takes them
+     */
+    private function getControlSynthesis($control, $project, string $linkedObjectText, array $signatures, int $totalQ, int $answeredQ, $outputLangs): array
     {
-        $pageW   = $pdf->getPageWidth();
-        $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
-        $x       = $this->marge_gauche;
-        $y       = $pdf->GetY() + 2;
-
-        $photoW  = 32;
-        $noteW   = 30;
-        $rowH    = 7;
-        $labelW  = 30;
-        $infoX   = $x + $photoW + 3;
-        $infoW   = $usableW - $photoW - $noteW - 6;
-
-        $notePublicText = !empty($control->note_public) ? $this->cleanText($control->note_public) : '';
-        $auditorsText   = $this->buildAuditorsText($signatures, $outputLangs);
-        $projectText    = (!empty($project->ref) ? $project->ref . ' — ' : '') . ($project->title ?? '');
+        $auditorsText = $this->buildAuditorsText($signatures, $outputLangs);
+        $projectText  = (!empty($project->ref) ? $project->ref . ' — ' : '') . $project->title;
 
         // Rows without value (no project, no linked object) are left out rather than shown empty
         $cellData = [
@@ -459,6 +463,44 @@ class pdf_controldocument extends SaturneDocumentModel
         $cellData[] = ['label' => $outputLangs->transnoentities('Progress'), 'value' => $answeredQ . ' / ' . $totalQ . ' ' . $outputLangs->transnoentities('Questions')];
         $cellData[] = ['label' => $outputLangs->transnoentities('PDFControlAuditors'), 'value' => $auditorsText, 'multiline' => true];
 
+        // Verdict (same labels as the control card: OK / KO / N/A translated)
+        $verdictValue = (int) $control->verdict;
+        // Not $control->fields['verdict']['arrayofkeyval']: it is already translated in the language of the user
+        $result = [
+            'label' => $outputLangs->transnoentities('PDFControlResult'),
+            'value' => $outputLangs->transnoentities($verdictValue == 1 ? 'OK' : ($verdictValue == 2 ? 'KO' : 'N/A')),
+            'color' => $verdictValue == 1 ? [40, 167, 69] : ($verdictValue == 2 ? [220, 53, 69] : $this->colorGray),
+        ];
+
+        return [$cellData, $result];
+    }
+
+    /**
+     * Draw the summary of the document : the photo of the object, its rows of information, its result box and its public note
+     *
+     * @param  TCPDF        $pdf         PDF
+     * @param  CommonObject $object      Object of the document (control or survey)
+     * @param  array        $cellData    Rows of information : label and value, with the teal or multiline flags
+     * @param  array        $result      Result box : label, value, color, and an optional detail line under the value
+     * @param  Translate    $outputLangs Output langs
+     * @return void
+     */
+    protected function drawSynthesisSection($pdf, $object, array $cellData, array $result, $outputLangs): void
+    {
+        $pageW   = $pdf->getPageWidth();
+        $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
+        $x       = $this->marge_gauche;
+        $y       = $pdf->GetY() + 2;
+
+        $photoW  = 32;
+        $noteW   = 30;
+        $rowH    = 7;
+        $labelW  = 30;
+        $infoX   = $x + $photoW + 3;
+        $infoW   = $usableW - $photoW - $noteW - 6;
+
+        $notePublicText = !empty($object->note_public) ? $this->cleanText($object->note_public) : '';
+
         // Multiline rows grow with their wrapped value
         $pdf->SetFont('', '', 8);
         $tableH = 0;
@@ -469,20 +511,20 @@ class pdf_controldocument extends SaturneDocumentModel
             $tableH += $cellData[$index]['height'] ?? $rowH;
         }
 
-        // Photo block — try $control->photo first, then scan directory (ref and id variants)
-        $controlPhoto = null;
-        $multdir      = getMultidirOutput($control, $control->module);
-        $photoDirs    = [
-            $multdir . '/control/' . $control->ref . '/photos',
-            $multdir . '/control/' . $control->id  . '/photos',
+        // Photo block — try $object->photo first, then scan directory (ref and id variants)
+        $objectPhoto = null;
+        $multdir     = getMultidirOutput($object, $object->module);
+        $photoDirs   = [
+            $multdir . '/' . $object->element . '/' . $object->ref . '/photos',
+            $multdir . '/' . $object->element . '/' . $object->id  . '/photos',
         ];
 
         foreach ($photoDirs as $photoDir) {
-            if (!empty($control->photo)) {
-                $thumb     = saturne_get_thumb_name($control->photo, 'medium', $photoDir);
+            if (!empty($object->photo)) {
+                $thumb     = saturne_get_thumb_name($object->photo, 'medium', $photoDir);
                 $candidate = $photoDir . '/thumbs/' . $thumb;
                 if (file_exists($candidate)) {
-                    $controlPhoto = $candidate;
+                    $objectPhoto = $candidate;
                     break;
                 }
             }
@@ -497,19 +539,19 @@ class pdf_controldocument extends SaturneDocumentModel
                     if ($fullPath && is_readable($fullPath)) {
                         $thumb     = saturne_get_thumb_name($photoFile, 'medium', $photoDir);
                         $candidate = $photoDir . '/thumbs/' . $thumb;
-                        $controlPhoto = file_exists($candidate) ? $candidate : $fullPath;
+                        $objectPhoto = file_exists($candidate) ? $candidate : $fullPath;
                         break;
                     }
                 }
             }
-            if (!empty($controlPhoto)) {
+            if (!empty($objectPhoto)) {
                 break;
             }
         }
 
-        if (!empty($controlPhoto)) {
+        if (!empty($objectPhoto)) {
             $this->fillRect($pdf, $x, $y, $photoW, $tableH, [210, 215, 220]);
-            $info = @getimagesize($controlPhoto);
+            $info = @getimagesize($objectPhoto);
             if ($info && $info[0] > 0 && $info[1] > 0) {
                 $scale = min($photoW / $info[0], $tableH / $info[1]);
                 $dW    = $info[0] * $scale;
@@ -519,7 +561,7 @@ class pdf_controldocument extends SaturneDocumentModel
             } else {
                 $dW = $photoW; $dH = $tableH; $imgX = $x; $imgY = $y;
             }
-            $pdf->Image($controlPhoto, $imgX, $imgY, $dW, $dH);
+            $pdf->Image($objectPhoto, $imgX, $imgY, $dW, $dH);
         } else {
             $this->fillRect($pdf, $x, $y, $photoW, $tableH, [210, 215, 220]);
             if (!empty($this->faFontName)) {
@@ -546,25 +588,27 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetDrawColor(...$this->colorTeal);
         $pdf->Rect($noteX, $y, $noteW, $tableH);
 
-        // The box holds the verdict only — the object status badge lives in the page header
+        // The box holds the result only — the object status badge lives in the page header
         $labelH   = 4;
         $valueH   = 9;
-        $contentY = $y + max(2, ($tableH - ($labelH * 2 + $valueH)) / 2);
+        $detailH  = !empty($result['detail']) ? $labelH * 2 : 0;
+        $contentY = $y + max(2, ($tableH - ($labelH * 2 + $valueH + $detailH)) / 2);
 
-        // "Control result" label, wrapped on the 2 lines of the box
+        // Result label, wrapped on the 2 lines of the box
         $pdf->SetTextColor(...$this->colorNavy);
         $pdf->SetFont('', 'B', 7);
-        $pdf->MultiCell($noteW - 2, $labelH, $outputLangs->transnoentities('PDFControlResult'), 0, 'C', false, 0, $noteX + 1, $contentY, true, 0, false, true, $labelH * 2, 'M', false);
+        $pdf->MultiCell($noteW - 2, $labelH, $result['label'], 0, 'C', false, 0, $noteX + 1, $contentY, true, 0, false, true, $labelH * 2, 'M', false);
 
-        // Verdict (same labels as the control card: OK / KO / N/A translated)
-        $verdictValue = (int) $control->verdict;
-        // Not $control->fields['verdict']['arrayofkeyval']: it is already translated in the language of the user
-        $verdictLabel = $outputLangs->transnoentities($verdictValue == 1 ? 'OK' : ($verdictValue == 2 ? 'KO' : 'N/A'));
-        $verdictColor = $verdictValue == 1 ? [40, 167, 69] : ($verdictValue == 2 ? [220, 53, 69] : $this->colorGray);
-        $pdf->SetTextColor(...$verdictColor);
+        $pdf->SetTextColor(...$result['color']);
         $pdf->SetFont('', 'B', 14);
         $pdf->SetXY($noteX, $contentY + $labelH * 2);
-        $pdf->Cell($noteW, $valueH, $verdictLabel, 0, 0, 'C');
+        $pdf->Cell($noteW, $valueH, $result['value'], 0, 0, 'C');
+
+        // A value alone may not tell whether it is good, e.g. the success rate of a survey
+        if (!empty($result['detail'])) {
+            $pdf->SetFont('', 'B', 8);
+            $pdf->MultiCell($noteW - 2, $labelH, $result['detail'], 0, 'C', false, 0, $noteX + 1, $contentY + $labelH * 2 + $valueH, true, 0, false, true, $detailH, 'T', false);
+        }
 
         $cellY = $y;
         foreach ($cellData as $row) {
@@ -619,7 +663,7 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetTextColor(0, 0, 0);
     }
 
-    private function buildAuditorsText(array $signatures, $outputLangs): string
+    protected function buildAuditorsText(array $signatures, $outputLangs): string
     {
         if (empty($signatures)) {
             return '';
@@ -653,7 +697,7 @@ class pdf_controldocument extends SaturneDocumentModel
      * @param  Translate    $outputLangs    Output langs
      * @return string
      */
-    private function getLinkedObjectText($linkedObject, array $objectMetadata, $outputLangs): string
+    protected function getLinkedObjectText($linkedObject, array $objectMetadata, $outputLangs): string
     {
         if (!empty($objectMetadata['langfile'])) {
             $outputLangs->load($objectMetadata['langfile']);
@@ -1119,7 +1163,7 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetY($pdf->GetY() + 1);
     }
 
-    private function drawActionPlanSection($pdf, array $questionsAndGroups, array $questionTasksMap, $outputLangs): void
+    protected function drawActionPlanSection($pdf, array $questionsAndGroups, array $questionTasksMap, $outputLangs): void
     {
         $hasTasks = false;
         foreach ($questionTasksMap as $tasks) {
@@ -1258,7 +1302,7 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetDrawColor(0, 0, 0);
     }
 
-    private function drawSignatureSection($pdf, array $signatures, string $title, array $roles, $outputLangs): void
+    protected function drawSignatureSection($pdf, array $signatures, string $title, array $roles, $outputLangs): void
     {
         $pageW   = $pdf->getPageWidth();
         $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
@@ -1338,34 +1382,23 @@ class pdf_controldocument extends SaturneDocumentModel
     }
 
     /**
-     * Write the PDF file to disk
+     * Build the file name of the document, then get ready to write it : output langs and hooks
      *
-     * @param Object $objectDocument Object to generate (ex: control)
-     * @param Translate $outputLangs Lang object
-     * @param string $srcTemplatePath
-     * @param int $hidedetails
-     * @param int $hidedesc
-     * @param int $hideref
-     * @param null|array $moreparams
-     * @return int                         1=OK, <0=KO
+     * @param  CommonObject $objectDocument Document object
+     * @param  Translate    $outputLangs    Output langs
+     * @param  CommonObject $object         Object of the document (control or survey)
+     * @param  array        $moreparams     More parameters, see getMoreParam()
+     * @return string|int                   Path of the file to write, -1 if its name can not be built
      */
-    public function write_file($objectDocument, $outputLangs, $srcTemplatePath = '', $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = array()): int
+    protected function prepareDocument($objectDocument, $outputLangs, $object, array $moreparams)
     {
         global $action, $langs, $hookmanager, $user;
-
-        $moreparams = self::getMoreParam($objectDocument, $moreparams);
-
-        $control = $moreparams['object'] ?? null;
-        if (empty($control)) {
-            $this->error = 'MissingControlObject';
-            return -1;
-        }
 
         $moreparams['hideTemplateName'] = 1;
         if (empty($moreparams['user'])) {
             $moreparams['user'] = $user;
         }
-        $file = $this->buildDocumentFilename($objectDocument, $outputLangs, $control, $moreparams);
+        $file = $this->buildDocumentFilename($objectDocument, $outputLangs, $object, $moreparams);
         if (is_int($file) && $file < 0) {
             $this->error = $langs->transnoentities('ErrorFileNameCanNotBeBuilt');
             return -1;
@@ -1375,40 +1408,24 @@ class pdf_controldocument extends SaturneDocumentModel
         $this->documentLangs     = $outputLangs;
         $outputLangs->loadLangs(['main', 'other', 'users', 'projects', 'productbatch', 'saturne@saturne', 'object@saturne', 'signature@saturne', 'digiquali@digiquali']);
         $hookmanager->initHooks(['pdfgeneration']);
-        $parameters = ['file' => $file, 'object' => $control, 'outputlangs' => $outputLangs];
-        $hookmanager->executeHooks('beforePDFCreation', $parameters, $control, $action);
+        $parameters = ['file' => $file, 'object' => $object, 'outputlangs' => $outputLangs];
+        $hookmanager->executeHooks('beforePDFCreation', $parameters, $object, $action);
 
-        // ── Load related objects ─────────────────────────────────────────────
+        return $file;
+    }
 
-        $sheet            = new Sheet($this->db);
-        $controlLine      = new ControlLine($this->db);
-        $answerObj        = new Answer($this->db);
-        $project          = new Project($this->db);
-        $saturneSignature = new SaturneSignature($this->db);
-        $controlEquipment = new ControlEquipment($this->db);
-        $productLot       = new Productlot($this->db);
-
-        $sheet->fetch($control->fk_sheet);
-        $project->fetch($control->projectid);
-        $signatures        = $saturneSignature->fetchSignatories($control->id, $control->element);
-        $controlEquipments = $controlEquipment->fetchFromParent($control->id);
-
-        // Linked element for synthesis header
-        $objectsMetadata = saturne_get_objects_metadata();
-        $control->fetchObjectLinked('', '', $control->id, 'digiquali_control');
-        $linkedObjectType = key($control->linkedObjects);
-        $linkedObjectText = '';
-        // No test on 'conf': it is only filled by a hook in some contexts (control card, list...), and the control is linked to the object anyway
-        foreach ($objectsMetadata as $objectMetadata) {
-            if ($objectMetadata['link_name'] != $linkedObjectType || empty($control->linkedObjects[$objectMetadata['link_name']])) {
-                continue;
-            }
-            $linkedObject = reset($control->linkedObjects[$objectMetadata['link_name']]);
-            $linkedObjectText = $this->getLinkedObjectText($linkedObject, $objectMetadata, $outputLangs);
-            break;
-        }
-
-        // ── Questions & groups ───────────────────────────────────────────────
+    /**
+     * Load the questions of the sheet, with the answer line, the answers, the tasks and the photos of each
+     *
+     * @param  CommonObject $object     Object of the document (control or survey)
+     * @param  Sheet        $sheet      Sheet of the object
+     * @param  CommonObject $lineObject Answer line of the object (ControlLine or SurveyLine)
+     * @return array                    Questions and groups, questions by group, then per question id its line, answers,
+     *                                  tasks and photos, and the number of questions and of answered questions
+     */
+    protected function loadQuestions($object, Sheet $sheet, $lineObject): array
+    {
+        $answerObj = new Answer($this->db);
 
         $questionsAndGroups = $sheet->fetchQuestionsAndGroups(null, 'digiquali_sheet', true);
 
@@ -1436,20 +1453,20 @@ class pdf_controldocument extends SaturneDocumentModel
             }
         }
 
-        // Fetch control lines and answers per question
-        $controlLineByQuestion = [];
-        $answersByQuestion     = [];
-        $totalQuestions        = 0;
-        $answeredQuestions     = 0;
+        // Fetch answer lines and answers per question
+        $lineByQuestion    = [];
+        $answersByQuestion = [];
+        $totalQuestions    = 0;
+        $answeredQuestions = 0;
 
         foreach ($questionsAndGroups as $item) {
             if (!($item instanceof Question)) {
                 continue;
             }
             $totalQuestions++;
-            $lines = $controlLine->fetchFromParentWithQuestion((int)$control->id, (int)$item->id);
+            $lines = $lineObject->fetchFromParentWithQuestion((int)$object->id, (int)$item->id);
             $cl    = is_array($lines) && !empty($lines) ? reset($lines) : null;
-            $controlLineByQuestion[$item->id] = $cl;
+            $lineByQuestion[$item->id] = $cl;
             if (!empty($cl) && $cl->answer !== null && $cl->answer !== '') {
                 $answeredQuestions++;
             }
@@ -1457,14 +1474,14 @@ class pdf_controldocument extends SaturneDocumentModel
             $answersByQuestion[$item->id] = is_array($answers) ? $answers : [];
         }
 
-        // Fetch tasks linked to each control line (action plan)
+        // Fetch tasks linked to each answer line (action plan)
         // Use direct SQL on llx_element_element to avoid fetchObjectLinked SQL errors (actioncomm join issue)
         $questionTasksMap = [];
         foreach ($questionsAndGroups as $item) {
             if (!($item instanceof Question)) {
                 continue;
             }
-            $cl = $controlLineByQuestion[$item->id] ?? null;
+            $cl = $lineByQuestion[$item->id] ?? null;
             if (empty($cl)) {
                 $questionTasksMap[$item->id] = [];
                 continue;
@@ -1472,10 +1489,10 @@ class pdf_controldocument extends SaturneDocumentModel
 
             $clId  = (int)$cl->id;
             $sql   = 'SELECT fk_source AS task_id FROM ' . MAIN_DB_PREFIX . 'element_element';
-            $sql  .= " WHERE sourcetype = 'project_task' AND fk_target = " . $clId . " AND targettype = 'controldet'";
+            $sql  .= " WHERE sourcetype = 'project_task' AND fk_target = " . $clId . " AND targettype = '" . $this->db->escape($lineObject->element) . "'";
             $sql  .= ' UNION ';
             $sql  .= 'SELECT fk_target AS task_id FROM ' . MAIN_DB_PREFIX . 'element_element';
-            $sql  .= " WHERE targettype = 'project_task' AND fk_source = " . $clId . " AND sourcetype = 'controldet'";
+            $sql  .= " WHERE targettype = 'project_task' AND fk_source = " . $clId . " AND sourcetype = '" . $this->db->escape($lineObject->element) . "'";
             $resql = $this->db->query($sql);
 
             $tasks = [];
@@ -1491,14 +1508,14 @@ class pdf_controldocument extends SaturneDocumentModel
         }
 
         // Fetch photos per question
-        $multdirOutput     = getMultidirOutput($control, $control->module);
+        $multdirOutput     = getMultidirOutput($object, $object->module);
         $questionPhotosMap = [];
 
         foreach ($questionsAndGroups as $item) {
             if (!($item instanceof Question)) {
                 continue;
             }
-            $photoPath = $multdirOutput . '/control/' . $control->ref . '/answer_photo/' . $item->ref;
+            $photoPath = $multdirOutput . '/' . $object->element . '/' . $object->ref . '/answer_photo/' . $item->ref;
             $photos    = [];
             if (is_dir($photoPath)) {
                 $files = array_values(array_diff(scandir($photoPath), ['.', '..', 'thumbs']));
@@ -1513,7 +1530,28 @@ class pdf_controldocument extends SaturneDocumentModel
             $questionPhotosMap[$item->id] = $photos;
         }
 
-        // ── Create PDF instance ──────────────────────────────────────────────
+        return [
+            'questionsAndGroups' => $questionsAndGroups,
+            'structuredGroups'   => $structuredGroups,
+            'lines'              => $lineByQuestion,
+            'answers'            => $answersByQuestion,
+            'tasks'              => $questionTasksMap,
+            'photos'             => $questionPhotosMap,
+            'total'              => $totalQuestions,
+            'answered'           => $answeredQuestions,
+        ];
+    }
+
+    /**
+     * Create the PDF, with the FontAwesome font of the pictograms
+     *
+     * @param  CommonObject $object      Object of the document (control or survey)
+     * @param  Translate    $outputLangs Output langs
+     * @return TCPDF                     PDF
+     */
+    protected function createPdf($object, $outputLangs)
+    {
+        global $user;
 
         pdf_getInstance($this->format); // charge les constantes TCPDF et tcpdf.php
 
@@ -1527,9 +1565,8 @@ class pdf_controldocument extends SaturneDocumentModel
             }
         }
 
-        $pdfa            = getDolGlobalInt('PDF_USE_A', 0);
-        $pdf             = new TCPDF('P', 'mm', $this->format, true, 'UTF-8', false, $pdfa);
-        $defaultFontSize = pdf_getPDFFontSize($outputLangs);
+        $pdfa = getDolGlobalInt('PDF_USE_A', 0);
+        $pdf  = new TCPDF('P', 'mm', $this->format, true, 'UTF-8', false, $pdfa);
 
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
@@ -1540,19 +1577,26 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->SetSubject($outputLangs->transnoentities($this->document_type));
         $pdf->SetCreator('Dolibarr ' . DOL_VERSION);
         $pdf->SetAuthor($outputLangs->convToOutputCharset($user->getFullName($outputLangs)));
-        $pdf->SetKeyWords($outputLangs->convToOutputCharset($control->ref) . ' ' . $outputLangs->transnoentities($this->document_type));
+        $pdf->SetKeyWords($outputLangs->convToOutputCharset($object->ref) . ' ' . $outputLangs->transnoentities($this->document_type));
         $pdf->SetMargins($this->marge_gauche, $this->marge_haute, $this->marge_droite);
         $pdf->SetAutoPageBreak(1, $this->marge_basse + 8);
 
-        // ── Page 1: synthesis ────────────────────────────────────────────────
+        return $pdf;
+    }
 
-        $pdf->AddPage();
-        $this->drawTopRight($pdf);
-        $this->drawTitleArea($pdf, $control, $sheet, $project, $totalQuestions, $outputLangs);
-        $this->drawSectionBanner($pdf, $outputLangs->transnoentities('PDFControlSummary'));
-        $this->drawSynthesisSection($pdf, $control, $project, $linkedObjectText, $signatures, $totalQuestions, $answeredQuestions, $outputLangs);
-
-        // ── Questions section ────────────────────────────────────────────────
+    /**
+     * Draw the questions, group by group : the card of each question with its photos, then its tasks
+     *
+     * @param  TCPDF        $pdf         PDF
+     * @param  CommonObject $object      Object of the document (control or survey)
+     * @param  array        $questions   Questions returned by loadQuestions()
+     * @param  Translate    $outputLangs Output langs
+     * @return void
+     */
+    protected function drawQuestionsSection($pdf, $object, array $questions, $outputLangs): void
+    {
+        $lineByQuestion    = $questions['lines'];
+        $answersByQuestion = $questions['answers'];
 
         $this->checkPageBreak($pdf, 12);
         $pdf->SetTextColor(...$this->colorTeal);
@@ -1562,21 +1606,21 @@ class pdf_controldocument extends SaturneDocumentModel
         $pdf->Ln(2);
         $pdf->SetTextColor(0, 0, 0);
 
-        foreach ($structuredGroups as $groupData) {
-            $group     = $groupData['group'];
-            $questions = $groupData['questions'];
+        foreach ($questions['structuredGroups'] as $groupData) {
+            $group          = $groupData['group'];
+            $groupQuestions = $groupData['questions'];
 
-            if (empty($questions)) {
+            if (empty($groupQuestions)) {
                 continue;
             }
 
             // Build group stats (choice-type questions only) — ['abbrev' => ['count' => N, 'rgb' => [R,G,B]]]
             $groupStats = [];
-            foreach ($questions as $q) {
+            foreach ($groupQuestions as $q) {
                 if (!$this->isChoiceType($q->type)) {
                     continue;
                 }
-                $cl          = $controlLineByQuestion[$q->id] ?? null;
+                $cl          = $lineByQuestion[$q->id] ?? null;
                 $pictogram   = null;
                 $answerColor = null;
                 if (!empty($cl) && !empty($cl->answer) && $cl->answer !== '0') {
@@ -1599,11 +1643,11 @@ class pdf_controldocument extends SaturneDocumentModel
             }
 
             if ($group !== null) {
-                $this->drawGroupBanner($pdf, $outputLangs->transnoentities('PDFControlGroup', $group->label), count($questions) . ' ' . $outputLangs->transnoentities('Questions'), $groupStats);
+                $this->drawGroupBanner($pdf, $outputLangs->transnoentities('PDFControlGroup', $group->label), count($groupQuestions) . ' ' . $outputLangs->transnoentities('Questions'), $groupStats);
             }
 
-            foreach ($questions as $question) {
-                $cl          = $controlLineByQuestion[$question->id] ?? null;
+            foreach ($groupQuestions as $question) {
+                $cl          = $lineByQuestion[$question->id] ?? null;
                 $pictogram   = null;
                 $answerColor = null;
                 if ($this->isChoiceType($question->type) && !empty($cl) && !empty($cl->answer) && $cl->answer !== '0') {
@@ -1619,15 +1663,116 @@ class pdf_controldocument extends SaturneDocumentModel
                 if ($question->type == Question::TYPE_PHOTO_MULTIPLE) {
                     // The photos are the answer : they come in its table, each with its comment and status, not in the strip of thumbs
                     $this->drawQuestionCard($pdf, $question, $cl, $pictogram, $answerColor, [], $outputLangs, $answersByQuestion[$question->id] ?? []);
-                    $this->drawPhotoMultipleTable($pdf, digiquali_photo_multiple_get_rows($control, $question, $cl->answer ?? ''), $outputLangs);
+                    $this->drawPhotoMultipleTable($pdf, digiquali_photo_multiple_get_rows($object, $question, $cl->answer ?? ''), $outputLangs);
                 } else {
-                    $this->drawQuestionCard($pdf, $question, $cl, $pictogram, $answerColor, $questionPhotosMap[$question->id] ?? [], $outputLangs, $answersByQuestion[$question->id] ?? []);
+                    $this->drawQuestionCard($pdf, $question, $cl, $pictogram, $answerColor, $questions['photos'][$question->id] ?? [], $outputLangs, $answersByQuestion[$question->id] ?? []);
                 }
-                $this->drawQuestionTasks($pdf, $questionTasksMap[$question->id] ?? [], $outputLangs);
+                $this->drawQuestionTasks($pdf, $questions['tasks'][$question->id] ?? [], $outputLangs);
             }
 
             $pdf->Ln(1);
         }
+    }
+
+    /**
+     * Close the last page, then write the PDF on disk
+     *
+     * @param  TCPDF  $pdf  PDF
+     * @param  string $file Path of the file
+     * @return int          1 if OK, -1 if KO
+     */
+    protected function saveDocument($pdf, string $file): int
+    {
+        // ── Last page footer ─────────────────────────────────────────────────
+
+        $this->drawPageFooter($pdf);
+
+        try {
+            $pdf->Output($file, 'F');
+        } catch (Exception $exception) {
+            $this->error = 'Error generating PDF: ' . $exception->getMessage();
+            return -1;
+        }
+
+        $this->result = ['fullpath' => $file];
+        return 1;
+    }
+
+    /**
+     * Write the PDF file to disk
+     *
+     * @param Object $objectDocument Object to generate (ex: control)
+     * @param Translate $outputLangs Lang object
+     * @param string $srcTemplatePath
+     * @param int $hidedetails
+     * @param int $hidedesc
+     * @param int $hideref
+     * @param null|array $moreparams
+     * @return int                         1=OK, <0=KO
+     */
+    public function write_file($objectDocument, $outputLangs, $srcTemplatePath = '', $hidedetails = 0, $hidedesc = 0, $hideref = 0, $moreparams = array()): int
+    {
+        $moreparams = self::getMoreParam($objectDocument, $moreparams);
+
+        $control = $moreparams['object'] ?? null;
+        if (empty($control)) {
+            $this->error = 'MissingControlObject';
+            return -1;
+        }
+
+        $file = $this->prepareDocument($objectDocument, $outputLangs, $control, $moreparams);
+        if (is_int($file)) {
+            return -1;
+        }
+
+        // ── Load related objects ─────────────────────────────────────────────
+
+        $sheet            = new Sheet($this->db);
+        $project          = new Project($this->db);
+        $saturneSignature = new SaturneSignature($this->db);
+        $controlEquipment = new ControlEquipment($this->db);
+        $productLot       = new Productlot($this->db);
+
+        $sheet->fetch($control->fk_sheet);
+        $project->fetch($control->projectid);
+        $signatures        = $saturneSignature->fetchSignatories($control->id, $control->element);
+        $controlEquipments = $controlEquipment->fetchFromParent($control->id);
+
+        // Linked element for synthesis header
+        $objectsMetadata = saturne_get_objects_metadata();
+        $control->fetchObjectLinked('', '', $control->id, 'digiquali_control');
+        $linkedObjectType = key($control->linkedObjects);
+        $linkedObjectText = '';
+        // No test on 'conf': it is only filled by a hook in some contexts (control card, list...), and the control is linked to the object anyway
+        foreach ($objectsMetadata as $objectMetadata) {
+            if ($objectMetadata['link_name'] != $linkedObjectType || empty($control->linkedObjects[$objectMetadata['link_name']])) {
+                continue;
+            }
+            $linkedObject = reset($control->linkedObjects[$objectMetadata['link_name']]);
+            $linkedObjectText = $this->getLinkedObjectText($linkedObject, $objectMetadata, $outputLangs);
+            break;
+        }
+
+        // ── Questions & groups ───────────────────────────────────────────────
+
+        $questions = $this->loadQuestions($control, $sheet, new ControlLine($this->db));
+
+        // ── Create PDF instance ──────────────────────────────────────────────
+
+        $pdf = $this->createPdf($control, $outputLangs);
+
+        // ── Page 1: synthesis ────────────────────────────────────────────────
+
+        $pdf->AddPage();
+        $this->drawTopRight($pdf);
+        $this->drawTitleArea($pdf, $control, $sheet, $project, $questions['total'], $outputLangs);
+        $this->drawSectionBanner($pdf, $outputLangs->transnoentities('PDFControlSummary'));
+        [$cellData, $result] = $this->getControlSynthesis($control, $project, $linkedObjectText, $signatures, $questions['total'], $questions['answered'], $outputLangs);
+        $this->drawSynthesisSection($pdf, $control, $cellData, $result, $outputLangs);
+
+        // ── Questions section ────────────────────────────────────────────────
+
+        $this->drawQuestionsSection($pdf, $control, $questions, $outputLangs);
 
         // ── Equipment section ────────────────────────────────────────────────
 
@@ -1709,20 +1854,8 @@ class pdf_controldocument extends SaturneDocumentModel
 
         // ── Plan d'action (dernière page) ────────────────────────────────────
 
-        $this->drawActionPlanSection($pdf, $questionsAndGroups, $questionTasksMap, $outputLangs);
+        $this->drawActionPlanSection($pdf, $questions['questionsAndGroups'], $questions['tasks'], $outputLangs);
 
-        // ── Last page footer ─────────────────────────────────────────────────
-
-        $this->drawPageFooter($pdf);
-
-        try {
-            $pdf->Output($file, 'F');
-        } catch (Exception $exception) {
-            $this->error = 'Error generating PDF: ' . $exception->getMessage();
-            return -1;
-        }
-
-        $this->result = ['fullpath' => $file];
-        return 1;
+        return $this->saveDocument($pdf, $file);
     }
 }

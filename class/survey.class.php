@@ -208,7 +208,7 @@ class Survey extends SaturneObject
     /**
      * @var int Sheet ID
      */
-    public int $fk_sheet;
+    public int $fk_sheet = 0;
 
     /**
      * @var int|string|null Project ID
