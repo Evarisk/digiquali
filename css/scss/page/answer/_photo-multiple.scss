@@ -159,6 +159,11 @@ $photo-multiple__statuses: (
   }
 }
 
+// The card cuts a text field to 250px that scroll: the photos are the answer, shown whole
+.mod-controldet .fieldname_answer .longmessagecut {
+  max-height: none;
+}
+
 // The answer containers pad and size every textarea for the single answer of a Text question;
 // mirroring their ancestors is what lets the comment of a photo row keep its own box.
 .page-public-card .question-answer-container-pwa,
