@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Sheet.
@@ -926,7 +926,7 @@ class Sheet extends SaturneObject
     {
         global $langs;
 
-        require_once __DIR__ . '/../../saturne/class/saturnedashboard.class.php';
+        dol_include_once('/saturne/class/saturnedashboard.class.php');
 
         switch ($question->type) {
             case 'UniqueChoice':
@@ -1036,17 +1036,18 @@ class Sheet extends SaturneObject
                 break;
 
             case 'PhotoMultiple':
+                require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+
                 // Every photo of every answer counts, each with the status it was given
                 $photoStatuses = [];
                 foreach ($questionAnswerStats[$question->id] ?? [] as $questionAnswer) {
                     $photoStatuses = array_merge($photoStatuses, $questionAnswer['photo_statuses'] ?? []);
                 }
-                $statusCounts = array_count_values($photoStatuses);
 
                 print '<div class="range-bar-container">';
                 print '<div class="range-average-indicator">';
                 print '<div class="range-average-value">';
-                print '<i class="fa fa-images" aria-hidden="true"></i> ' . $langs->trans('PhotoMultipleSummary', count($photoStatuses), $statusCounts['OK'] ?? 0, $statusCounts['KO'] ?? 0);
+                print '<i class="fa fa-images" aria-hidden="true"></i> ' . dol_escape_htmltag(digiquali_photo_multiple_format_summary($photoStatuses));
                 print '</div>';
                 print '</div>';
                 print '</div>';

@@ -95,10 +95,10 @@ print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@d
  * Numbering module
  */
 
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 $constArray = $constArray ?? [];
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 /*
  * Numbering module line
@@ -106,7 +106,7 @@ require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.ph
 
 $object = new SurveyLine($db);
 
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 // Extrafields survey management
 print load_fiche_titre($langs->trans('ExtrafieldsSurveyManagement'), '', '');

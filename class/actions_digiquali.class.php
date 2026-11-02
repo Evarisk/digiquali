@@ -269,7 +269,7 @@ class ActionsDigiquali
         global $conf, $extrafields, $langs;
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata                = saturne_get_objects_metadata();
             $conf->cache['objectsMetadata'] = $objectsMetadata;
         } else {
@@ -358,7 +358,7 @@ class ActionsDigiquali
         }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
         }
 
@@ -536,7 +536,7 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
             if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+                dol_include_once('/saturne/lib/object.lib.php');
                 $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
             }
             $objectsMetadata = $conf->cache['objectsMetadata'];
@@ -684,7 +684,7 @@ class ActionsDigiquali
         }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata = saturne_get_objects_metadata();
             $conf->cache['objectsMetadata'] = $objectsMetadata;
         } else {
@@ -1067,7 +1067,7 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
             // Load Saturne libraries
-            require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+            dol_include_once('/saturne/class/saturnesignature.class.php');
 
             // Load DigiQuali libraries
             require_once __DIR__ . '/sheet.class.php';
@@ -1496,9 +1496,9 @@ class ActionsDigiquali
                 'label_field'    => 'label',
                 'hook_name_card' => $objectName . 'list',
                 'hook_name_list' => $objectName . 'card',
-                'create_url'     => 'custom/digiquali/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
-                'class_path'     => 'custom/digiquali/class/' . $objectName . '.class.php',
-                'lib_path'       => 'custom/digiquali/lib/digiquali_' . $objectName . '.lib.php'
+                'create_url'     => 'digiquali/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
+                'class_path'     => 'digiquali/class/' . $objectName . '.class.php',
+                'lib_path'       => 'digiquali/lib/digiquali_' . $objectName . '.lib.php'
             ];
         }
 
@@ -1562,8 +1562,8 @@ class ActionsDigiquali
         }
 
         // Saturne provides short URLs since its s/ entry point
-        if (is_file(__DIR__ . '/../../saturne/s/index.php')) {
-            require_once __DIR__ . '/../../saturne/class/saturneredirection.class.php';
+        if (is_file(dol_buildpath('/saturne/s/index.php'))) {
+            dol_include_once('/saturne/class/saturneredirection.class.php');
 
             $saturneRedirection = new SaturneRedirection($this->db);
 
@@ -1640,7 +1640,7 @@ class ActionsDigiquali
         require_once DOL_DOCUMENT_ROOT . '/core/modules/printsheet/modules_labels.php';
         require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
         if (!empty($objectMetadata['class_path'])) {
-            require_once DOL_DOCUMENT_ROOT . '/' . $objectMetadata['class_path'];
+            require_once dol_buildpath('/' . $objectMetadata['class_path']);
         }
 
         $langs->loadLangs(['errors', 'digiquali@digiquali']);

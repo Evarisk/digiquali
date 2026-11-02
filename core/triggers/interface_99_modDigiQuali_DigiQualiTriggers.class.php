@@ -49,7 +49,7 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'DigiQuali triggers.';
-        $this->version     = '23.2.0';
+        $this->version     = '23.2.1';
         $this->picto       = 'digiquali@digiquali';
     }
 
@@ -177,7 +177,7 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
 
         // A deleted object leaves no short URL leading to its public control history: it would lead to a 404 and
         // clutter the list of redirections. Only when Saturne provides short URLs (s/ entry point)
-        if (substr($action, -7) === '_DELETE' && $object instanceof CommonObject && is_file(__DIR__ . '/../../../saturne/s/index.php')) {
+        if (substr($action, -7) === '_DELETE' && $object instanceof CommonObject && is_file(dol_buildpath('/saturne/s/index.php'))) {
             require_once __DIR__ . '/../../lib/digiquali_control.lib.php';
 
             digiquali_delete_public_control_short_urls($object);

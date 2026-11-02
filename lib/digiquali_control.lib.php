@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 /**
  * Prepare array of tabs for control.
@@ -186,7 +186,7 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
         }
 
         if (!empty($linkedObjectParentData['class_path'])) {
-            require_once DOL_DOCUMENT_ROOT . '/' . $linkedObjectParentData['class_path'];
+            require_once dol_buildpath('/' . $linkedObjectParentData['class_path']);
 
             $parentLinkedObject = new $linkedObjectParentData['class_name']($db);
 
@@ -714,7 +714,7 @@ function digiquali_get_control_actions(Control $control): array
     require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
     // Load Saturne libraries
-    require_once __DIR__ . '/../../saturne/class/task/saturnetask.class.php';
+    dol_include_once('/saturne/class/task/saturnetask.class.php');
 
     // Load DigiQuali libraries
     require_once __DIR__ . '/../class/answer.class.php';

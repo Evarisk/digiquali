@@ -197,8 +197,8 @@ if ($action == 'create') {
 }
 $help_url = '';
 
-// Not built with saturne_header(): the modern back office theme of Saturne is loaded by hand
-llxHeader('', $title, $help_url, '', 0, 0, '', ['/saturne/css/saturne.min.css', '/digiquali/css/digiquali.min.css'], '', 'saturne-theme mod-controldet page-card');
+// The module stylesheet draws the photos of a PhotoMultiple answer
+saturne_header(0, '', $title, $help_url, '', 0, 0, [], [], '', 'mod-controldet page-card');
 
 // Example : Adding jquery code
 // print '<script type="text/javascript">
