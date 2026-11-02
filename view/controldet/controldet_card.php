@@ -197,7 +197,8 @@ if ($action == 'create') {
 }
 $help_url = '';
 
-llxHeader('', $title, $help_url, '', 0, 0, '', '', '', 'mod-controldet page-card');
+// The module stylesheet draws the photos of a PhotoMultiple answer
+saturne_header(0, '', $title, $help_url, '', 0, 0, [], [], '', 'mod-controldet page-card');
 
 // Example : Adding jquery code
 // print '<script type="text/javascript">

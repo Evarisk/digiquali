@@ -82,7 +82,7 @@ saturne_check_access($permissiontoread);
  */
 
 // Actions set_mod, update_mask
-require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/actions/admin_conf_actions.tpl.php');
 
 // Extrafields actions.
 require DOL_DOCUMENT_ROOT.'/core/actions_extrafields.inc.php';
@@ -238,7 +238,7 @@ print load_fiche_titre($title, $linkback, 'title_setup');
 $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 $constArray[$moduleNameLowerCase] = [
 	'UniqueLinkedElement' => [
@@ -253,7 +253,7 @@ $constArray[$moduleNameLowerCase] = [
 	],
 ];
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 // Linkable elements, driven by the DIGIQUALI_SHEET_LINK_* constants.
 $linkableObjects            = digiquali_get_linkable_objects();
@@ -261,7 +261,7 @@ $enabledObjectTypes         = digiquali_get_enabled_linked_object_types();
 $linkedObjectExtraFieldName = 'qc_frequency';
 $linkedObjectUsage          = digiquali_get_linked_object_usage();
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/linked_object_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/linked_object_view.tpl.php');
 
 // Generate categories.
 print load_fiche_titre($langs->trans('SheetCategories'), '', '', 0, 'sheetCategories');

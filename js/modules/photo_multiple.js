@@ -17,7 +17,7 @@
 /**
  * \file    js/modules/photo_multiple.js
  * \ingroup digiquali
- * \brief   JavaScript of the PhotoMultiple question type : one row per answer photo, with its comment and OK/KO status.
+ * \brief   JavaScript of the PhotoMultiple question type : one row per answer photo, with its comment and status (OK, KO, to fix or N/A).
  *          Markup: digiquali_render_photo_multiple_answer() in lib/digiquali_answer.lib.php.
  *
  * The rows only fill the hidden input named answer<questionId>, a JSON object keyed by photo name :

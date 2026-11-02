@@ -1,9 +1,15 @@
-// Answer table of a PhotoMultiple question: one row per answer photo, with its comment and OK/KO status.
+// Answer table of a PhotoMultiple question: one row per answer photo, with its comment and status.
 // Rendered on the backoffice card, the public page and the PWA wizard alike, under the question
 // header across its whole width, so it stays self-contained and carries no outer margin.
 
-// The theme green is too light to carry a label, on white as under white: a darker shade of it
-$photo-multiple__ok: #16964d;
+// One colour per status, keyed like the modifier of its button: those of the answers an OK/KO/To fix/N/A
+// question is created with, as in digiquali_photo_multiple_get_statuses()
+$photo-multiple__statuses: (
+  ok: #47e58e,
+  ko: #e05353,
+  tofix: #e9ad4f,
+  na: #989898,
+);
 
 .question__body {
   margin-top: 0.4em;
@@ -71,22 +77,15 @@ $photo-multiple__ok: #16964d;
     font-weight: 600;
     cursor: pointer;
 
-    &--ok {
-      color: $photo-multiple__ok;
-    }
-    &--ko {
-      color: $color__red;
-    }
-    &.active {
-      &.question-photo-multiple__status-button--ok {
-        background: $photo-multiple__ok;
-        border-color: $photo-multiple__ok;
-        color: #fff;
-      }
-      &.question-photo-multiple__status-button--ko {
-        background: $color__red;
-        border-color: $color__red;
-        color: #fff;
+    @each $status, $status-color in $photo-multiple__statuses {
+      &--#{$status} {
+        color: $status-color;
+
+        &.active {
+          background: $status-color;
+          border-color: $status-color;
+          color: #fff;
+        }
       }
     }
     &[disabled] {
@@ -114,11 +113,55 @@ $photo-multiple__ok: #16964d;
       grid-row: 2;
     }
 
+    // Two by two, the four statuses stay about the height of the photo
     .question-photo-multiple__status {
-      flex-direction: column;
-      align-items: stretch;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .question-photo-multiple__status-button {
+      justify-content: center;
+      padding: 0.5em;
     }
   }
+}
+
+// The same answer to be read, on the answer card: a badge for the status of each photo
+.question-photo-multiple-output {
+  .question-photo-multiple-output__summary {
+    margin-bottom: 0.4em;
+    font-weight: 600;
+  }
+
+  .question-photo-multiple-output__photo img {
+    display: block;
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .question-photo-multiple-output__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.2em 0.6em;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+
+    @each $status, $status-color in $photo-multiple__statuses {
+      &--#{$status} {
+        background: $status-color;
+      }
+    }
+  }
+}
+
+// The card cuts a text field to 250px that scroll: the photos are the answer, shown whole
+.mod-controldet .fieldname_answer .longmessagecut {
+  max-height: none;
 }
 
 // The answer containers pad and size every textarea for the single answer of a Text question;

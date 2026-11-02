@@ -1,0 +1,10 @@
+/* DigiQuali modern theme: the DigiQuali components on top of the shared theme of Saturne, imported
+   last so that it wins over the legacy partials. Every rule is scoped by $dq-scope (see _tokens.scss). */
+
+@import "tokens";
+@import "control";
+@import "answers";
+@import "actionplan";
+@import "sheet";
+@import "stats";
+@import "misc";

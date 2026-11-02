@@ -116,8 +116,22 @@
     background: rgba(0,0,0,0.1);
   }
 
+  .sheet-item-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .icon {
+    flex-shrink: 0;
+  }
+
   .title {
     font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
   }
 
 
@@ -127,15 +141,53 @@
   }
 }
 
+// Same + / - toolbar as the Digirisk GP/UT tree
+.question-and-group-tree .side-nav .tree-toggle-all {
+  display: flex;
+  gap: 4px;
+  padding: 0 10px;
+
+  .tree-toggle-all-button {
+    padding: 3px;
+    border: none;
+    background: none;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 15px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+
+    &:hover, &:focus-visible {
+      opacity: 0.6;
+    }
+  }
+}
+
 .question-and-group-tree .side-nav .question-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+// Icons keep their width and stay on the first lines when a long label wraps
+.question-and-group-tree .side-nav {
+  .group-item > .icon, .question-item > .icon {
+    flex-shrink: 0;
+  }
+
+  .group-item-link, .question-item-link {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .title-container .label {
+    overflow-wrap: anywhere;
+  }
+}
+
 .question-and-group-tree .side-nav .group-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 600;
@@ -157,6 +209,7 @@
 .question-and-group-tree .side-nav .group-item .toggle-group-in-tree {
   font-size: 14px;
   color: #666;
+  margin-right: 10px;
 }
 
 .question-and-group-tree .side-nav .group-item .title-container {
@@ -210,7 +263,7 @@
 
 .question-and-group-tree .side-nav .question-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 8px 12px;
   font-size: 13px;
   transition: background 0.2s ease-in-out;
