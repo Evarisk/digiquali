@@ -1011,9 +1011,10 @@ class Question extends SaturneObject
 	 * @param Sheet $sheetObject The sheet of the question
 	 * @param string $positionPath The path of the question based on positions
 	 * @param string $tdOffsetStyle Additional CSS styles to put on question
+	 * @param int $containerGroupId Id of the group the question is displayed in, 0 for the sheet root
 	 *
      */
-    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '')
+    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '', int $containerGroupId = 0)
     {
 		global $conf, $langs;
 		$question = $this;

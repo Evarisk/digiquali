@@ -176,6 +176,13 @@ ConfirmMassGenerateQRCodes    = Generate a sheet of labels with the QR code of t
 QRCodeLabelFormat             = Label format
 
 #
+# Questions removed from a template or a group - Agenda events
+#
+
+ObjectRemovequestionTrigger      = Question %s removed
+ObjectRemovequestiongroupTrigger = Question group %s removed
+
+#
 # Public interface
 #
 

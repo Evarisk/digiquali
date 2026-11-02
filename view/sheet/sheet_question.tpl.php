@@ -1,6 +1,8 @@
 <?php
 
 $parentGroupId = $question->getParentGroupId();
+// Group the line is displayed in (0 = sheet root): the unlink removes this link only
+$containerGroupId = $containerGroupId ?? 0;
 
 print '<tr id="question-' . $question->id . '" class="' . ($parentGroupId > 0 ? 'hidden ' : '') . 'question line-row" data-id="' . $question->id . '" data-parent-id="' . $parentGroupId . '" data-position-path="' . $positionPath . '">';
 print '<td ' . $tdOffsetStyle . '>' . $question->getNomUrl(1) . '</td>';
@@ -36,7 +38,7 @@ print '<td class="center">' . saturne_show_medias_linked(
 print '<td class="center">' . $question->getLibStatut(5) . '</td>';
 print '<td class="center">';
     if ($sheetObject->status < $sheetObject::STATUS_LOCKED) {
-        print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $sheetObject->id . '&amp;action=unlinkQuestion&questionId=' . $question->id . '&token=' . newToken() . '">';
+        print '<a class="reposition" href="' . $_SERVER["PHP_SELF"] . '?id=' . $sheetObject->id . '&amp;action=unlinkQuestion&questionId=' . $question->id . '&parentGroupId=' . $containerGroupId . '&token=' . newToken() . '">';
         print '<i class="fa fa-unlink" aria-hidden="true"></i>';
         print '</a>';
     }
