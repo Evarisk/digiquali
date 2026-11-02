@@ -269,7 +269,7 @@ if ($id > 0 || !empty($ref)) {
 
 			print '<td class="center">';
 			if ($object->status < Control::STATUS_LOCKED) {
-				print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&action=unlink_equipment&equipmentId=' . $controlEquipment->id . '">';
+				print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&action=unlink_equipment&token=' . newToken() . '&equipmentId=' . $controlEquipment->id . '">';
 				print img_delete();
 				print '</a>';
 			}
