@@ -51,6 +51,44 @@ function digiquali_format_duration($answer): string
 }
 
 /**
+ * Get the statuses a photo of a PhotoMultiple answer can be given, in the order of their buttons
+ *
+ * The keys are what the answer stores, the icons and colors those of the answers an OK/KO/To fix/N/A
+ * question is created with (the colors are repeated in _photo-multiple.scss). The labels have keys of
+ * their own : the OK and KO of Dolibarr translate as Success and Error.
+ *
+ * @return array Icon, color and translation key of each status, keyed by the stored status
+ */
+function digiquali_photo_multiple_get_statuses(): array
+{
+    return [
+        'OK'    => ['icon' => 'fa-check', 'color' => '#47e58e', 'label' => 'PhotoMultipleStatusOK'],
+        'KO'    => ['icon' => 'fa-times', 'color' => '#e05353', 'label' => 'PhotoMultipleStatusKO'],
+        'TOFIX' => ['icon' => 'fa-tools', 'color' => '#e9ad4f', 'label' => 'PhotoMultipleStatusTOFIX'],
+        'NA'    => ['icon' => 'fa-ban',   'color' => '#989898', 'label' => 'PhotoMultipleStatusNA'],
+    ];
+}
+
+/**
+ * Get the label of the status of a PhotoMultiple photo
+ *
+ * @param  string         $status      Status stored in the answer
+ * @param  Translate|null $outputLangs Langs of the output, those of the user when null
+ * @return string                      Translated label, empty string for a photo without status
+ */
+function digiquali_photo_multiple_get_status_label(string $status, ?Translate $outputLangs = null): string
+{
+    global $langs;
+
+    $statuses = digiquali_photo_multiple_get_statuses();
+    if (!isset($statuses[$status])) {
+        return '';
+    }
+
+    return ($outputLangs ?? $langs)->transnoentities($statuses[$status]['label']);
+}
+
+/**
  * Read the answer of a PhotoMultiple question
  *
  * The answer is a JSON object keyed by the name of each answer photo, so a row follows its photo
@@ -58,7 +96,7 @@ function digiquali_format_duration($answer): string
  * Everything that does not fit that shape is dropped, the answer also comes back from the browser.
  *
  * @param  string|null $answer Answer of the line
- * @return array               Rows keyed by photo file name, each with a comment and a status (OK, KO or empty)
+ * @return array               Rows keyed by photo file name, each with a comment and a status (one of digiquali_photo_multiple_get_statuses() or empty)
  */
 function digiquali_photo_multiple_decode(?string $answer): array
 {
@@ -66,6 +104,8 @@ function digiquali_photo_multiple_decode(?string $answer): array
     if (!is_array($decodedAnswer)) {
         return [];
     }
+
+    $statuses = digiquali_photo_multiple_get_statuses();
 
     $rows = [];
     foreach ($decodedAnswer as $fileName => $row) {
@@ -79,7 +119,7 @@ function digiquali_photo_multiple_decode(?string $answer): array
 
         $rows[$fileName] = [
             'comment' => dol_substr(dol_string_nohtmltag((string) ($row['comment'] ?? ''), 0, 'UTF-8', 0, 0), 0, 2000),
-            'status'  => in_array($status, ['OK', 'KO'], true) ? $status : '',
+            'status'  => isset($statuses[$status]) ? $status : '',
         ];
     }
 
@@ -166,23 +206,42 @@ function digiquali_photo_multiple_get_rows(CommonObject $object, Question $quest
 }
 
 /**
- * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ * Sum up the statuses of PhotoMultiple photos in one line : the number of photos, then of each status given
  *
- * @param  string|null $answer Answer of the line
- * @return string              Number of photos and of OK and KO, empty string when there is no photo
+ * @param  array  $photoStatuses Status of each photo, empty for a photo without status
+ * @return string                Summary, e.g. "3 photo(s) - 2 OK - 1 To fix"
  */
-function digiquali_photo_multiple_summary(?string $answer): string
+function digiquali_photo_multiple_format_summary(array $photoStatuses): string
 {
     global $langs;
 
+    $statusCounts = array_count_values($photoStatuses);
+
+    $summary = [$langs->transnoentities('PhotoMultipleSummary', (string) count($photoStatuses))];
+    foreach (array_keys(digiquali_photo_multiple_get_statuses()) as $status) {
+        // Four statuses at zero would bury the ones that were given
+        if (!empty($statusCounts[$status])) {
+            $summary[] = $statusCounts[$status] . ' ' . digiquali_photo_multiple_get_status_label($status);
+        }
+    }
+
+    return implode(' - ', $summary);
+}
+
+/**
+ * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ *
+ * @param  string|null $answer Answer of the line
+ * @return string              Number of photos and of each status given, empty string when there is no photo
+ */
+function digiquali_photo_multiple_summary(?string $answer): string
+{
     $rows = digiquali_photo_multiple_decode($answer);
     if (empty($rows)) {
         return '';
     }
 
-    $statuses = array_count_values(array_column($rows, 'status'));
-
-    return $langs->transnoentities('PhotoMultipleSummary', (string) count($rows), (string) ($statuses['OK'] ?? 0), (string) ($statuses['KO'] ?? 0));
+    return digiquali_photo_multiple_format_summary(array_column($rows, 'status'));
 }
 
 /**
@@ -204,10 +263,86 @@ function digiquali_photo_multiple_odt_answer(?string $answer): string
     $lines    = [$summary];
     $position = 1;
     foreach (digiquali_photo_multiple_decode($answer) as $row) {
-        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? $row['status'] : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
+        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? digiquali_photo_multiple_get_status_label($row['status']) : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
     }
 
     return implode("\n", $lines);
+}
+
+/**
+ * Get the URLs of a PhotoMultiple photo and of its small thumbnail
+ *
+ * @param  array $row Row of digiquali_photo_multiple_get_rows()
+ * @return array      URL of the photo and of its thumbnail, the photo itself when it has none
+ */
+function digiquali_photo_multiple_get_photo_urls(array $row): array
+{
+    global $conf;
+
+    // Without a session document.php answers the login page : the public answer page goes through the
+    // image wrapper of Saturne, like the reference photos of the questions
+    $imageUrl  = (defined('NOLOGIN') ? dol_buildpath('/saturne/utils/viewimage.php', 1) : DOL_URL_ROOT . '/document.php') . '?modulepart=digiquali&entity=' . $conf->entity . '&file=';
+    $thumbName = saturne_get_thumb_name($row['name'], 'small', dirname($row['path']));
+    $photoUrl  = $imageUrl . urlencode($row['sub_dir'] . '/' . $row['name']);
+
+    return ['photo' => $photoUrl, 'thumb' => is_string($thumbName) ? $imageUrl . urlencode($row['sub_dir'] . '/thumbs/' . $thumbName) : $photoUrl];
+}
+
+/**
+ * Render a PhotoMultiple answer to be read, where it is shown as a field like on the answer card :
+ * its summary, then the thumbnail, comment and status of each photo
+ *
+ * @param  Question     $question Question
+ * @param  CommonObject $object   Answered object (control or survey)
+ * @param  string|null  $answer   Answer of the line
+ * @return string                 HTML output
+ */
+function digiquali_photo_multiple_render_output(Question $question, CommonObject $object, ?string $answer): string
+{
+    global $langs;
+
+    $rows = digiquali_photo_multiple_get_rows($object, $question, $answer);
+    if (empty($rows)) {
+        return '<span class="opacitymedium">' . $langs->trans('PhotoMultipleEmpty') . '</span>';
+    }
+
+    $statuses = digiquali_photo_multiple_get_statuses();
+
+    $out  = '<div class="question-photo-multiple-output">';
+    $out .= '<div class="question-photo-multiple-output__summary">' . dol_escape_htmltag(digiquali_photo_multiple_format_summary(array_column($rows, 'status'))) . '</div>';
+    $out .= '<table class="noborder centpercent">';
+    $out .= '<tr class="liste_titre">';
+    $out .= '<th>' . $langs->trans('PhotoMultipleImage') . '</th>';
+    $out .= '<th>' . $langs->trans('PhotoMultipleComment') . '</th>';
+    $out .= '<th class="center">' . $langs->trans('PhotoMultipleStatus') . '</th>';
+    $out .= '</tr>';
+
+    foreach ($rows as $row) {
+        $photoUrls = digiquali_photo_multiple_get_photo_urls($row);
+
+        $out .= '<tr class="oddeven">';
+        $out .= '<td class="question-photo-multiple-output__photo">';
+        $out .= '<a href="' . dol_escape_htmltag($photoUrls['photo']) . '" target="_blank" rel="noopener">';
+        $out .= '<img src="' . dol_escape_htmltag($photoUrls['thumb']) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
+        $out .= '</a>';
+        $out .= '</td>';
+        $out .= '<td>' . ($row['comment'] !== '' ? dol_nl2br(dol_escape_htmltag($row['comment'], 0, 1)) : '<span class="opacitymedium">-</span>') . '</td>';
+        $out .= '<td class="center">';
+        if (isset($statuses[$row['status']])) {
+            $out .= '<span class="question-photo-multiple-output__status question-photo-multiple-output__status--' . dol_strtolower($row['status']) . '">';
+            $out .= '<i class="fas ' . $statuses[$row['status']]['icon'] . '"></i> ' . $langs->trans($statuses[$row['status']]['label']);
+            $out .= '</span>';
+        } else {
+            $out .= '<span class="opacitymedium">-</span>';
+        }
+        $out .= '</td>';
+        $out .= '</tr>';
+    }
+
+    $out .= '</table>';
+    $out .= '</div>';
+
+    return $out;
 }
 
 /**
@@ -225,7 +360,7 @@ function digiquali_photo_multiple_odt_answer(?string $answer): string
  */
 function digiquali_render_photo_multiple_answer(Question $question, CommonObject $object, string $questionAnswer, bool $readOnly = false): string
 {
-    global $conf, $langs;
+    global $langs;
 
     $disabled = ($readOnly ? ' disabled' : '');
     $rows     = digiquali_photo_multiple_get_rows($object, $question, $questionAnswer);
@@ -248,24 +383,18 @@ function digiquali_render_photo_multiple_answer(Question $question, CommonObject
         $out .= '<span>' . $langs->trans('PhotoMultipleStatus') . '</span>';
         $out .= '</div>';
 
-        // Without a session document.php answers the login page : the public answer page goes through the
-        // image wrapper of Saturne, like the reference photos of the questions
-        $imageUrl = (defined('NOLOGIN') ? dol_buildpath('/saturne/utils/viewimage.php', 1) : DOL_URL_ROOT . '/document.php') . '?modulepart=digiquali&entity=' . $conf->entity . '&file=';
-
         foreach ($rows as $row) {
-            $thumbName = saturne_get_thumb_name($row['name'], 'small', dirname($row['path']));
-            $photoUrl  = $imageUrl . urlencode($row['sub_dir'] . '/' . $row['name']);
-            $thumbUrl  = is_string($thumbName) ? $imageUrl . urlencode($row['sub_dir'] . '/thumbs/' . $thumbName) : $photoUrl;
+            $photoUrls = digiquali_photo_multiple_get_photo_urls($row);
 
             $out .= '<div class="question-photo-multiple__row" data-file-name="' . dol_escape_htmltag($row['name']) . '">';
-            $out .= '<a class="question-photo-multiple__photo" href="' . dol_escape_htmltag($photoUrl) . '" target="_blank" rel="noopener">';
-            $out .= '<img src="' . dol_escape_htmltag($thumbUrl) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
+            $out .= '<a class="question-photo-multiple__photo" href="' . dol_escape_htmltag($photoUrls['photo']) . '" target="_blank" rel="noopener">';
+            $out .= '<img src="' . dol_escape_htmltag($photoUrls['thumb']) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
             $out .= '</a>';
             $out .= '<textarea class="question-textarea question-photo-multiple__comment" rows="2" placeholder="' . $langs->transnoentities('WriteComment') . '"' . $disabled . '>' . dol_escape_htmltag($row['comment']) . '</textarea>';
             $out .= '<div class="question-photo-multiple__status">';
-            foreach (['OK' => 'fa-check', 'KO' => 'fa-times'] as $status => $statusIcon) {
+            foreach (digiquali_photo_multiple_get_statuses() as $status => $statusInfo) {
                 $out .= '<button type="button" class="question-photo-multiple__status-button question-photo-multiple__status-button--' . dol_strtolower($status) . ($row['status'] == $status ? ' active' : '') . '" data-status="' . $status . '" aria-pressed="' . ($row['status'] == $status ? 'true' : 'false') . '"' . $disabled . '>';
-                $out .= '<i class="fas ' . $statusIcon . '"></i> ' . $status;
+                $out .= '<i class="fas ' . $statusInfo['icon'] . '"></i> ' . $langs->trans($statusInfo['label']);
                 $out .= '</button>';
             }
             $out .= '</div>';

@@ -239,7 +239,7 @@ class Question extends SaturneObject
 			'correctable' => true,
 			'only_one_correct_answer' => true,
 		],
-		// The answer is made of the answer photos : one row per photo, each with its comment and OK/KO status
+		// The answer is made of the answer photos : one row per photo, each with its comment and status (OK, KO, to fix or N/A)
 		self::TYPE_PHOTO_MULTIPLE => [
 			'default_points' => 0,
 			'correctable' => false,
