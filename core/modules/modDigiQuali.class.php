@@ -31,6 +31,11 @@ include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
 class modDigiQuali extends DolibarrModules
 {
 	/**
+	 * @var int[] Minimum version of Saturne required by module, same format as need_dolibarr_version: checked by init() and by the Saturne index page
+	 */
+	public $need_saturne_version = [23, 6];
+
+	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
 	 *
 	 * @param DoliDB $db Database handler
@@ -896,6 +901,16 @@ class modDigiQuali extends DolibarrModules
 		if ($this->error > 0) {
 			setEventMessages('', $this->errors, 'errors');
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
+		}
+
+		// Saturne ships separately: refuse one older than need_saturne_version, it lacks functions this release calls
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+		dol_include_once('/saturne/core/modules/modSaturne.class.php');
+		$saturneVersion = class_exists('modSaturne') ? (new modSaturne($this->db))->version : '';
+		if (versioncompare(explode('.', $saturneVersion), $this->need_saturne_version) < 0) {
+			$langs->load('admin'); // activateModuleDependNotSatisfied, not loaded when the Saturne index page runs init()
+			$this->error = $langs->trans('activateModuleDependNotSatisfied', $this->name, 'modSaturne >= ' . versiontostring($this->need_saturne_version) . ' (' . ($saturneVersion ?: '-') . ')', $this->name);
+			return -1;
 		}
 
         // Dolibarr runs init() before activating $this->depends : activate them first, their tables (saturne_object_standard...) are filled below
