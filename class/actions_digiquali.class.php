@@ -1033,7 +1033,8 @@ class ActionsDigiquali
             }
         }
 
-        if ($parameters['massaction'] == 'pre_generate_qrcodes' && !empty($this->getQRCodeObjectMetadata($parameters['context']))) {
+        // projet/tasks/time.php calls this hook without 'massaction' (only massactions_pre.tpl.php passes it)
+        if (($parameters['massaction'] ?? '') == 'pre_generate_qrcodes' && !empty($this->getQRCodeObjectMetadata($parameters['context']))) {
             // format_cards.lib.php fills $_Avery_Labels at include time with the $db of the including scope
             global $_Avery_Labels, $db;
 
