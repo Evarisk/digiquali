@@ -59,8 +59,9 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                 </div>
                 <?php
                 $answerWidget = show_answer_from_question($question, $object, $questionAnswer, $questionGroupId, $showCorrection);
-                // A table of photos does not fit the answer column : it takes the whole width under the header
-                $answerWidgetIsWide = ($question->type == Question::TYPE_PHOTO_MULTIPLE);
+                // A table of photos, or a free text that may be pasted from elsewhere, does not fit the answer column :
+                // it takes the whole width under the header
+                $answerWidgetIsWide = in_array($question->type, [Question::TYPE_PHOTO_MULTIPLE, Question::TYPE_TEXT]);
                 ?>
                 <div class="question__header-answer">
                     <?php print $answerWidgetIsWide ? '' : $answerWidget; ?>
