@@ -231,6 +231,16 @@ AddFromMediaLibrary      = Add from the media library
 CloneAnswers             = Clone answers (comments and photos included)
 
 #
+# ControlDet
+#
+
+Controldet       = Control answer
+ControldetList   = List of control answers
+DeleteControldet = Delete the control answer
+EarnedPoints     = Earned points
+ScoreRate        = Success rate
+
+#
 # Control Document PDF
 #
 

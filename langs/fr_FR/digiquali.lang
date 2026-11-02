@@ -579,6 +579,10 @@ LockControlDate                                = Le verrouillage de ce contrôle
 #
 
 # Data - Donnée
+Controldet                              = Réponse au contrôle
+DeleteControldet                        = Supprimer la réponse au contrôle
+EarnedPoints                            = Points obtenus
+ScoreRate                               = Taux de réussite
 AnswerSaved                             = Les réponses ont été sauvegardées
 Repair                                  = SAV
 NotApplicable                           = NA
