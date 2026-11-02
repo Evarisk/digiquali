@@ -1472,6 +1472,11 @@ class ActionsDigiquali
      */
     public function saturneExtendGetObjectsMetadata(array $parameters): int
     {
+        // Paths relative to DOL_DOCUMENT_ROOT as installed (custom/digiquali on a standard install): Saturne < 23.3.0 and older
+        // readers prepend DOL_DOCUMENT_ROOT, newer ones use dol_buildpath(). Bare name only outside the main document root
+        $moduleDir  = dol_buildpath('/digiquali', 0);
+        $modulePath = strpos($moduleDir, DOL_DOCUMENT_ROOT . '/') === 0 ? substr($moduleDir, strlen(DOL_DOCUMENT_ROOT) + 1) : 'digiquali';
+
 
         //@todo faire les autres object
 
@@ -1497,9 +1502,9 @@ class ActionsDigiquali
                 'label_field'    => 'label',
                 'hook_name_card' => $objectName . 'list',
                 'hook_name_list' => $objectName . 'card',
-                'create_url'     => 'digiquali/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
-                'class_path'     => 'digiquali/class/' . $objectName . '.class.php',
-                'lib_path'       => 'digiquali/lib/digiquali_' . $objectName . '.lib.php'
+                'create_url'     => $modulePath . '/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
+                'class_path'     => $modulePath . '/class/' . $objectName . '.class.php',
+                'lib_path'       => $modulePath . '/lib/digiquali_' . $objectName . '.lib.php'
             ];
         }
 
