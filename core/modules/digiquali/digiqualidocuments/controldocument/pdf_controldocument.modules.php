@@ -975,7 +975,7 @@ class pdf_controldocument extends SaturneDocumentModel
         $minRowH = 32;
         $pad     = 2;
 
-        $statusColors = ['OK' => [56, 161, 105], 'KO' => [220, 53, 69], 'TOFIX' => [196, 132, 30], 'NA' => $this->colorGray];
+        $statusColors = array_map(fn ($statusInfo) => $this->hexToRgb($statusInfo['color']), digiquali_photo_multiple_get_statuses());
 
         $drawHeader = function () use ($pdf, $x, $photoW, $commentW, $statusW, $headerH, $outputLangs) {
             $y = $pdf->GetY();

@@ -2,13 +2,13 @@
 // Rendered on the backoffice card, the public page and the PWA wizard alike, under the question
 // header across its whole width, so it stays self-contained and carries no outer margin.
 
-// One colour per status, keyed like the modifier of its button. The theme green, yellow and grey of
-// the OK/KO/To fix/N/A selector are too light to carry a label, on white as under white: darker shades of them
+// One colour per status, keyed like the modifier of its button: those of the answers an OK/KO/To fix/N/A
+// question is created with, as in digiquali_photo_multiple_get_statuses()
 $photo-multiple__statuses: (
-  ok: #16964d,
-  ko: $color__red,
-  tofix: #a86a0c,
-  na: #6c6c6c,
+  ok: #47e58e,
+  ko: #e05353,
+  tofix: #e9ad4f,
+  na: #989898,
 );
 
 .question__body {
@@ -122,6 +122,39 @@ $photo-multiple__statuses: (
     .question-photo-multiple__status-button {
       justify-content: center;
       padding: 0.5em;
+    }
+  }
+}
+
+// The same answer to be read, on the answer card: a badge for the status of each photo
+.question-photo-multiple-output {
+  .question-photo-multiple-output__summary {
+    margin-bottom: 0.4em;
+    font-weight: 600;
+  }
+
+  .question-photo-multiple-output__photo img {
+    display: block;
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .question-photo-multiple-output__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.2em 0.6em;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+
+    @each $status, $status-color in $photo-multiple__statuses {
+      &--#{$status} {
+        background: $status-color;
+      }
     }
   }
 }

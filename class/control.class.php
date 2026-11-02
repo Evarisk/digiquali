@@ -1581,6 +1581,39 @@ class ControlLine extends SaturneObject
     {
         return $this->fetchAll('', '', 1, 0, ['customsql' => 't.fk_control = ' . $controlID . ' AND t.fk_question = ' . $questionID . ' AND t.status > 0']);
     }
+
+    /**
+     * Return HTML string to put an output field into a page
+     *
+     * The answer of a PhotoMultiple question is a JSON of the comment and status of each photo : the
+     * answer card shows it as the photos it describes
+     *
+     * @param  array{type:string,label:string,enabled:int<0,2>|string,position:int,notnull?:int,visible:int<-6,6>,noteditable?:int,default?:int|string,index?:int,foreignkey?:string,searchall?:int,isameasure?:int,css?:string,csslist?:string,cssview?:string,help?:string,showoncombobox?:int,disabled?:int,arrayofkeyval?:array<int|string,string>,comment?:string,validate?:int,required?:int,picto?:string} $val Array of properties of field to show
+     * @param  string          $key       Key of attribute
+     * @param  string|int|null $value     Preselected value to show
+     * @param  string          $moreparam To add more parameters on html tag
+     * @param  string          $keysuffix Suffix string to add into name and id of field
+     * @param  string          $keyprefix Prefix string to add into name and id of field
+     * @param  mixed           $morecss   Value for CSS to use
+     * @return string                     HTML output
+     * @throws Exception
+     */
+    public function showOutputField($val, $key, $value, $moreparam = '', $keysuffix = '', $keyprefix = '', $morecss = '')
+    {
+        if ($key == 'answer' && !empty($value) && !empty($this->fk_question)) {
+            require_once __DIR__ . '/question.class.php';
+
+            $question = new Question($this->db);
+            $control  = new Control($this->db);
+            if ($question->fetch($this->fk_question) > 0 && $question->type == Question::TYPE_PHOTO_MULTIPLE && $control->fetch($this->fk_control) > 0) {
+                require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+
+                return digiquali_photo_multiple_render_output($question, $control, (string) $value);
+            }
+        }
+
+        return parent::showOutputField($val, $key, $value, $moreparam, $keysuffix, $keyprefix, $morecss);
+    }
 }
 
 class ControlEquipment extends SaturneObject
