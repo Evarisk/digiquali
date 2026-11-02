@@ -20,6 +20,16 @@
 ControlDocumentPDF                      = Control Sheet PDF with photo
 
 #
+# SurveyDocument
+#
+
+SurveyDocumentPDF            = Survey Sheet PDF with photo
+SurveyDocumentPDFDescription = Survey summary with its score, answers and photos of each question, attendants
+PDFSurveySummary             = Survey summary & question details
+PDFSurveyResult              = Survey result
+SuccessScore                 = Success score
+
+#
 # Public control
 #
 
