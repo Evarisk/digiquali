@@ -1,9 +1,15 @@
-// Answer table of a PhotoMultiple question: one row per answer photo, with its comment and OK/KO status.
+// Answer table of a PhotoMultiple question: one row per answer photo, with its comment and status.
 // Rendered on the backoffice card, the public page and the PWA wizard alike, under the question
 // header across its whole width, so it stays self-contained and carries no outer margin.
 
-// The theme green is too light to carry a label, on white as under white: a darker shade of it
-$photo-multiple__ok: #16964d;
+// One colour per status, keyed like the modifier of its button. The theme green, yellow and grey of
+// the OK/KO/To fix/N/A selector are too light to carry a label, on white as under white: darker shades of them
+$photo-multiple__statuses: (
+  ok: #16964d,
+  ko: $color__red,
+  tofix: #a86a0c,
+  na: #6c6c6c,
+);
 
 .question__body {
   margin-top: 0.4em;
@@ -71,22 +77,15 @@ $photo-multiple__ok: #16964d;
     font-weight: 600;
     cursor: pointer;
 
-    &--ok {
-      color: $photo-multiple__ok;
-    }
-    &--ko {
-      color: $color__red;
-    }
-    &.active {
-      &.question-photo-multiple__status-button--ok {
-        background: $photo-multiple__ok;
-        border-color: $photo-multiple__ok;
-        color: #fff;
-      }
-      &.question-photo-multiple__status-button--ko {
-        background: $color__red;
-        border-color: $color__red;
-        color: #fff;
+    @each $status, $status-color in $photo-multiple__statuses {
+      &--#{$status} {
+        color: $status-color;
+
+        &.active {
+          background: $status-color;
+          border-color: $status-color;
+          color: #fff;
+        }
       }
     }
     &[disabled] {
@@ -114,9 +113,15 @@ $photo-multiple__ok: #16964d;
       grid-row: 2;
     }
 
+    // Two by two, the four statuses stay about the height of the photo
     .question-photo-multiple__status {
-      flex-direction: column;
-      align-items: stretch;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .question-photo-multiple__status-button {
+      justify-content: center;
+      padding: 0.5em;
     }
   }
 }

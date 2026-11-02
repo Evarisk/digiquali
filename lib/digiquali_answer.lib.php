@@ -51,6 +51,43 @@ function digiquali_format_duration($answer): string
 }
 
 /**
+ * Get the statuses a photo of a PhotoMultiple answer can be given, in the order of their buttons
+ *
+ * The keys are what the answer stores, the icons those of the OK/KO/To fix/N/A selector. The labels
+ * have keys of their own : the OK and KO of Dolibarr translate as Success and Error.
+ *
+ * @return array Icon and translation key of each status, keyed by the stored status
+ */
+function digiquali_photo_multiple_get_statuses(): array
+{
+    return [
+        'OK'    => ['icon' => 'fa-check', 'label' => 'PhotoMultipleStatusOK'],
+        'KO'    => ['icon' => 'fa-times', 'label' => 'PhotoMultipleStatusKO'],
+        'TOFIX' => ['icon' => 'fa-tools', 'label' => 'PhotoMultipleStatusTOFIX'],
+        'NA'    => ['icon' => 'fa-ban',   'label' => 'PhotoMultipleStatusNA'],
+    ];
+}
+
+/**
+ * Get the label of the status of a PhotoMultiple photo
+ *
+ * @param  string         $status      Status stored in the answer
+ * @param  Translate|null $outputLangs Langs of the output, those of the user when null
+ * @return string                      Translated label, empty string for a photo without status
+ */
+function digiquali_photo_multiple_get_status_label(string $status, ?Translate $outputLangs = null): string
+{
+    global $langs;
+
+    $statuses = digiquali_photo_multiple_get_statuses();
+    if (!isset($statuses[$status])) {
+        return '';
+    }
+
+    return ($outputLangs ?? $langs)->transnoentities($statuses[$status]['label']);
+}
+
+/**
  * Read the answer of a PhotoMultiple question
  *
  * The answer is a JSON object keyed by the name of each answer photo, so a row follows its photo
@@ -58,7 +95,7 @@ function digiquali_format_duration($answer): string
  * Everything that does not fit that shape is dropped, the answer also comes back from the browser.
  *
  * @param  string|null $answer Answer of the line
- * @return array               Rows keyed by photo file name, each with a comment and a status (OK, KO or empty)
+ * @return array               Rows keyed by photo file name, each with a comment and a status (one of digiquali_photo_multiple_get_statuses() or empty)
  */
 function digiquali_photo_multiple_decode(?string $answer): array
 {
@@ -66,6 +103,8 @@ function digiquali_photo_multiple_decode(?string $answer): array
     if (!is_array($decodedAnswer)) {
         return [];
     }
+
+    $statuses = digiquali_photo_multiple_get_statuses();
 
     $rows = [];
     foreach ($decodedAnswer as $fileName => $row) {
@@ -79,7 +118,7 @@ function digiquali_photo_multiple_decode(?string $answer): array
 
         $rows[$fileName] = [
             'comment' => dol_substr(dol_string_nohtmltag((string) ($row['comment'] ?? ''), 0, 'UTF-8', 0, 0), 0, 2000),
-            'status'  => in_array($status, ['OK', 'KO'], true) ? $status : '',
+            'status'  => isset($statuses[$status]) ? $status : '',
         ];
     }
 
@@ -166,23 +205,42 @@ function digiquali_photo_multiple_get_rows(CommonObject $object, Question $quest
 }
 
 /**
- * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ * Sum up the statuses of PhotoMultiple photos in one line : the number of photos, then of each status given
  *
- * @param  string|null $answer Answer of the line
- * @return string              Number of photos and of OK and KO, empty string when there is no photo
+ * @param  array  $photoStatuses Status of each photo, empty for a photo without status
+ * @return string                Summary, e.g. "3 photo(s) - 2 OK - 1 To fix"
  */
-function digiquali_photo_multiple_summary(?string $answer): string
+function digiquali_photo_multiple_format_summary(array $photoStatuses): string
 {
     global $langs;
 
+    $statusCounts = array_count_values($photoStatuses);
+
+    $summary = [$langs->transnoentities('PhotoMultipleSummary', (string) count($photoStatuses))];
+    foreach (array_keys(digiquali_photo_multiple_get_statuses()) as $status) {
+        // Four statuses at zero would bury the ones that were given
+        if (!empty($statusCounts[$status])) {
+            $summary[] = $statusCounts[$status] . ' ' . digiquali_photo_multiple_get_status_label($status);
+        }
+    }
+
+    return implode(' - ', $summary);
+}
+
+/**
+ * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ *
+ * @param  string|null $answer Answer of the line
+ * @return string              Number of photos and of each status given, empty string when there is no photo
+ */
+function digiquali_photo_multiple_summary(?string $answer): string
+{
     $rows = digiquali_photo_multiple_decode($answer);
     if (empty($rows)) {
         return '';
     }
 
-    $statuses = array_count_values(array_column($rows, 'status'));
-
-    return $langs->transnoentities('PhotoMultipleSummary', (string) count($rows), (string) ($statuses['OK'] ?? 0), (string) ($statuses['KO'] ?? 0));
+    return digiquali_photo_multiple_format_summary(array_column($rows, 'status'));
 }
 
 /**
@@ -204,7 +262,7 @@ function digiquali_photo_multiple_odt_answer(?string $answer): string
     $lines    = [$summary];
     $position = 1;
     foreach (digiquali_photo_multiple_decode($answer) as $row) {
-        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? $row['status'] : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
+        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? digiquali_photo_multiple_get_status_label($row['status']) : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
     }
 
     return implode("\n", $lines);
@@ -263,9 +321,9 @@ function digiquali_render_photo_multiple_answer(Question $question, CommonObject
             $out .= '</a>';
             $out .= '<textarea class="question-textarea question-photo-multiple__comment" rows="2" placeholder="' . $langs->transnoentities('WriteComment') . '"' . $disabled . '>' . dol_escape_htmltag($row['comment']) . '</textarea>';
             $out .= '<div class="question-photo-multiple__status">';
-            foreach (['OK' => 'fa-check', 'KO' => 'fa-times'] as $status => $statusIcon) {
+            foreach (digiquali_photo_multiple_get_statuses() as $status => $statusInfo) {
                 $out .= '<button type="button" class="question-photo-multiple__status-button question-photo-multiple__status-button--' . dol_strtolower($status) . ($row['status'] == $status ? ' active' : '') . '" data-status="' . $status . '" aria-pressed="' . ($row['status'] == $status ? 'true' : 'false') . '"' . $disabled . '>';
-                $out .= '<i class="fas ' . $statusIcon . '"></i> ' . $status;
+                $out .= '<i class="fas ' . $statusInfo['icon'] . '"></i> ' . $langs->trans($statusInfo['label']);
                 $out .= '</button>';
             }
             $out .= '</div>';

@@ -968,13 +968,14 @@ class pdf_controldocument extends SaturneDocumentModel
         $usableW = $pageW - $this->marge_gauche - $this->marge_droite;
         $x       = $this->marge_gauche;
         $photoW  = 40;
-        $statusW = 22;
+        // Wide enough for the longest status label, "A réparer"
+        $statusW = 26;
         $commentW = $usableW - $photoW - $statusW;
         $headerH = 6;
         $minRowH = 32;
         $pad     = 2;
 
-        $statusColors = ['OK' => [56, 161, 105], 'KO' => [220, 53, 69]];
+        $statusColors = ['OK' => [56, 161, 105], 'KO' => [220, 53, 69], 'TOFIX' => [196, 132, 30], 'NA' => $this->colorGray];
 
         $drawHeader = function () use ($pdf, $x, $photoW, $commentW, $statusW, $headerH, $outputLangs) {
             $y = $pdf->GetY();
@@ -1038,7 +1039,7 @@ class pdf_controldocument extends SaturneDocumentModel
                 $pdf->SetTextColor(255, 255, 255);
                 $pdf->SetFont('', 'B', 8);
                 $pdf->SetXY($badgeX, $badgeY);
-                $pdf->Cell($badgeW, $badgeH, $row['status'], 0, 0, 'C');
+                $pdf->Cell($badgeW, $badgeH, digiquali_photo_multiple_get_status_label($row['status'], $outputLangs), 0, 0, 'C');
             } else {
                 $pdf->SetTextColor(...$this->colorGray);
                 $pdf->SetFont('', '', 8);
