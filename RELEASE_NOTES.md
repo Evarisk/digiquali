@@ -1,34 +1,48 @@
-# [DigiQuali] [23.1.1] - Dolibarr 24 - Conformité Dolistore - Chaîne qualité
+# [DigiQuali] [23.2.1] - Activation fiable sur une instance neuve - Fiche de contrôle PDF plus lisible
 
-Description : Cette version corrige les deux motifs pour lesquels le contrôle de paquet du **Dolistore** refusait le zip, déclare le module compatible **Dolibarr 24**, et met en place une **chaîne de contrôles qualité** sur les pull requests — analyse statique, lint PHP et parité des fichiers de langue.
+Description : Version corrective. DigiQuali s'active du premier coup sur une instance neuve, la fiche de contrôle PDF gagne un en-tête épuré, des libellés traduits et le nom de l'objet contrôlé, et le clonage d'un contrôle garde enfin ses réponses.
 
-**Cette version demande Saturne 23.2.1 ou supérieur.**
+**Cette version s'utilise avec Saturne 23.5.0 ou plus récent. Mettez-la à jour avant Saturne 23.6.0**, dont elle sait lire le nouveau registre d'objets. À partir de Saturne 23.6.0, activer DigiQuali active d'abord Saturne et Projets ; avec Saturne 23.5.0, activez Saturne en premier.
 
 ## Améliorations & corrections
 
-### Conformité du paquet Dolistore
+### Installation
 
-* Le contrôle de paquet refusait le zip : `manifest.json.php` chargeait l'environnement Dolibarr par un `require` unique, alors que la règle demande **au moins deux tentatives** — une pour le module à la racine de Dolibarr, une pour le module dans `custom`. C'était le seul fichier du module dans ce cas, les 25 autres points d'entrée étaient déjà conformes.
-* Second motif : la classe d'API incluait ses neuf classes — une de Saturne, huit de DigiQuali — par un chemin `/custom` en dur, qui ne résout pas si les modules sont installés à la racine de Dolibarr. Elles passent par `dol_include_once`, qui cherche dans les deux racines de documents.
+* **Activation du premier coup sur une instance neuve.** Si Saturne n'avait encore jamais été activé, l'activation échouait sur « La table llx_saturne_object_standard n'existe pas » : Dolibarr installe un module avant ses dépendances. Avec Saturne 23.6.0, DigiQuali active d'abord Saturne et Projets, et la liaison aux projets (onglets, listes, champ de fréquence de contrôle) est en place dès la première activation.
+* **Plus de page des modules blanche quand Saturne manque.** L'activation de DigiQuali est refusée avec un message qui nomme le module manquant.
+* **Le tag « Défaut » des modèles est créé au bon type.** Il pouvait apparaître parmi les catégories de produits. Un tag déjà mal rangé est corrigé à la mise à jour, s'il n'est utilisé par aucun produit.
+
+### Fiche de contrôle (PDF)
+
+* **En-tête épuré** : la mention « DigiQuali · digiquali.com » disparaît et le statut remonte sur la ligne du titre. Un titre ou un sous-titre long passe à la ligne au lieu d'être coupé ou de déborder.
+* **L'objet contrôlé est nommé** : « Utilisateur — Jeanne Martin » au lieu de « Utilisateur — 6 », pour tous les types d'objets. Il ne disparaît plus quand le document est généré depuis un autre écran que la fiche du contrôle.
+* **Libellés traduits dans la langue du document** : une fiche générée en anglais n'est plus à moitié en français.
+* « Signés électroniquement » ne s'affiche que si tous les signataires ont signé, et les lignes Projet et Objet lié vides sont masquées.
+
+### Contrôles et questionnaires
+
+* **Le clonage recopie les réponses** des contrôles et des questionnaires, et le contrôleur d'un contrôle redevient modifiable.
+* **Questions Pourcentage** : le curseur n'est plus écrasé à une largeur nulle sur la fiche de contrôle.
+* **Questionnaires** : leurs champs complémentaires s'affichent et s'enregistrent sur la fiche.
 
 ### Compatibilité
 
-* Le module déclare **Dolibarr 23 au minimum et 24 au maximum**.
+* **Prêt pour Saturne 23.6.0 et les prochaines versions des modules Evarisk.** DigiQuali lit les chemins du registre d'objets sans supposer qu'ils commencent par `custom/` : il fonctionne avec un module installé dans un autre dossier, et avec les entrées sans ce préfixe des prochaines versions de Saturne, Digirisk, DoliMeet, DoliCar et ReedCRM. Sans ce correctif, les étiquettes QR des tâches, des expéditions et des objets DoliCar se seraient arrêtées sur une erreur.
 
-### Intégration continue
+## Testez les nouveautés maintenant
 
-* Les pull requests passent désormais **PHPStan**, un **lint PHP** et un contrôle de **parité des fichiers de langue** français / anglais.
-* PHPStan ne scanne plus les classes bouchons des tests de Saturne, qui masquaient les vraies signatures en CI et y laissaient passer des erreurs invisibles en local — 94 erreurs démasquées, absorbées dans la baseline.
-* La baseline figeait le numéro de version du module dans un message d'erreur : la première release aurait cassé la chaîne qualité. Le motif est désormais ignoré indépendamment du numéro.
-* `phpstan.neon` est aligné sur le gabarit commun aux modules du socle.
+**Allez tester DigiQuali sur la démo : [https://demodoli.digirisk.com/](https://demodoli.digirisk.com/)**
 
-## Comparaison des versions [23.1.0](https://github.com/Evarisk/digiquali/compare/23.1.0...23.1.1) et 23.1.1
+## Comparaison des versions [23.2.0](https://github.com/Evarisk/digiquali/compare/23.2.0...23.2.1) et 23.2.1
 
-* [#2621] [CI] rework: aligner phpstan.neon sur le gabarit commun [`3fc9e618`](https://github.com/Evarisk/digiquali/commit/3fc9e618)
-* [#2619] [CI] fix: ignorer par motif la version des triggers, figée dans la baseline [`7d8f2c80`](https://github.com/Evarisk/digiquali/commit/7d8f2c80)
-* [#2617] [CI] fix: PHPStan ne scanne plus les stubs de test de Saturne [`1bf7f17e`](https://github.com/Evarisk/digiquali/commit/1bf7f17e)
-* [#2615] [API] fix: inclure les classes du module par dol_include_once [`1b11d636`](https://github.com/Evarisk/digiquali/commit/1b11d636)
-* [#2613] [Module] fix: bootstrap main.inc.php à deux tentatives, exigé par le Dolistore [`3607054e`](https://github.com/Evarisk/digiquali/commit/3607054e)
-* [CI] fix: compléter les dossiers du coeur vus par PHPStan [`7cbc25e8`](https://github.com/Evarisk/digiquali/commit/7cbc25e8)
-* [#2611] [CI] feat: PHPStan, lint PHP et parité des langues [`3aa986a8`](https://github.com/Evarisk/digiquali/commit/3aa986a8)
-* [#2609] [Module] rework: bornes de version Dolibarr 23 minimum, 24 maximum [`d7cf9527`](https://github.com/Evarisk/digiquali/commit/d7cf9527)
+* #2694 [Module] fix: activate dependencies before init so Saturne tables exist on a fresh instance [`#2695`](https://github.com/Evarisk/digiquali/pull/2695)
+* #2697 [Module] fix: no fatal on admin/modules.php when Saturne is missing [`#2699`](https://github.com/Evarisk/digiquali/pull/2699)
+* #2696 [Category] fix: create the default sheet tag with its type and repair product-typed ones [`#2698`](https://github.com/Evarisk/digiquali/pull/2698)
+* #2685 [PDF] fix: fiche de contrôle sans marque en en-tête, sous-titre sur plusieurs lignes, nom de l'objet lié [`#2686`](https://github.com/Evarisk/digiquali/pull/2686)
+* #2689 [PDF] fix: libellés de la fiche de contrôle traduits dans la langue du document [`#2690`](https://github.com/Evarisk/digiquali/pull/2690)
+* #2687 [Control] fix: le clonage (contrôles et questionnaires) recopie les réponses et le contrôleur devient modifiable [`#2688`](https://github.com/Evarisk/digiquali/pull/2688)
+* #2683 [Question] fix: largeur minimale du curseur des questions Pourcentage, écrasé à 0 px sur la fiche [`#2684`](https://github.com/Evarisk/digiquali/pull/2684)
+* #2665 [Survey] fix: nommer $extrafields comme les gabarits du coeur l'attendent [`#2666`](https://github.com/Evarisk/digiquali/pull/2666)
+* #2661 [Object] fix: lire class_path et create_url du registre par dol_buildpath() [`#2662`](https://github.com/Evarisk/digiquali/pull/2662)
+* #2691 [Object] rework: retirer le prefixe custom/ des entrees du registre d'objets [`#2692`](https://github.com/Evarisk/digiquali/pull/2692)
+* #2700 [Public] fix: load the QR label object class through dol_buildpath() [`#2701`](https://github.com/Evarisk/digiquali/pull/2701)

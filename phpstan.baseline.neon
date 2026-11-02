@@ -541,24 +541,6 @@ parameters:
 			path: class/questiongroup.class.php
 
 		-
-			message: '#^Method QuestionGroup\:\:displayInSheetCard\(\) has parameter \$positionPath with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Method QuestionGroup\:\:displayInSheetCard\(\) has parameter \$sheetObject with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
-			message: '#^Method QuestionGroup\:\:displayInSheetCard\(\) has parameter \$subLevel with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: class/questiongroup.class.php
-
-		-
 			message: '#^Method QuestionGroup\:\:isCorrectFromPoints\(\) has parameter \$correctPoints with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
@@ -2125,18 +2107,6 @@ parameters:
 			path: view/sheet/sheet_card.php
 
 		-
-			message: '#^Variable \$sourceId might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: view/sheet/sheet_card.php
-
-		-
-			message: '#^Variable \$sourceType might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: view/sheet/sheet_card.php
-
-		-
 			message: '#^Negated boolean expression is always true\.$#'
 			identifier: booleanNot.alwaysTrue
 			count: 2
@@ -2475,7 +2445,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
 			identifier: argument.type
-			count: 2
+			count: 1
 			path: view/questiongroup/questiongroup_card.php
 
 		-
@@ -2499,7 +2469,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
 			identifier: argument.type
-			count: 10
+			count: 8
 			path: view/sheet/sheet_card.php
 
 		-
@@ -2516,12 +2486,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: view/sheet/sheet_card.php
-
-		-
-			message: '#^Parameter \#3 \$targetid of method SaturneObject\:\:deleteObjectLinked\(\) expects int\|null, string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: view/sheet/sheet_card.php

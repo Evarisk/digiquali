@@ -74,7 +74,7 @@ function digiquali_pwa_get_object_types(): array
 function digiquali_pwa_count(string $className, array $filter = []): int
 {
     if (!function_exists('saturne_fetch_all_object_type')) {
-        require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+        dol_include_once('/saturne/lib/object.lib.php');
     }
 
     $nb = saturne_fetch_all_object_type($className, '', '', 0, 0, $filter, 'AND', false, true, false, '', ['count' => 1]);
@@ -258,7 +258,7 @@ function digiquali_pwa_render_list_items(string $className, string $cardPage, st
     global $db, $langs;
 
     if (!function_exists('saturne_fetch_all_object_type')) {
-        require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+        dol_include_once('/saturne/lib/object.lib.php');
     }
 
     $filter = [];

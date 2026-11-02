@@ -1,0 +1,353 @@
+/* DigiQuali modern theme: questions to answer on the control and survey cards (question cards,
+   answer fields, comments, actions, question groups). The answer colours set on each answer stay
+   untouched: only the frame around them follows the theme. The public page and the PWA, which
+   share these components, are outside the scope and keep their own look. */
+
+#{$dq-scope} .question-answer-container {
+  /* ---- Question card ---- */
+
+  .question:not(.wpeo-button) {
+    /* The coloured side bar is drawn with an inset shadow, which follows the rounded corners */
+    --dq-question-accent: #{$dq-border-strong};
+
+    /* The legacy rules of the questions of a group add their own margin and padding */
+    margin: 0 0 10px;
+    padding: 0 0 0 4px;
+    border: 1px solid $dq-border;
+    border-radius: $dq-radius-lg;
+    background: $dq-surface;
+    box-shadow: inset 4px 0 0 var(--dq-question-accent), $dq-shadow-sm;
+    transition: box-shadow $dq-transition;
+
+    &::before {
+      display: none;
+    }
+
+    &.question-complete {
+      --dq-question-accent: #{$dq-primary};
+    }
+
+    /* Locked control: the corrected answers */
+    &.correct {
+      --dq-question-accent: #{$dq-success};
+      border-color: $dq-success-line !important;
+    }
+
+    &.incorrect {
+      --dq-question-accent: #{$dq-danger};
+      border-color: $dq-danger-line !important;
+    }
+
+    .question__container {
+      padding: 10px 14px 10px 12px;
+    }
+
+    .question__header {
+      margin-bottom: 4px;
+
+      .question-title {
+        gap: 6px;
+
+        .question-ref {
+          font-size: 14.5px;
+          font-weight: 600;
+          color: $dq-text;
+
+          .opacitymedium {
+            color: $dq-text-soft;
+          }
+        }
+
+        .question-type {
+          padding: 1px 8px;
+          border: 1px solid $dq-border;
+          border-radius: $dq-radius-pill;
+          background: $dq-surface-soft;
+          color: $dq-muted;
+          font-size: 11.5px;
+          font-weight: 600;
+        }
+      }
+
+      .question-description {
+        margin-top: 2px;
+        font-size: 14px;
+        line-height: 1.55;
+        color: $dq-text-soft;
+      }
+
+      .question-points {
+        margin-top: 4px;
+        font-size: 13px;
+        color: $dq-muted;
+
+        strong {
+          color: $dq-text-soft;
+        }
+      }
+    }
+
+    /* Example photos of the question (OK / KO) */
+    .question__header-medias {
+      background: $dq-surface-soft;
+      border-right: 1px solid $dq-border-soft;
+
+      .photo {
+        border-radius: $dq-radius-sm;
+      }
+    }
+
+    .question__header-answer {
+      .question__answer-sep {
+        background: $dq-border;
+      }
+
+      .question__answer-actions .button-square-50 {
+        border-radius: 12px;
+      }
+    }
+
+    /* ---- Comment of the answer ---- */
+
+    .question__footer {
+      margin-top: 8px;
+
+      .question__footer-comment {
+        align-items: center;
+        padding: 4px;
+        border: 1px solid $dq-border-strong;
+        border-radius: $dq-radius;
+        background: $dq-surface;
+        transition: border-color $dq-transition, box-shadow $dq-transition;
+
+        &:hover {
+          border-color: $dq-faint;
+        }
+
+        &:focus-within {
+          border-color: $dq-primary;
+          box-shadow: $dq-ring;
+        }
+
+        .question-comment-icon {
+          flex-shrink: 0;
+          width: 32px;
+          height: 32px;
+          border-radius: $dq-radius-sm;
+          background: $dq-primary-soft;
+          color: $dq-primary;
+          line-height: 32px;
+        }
+
+        .question-comment {
+          height: 32px;
+          padding: 6px 4px;
+          background: transparent;
+          color: $dq-text;
+          font-size: 14px;
+          line-height: 1.4;
+
+          &::placeholder {
+            color: $dq-faint;
+          }
+        }
+      }
+
+      /* Comment library: suggestions as slate chips */
+      .question__comment-library {
+        gap: 6px;
+        margin-top: 6px;
+
+        .question-comment-suggestion {
+          padding: 4px 11px;
+          border: 1px solid $dq-border;
+          background: $dq-surface-soft;
+          color: $dq-text-soft;
+          font-size: 12.5px;
+          font-weight: 500;
+          transition: background-color $dq-transition, border-color $dq-transition, color $dq-transition;
+
+          &:hover {
+            border-color: $dq-primary-line;
+            background: $dq-primary-soft;
+            color: $dq-primary-strong;
+          }
+
+          .question-comment-suggestion-icon {
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+
+    /* ---- Actions (tasks) created from the answer ---- */
+
+    .question__list-actions {
+      gap: 6px;
+      margin-top: 8px;
+
+      .question__action {
+        gap: 12px;
+        padding: 8px 12px;
+        border: 1px solid $dq-border;
+        border-radius: $dq-radius;
+        background: $dq-surface-soft;
+        color: $dq-text;
+        font-size: 13.5px;
+
+        .question__action-body .question__action-metas {
+          align-items: center;
+          gap: 4px 8px;
+          color: $dq-text-soft;
+
+          .question__action-metas-ref {
+            color: $dq-text;
+          }
+
+          i {
+            color: $dq-faint;
+          }
+
+          .task-progress-value {
+            color: $dq-text;
+          }
+        }
+
+        .question__action-buttons .wpeo-button {
+          border-radius: $dq-radius-sm;
+        }
+      }
+    }
+
+    .question__list-medias .photo,
+    .question__list-medias img {
+      border-radius: $dq-radius-sm;
+    }
+  }
+
+  /* ---- Answer fields (number, text, duration) ---- */
+
+  /* The shared theme already draws the border of the field: the legacy rule still gave it the
+     18px text of the field device */
+  input:not(.button):not(.range):not([type="checkbox"]):not([type="radio"]),
+  textarea {
+    font-size: 14px;
+    color: $dq-text;
+
+    &::placeholder {
+      color: $dq-faint;
+    }
+  }
+
+  /* The eldy fix of the legacy stylesheet underlines a focused field with a thick blue line */
+  input:focus:not(.button):not(.buttonwebsite):not(.buttonreset):not(.select2-search__field):not(#top-bookmark-search-input):not(.search_component_input):not(.input-search-takepos),
+  select:focus {
+    border-bottom: 1px solid $dq-primary !important;
+    border-bottom-left-radius: $dq-radius-sm !important;
+    border-bottom-right-radius: $dq-radius-sm !important;
+  }
+
+  /* ...except the comment field, whose frame is the label around it */
+  .question__footer-comment input.question-comment:focus:not(.button):not(.buttonwebsite):not(.buttonreset):not(.select2-search__field):not(#top-bookmark-search-input):not(.search_component_input):not(.input-search-takepos) {
+    border: none !important;
+  }
+
+  .question-duration .question-duration__label {
+    color: $dq-muted;
+    opacity: 1;
+    font-size: 13px;
+  }
+
+  /* ---- Photo multiple answer: one row per photo ---- */
+
+  .question-photo-multiple {
+    gap: 6px;
+
+    .question-photo-multiple__head {
+      @include dq-label;
+      opacity: 1;
+    }
+
+    .question-photo-multiple__row {
+      padding: 6px;
+      border: 1px solid $dq-border;
+      border-radius: $dq-radius;
+      background: $dq-surface-soft;
+    }
+
+    .question-photo-multiple__empty {
+      border: 1px dashed $dq-border-strong;
+      border-radius: $dq-radius;
+      color: $dq-muted;
+    }
+
+    .question-photo-multiple__photo img {
+      border-radius: $dq-radius-sm;
+    }
+
+    .question-photo-multiple__status-button {
+      padding: 5px 10px;
+      border-width: 1px;
+      border-radius: $dq-radius-sm;
+      font-size: 12.5px;
+    }
+  }
+
+  /* ---- Question group ---- */
+
+  .digiquali-question-group {
+    --dq-group-accent: #{$dq-navy};
+
+    margin: 6px 0 14px;
+    padding: 14px 16px 14px 20px;
+    border: 1px solid $dq-border;
+    border-radius: $dq-radius-lg;
+    background: $dq-surface-soft;
+    box-shadow: inset 4px 0 0 var(--dq-group-accent), $dq-shadow-sm;
+
+    &.correct {
+      --dq-group-accent: #{$dq-success};
+      border-color: $dq-success-line;
+    }
+
+    &.incorrect {
+      --dq-group-accent: #{$dq-danger};
+      border-color: $dq-danger-line;
+    }
+
+    > h3 {
+      gap: 4px;
+      margin: 0 0 8px;
+      padding: 0 0 10px;
+      border-bottom: 1px solid $dq-border;
+      border-radius: 0;
+      background: none;
+      color: $dq-text;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+
+      .group-answer-counter {
+        font-size: 11px;
+      }
+    }
+
+    > .group-description {
+      padding: 0;
+      font-size: 13.5px;
+      color: $dq-text-soft;
+    }
+
+    > p {
+      padding: 0;
+      font-size: 13px;
+      color: $dq-muted;
+    }
+
+    .group-questions {
+      gap: 0;
+      margin-top: 10px;
+      padding: 0;
+    }
+  }
+}

@@ -1,0 +1,188 @@
+/* DigiQuali modern theme: statistics of a sheet (sheet_stats.php) and tag statistics of a control
+   (control_tag_stats.tpl.php). Each section becomes a white card. */
+
+#{$dq-scope} {
+  /* The statistics of a sheet sit in a second div.fiche, which eldy indents: the cards line up
+     with the banner instead */
+  div.fiche div.fiche.sheet-stats-container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .sheet-stats-container {
+    .stats-section {
+      overflow: hidden;
+      margin-bottom: 18px;
+      @include dq-card;
+
+      .stats-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-bottom: 1px solid $dq-border-soft;
+        border-radius: 0;
+        background: $dq-surface;
+        color: $dq-text;
+        font-size: 14px;
+
+        > i {
+          color: $dq-primary;
+        }
+      }
+
+      .stats-content {
+        padding: 16px;
+        border: none;
+        border-radius: 0;
+        background: $dq-surface;
+      }
+    }
+
+    /* Figures of the sheet */
+    .stat-card {
+      margin: 0 12px 0 0;
+      padding: 14px 18px;
+      border: 1px solid $dq-border;
+      border-left: 3px solid $dq-primary;
+      border-radius: $dq-radius;
+      background: $dq-surface;
+      box-shadow: $dq-shadow-sm;
+      text-align: left;
+
+      .stat-value {
+        margin-bottom: 4px;
+        color: $dq-text;
+        font-size: 22px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stat-label {
+        @include dq-label;
+      }
+    }
+
+    /* Statistics table of the questions / of the tags */
+    .question-stats-table {
+      border-collapse: separate;
+      border-spacing: 0;
+
+      th {
+        padding: 10px 12px;
+        border-bottom: 1px solid $dq-border;
+        background: $dq-surface-soft;
+        @include dq-label;
+        font-size: 11px;
+      }
+
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid $dq-border-soft;
+        color: $dq-text;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:nth-child(even) {
+        background-color: transparent;
+      }
+
+      tr:hover {
+        background-color: $dq-surface-soft;
+      }
+
+      .stat-bar-container {
+        height: 8px;
+        background-color: $dq-border;
+
+        .stat-bar {
+          height: 8px;
+          background-color: $dq-primary;
+        }
+      }
+    }
+  }
+
+  .select-answer-stats .answer.static .answer-stats-badge {
+    background: $dq-text;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  }
+
+  .percentage-bar-background {
+    height: 8px;
+    background-color: $dq-border;
+    border-radius: $dq-radius-pill;
+  }
+
+  .percentage-bar-fill {
+    height: 8px;
+    background-color: $dq-success;
+    border-radius: $dq-radius-pill;
+  }
+
+  .percentage-bar-label {
+    color: $dq-text-soft;
+    font-size: 13px;
+  }
+
+  .range-average-indicator {
+    border: 1px solid $dq-border;
+    border-radius: $dq-radius;
+    background: $dq-surface-soft;
+    box-shadow: none;
+    font-family: inherit;
+  }
+
+  .range-average-value {
+    color: $dq-text;
+    font-variant-numeric: tabular-nums;
+
+    i {
+      color: $dq-success;
+    }
+  }
+
+  .range-average-label {
+    @include dq-label;
+    font-size: 10px;
+  }
+
+  /* ---- Tag statistics of a control ---- */
+
+  .tag-stats-filter-bar {
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    @include dq-card;
+
+    > span > b {
+      @include dq-label;
+    }
+  }
+
+  #controlTagChartsRow.control-charts-side-by-side {
+    gap: 16px;
+  }
+
+  .bar-chart-legend {
+    color: $dq-text-soft;
+    font-size: 13px;
+  }
+
+  .legend-color-swatch {
+    border-radius: 4px;
+  }
+
+  .donut-card {
+    .donut-card-title {
+      color: $dq-text;
+      font-size: 14px;
+    }
+
+    .donut-card-legend {
+      color: $dq-text-soft;
+    }
+  }
+}

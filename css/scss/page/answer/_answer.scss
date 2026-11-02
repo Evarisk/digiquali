@@ -242,6 +242,9 @@
         }
         input[type=range] {
           width: 100%;
+          // A percentage width gives the slider no minimum width : sharing its row with the action
+          // buttons, it was crushed down to nothing. On the field device the answer has a row of its own
+          min-width: 200px;
           appearance: none;
           cursor: pointer;
           padding: 0;
@@ -250,6 +253,10 @@
           margin: 0;
           box-shadow: none;
           position: relative;
+
+          @media ( max-width: $media__small ) {
+            min-width: 0;
+          }
         }
 
         input[type=range]::-webkit-slider-thumb {

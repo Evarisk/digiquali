@@ -25,7 +25,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Survey
@@ -208,7 +208,7 @@ class Survey extends SaturneObject
     /**
      * @var int Sheet ID
      */
-    public int $fk_sheet;
+    public int $fk_sheet = 0;
 
     /**
      * @var int|string|null Project ID
@@ -399,6 +399,41 @@ class Survey extends SaturneObject
                 $path = $dir . '/' . $objectRef . '/photos';
                 dol_mkdir($dir . '/' . $objectFromClone->ref . '/photos');
                 dolCopyDir($path,$dir . '/' . $objectFromClone->ref . '/photos', 0, 1);
+            }
+
+            // #2687: create() rebuilds the lines from the sheet with empty answers, fill them back from the source.
+            if (!empty($options['answers'])) {
+                $surveyLine  = new SurveyLine($this->db);
+                $sourceLines = $surveyLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_survey = ' . $fromID . ' AND t.status > 0']);
+                if (is_array($sourceLines) && !empty($sourceLines)) {
+                    foreach ($sourceLines as $sourceLine) {
+                        $clonedLines = $surveyLine->fetchFromParentWithQuestion($surveyID, (int) $sourceLine->fk_question);
+                        // A question removed from the sheet since has no line on the clone.
+                        if (!is_array($clonedLines) || empty($clonedLines)) {
+                            continue;
+                        }
+
+                        // Typed properties without default stay uninitialized when the column is NULL.
+                        $clonedLine                = array_shift($clonedLines);
+                        $clonedLine->answer        = $sourceLine->answer ?? null;
+                        $clonedLine->comment       = $sourceLine->comment ?? null;
+                        $clonedLine->earned_points = $sourceLine->earned_points ?? null;
+                        $clonedLine->score_rate    = $sourceLine->score_rate ?? null;
+                        if ($clonedLine->update($user, 1) < 0) {
+                            $error++;
+                            $this->error  = $clonedLine->error;
+                            $this->errors = $clonedLine->errors;
+                        }
+                    }
+                }
+
+                // Answer photos belong to the answers, PhotoMultiple answers even reference them by file name.
+                $dir  = $conf->digiquali->multidir_output[$conf->entity] . '/survey';
+                $path = $dir . '/' . $objectRef . '/answer_photo';
+                if (dol_is_dir($path)) {
+                    dol_mkdir($dir . '/' . $objectFromClone->ref . '/answer_photo');
+                    dolCopyDir($path, $dir . '/' . $objectFromClone->ref . '/answer_photo', '0', 1);
+                }
             }
         } else {
             $error++;

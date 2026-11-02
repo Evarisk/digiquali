@@ -133,7 +133,7 @@ print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@d
  *  Numbering module
  */
 
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 $constArray['digiquali'] = [
     'ManageControlActionsOnLockedControl' => [
@@ -142,7 +142,7 @@ $constArray['digiquali'] = [
         'code'        => 'DIGIQUALI_CONTROL_MANAGE_ACTIONS_ON_LOCKED_CONTROL'
     ]
 ];
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 /*
  * Numbering module line
@@ -150,7 +150,7 @@ require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.ph
 
 $object = new ControlLine($db);
 
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 // Control reminder
 print load_fiche_titre($langs->trans('ControlReminder'), '', '');

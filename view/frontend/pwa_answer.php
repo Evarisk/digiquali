@@ -175,7 +175,7 @@ print '</div>';
 print '</form>';
 
 // Required by the media block: without it, picking a photo silently does nothing
-require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 llxFooter();
 $db->close();

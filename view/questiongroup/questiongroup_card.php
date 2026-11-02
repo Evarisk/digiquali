@@ -146,15 +146,17 @@ if (empty($reshook)) {
 		$object->updateQuestionsPositions($reIndexedIds);
 	}
 
-    if ($action == 'removeQuestion') {
-        $questionId = GETPOST('questionId', 'int');
-        if ($questionId > 0) {
-            $question->fetch($questionId);
-			$object->deleteObjectLinked($object->id, 'digiquali_questiongroup', $question->id, 'digiquali_question');
-
-            setEventMessages($langs->trans('RemoveQuestionFromGroup') . ' ' . $question->ref, array());
+    if ($action == 'removeQuestion' && $permissiontoadd) {
+        $questionId = GETPOSTINT('questionId');
+        if ($questionId > 0 && $question->fetch($questionId) > 0) {
+            if ($object->removeQuestion($questionId) > 0) {
+                setEventMessages($langs->trans('RemoveQuestionFromGroup') . ' ' . $question->ref, []);
+            } else {
+                setEventMessages($object->error, $object->errors, 'errors');
+            }
         }
         header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id  . ($sheetId ? '&sheet_id=' . $sheetId : ''));
+        exit;
     }
 
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
@@ -166,7 +168,7 @@ if (empty($reshook)) {
 	}
 
     // Actions confirm_lock, confirm_archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
 }
 
 /*
@@ -405,7 +407,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			print '<span class="butAction" id="actionButtonClone"><i class="fas fa-clone"></i> ' . $langs->trans('Clone') . '</span>';
 
 			// Delete (need delete permission, or if draft, just need create/modify permission)
-			print dolGetButtonAction('<i class="fas fa-trash"></i> ' . $langs->trans('Delete'), '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id  . ($sheetId ? '&sheet_id=' . $sheetId : '') . '&action=delete', '', $permissiontodelete || ($object->status == $object::STATUS_DRAFT && $permissiontoadd));
+			print dolGetButtonAction('<i class="fas fa-trash"></i> ' . $langs->trans('Delete'), '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id  . ($sheetId ? '&sheet_id=' . $sheetId : '') . '&action=delete&token=' . newToken(), '', $permissiontodelete || ($object->status == $object::STATUS_DRAFT && $permissiontoadd));
 		}
 		print '</div>';
 	}

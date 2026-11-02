@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 require_once __DIR__ . '/answer.class.php';
 
 /**
@@ -239,7 +239,7 @@ class Question extends SaturneObject
 			'correctable' => true,
 			'only_one_correct_answer' => true,
 		],
-		// The answer is made of the answer photos : one row per photo, each with its comment and OK/KO status
+		// The answer is made of the answer photos : one row per photo, each with its comment and status (OK, KO, to fix or N/A)
 		self::TYPE_PHOTO_MULTIPLE => [
 			'default_points' => 0,
 			'correctable' => false,
@@ -1011,9 +1011,10 @@ class Question extends SaturneObject
 	 * @param Sheet $sheetObject The sheet of the question
 	 * @param string $positionPath The path of the question based on positions
 	 * @param string $tdOffsetStyle Additional CSS styles to put on question
+	 * @param int $containerGroupId Id of the group the question is displayed in, 0 for the sheet root
 	 *
      */
-    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '')
+    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '', int $containerGroupId = 0)
     {
 		global $conf, $langs;
 		$question = $this;

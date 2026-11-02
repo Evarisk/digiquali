@@ -145,7 +145,7 @@ $constArray['digiquali'] = [
         'code'        => 'DIGIQUALI_ANSWER_PUBLIC_INTERFACE_ADD_ACTION',
     ]
 ];
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 // Page end
 print dol_get_fiche_end();
