@@ -551,6 +551,82 @@ class Control extends SaturneObject
     }
 
     /**
+     * Is one of the equipments used by the control past its expiry date?
+     *
+     * Only checked when DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT is enabled : the control can then be
+     * neither validated nor locked.
+     *
+     * @return bool True if an equipment is outdated
+     * @throws Exception
+     */
+    public function hasOutdatedEquipment(): bool
+    {
+        if (!getDolGlobalInt('DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT')) {
+            return false;
+        }
+
+        $controlEquipment  = new ControlEquipment($this->db);
+        $controlEquipments = $controlEquipment->fetchFromParent($this->id);
+        if (is_array($controlEquipments) && !empty($controlEquipments)) {
+            foreach ($controlEquipments as $equipmentControl) {
+                $data = json_decode($equipmentControl->json, true);
+                $dluo = $data['dluo'];
+                if (!empty($dluo) && $dluo <= dol_now()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the steps left before the control can be locked.
+     *
+     * A control is locked once validated, given a verdict and signed by all its attendants : the card
+     * lists these steps and the mass lock skips the controls that still have some.
+     *
+     * @return string[] Translation keys of the steps left, empty when the control can be locked
+     * @throws Exception
+     */
+    public function getLockBlockers(): array
+    {
+        dol_include_once('/saturne/class/saturnesignature.class.php');
+
+        if ($this->status != self::STATUS_VALIDATED) {
+            return ['ControlLockStepValidate'];
+        }
+
+        $blockers = [];
+        if (empty($this->verdict)) {
+            $blockers[] = 'ControlLockStepVerdict';
+        }
+
+        // No attendant at all does not block the lock, an attendant who has not signed yet does
+        $signatory = new SaturneSignature($this->db);
+        if (!$signatory->checkSignatoriesSignatures($this->id, $this->element)) {
+            $blockers[] = 'ControlLockStepSign';
+        }
+
+        if ($this->hasOutdatedEquipment()) {
+            $blockers[] = 'ControlEquipmentOutdated';
+        }
+
+        return $blockers;
+    }
+
+    /**
+     * Can the control be locked now?
+     *
+     * @return bool True if the control is validated, has a verdict and is signed by all its attendants
+     * @throws Exception
+     */
+    public function isLockable(): bool
+    {
+        return empty($this->getLockBlockers());
+    }
+
+    /**
      * Set locked status
      *
      * @param  User      $user      Object user that modify

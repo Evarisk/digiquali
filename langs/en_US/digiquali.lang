@@ -104,6 +104,20 @@ ControlsOnParentProduct   = Controls carried out on the parent product
 ControlsOnProductLots     = Controls carried out on the lots/serials in stock
 
 #
+# Lock of a control
+#
+
+ControlLockStepsLeft          = Steps left before the lock:
+ControlLockStepValidate       = Validate the control
+ControlLockStepVerdict        = Set the verdict (Compliant/Non-compliant)
+ControlLockStepSign           = Have all the attendants sign
+ControlLockStepLock           = Lock: the control is frozen, the next control date is computed and it appears on the public interface
+ControlAlreadyLocked          = The control is already locked
+ControlValidatedNotLocked     = Control validated, not locked yet
+ControlValidatedNotLockedHelp = Until it is locked, the control can be set back to draft, it does not appear on the public interface and the next control date is not computed. Steps to complete it:
+ControlLockConsequences       = Once locked, the control can no longer be set back to draft and appears on the public interface.
+
+#
 # Action plan
 #
 
