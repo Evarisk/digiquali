@@ -965,9 +965,13 @@ class Control extends SaturneObject
             $verdict = 0;
         }
 
-        $this->labelStatus[0] = $langs->trans('NA');
-        $this->labelStatus[1] = $langs->trans('OK');
-        $this->labelStatus[2] = $langs->trans('KO');
+        // Labels of their own: written into labelStatus, they replaced the status labels of the object, which
+        // LibStatut() only fills when empty, and labelStatusShort held the short status labels, not the verdict ones
+        $labelVerdict = [
+            0 => $langs->trans('NA'),
+            1 => $langs->trans('OK'),
+            2 => $langs->trans('KO'),
+        ];
 
         $verdictType = 'status' . $verdict;
         if ($verdict == 0) {
@@ -980,7 +984,7 @@ class Control extends SaturneObject
             $verdictType = 'status8';
         }
 
-        return dolGetStatus($this->labelStatus[$verdict], $this->labelStatusShort[$verdict], '', $verdictType, $mode);
+        return dolGetStatus($labelVerdict[$verdict] ?? '', $labelVerdict[$verdict] ?? '', '', $verdictType, $mode);
     }
 
     /**
