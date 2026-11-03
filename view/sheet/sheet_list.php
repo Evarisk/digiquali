@@ -102,7 +102,9 @@ $excludeFields                  = ['nb_questions'];
 // Initialize array of search criterias
 $searchAll        = trim(GETPOST('search_all'));
 $search           = [];
-$search['status'] = saturne_get_status_search_filter([Sheet::STATUS_VALIDATED, Sheet::STATUS_LOCKED]);
+// Draft and archived sheets are hidden until asked for, "Remove filters" goes back to these statuses
+$defaultSearchStatus = [Sheet::STATUS_VALIDATED, Sheet::STATUS_LOCKED];
+$search['status']    = saturne_get_status_search_filter($defaultSearchStatus);
 foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');
@@ -176,6 +178,8 @@ if (empty($resHook)) {
         $toselect             = [];
         $search_array_options = [];
         $searchCategories     = [];
+        // An emptied status would list the hidden sheets for this page only, the next sort bringing the default back
+        $search['status'] = $defaultSearchStatus;
     }
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')
         || GETPOST('button_search_x', 'alpha') || GETPOST('button_search.x', 'alpha') || GETPOST('button_search', 'alpha')) {
