@@ -167,7 +167,9 @@ $excludeFields = array_merge($excludeFields, ['days_remaining_before_next_contro
 // Initialize array of search criterias
 $searchAll = trim(GETPOST('search_all'));
 $search    = [];
-$search['status'] = saturne_get_status_search_filter([Control::STATUS_DRAFT, Control::STATUS_VALIDATED, Control::STATUS_LOCKED]);
+// Archived controls are hidden until asked for, "Remove filters" goes back to these statuses
+$defaultSearchStatus = [Control::STATUS_DRAFT, Control::STATUS_VALIDATED, Control::STATUS_LOCKED];
+$search['status']    = saturne_get_status_search_filter($defaultSearchStatus);
 foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');
@@ -267,6 +269,8 @@ if (empty($resHook)) {
         $toselect             = [];
         $search_array_options = [];
         $searchCategories     = [];
+        // An emptied status would list the archived controls for this page only, the next sort bringing the default back
+        $search['status'] = $defaultSearchStatus;
     }
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')
         || GETPOST('button_search_x', 'alpha') || GETPOST('button_search.x', 'alpha') || GETPOST('button_search', 'alpha')) {
