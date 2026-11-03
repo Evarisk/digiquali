@@ -86,7 +86,6 @@ $object           = new Control($db);
 $objectLine       = new ControlLine($db);
 $document         = new ControlDocument($db);
 $signatory        = new SaturneSignature($db, 'digiquali');
-$controlEquipment = new ControlEquipment($db);
 $product          = new Product($db);
 $sheet            = new Sheet($db);
 $question         = new Question($db);
@@ -590,20 +589,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     $formConfirm = '';
 
     // If conf activated we check that at least one control equipment is outdated
-    $equipmentOutdated = false;
-    if (getDolGlobalInt('DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT')) {
-        $controlEquipments = $controlEquipment->fetchFromParent($object->id);
-        if (is_array($controlEquipments) && !empty($controlEquipments)) {
-            foreach ($controlEquipments as $equipmentControl) {
-                $data = json_decode($equipmentControl->json, true);
-                $dluo = $data['dluo'];
-                if (!empty($dluo) && $dluo <= dol_now()) {
-                    $equipmentOutdated = true;
-                    break;
-                }
-            }
-        }
-    }
+    $equipmentOutdated = $object->hasOutdatedEquipment();
+
+    // Steps left before the lock, listed by the lock button and the notice of a validated control
+    $lockBlockers = $object->getLockBlockers();
 
     if (($action == 'setVerdict' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         $formquestion = [
@@ -641,6 +630,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
         }
         $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('ControlLockConsequences');
 
         $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $lockConfirmContent, 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
     }
@@ -891,6 +881,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
         </div>
     <?php }
 
+    // A validated control is neither final nor published yet: tell what is left before the lock
+    if ($object->status == Control::STATUS_VALIDATED) {
+        require __DIR__ . '/../../core/tpl/control/control_lock_steps.tpl.php';
+    }
+
     print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?action=save&id=' . $object->id . '" id="saveObject" enctype="multipart/form-data">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="save">';
@@ -949,10 +944,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
             // Lock
             $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('Lock');
-            if ($object->status == $object::STATUS_VALIDATED && $object->verdict != null && $signatory->checkSignatoriesSignatures($object->id, $object->element) && !$equipmentOutdated) {
+            if (empty($lockBlockers)) {
                 print '<span class="butAction" id="actionButtonLock">' . $displayButton . '</span>';
+            } elseif ($object->status < $object::STATUS_LOCKED) {
+                // Name the steps left rather than a generic message: the user knows what to do next
+                $lockBlockersLabels = array_map([$langs, 'transnoentities'], $lockBlockers);
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->transnoentities('ControlLockStepsLeft') . '<br>- ' . implode('<br>- ', $lockBlockersLabels)) . '">' . $displayButton . '</span>';
             } else {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ControlMustBeValidatedToLock')) . '">' . $displayButton . '</span>';
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ControlAlreadyLocked')) . '">' . $displayButton . '</span>';
             }
 
             // Send email
