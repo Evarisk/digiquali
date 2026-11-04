@@ -100,6 +100,10 @@ print '<div class="fiche sheet-stats-container">';
 
 $filter = ['fk_sheet' => $object->id];
 $controls = $control->fetchAll('', '', 0, 0, $filter);
+// fetchAll() returns -1 when the query fails, as it does without a sheet to filter on
+if (!is_array($controls)) {
+    $controls = [];
+}
 
 $controlsNumber = count($controls);
 
