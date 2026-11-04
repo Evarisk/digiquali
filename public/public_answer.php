@@ -52,6 +52,9 @@ if (file_exists('../digiquali.main.inc.php')) {
     die('Include of digiquali main fails');
 }
 
+// Global variables definitions
+global $conf, $db, $hookmanager, $moduleNameLowerCase, $langs, $user;
+
 // Get module parameters
 $objectType   = GETPOST('object_type', 'alpha');
 $documentType = GETPOST('document_type', 'alpha');
@@ -86,9 +89,6 @@ require_once __DIR__ . '/../lib/digiquali_sheet.lib.php';
 require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
 require_once __DIR__ . '/../lib/digiquali_control.lib.php';
-
-// Global variables definitions
-global $conf, $db, $hookmanager, $moduleNameLowerCase, $langs, $user;
 
 // Load translation files required by the page
 saturne_load_langs(['projects']);
@@ -134,7 +134,7 @@ $conf->setEntityValues($db, $entity);
 $object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'");
 
 $linkableElements = saturne_get_objects_metadata();
-$object->fetchObjectLinked('', '', '', 'digiquali_control');
+$object->fetchObjectLinked(null, '', null, 'digiquali_control');
 $linkedObjectType = key($object->linkedObjects);
 $linkedObject     = (is_array($object->linkedObjects[$linkedObjectType] ?? null) && !empty($object->linkedObjects[$linkedObjectType]))
     ? current($object->linkedObjects[$linkedObjectType])
