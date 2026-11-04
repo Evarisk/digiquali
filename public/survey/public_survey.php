@@ -77,7 +77,7 @@ if (!isModEnabled('multicompany')) {
 $conf->setEntityValues($db, $entity);
 
 // Load object
-$object->fetch(0, '', ' AND track_id = ' . "'" . $track_id . "'");
+$object->fetch(0, '', " AND track_id = '" . $db->escape($track_id) . "'");
 
 /*
  * View
