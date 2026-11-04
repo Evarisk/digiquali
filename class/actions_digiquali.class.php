@@ -172,7 +172,7 @@ class ActionsDigiquali
     public function hookSetManifest(array $parameters): int
     {
         if (strpos($_SERVER['PHP_SELF'], 'digiquali') !== false) {
-            $this->resprints = dol_buildpath('custom/digiquali/manifest.json.php', 1);
+            $this->resprints = dol_buildpath('/digiquali/manifest.json.php', 1);
             return 1; // or return 1 to replace standard code
         }
 
@@ -741,7 +741,7 @@ class ActionsDigiquali
     {
         if (strpos($parameters['context'], 'mainloginpage') !== false) {
             if (getDolGlobalInt('DIGIQUALI_REDIRECT_AFTER_CONNECTION')) {
-                $this->resprints = dol_buildpath('/custom/digiquali/digiqualiindex.php?mainmenu=digiquali', 1);
+                $this->resprints = dol_buildpath('/digiquali/digiqualiindex.php', 1) . '?mainmenu=digiquali';
             }
         }
 
@@ -1028,7 +1028,7 @@ class ActionsDigiquali
                     ];
                     $this->resprints = $form->formconfirm($_SERVER['PHP_SELF'], $langs->trans('ConfirmMassAddQuestion'), $langs->trans('ConfirmMassAddingQuestion', count($parameters['toselect'])) . '<br>' . $langs->trans('QuestionsInSheetWillBeIgnored'), 'add_questions', $formQuestion, '', 0, 200, 500, 1);
                 } else {
-                    setEventMessages('<a href="' . dol_buildpath('custom/digiquali/view/sheet/sheet_list.php', 1) . '">' . $langs->transnoentities('ObjectNotFound', img_picto('', $sheet->picto, 'class="paddingrightonly"') . $langs->transnoentities(ucfirst($sheet->element))) . '</a>', [], 'warnings');
+                    setEventMessages('<a href="' . dol_buildpath('/digiquali/view/sheet/sheet_list.php', 1) . '">' . $langs->transnoentities('ObjectNotFound', img_picto('', $sheet->picto, 'class="paddingrightonly"') . $langs->transnoentities(ucfirst($sheet->element))) . '</a>', [], 'warnings');
                 }
             }
         }
@@ -1453,7 +1453,7 @@ class ActionsDigiquali
                         'img'      => 'fontawesome_fa-' . $picto . '_fas_#d35968',
                         'label'    => $langs->trans(ucfirst($objectName)),
                         'text'     => img_picto('', 'fontawesome_fa-' . $picto . '_fas_#d35968', 'class="pictofixedwidth"') . $langs->trans(ucfirst($objectName)),
-                        'url'      => dol_buildpath('custom/digiquali/view/' . $objectName . '/' . $objectName . '_list.php?mainmenu=digiquali', 1) . (!empty($parameters['search_boxvalue']) ? '&search_all=' . urlencode($parameters['search_boxvalue']) : '')
+                        'url'      => dol_buildpath('/digiquali/view/' . $objectName . '/' . $objectName . '_list.php', 1) . '?mainmenu=digiquali' . (!empty($parameters['search_boxvalue']) ? '&search_all=' . urlencode($parameters['search_boxvalue']) : '')
                     ];
                 }
             }

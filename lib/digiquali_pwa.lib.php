@@ -32,7 +32,8 @@ function digiquali_pwa_nav_get_items(): array
 {
     global $langs;
 
-    $urlBase = dol_buildpath('/custom/digiquali/view/frontend/', 1);
+    // The folder is resolved through one of its files: dol_buildpath() falls back to the main root for a path it cannot find
+    $urlBase = dirname(dol_buildpath('/digiquali/view/frontend/pwa_home.php', 1)) . '/';
 
     return [
         'home'     => ['url' => $urlBase . 'pwa_home.php?source=pwa',     'page' => 'pwa_home.php',     'icon' => 'fa-home',            'label' => ucfirst($langs->trans('Home'))],

@@ -305,7 +305,7 @@ function get_control_infos(CommonObject $linkedObject): array
 
         $out['control'][$control->id] = [
             'ref'               => $control->ref,
-            'url'               => $permissionToReadControl ? dol_buildpath('custom/digiquali/view/control/control_card.php', 1) . '?id=' . $control->id : '',
+            'url'               => $permissionToReadControl ? dol_buildpath('/digiquali/view/control/control_card.php', 1) . '?id=' . $control->id : '',
             'control_date'      => $control->control_date,
             'next_control_date' => $control->next_control_date ?: 0,
             'sheet'             => $sheet->label ?: $sheet->ref,
@@ -353,7 +353,7 @@ function get_control_infos(CommonObject $linkedObject): array
                 }
             }
         }
-        $out['status']['create_url'] = dol_buildpath('custom/digiquali/view/frontend/pwa_control_create.php', 1) . '?' . http_build_query(array_filter($createParameters));
+        $out['status']['create_url'] = dol_buildpath('/digiquali/view/frontend/pwa_control_create.php', 1) . '?' . http_build_query(array_filter($createParameters));
     }
 
     return $out;
@@ -1041,7 +1041,7 @@ function digiquali_public_control_history_url(CommonObject $object, bool $signed
 
     $trackId = $signed ? digiquali_public_control_track_id($object) : base64_encode((string) json_encode(['type' => $object->element, 'id' => (int) $object->id]));
 
-    return dol_buildpath('custom/digiquali/public/control/public_control_history.php?track_id=' . $trackId . '&entity=' . $conf->entity, 3);
+    return dol_buildpath('/digiquali/public/control/public_control_history.php', 3) . '?track_id=' . $trackId . '&entity=' . $conf->entity;
 }
 
 /**

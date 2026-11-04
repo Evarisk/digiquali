@@ -63,7 +63,7 @@ $backtopage = GETPOST('backtopage', 'alpha');
 if (!preg_match('/^\/[^\/]/', $backtopage)) {
     $backtopage = '';
 }
-$pwaBackUrl = $backtopage ?: dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
+$pwaBackUrl = $backtopage ?: dol_buildpath('/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
 
 // Initialize technical objects
 $className  = ucfirst($objectType);

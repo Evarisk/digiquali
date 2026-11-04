@@ -322,7 +322,7 @@ class modDigiQuali extends DolibarrModules
 		// Array to add new pages in new tabs
 
 		$this->tabs   = [];
-		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
+		$pictopath    = dol_buildpath('/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
         // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
         dol_include_once('/saturne/lib/object.lib.php');
@@ -1040,7 +1040,7 @@ class modDigiQuali extends DolibarrModules
                 $control->track_id = generate_random_id();
                 $control->update($user, true);
 
-                $url = dol_buildpath('custom/digiquali/public/control/public_control.php?track_id=' . $control->track_id . '&entity=' . $conf->entity, 3);
+                $url = dol_buildpath('/digiquali/public/control/public_control.php', 3) . '?track_id=' . $control->track_id . '&entity=' . $conf->entity;
 
                 $barcode = new TCPDF2DBarcode($url, 'QRCODE,L');
                 dol_mkdir(DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/');

@@ -39,7 +39,7 @@ if (!empty($mysoc->logo_squarred)) {
     $logoFile = 'logos/' . $mysoc->logo;
 }
 
-$homeUrl    = dol_buildpath('/custom/digiquali/view/frontend/pwa_home.php?source=pwa', 1);
+$homeUrl    = dol_buildpath('/digiquali/view/frontend/pwa_home.php', 1) . '?source=pwa';
 $profileUrl = dol_buildpath('/user/virtualcard.php', 1) . '?id=' . $user->id;
 ?>
 <header id="id-top" class="pwa-header">

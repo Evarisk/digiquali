@@ -762,9 +762,9 @@ class Sheet extends SaturneObject
         list($modQuestion, $modQuestionGroup) = saturne_require_objects_mod($numberingModules, $moduleNameLowerCase);
 
         $questionAndGroups = $this->fetchQuestionsAndGroups();
-        $questionGroupCardUrl = dol_buildpath('/custom/digiquali/view/questiongroup/questiongroup_card.php', 1);
-        $questionCardUrl = dol_buildpath('/custom/digiquali/view/question/question_card.php', 1);
-        $sheetCardUrl = dol_buildpath('/custom/digiquali/view/sheet/sheet_card.php', 1);
+        $questionGroupCardUrl = dol_buildpath('/digiquali/view/questiongroup/questiongroup_card.php', 1);
+        $questionCardUrl = dol_buildpath('/digiquali/view/question/question_card.php', 1);
+        $sheetCardUrl = dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1);
 
         $out = '<div id="id-container" class="id-container question-and-group-tree">';
         $out .= '<input type="hidden" name="token" value="'. newToken() . '"/>';
