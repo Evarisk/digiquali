@@ -173,7 +173,7 @@ if ($object->id > 0) {
     $actionPlanFormParameters = ['id' => $object->id];
 
     if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
-        $publicActionPlanUrl = dol_buildpath('custom/digiquali/public/control/public_control_actionplan.php?track_id=' . $object->track_id . '&entity=' . $conf->entity, 3);
+        $publicActionPlanUrl = dol_buildpath('/digiquali/public/control/public_control_actionplan.php', 3) . '?track_id=' . $object->track_id . '&entity=' . $conf->entity;
         print '<div class="underbanner clearboth"></div>';
         print '<table class="border centpercent tableforfield"><tr><td class="titlefield">';
         print $langs->trans('PublicActionPlan') . ' <a href="' . $publicActionPlanUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';

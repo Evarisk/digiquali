@@ -52,8 +52,8 @@ if (!$rights['sheets'] && !$rights['controls'] && !$rights['surveys']) {
 
 $title    = $langs->trans('Home');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/digiquali/js/digiquali.min.js'];
-$moreCSS  = ['/custom/digiquali/css/digiquali.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/digiquali/js/digiquali.min.js'];
+$moreCSS  = ['/digiquali/css/digiquali.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -107,7 +107,7 @@ if ($rights['controls']) {
         print '<div class="pwa-empty"><i class="fas fa-clipboard-check"></i><p>' . $langs->trans('NoRecordFound') . '</p></div>';
     } else {
         foreach ($recentControls as $control) {
-            print digiquali_pwa_render_card($control, '/custom/digiquali/view/frontend/pwa_answer.php', false, 'object_type=control');
+            print digiquali_pwa_render_card($control, '/digiquali/view/frontend/pwa_answer.php', false, 'object_type=control');
         }
     }
     print '</div>';

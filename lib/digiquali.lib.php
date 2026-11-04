@@ -88,7 +88,7 @@ function digiquali_admin_prepare_head(): array
     $head[$h][2] = 'settings';
     $h++;
 
-    $head[$h][0] = dol_buildpath('saturne/admin/pwa.php', 1). '?module_name=DigiQuali&start_url=' . dol_buildpath('custom/digiquali/view/control/control_list.php?source=pwa', 3);
+    $head[$h][0] = dol_buildpath('saturne/admin/pwa.php', 1). '?module_name=DigiQuali&start_url=' . dol_buildpath('/digiquali/view/control/control_list.php', 3) . '?source=pwa';
     $head[$h][1] = $conf->browser->layout == 'classic' ? '<i class="fas fa-mobile pictofixedwidth"></i>' . $langs->trans('PWA') : '<i class="fas fa-mobile"></i>';
     $head[$h][2] = 'pwa';
     $h++;

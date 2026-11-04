@@ -7,9 +7,9 @@ $questionGroup = new QuestionGroup($db);
 
 // Ensure distinct actions are set in the form
 if ($object->status < $object::STATUS_LOCKED) {
-    $questionGroupCardUrl = dol_buildpath('/custom/digiquali/view/questiongroup/questiongroup_card.php', 1);
-    $questionCardUrl = dol_buildpath('/custom/digiquali/view/question/question_card.php', 1);
-    $sheetCardUrl = dol_buildpath('/custom/digiquali/view/sheet/sheet_card.php?id=' . $object->id, 1);
+    $questionGroupCardUrl = dol_buildpath('/digiquali/view/questiongroup/questiongroup_card.php', 1);
+    $questionCardUrl = dol_buildpath('/digiquali/view/question/question_card.php', 1);
+    $sheetCardUrl = dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1) . '?id=' . $object->id;
 
     $addQuestionHref =  $questionCardUrl . '?action=create&sheet_id='. $object->id . '&question_group_id=' . $groupId . '&backtopage=' . $sheetCardUrl;
     $addQuestionGroupHref =  $questionGroupCardUrl . '?action=create&sheet_id='. $object->id . '&parent_group_id=' . $groupId . '&backtopage=' . $sheetCardUrl;

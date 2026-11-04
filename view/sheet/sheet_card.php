@@ -575,7 +575,7 @@ if ($action == 'create') {
 	}
 
     // Linked elements
-    $sheetAdminUrl = dol_buildpath('custom/digiquali/admin/sheet.php', 1);
+    $sheetAdminUrl = dol_buildpath('/digiquali/admin/sheet.php', 1);
     print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b> <a href="' . $sheetAdminUrl . '" target="_blank"><span class="opacitymedium">(' . $langs->trans('ConfigureYourObjectsHere') . ')</span></a></td></tr>';
 
     if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
@@ -994,7 +994,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		if (empty($reshook) && $permissiontoadd) {
 			// Create object depending on sheet type
 			if ($object->status == $object::STATUS_LOCKED) {
-				print '<a class="butAction" href="' . dol_buildpath('/custom/digiquali/view/' . $object->type . '/' . $object->type . '_card.php?action=create&fk_sheet=' . $object->id, 1) . '"><i class="fas fa-plus-circle"></i> ' . $langs->trans('New' . ucfirst($object->type)) . '</a>';
+				print '<a class="butAction" href="' . dol_buildpath('/digiquali/view/' . $object->type . '/' . $object->type . '_card.php', 1) . '?action=create&fk_sheet=' . $object->id . '"><i class="fas fa-plus-circle"></i> ' . $langs->trans('New' . ucfirst($object->type)) . '</a>';
 			} else {
 				print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeLocked', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '"><i class="fas fa-plus-circle"></i> ' . $langs->trans('New' . ucfirst($object->type)) . '</span>';
 			}

@@ -63,7 +63,7 @@ $backtopage = GETPOST('backtopage', 'alpha');
 if (!preg_match('/^\/[^\/]/', $backtopage)) {
     $backtopage = '';
 }
-$pwaBackUrl = $backtopage ?: dol_buildpath('/custom/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
+$pwaBackUrl = $backtopage ?: dol_buildpath('/digiquali/view/frontend/pwa_' . $objectType . 's.php', 1) . '?source=pwa';
 
 // Initialize technical objects
 $className  = ucfirst($objectType);
@@ -129,8 +129,8 @@ $title    = $langs->trans('Answers') . ' - ' . $object->ref;
 $help_url = 'FR:Module_DigiQuali';
 // llxHeader() does not load the Saturne assets on its own, and the media block needs both its
 // JS and its CSS: without saturne.min.css the linked photos render unconstrained.
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/digiquali/js/digiquali.min.js'];
-$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/digiquali/css/digiquali.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/digiquali/js/digiquali.min.js'];
+$moreCSS  = ['/saturne/css/saturne.min.css', '/digiquali/css/digiquali.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;

@@ -322,7 +322,7 @@ class modDigiQuali extends DolibarrModules
 		// Array to add new pages in new tabs
 
 		$this->tabs   = [];
-		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
+		$pictopath    = dol_buildpath('/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
         // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
         dol_include_once('/saturne/lib/object.lib.php');
@@ -358,9 +358,9 @@ class modDigiQuali extends DolibarrModules
                 $tabType = $objectMetadata['tab_type'];
             }
             if ($objectMetadata['link_name'] !== 'propal') {
-                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
             }
-            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
 
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_list'];
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_card'];
@@ -1031,24 +1031,14 @@ class modDigiQuali extends DolibarrModules
         }
 
     if (getDolGlobalInt('DIGIQUALI_CONTROL_BACKWARD_COMPATIBILITY') == 0) {
-        require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
         require_once __DIR__ . '/../../class/control.class.php';
         $control  = new Control($this->db);
         $controls = $control->fetchAll();
         if (is_array($controls) && !empty($controls)) {
+            // Tracking id only: #2021 removed the public control page these QR codes pointed to, and their display
             foreach ($controls as $control) {
                 $control->track_id = generate_random_id();
                 $control->update($user, true);
-
-                $url = dol_buildpath('custom/digiquali/public/control/public_control.php?track_id=' . $control->track_id . '&entity=' . $conf->entity, 3);
-
-                $barcode = new TCPDF2DBarcode($url, 'QRCODE,L');
-                dol_mkdir(DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/');
-                $file = DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/barcode_' . $control->track_id . '.png';
-
-                $imageData = $barcode->getBarcodePngData();
-                $imageData = imagecreatefromstring($imageData);
-                imagepng($imageData, $file);
             }
         }
 

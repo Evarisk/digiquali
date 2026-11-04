@@ -404,7 +404,7 @@ if ($action == 'create') {
         if (!getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET')) {
             print '<div class="wpeo-notice notice-warning notice-red">';
             print '<div class="notice-content">';
-            print '<a href="' . dol_buildpath('/custom/digiquali/admin/sheet.php#sheetCategories', 2) . '">' . '<b><div class="notice-subtitle">' . $langs->trans('GenerateSheetTags') . ' : ' . $langs->trans('ConfigSheet') . '</div></b></a>';
+            print '<a href="' . dol_buildpath('/digiquali/admin/sheet.php', 2) . '#sheetCategories">' . '<b><div class="notice-subtitle">' . $langs->trans('GenerateSheetTags') . ' : ' . $langs->trans('ConfigSheet') . '</div></b></a>';
             print '</div></div>';
             print '</table>';
             print dol_get_fiche_end();
@@ -454,7 +454,7 @@ if ($action == 'create') {
         print '<tr><td class="fieldrequired">' . ($source != 'pwa' ? $langs->trans('Sheet') : img_picto('', $sheet->picto . '_2em', 'class="pictofixedwidth"')) . '</td><td>';
         print ($source != 'pwa' ? img_picto('', $sheet->picto, 'class="pictofixedwidth"') : '') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', $filter, 1);
         if ($source != 'pwa') {
-            print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/custom/digiquali/view/sheet/sheet_card.php?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
+            print '<a class="butActionNew" href="' . dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1) . '?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
         }
         print '</td></tr>';
     }
@@ -692,7 +692,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
         // Answer public interface
-        $publicAnswerUrl = dol_buildpath('custom/digiquali/public/public_answer.php?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=ControlDocument&entity=' . $conf->entity, 3);
+        $publicAnswerUrl = dol_buildpath('/digiquali/public/public_answer.php', 3) . '?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=ControlDocument&entity=' . $conf->entity;
         print '<tr><td class="titlefield">' . $langs->trans('PublicAnswer') . ' <a href="' . $publicAnswerUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';
         print showValueWithClipboardCPButton($publicAnswerUrl, 0, '&nbsp;');
         print '</td><td>';
@@ -877,7 +877,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             <div class="notice-content">
                 <div class="notice-title"><?php echo $langs->trans('ControlEquipmentOutdated') ?></div>
             </div>
-            <a class="butAction" href="<?php echo DOL_URL_ROOT . '/custom/digiquali/view/control/control_equipment.php?id=' . $object->id ?>"><?php echo $langs->trans("GoToEquipmentHours", $usertmp->getFullName($langs)) ?></a>
+            <a class="butAction" href="<?php echo dol_buildpath('/digiquali/view/control/control_equipment.php', 1) . '?id=' . $object->id ?>"><?php echo $langs->trans("GoToEquipmentHours", $usertmp->getFullName($langs)) ?></a>
         </div>
     <?php }
 
@@ -937,7 +937,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             // Sign
             $displayButton = $onPhone ? '<i class="fas fa-signature fa-2x"></i>' : '<i class="fas fa-signature"></i>' . ' ' . $langs->trans('Sign');
             if ($object->status == $object::STATUS_VALIDATED && !$signatory->checkSignatoriesSignatures($object->id, $object->element) && $object->verdict > 0) {
-                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/custom/saturne/view/saturne_attendants.php?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=ControlDocument&attendant_table_mode=simple', 3) . '">' . $displayButton . '</a>';
+                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/saturne/view/saturne_attendants.php', 3) . '?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=ControlDocument&attendant_table_mode=simple">' . $displayButton . '</a>';
             } else {
                 print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidatedToSign', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
             }

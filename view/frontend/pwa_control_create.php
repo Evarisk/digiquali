@@ -155,7 +155,7 @@ if ($action == 'add' && $fkSheet > 0) {
                 $object->setCategories($categories);
             }
 
-            header('Location: ' . dol_buildpath('/custom/digiquali/view/frontend/pwa_answer.php', 1) . '?id=' . $object->id . '&object_type=control&source=pwa' . (!empty($backtopage) ? '&backtopage=' . urlencode($backtopage) : ''));
+            header('Location: ' . dol_buildpath('/digiquali/view/frontend/pwa_answer.php', 1) . '?id=' . $object->id . '&object_type=control&source=pwa' . (!empty($backtopage) ? '&backtopage=' . urlencode($backtopage) : ''));
             exit;
         }
         setEventMessages($object->error, $object->errors, 'errors');
@@ -168,8 +168,8 @@ if ($action == 'add' && $fkSheet > 0) {
 
 $title    = $langs->trans('NewControl');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/digiquali/js/digiquali.min.js'];
-$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/digiquali/css/digiquali.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/digiquali/js/digiquali.min.js'];
+$moreCSS  = ['/saturne/css/saturne.min.css', '/digiquali/css/digiquali.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -177,7 +177,7 @@ $conf->dol_hide_leftmenu = 1;
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-control-create-page');
 
 // Installed as an app there is no browser back button, so the header carries the way out
-$pwaHeaderBackUrl    = $backtopage ?: dol_buildpath('/custom/digiquali/view/frontend/pwa_controls.php', 1) . '?source=pwa';
+$pwaHeaderBackUrl    = $backtopage ?: dol_buildpath('/digiquali/view/frontend/pwa_controls.php', 1) . '?source=pwa';
 $pwaHeaderCenterHtml = '<div class="pwa-header-indicator"><i class="fas fa-plus"></i> ' . $langs->trans('NewControl') . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_header.tpl.php';
 

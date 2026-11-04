@@ -263,7 +263,7 @@ if ($action == 'create') {
     //FK SHEET
     print '<tr><td class="fieldrequired">' . $langs->trans('Sheet') . '</td><td>';
     print img_picto('', $sheet->picto, 'class="pictofixedwidth"') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', 's.type = \'' . $object->element . '\' AND s.status = ' . Sheet::STATUS_LOCKED);
-    print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/custom/digiquali/view/sheet/sheet_card.php?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
+    print '<a class="butActionNew" href="' . dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1) . '?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
     print '</td></tr>';
 
     // Common attributes
@@ -444,14 +444,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     unset($object->fields['projectid']); // Hide field already shown in banner
 
     if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
-        $publicInterfaceUrl = dol_buildpath('custom/digiquali/public/survey/public_survey.php?track_id=' . $object->track_id . '&entity=' . $conf->entity, 3);
+        $publicInterfaceUrl = dol_buildpath('/digiquali/public/survey/public_survey.php', 3) . '?track_id=' . $object->track_id . '&entity=' . $conf->entity;
         print '<tr><td class="titlefield">' . $langs->trans('PublicInterface') . ' <a href="' . $publicInterfaceUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';
         print showValueWithClipboardCPButton($publicInterfaceUrl, 0, '&nbsp;');
         print '</td>';
         print '<td>' . saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/survey/' . $object->ref . '/qrcode/', 'small', 1, 0, 0, 0, 80, 80, 0, 0, 0, 'survey/'. $object->ref . '/qrcode/', $object, '', 0, 0) . '</td></tr>';
 
         // Answer public interface
-        $publicAnswerUrl = dol_buildpath('custom/digiquali/public/public_answer.php?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=SurveyDocument&entity=' . $conf->entity, 3);
+        $publicAnswerUrl = dol_buildpath('/digiquali/public/public_answer.php', 3) . '?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=SurveyDocument&entity=' . $conf->entity;
         print '<tr><td class="titlefield">' . $langs->trans('PublicAnswer') . ' <a href="' . $publicAnswerUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';
         print showValueWithClipboardCPButton($publicAnswerUrl, 0, '&nbsp;');
         print '</td><td>';
@@ -629,7 +629,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             // Sign
             $displayButton = $onPhone ? '<i class="fas fa-signature fa-2x"></i>' : '<i class="fas fa-signature"></i>' . ' ' . $langs->trans('Sign');
             if ($object->status == Survey::STATUS_VALIDATED && !$signatory->checkSignatoriesSignatures($object->id, $object->element)) {
-                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/custom/saturne/view/saturne_attendants.php?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=SurveyDocument&attendant_table_mode=simple', 3) . '">' . $displayButton . '</a>';
+                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/saturne/view/saturne_attendants.php', 3) . '?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=SurveyDocument&attendant_table_mode=simple">' . $displayButton . '</a>';
             } else {
                 print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidatedToSign', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
             }
