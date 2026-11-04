@@ -1031,24 +1031,14 @@ class modDigiQuali extends DolibarrModules
         }
 
     if (getDolGlobalInt('DIGIQUALI_CONTROL_BACKWARD_COMPATIBILITY') == 0) {
-        require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
         require_once __DIR__ . '/../../class/control.class.php';
         $control  = new Control($this->db);
         $controls = $control->fetchAll();
         if (is_array($controls) && !empty($controls)) {
+            // Tracking id only: #2021 removed the public control page these QR codes pointed to, and their display
             foreach ($controls as $control) {
                 $control->track_id = generate_random_id();
                 $control->update($user, true);
-
-                $url = dol_buildpath('/digiquali/public/control/public_control.php', 3) . '?track_id=' . $control->track_id . '&entity=' . $conf->entity;
-
-                $barcode = new TCPDF2DBarcode($url, 'QRCODE,L');
-                dol_mkdir(DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/');
-                $file = DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/barcode_' . $control->track_id . '.png';
-
-                $imageData = $barcode->getBarcodePngData();
-                $imageData = imagecreatefromstring($imageData);
-                imagepng($imageData, $file);
             }
         }
 
