@@ -263,7 +263,7 @@ if ($action == 'create') {
     //FK SHEET
     print '<tr><td class="fieldrequired">' . $langs->trans('Sheet') . '</td><td>';
     print img_picto('', $sheet->picto, 'class="pictofixedwidth"') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', 's.type = \'' . $object->element . '\' AND s.status = ' . Sheet::STATUS_LOCKED);
-    print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/custom/digiquali/view/sheet/sheet_card.php?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
+    print '<a class="butActionNew" href="' . dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1) . '?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
     print '</td></tr>';
 
     // Common attributes

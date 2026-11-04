@@ -85,7 +85,7 @@ $help_url = 'FR:Module_Digiquali#Fiche_modèle';
 
 saturne_header(0, '', $title, $help_url);
 
-$linkback = '<a href="' . DOL_URL_ROOT . '/custom/digiquali/view/sheet/sheet_list.php' . (!empty($socid) ? '?socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
+$linkback = '<a href="' . dol_buildpath('/digiquali/view/sheet/sheet_list.php', 1) . (!empty($socid) ? '?socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
 
 $morehtmlref = '<div class="refidno">';
 $morehtmlref .= $object->ref;
