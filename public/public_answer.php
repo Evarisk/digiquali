@@ -56,6 +56,21 @@ if (file_exists('../digiquali.main.inc.php')) {
 $objectType   = GETPOST('object_type', 'alpha');
 $documentType = GETPOST('document_type', 'alpha');
 
+// The type names the class file loaded below: only the objects answered on this page are accepted, anything
+// else (missing parameter, truncated link) gets the answer of an unknown record instead of a fatal
+if (!in_array($objectType, ['control', 'survey'], true)) {
+    saturne_load_langs();
+
+    $conf->dol_hide_topmenu  = 1;
+    $conf->dol_hide_leftmenu = 1;
+
+    http_response_code(404);
+    saturne_header(0, '', $langs->trans('PublicAnswer'), '', '', 0, 0, [], [], '', 'page-public-card page-public-answer');
+    print saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true);
+    llxFooter('', 'public');
+    exit;
+}
+
 // Load Saturne libraries
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
     require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
@@ -116,7 +131,7 @@ if (!isModEnabled('multicompany')) {
 $conf->setEntityValues($db, $entity);
 
 // Load object
-$object->fetch(0, '', ' AND track_id = ' . "'" . $trackID . "'");
+$object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'");
 
 $linkableElements = saturne_get_objects_metadata();
 $object->fetchObjectLinked('', '', '', 'digiquali_control');
