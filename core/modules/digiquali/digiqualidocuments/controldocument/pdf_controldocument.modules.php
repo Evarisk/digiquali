@@ -1776,7 +1776,8 @@ class pdf_controldocument extends SaturneDocumentModel
 
         // ── Equipment section ────────────────────────────────────────────────
 
-        if (!empty($controlEquipments)) {
+        // fetchFromParent() returns -1 when the query fails, as it does for the specimen, made on an unsaved control
+        if (is_array($controlEquipments) && !empty($controlEquipments)) {
             $this->checkPageBreak($pdf, 30);
             $pdf->Ln(5);
 
