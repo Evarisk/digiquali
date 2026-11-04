@@ -56,9 +56,9 @@ function digiquali_pwa_nav_get_items(): array
 function digiquali_pwa_get_object_types(): array
 {
     return [
-        'sheets'   => ['class' => 'Sheet',   'card' => '/custom/digiquali/view/sheet/sheet_card.php',       'card_params' => '',                     'right' => 'sheet',   'icon' => 'fa-clipboard-list'],
-        'controls' => ['class' => 'Control', 'card' => '/custom/digiquali/view/frontend/pwa_answer.php',    'card_params' => 'object_type=control',  'right' => 'control', 'icon' => 'fa-clipboard-check'],
-        'surveys'  => ['class' => 'Survey',  'card' => '/custom/digiquali/view/frontend/pwa_answer.php',    'card_params' => 'object_type=survey',   'right' => 'survey',  'icon' => 'fa-list-ol'],
+        'sheets'   => ['class' => 'Sheet',   'card' => '/digiquali/view/sheet/sheet_card.php',       'card_params' => '',                     'right' => 'sheet',   'icon' => 'fa-clipboard-list'],
+        'controls' => ['class' => 'Control', 'card' => '/digiquali/view/frontend/pwa_answer.php',    'card_params' => 'object_type=control',  'right' => 'control', 'icon' => 'fa-clipboard-check'],
+        'surveys'  => ['class' => 'Survey',  'card' => '/digiquali/view/frontend/pwa_answer.php',    'card_params' => 'object_type=survey',   'right' => 'survey',  'icon' => 'fa-list-ol'],
     ];
 }
 

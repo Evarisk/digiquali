@@ -358,9 +358,9 @@ class modDigiQuali extends DolibarrModules
                 $tabType = $objectMetadata['tab_type'];
             }
             if ($objectMetadata['link_name'] !== 'propal') {
-                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
             }
-            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
 
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_list'];
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_card'];

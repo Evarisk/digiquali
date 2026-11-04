@@ -129,10 +129,15 @@ class ActionsDigiquali
         if (preg_match('/elementproperties|category/', $parameters['context'])) {
             $objectElements = ['question', 'questiongroup', 'sheet', 'control', 'survey'];
             if (in_array($parameters['elementType'], $objectElements)) {
+                // Path relative to DOL_DOCUMENT_ROOT as installed (custom/digiquali on a standard install): categories/index.php
+                // prepends DOL_DOCUMENT_ROOT, dol_include_once() resolves it too. Bare name only outside the main document root
+                $moduleDir  = dirname(dol_buildpath('/digiquali/digiqualiindex.php', 0));
+                $modulePath = strpos($moduleDir, DOL_DOCUMENT_ROOT . '/') === 0 ? substr($moduleDir, strlen(DOL_DOCUMENT_ROOT) + 1) : 'digiquali';
+
                 $out = [
                     'module'        => 'digiquali',
                     'table_element' => 'digiquali_' . $parameters['elementType'],
-                    'classpath'     => 'custom/digiquali/class',
+                    'classpath'     => $modulePath . '/class',
                 ];
                 $this->results = $out;
             }
@@ -151,7 +156,7 @@ class ActionsDigiquali
     {
         if (strpos($parameters['context'], 'categoryindex') !== false) {
             $resourcesRequired = [
-                'js'  => '/custom/digiquali/js/digiquali.js'
+                'js'  => '/digiquali/js/digiquali.js'
             ];
 
             $out  = '<!-- Includes JS added by module digiquali -->';
