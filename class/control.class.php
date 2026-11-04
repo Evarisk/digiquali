@@ -551,6 +551,30 @@ class Control extends SaturneObject
     }
 
     /**
+     * Is the next control date set before the date the control was performed?
+     *
+     * A typing error nothing used to catch : once the control is locked the date can no longer be
+     * corrected, and the controlled object looks overdue (DoliCar reads it for the vehicle status).
+     * A computed next control date always comes after the control date, only a typed one is checked.
+     * Compared by day : the control date keeps the hour it was created at, a typed date is at midnight.
+     *
+     * @return bool True when both dates are set and the next control date falls on an earlier day
+     * @throws Exception
+     */
+    public function isNextControlDateBeforeControlDate(): bool
+    {
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+        if (dol_strlen($this->next_control_date) <= 0) {
+            return false;
+        }
+
+        $controlDate = $this->getControlDateTimestamp();
+
+        return $controlDate > 0 && $this->getNextControlDate() < dol_get_first_hour($controlDate);
+    }
+
+    /**
      * Is one of the equipments used by the control past its expiry date?
      *
      * Only checked when DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT is enabled : the control can then be
