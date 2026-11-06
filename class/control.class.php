@@ -1270,7 +1270,7 @@ class Control extends SaturneObject
     {
         global $conf, $langs;
 
-        $startMonth  = $conf->global->SOCIETE_FISCAL_MONTH_START;
+        $startMonth  = getDolGlobalInt('SOCIETE_FISCAL_MONTH_START', 1);
         $currentYear = date('Y', dol_now());
         $years       = [0 => $currentYear - 2, 1 => $currentYear - 1, 2 => $currentYear];
 
