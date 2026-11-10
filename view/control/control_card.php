@@ -327,8 +327,11 @@ if (empty($resHook)) {
         }
     }
 
-    // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block
-    require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    // Actions uploadPhoto, linkPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block,
+    // for a user allowed to change the control, as on the PWA answer screen
+    if ($permissiontoadd) {
+        require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    }
 
     // Actions confirm_lock, confirm_archive
     require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
@@ -792,10 +795,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     print '<tr class="linked-medias photo question-table"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list">';
     print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="' . dol_escape_htmltag($object->photo) . '"/>';
+    // The picking buttons offer the device and the media library, as the answers of the control do
     print saturne_render_media_block('digiquali', 'control/' . $object->id . '/photos', '', '', [
-        'show_photo'  => true,
-        'show_audio'  => false,
-        'show_upload' => $object->status < Control::STATUS_LOCKED,
+        'show_photo'   => true,
+        'show_audio'   => false,
+        'show_upload'  => $object->status < Control::STATUS_LOCKED,
+        'show_library' => true,
     ]);
     print '</td></tr>';
 
