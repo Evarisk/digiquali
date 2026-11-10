@@ -106,6 +106,8 @@ if ($canInvite) {
     print '</form>';
 }
 
+// Scrolls by itself on a phone instead of widening the page
+print '<div class="div-table-responsive-no-min">';
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre"><td>' . $langs->trans('SurveySessionInvitee') . '</td><td>' . $langs->trans('SurveyRespondentEmail') . '</td>';
 print '<td>' . $langs->trans('SurveySessionInviteeSentOn') . '</td><td>' . $langs->trans('SurveySessionInviteeRemindedOn') . '</td>';
@@ -144,4 +146,5 @@ foreach ($sessionInvitees as $invitee) {
     print '</tr>';
 }
 print '</table>';
+print '</div>';
 print '</div>';

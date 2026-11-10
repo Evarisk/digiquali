@@ -54,6 +54,21 @@ if ($action == 'save') {
     // any more, whichever page the answer comes through, and the session gets closed at that moment
     if ($object->element == 'survey' && $object->id > 0) {
         require_once __DIR__ . '/../../lib/digiquali_survey.lib.php';
+
+        // A collect session is the template of its responses: it is never answered itself, its answers would be those
+        // of nobody. Its card shows its questions read only, this stops a request sent anyway
+        if (digiquali_survey_is_session($object)) {
+            if ($isAutoSave) {
+                top_httphead('application/json');
+                http_response_code(409);
+                print json_encode(['success' => false, 'code' => 'session_template', 'message' => $langs->transnoentities('SurveySessionTemplateNotAnswered')]);
+                exit;
+            }
+            setEventMessages($langs->transnoentities('SurveySessionTemplateNotAnswered'), [], 'errors');
+            $action = '';
+            return;
+        }
+
         if (digiquali_survey_response_session_closed($object)) {
             if ($isAutoSave) {
                 top_httphead('application/json');

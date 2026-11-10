@@ -467,6 +467,8 @@ class Digiquali extends SaturneApi
      */
     public function validateSurvey($id)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_setStatus('surveys', $id, 'validate');
     }
 
@@ -481,6 +483,8 @@ class Digiquali extends SaturneApi
      */
     public function setDraftSurvey($id)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_setStatus('surveys', $id, 'setDraft');
     }
 
@@ -538,6 +542,8 @@ class Digiquali extends SaturneApi
      */
     public function createSurveyLine($id, $request_data = null)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_postLine('surveys', $id, $request_data);
     }
 
@@ -554,6 +560,8 @@ class Digiquali extends SaturneApi
      */
     public function updateSurveyLine($id, $lineid, $request_data = null)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_putLine('surveys', $id, $lineid, $request_data);
     }
 
@@ -569,7 +577,29 @@ class Digiquali extends SaturneApi
      */
     public function deleteSurveyLine($id, $lineid)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_deleteLine('surveys', $id, $lineid);
+    }
+
+    /**
+     * Refuse to answer a collect session, or to validate it as a survey: it is the template of its responses, each
+     * respondent answers a survey of his own. It is closed and reopened from its card
+     *
+     * @param int $id Survey id
+     *
+     * @return void
+     *
+     * @throws RestException 409 for a collect session
+     */
+    private function _checkNotSurveySession($id)
+    {
+        dol_include_once('/digiquali/lib/digiquali_survey.lib.php');
+
+        $survey = new Survey($this->db);
+        if ($survey->fetch((int) $id) > 0 && digiquali_survey_is_session($survey)) {
+            throw new RestException(409, 'Survey ' . ((int) $id) . ' is a collect session: only its responses are answered');
+        }
     }
 
     // =================================================================

@@ -119,6 +119,9 @@ if ($object->id > 0 && digiquali_survey_session_close_if_due($object)) {
     setEventMessages($langs->trans('SurveySessionClosedAuto', dol_print_date($object->date_end, 'dayhour', 'tzuserrel')), []);
 }
 
+// A collect session is the template of its responses: nobody answers it, nor validates, signs or reopens it as a survey
+$isSession = $object->id > 0 && digiquali_survey_is_session($object);
+
 /*
  * Actions
  */
@@ -188,6 +191,12 @@ if (empty($resHook)) {
         $action = '';
     }
 
+    // A session is closed by its own button, the validation of a survey would ask for the answers it never gets
+    if (in_array($action, ['confirm_validate', 'confirm_setdraft'], true) && $isSession) {
+        setEventMessages($langs->trans('SurveySessionTemplateNoWorkflow'), [], 'errors');
+        $action = '';
+    }
+
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     require_once DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
@@ -196,8 +205,11 @@ if (empty($resHook)) {
 
     // A collect session : one link gives each respondent a survey of his own (see lib/digiquali_survey.lib.php)
     if ($action == 'open_session' && $permissiontoadd && $object->id > 0) {
-        if (digiquali_survey_open_session($object) > 0) {
+        $result = digiquali_survey_open_session($object);
+        if ($result > 0) {
             setEventMessages($langs->trans('SurveySessionOpened'), []);
+        } elseif ($result == -2) {
+            setEventMessages($langs->trans('SurveySessionOpenHasAnswers'), [], 'errors');
         } else {
             setEventMessages($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element)))), [], 'errors');
         }
@@ -330,7 +342,7 @@ if (empty($resHook)) {
 
     // Actions uploadPhoto, deletePhoto posted by the Saturne media block of the answer photos.
     // It replays the HTML of the response to refresh itself, so this must not redirect
-    if (in_array($action, ['uploadPhoto', 'deletePhoto']) && $permissiontoadd && $object->status == Survey::STATUS_DRAFT) {
+    if (in_array($action, ['uploadPhoto', 'deletePhoto']) && $permissiontoadd && $object->status == Survey::STATUS_DRAFT && !$isSession) {
         require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
     }
 
@@ -762,38 +774,42 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         }
 
         if (empty($resHook)) {
-            // Save question answer
-            $displayButton = $onPhone ? '<i class="fas fa-save fa-2x"></i>' : '<i class="fas fa-save"></i>' . ' ' . $langs->trans('Save');
-            if ($object->status == Survey::STATUS_DRAFT) {
-                print '<span class="butActionRefused" id="saveButton" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=save' . '">' . $displayButton . ' <i class="fas fa-circle" style="color: red; display: none; ' . ($onPhone ? 'vertical-align: top;' : '') . '"></i></span>';
-            } else {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
-            }
+            // A collect session is neither answered, nor validated, reopened or signed as a survey: it is closed and
+            // reopened by the buttons of the session, further on
+            if (!$isSession) {
+                // Save question answer
+                $displayButton = $onPhone ? '<i class="fas fa-save fa-2x"></i>' : '<i class="fas fa-save"></i>' . ' ' . $langs->trans('Save');
+                if ($object->status == Survey::STATUS_DRAFT) {
+                    print '<span class="butActionRefused" id="saveButton" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=save' . '">' . $displayButton . ' <i class="fas fa-circle" style="color: red; display: none; ' . ($onPhone ? 'vertical-align: top;' : '') . '"></i></span>';
+                } else {
+                    print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
+                }
 
-            // Validate
-            $displayButton = $onPhone ? '<i class="fas fa-check fa-2x"></i>' : '<i class="fas fa-check"></i>' . ' ' . $langs->trans('Validate');
-            if ($object->status == Survey::STATUS_DRAFT && empty($cantValidateSurvey)) {
-                print '<span class="validateButton butAction" id="actionButtonValidate">' . $displayButton . '</span>';
-            } elseif ($cantValidateSurvey > 0) {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('QuestionMustBeAnswered', $cantValidateSurvey)) . '">' . $displayButton . '</span>';
-            } elseif ($object->status < Survey::STATUS_DRAFT) {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
-            }
+                // Validate
+                $displayButton = $onPhone ? '<i class="fas fa-check fa-2x"></i>' : '<i class="fas fa-check"></i>' . ' ' . $langs->trans('Validate');
+                if ($object->status == Survey::STATUS_DRAFT && empty($cantValidateSurvey)) {
+                    print '<span class="validateButton butAction" id="actionButtonValidate">' . $displayButton . '</span>';
+                } elseif ($cantValidateSurvey > 0) {
+                    print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('QuestionMustBeAnswered', $cantValidateSurvey)) . '">' . $displayButton . '</span>';
+                } elseif ($object->status < Survey::STATUS_DRAFT) {
+                    print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
+                }
 
-            // ReOpen
-            $displayButton = $onPhone ? '<i class="fas fa-lock fa-2x"></i>' : '<i class="fas fa-lock"></i>' . ' ' . $langs->trans('ReOpenDoli');
-            if ($object->status == Survey::STATUS_VALIDATED) {
-                print '<span class="butAction" id="actionButtonInProgress">' . $displayButton . '</span>';
-            } elseif ($object->status > Survey::STATUS_VALIDATED) {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidated', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
-            }
+                // ReOpen
+                $displayButton = $onPhone ? '<i class="fas fa-lock fa-2x"></i>' : '<i class="fas fa-lock"></i>' . ' ' . $langs->trans('ReOpenDoli');
+                if ($object->status == Survey::STATUS_VALIDATED) {
+                    print '<span class="butAction" id="actionButtonInProgress">' . $displayButton . '</span>';
+                } elseif ($object->status > Survey::STATUS_VALIDATED) {
+                    print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidated', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
+                }
 
-            // Sign
-            $displayButton = $onPhone ? '<i class="fas fa-signature fa-2x"></i>' : '<i class="fas fa-signature"></i>' . ' ' . $langs->trans('Sign');
-            if ($object->status == Survey::STATUS_VALIDATED && !$signatory->checkSignatoriesSignatures($object->id, $object->element)) {
-                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/saturne/view/saturne_attendants.php', 3) . '?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=SurveyDocument&attendant_table_mode=simple">' . $displayButton . '</a>';
-            } else {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidatedToSign', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
+                // Sign
+                $displayButton = $onPhone ? '<i class="fas fa-signature fa-2x"></i>' : '<i class="fas fa-signature"></i>' . ' ' . $langs->trans('Sign');
+                if ($object->status == Survey::STATUS_VALIDATED && !$signatory->checkSignatoriesSignatures($object->id, $object->element)) {
+                    print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/saturne/view/saturne_attendants.php', 3) . '?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=SurveyDocument&attendant_table_mode=simple">' . $displayButton . '</a>';
+                } else {
+                    print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidatedToSign', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
+                }
             }
 
             // Lock
@@ -836,7 +852,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
                 $isSession = digiquali_survey_is_session($object);
                 if (!$isSession && $object->status == Survey::STATUS_DRAFT) {
                     $displayButton = $onPhone ? '<i class="fas fa-users fa-2x"></i>' : '<i class="fas fa-users"></i>' . ' ' . $langs->trans('SurveySessionOpen');
-                    print '<a class="butAction classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionOpenHelp')) . '" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=open_session&token=' . newToken() . '">' . $displayButton . '</a>';
+                    // The session is the template of its responses: a survey already answered cannot become one
+                    if ($answerCounter > 0) {
+                        print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionOpenHasAnswers')) . '">' . $displayButton . '</span>';
+                    } else {
+                        print '<a class="butAction classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionOpenHelp')) . '" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=open_session&token=' . newToken() . '">' . $displayButton . '</a>';
+                    }
                 } elseif ($isSession && $object->status == Survey::STATUS_DRAFT) {
                     $displayButton = $onPhone ? '<i class="fas fa-lock fa-2x"></i>' : '<i class="fas fa-lock"></i>' . ' ' . $langs->trans('SurveySessionClose');
                     print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=close_session&token=' . newToken() . '">' . $displayButton . '</a>';
@@ -855,6 +876,25 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
     // QUESTION LINES
     print '<div class="div-table-responsive-no-min questionLines" style="overflow-x: unset !important;">';
+
+    // The questions of a collect session are shown for reference, read only: every respondent answers a survey of his
+    // own, opened by the link of the session. Shown as a validated survey: no field, no photo nor task to add, and no
+    // correction, which would mark as wrong the answers nobody gave
+    if ($isSession) {
+        print load_fiche_titre($langs->transnoentities('LinkedQuestionsList', $questionCounter), '', '');
+        print saturne_show_notice($langs->transnoentities('SurveySessionTemplateTitle'), $langs->transnoentities('SurveySessionTemplateReadOnly'), 'info', 'notice-survey-session-template', true, false);
+        print '<div id="tablelines" class="question-answer-container">';
+        $sessionStatus       = $object->status;
+        $sessionAddTaskRight = $permissionToAddTask ?? 0;
+        $object->status      = Survey::STATUS_VALIDATED;
+        $permissionToAddTask = 0;
+        $object->displayAnswers($objectLine, $sheet->fetchQuestionsAndGroups(), false);
+        $object->status      = $sessionStatus;
+        $permissionToAddTask = $sessionAddTaskRight;
+        print '</div>';
+    }
+
+    if (!$isSession) :
  ?>
 
     <div class="progress-info">
@@ -886,6 +926,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         $object->displayAnswers($objectLine, $questionsAndGroups, false);
         print '</div>';
     }
+    endif;
 
     print '</div>';
     print '</form>';
@@ -935,6 +976,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             print '</form>';
         }
 
+        // Scrolls by itself on a phone instead of widening the page
+        print '<div class="div-table-responsive-no-min">';
         print '<table class="noborder centpercent">';
         print '<tr class="liste_titre"><td>' . $langs->trans('Ref') . '</td>' . ($showRespondent ? '<td>' . $langs->trans('SurveyRespondent') . '</td>' : '') . '<td>' . $langs->trans('DateCreation') . '</td><td>' . $langs->trans('Status') . '</td>' . ($surveyIsScored ? '<td class="right">' . $langs->trans('SuccessScore') . '</td>' : '') . '</tr>';
         if (empty($sessionResponses)) {
@@ -956,6 +999,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             print '</tr>';
         }
         print '</table>';
+        print '</div>';
 
         // Invitees of a nominative session: personal links by e-mail, follow-up and reminders
         require __DIR__ . '/../../core/tpl/survey/survey_session_invitees.tpl.php';

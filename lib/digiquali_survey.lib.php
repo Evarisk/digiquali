@@ -197,10 +197,31 @@ function digiquali_survey_get_response_session(Survey $response): ?Survey
 }
 
 /**
+ * Tell whether a survey holds at least one answer
+ *
+ * @param  Survey $survey Survey
+ * @return bool           True when one of its questions is answered
+ */
+function digiquali_survey_has_answers(Survey $survey): bool
+{
+    global $db;
+
+    $sql   = 'SELECT COUNT(rowid) as nb FROM ' . $db->prefix() . 'digiquali_surveydet WHERE fk_survey = ' . ((int) $survey->id);
+    $sql  .= " AND status > 0 AND answer IS NOT NULL AND answer <> ''";
+    $resql = $db->query($sql);
+    $obj   = $resql ? $db->fetch_object($resql) : null;
+
+    return !empty($obj) && (int) $obj->nb > 0;
+}
+
+/**
  * Turn a draft survey into a collect session
  *
- * @param  Survey $survey Survey, a draft
- * @return int            > 0 when done, < 0 on error
+ * The session is the template of its responses and is never answered itself: a survey already answered would show
+ * answers that none of its respondents gave, it is refused
+ *
+ * @param  Survey $survey Survey, a draft without answers
+ * @return int            > 0 when done, -1 when the survey is no draft or on error, -2 when it is already answered
  */
 function digiquali_survey_open_session(Survey $survey): int
 {
@@ -211,6 +232,9 @@ function digiquali_survey_open_session(Survey $survey): int
     }
     if (digiquali_survey_is_session($survey)) {
         return 1;
+    }
+    if (digiquali_survey_has_answers($survey)) {
+        return -2;
     }
 
     $sql  = 'INSERT INTO ' . $db->prefix() . 'element_element (fk_source, sourcetype, fk_target, targettype)';
