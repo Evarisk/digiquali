@@ -114,11 +114,18 @@ class Survey extends SaturneObject
         'rowid'         => ['type' => 'integer',      'label' => 'TechnicalID',      'enabled' => 1, 'position' => 1,   'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
         'ref'           => ['type' => 'varchar(128)', 'label' => 'Ref',              'enabled' => 1, 'position' => 10,  'notnull' => 1, 'visible' => 4, 'noteditable' => 1, 'default' => '(PROV)', 'index' => 1, 'searchall' => 1, 'showoncombobox' => 1, 'validate' => 1, 'comment' => 'Reference of object'],
         'ref_ext'       => ['type' => 'varchar(128)', 'label' => 'RefExt',           'enabled' => 1, 'position' => 20,  'notnull' => 0, 'visible' => 0],
+        'label'         => ['type' => 'varchar(255)', 'label' => 'Label',            'enabled' => 1, 'position' => 12,  'notnull' => 0, 'visible' => 1, 'searchall' => 1, 'css' => 'minwidth300 maxwidth500 widthcentpercentminusxx', 'csslist' => 'tdoverflowmax200'],
         'entity'        => ['type' => 'integer',      'label' => 'Entity',           'enabled' => 1, 'position' => 30,  'notnull' => 1, 'visible' => 0, 'index' => 1],
         'date_creation' => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 40,  'notnull' => 1, 'visible' => 2, 'positioncard' => 10],
+        'date_end'      => ['type' => 'datetime',     'label' => 'SurveySessionDateEnd', 'enabled' => 1, 'position' => 45, 'notnull' => 0, 'visible' => 0, 'comment' => 'Planned closing date of a collect session'],
         'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 50,  'notnull' => 0, 'visible' => 0],
         'import_key'    => ['type' => 'varchar(14)',  'label' => 'ImportId',         'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => 0, 'index' => 0],
         'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 5, 'index' => 1, 'default' => 0, 'arrayofkeyval' => [0 => 'StatusDraft', 1 => 'Validated', 2 => 'Locked', 3 => 'Archived']],
+        'nominative'       => ['type' => 'smallint',     'label' => 'SurveySessionNominative', 'enabled' => 1, 'position' => 75, 'notnull' => 1, 'visible' => 0, 'default' => 0, 'comment' => '1 when the respondents of a collect session give their name'],
+        'respondent_name'  => ['type' => 'varchar(255)', 'label' => 'SurveyRespondentName',    'enabled' => 1, 'position' => 76, 'notnull' => 0, 'visible' => -2, 'searchall' => 1],
+        'respondent_email' => ['type' => 'varchar(255)', 'label' => 'SurveyRespondentEmail',   'enabled' => 1, 'position' => 77, 'notnull' => 0, 'visible' => 0],
+        // The column invitees (JSON, with the personal tokens of the invitees of a session) is no field on purpose: a
+        // clone, a list, an export or the API must never carry it. See lib/digiquali_survey.lib.php
         'note_public'   => ['type' => 'html',         'label' => 'NotePublic',       'enabled' => 1, 'position' => 80,  'notnull' => 0, 'visible' => 0],
         'note_private'  => ['type' => 'html',         'label' => 'NotePrivate',      'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
         'photo'         => ['type' => 'text',         'label' => 'Photo',            'enabled' => 1, 'position' => 100, 'notnull' => 0, 'visible' => 0],
@@ -146,6 +153,11 @@ class Survey extends SaturneObject
     public $ref_ext;
 
     /**
+     * @var string|null Label
+     */
+    public $label;
+
+    /**
      * @var int Entity
      */
     public $entity;
@@ -154,6 +166,11 @@ class Survey extends SaturneObject
      * @var int|string Creation date
      */
     public $date_creation;
+
+    /**
+     * @var int|string|null Planned closing date of a collect session
+     */
+    public $date_end;
 
     /**
      * @var int|string Timestamp
@@ -169,6 +186,21 @@ class Survey extends SaturneObject
      * @var int Status
      */
     public $status;
+
+    /**
+     * @var int|string 1 when the respondents of a collect session give their name, 0 when they stay anonymous
+     */
+    public $nominative = 0;
+
+    /**
+     * @var string|null Name the respondent of a nominative collect session gave
+     */
+    public $respondent_name;
+
+    /**
+     * @var string|null E-mail the respondent of a nominative collect session gave, optional
+     */
+    public $respondent_email;
 
     /**
      * @var string Public note
@@ -717,6 +749,60 @@ class Survey extends SaturneObject
         }
 
         return [$numberOfAnsweredQuestions, $numberOfQuestions, $surveyCorrectAnswersTotalPoints, $surveyTotalPoints, $atLeastOneIncorrectSubGroup];
+    }
+
+    /**
+     * Does a score make sense for the survey : a success rate to reach is set, and one of its questions earns points
+     * by its answer (an answer marked correct, a percentage, an option weighted)
+     *
+     * A satisfaction survey has neither : its score and its result would read as a failure, or as a success at 0 %.
+     * The bounds of a numeric question are the limits of the input (a mark from 0 to 10) far more often than an
+     * expected range : only the answers marked correct count.
+     *
+     * @return bool True when the score and the result of the survey are to be shown
+     * @throws Exception
+     */
+    public function isScored(): bool
+    {
+        if ((float) $this->success_rate <= 0 || $this->fk_sheet <= 0) {
+            return false;
+        }
+
+        require_once __DIR__ . '/sheet.class.php';
+
+        $sheet = new Sheet($this->db);
+        if ($sheet->fetch($this->fk_sheet) <= 0) {
+            return false;
+        }
+
+        $questionIds         = [];
+        $weightedQuestionIds = [];
+        foreach ($sheet->fetchAllQuestions() ?: [] as $question) {
+            // A percentage question earns its points in proportion of the answer : a satisfaction sheet with a threshold
+            // (« 60 % of satisfaction at least ») is scored by them, with no answer marked correct
+            if ($question->type == 'Percentage' && (float) $question->points > 0) {
+                return true;
+            }
+            if ($question->grading_policy == 'option_weighted' && (float) $question->points > 0) {
+                $weightedQuestionIds[] = (int) $question->id;
+            }
+            $questionIds[] = (int) $question->id;
+        }
+        if (empty($questionIds)) {
+            return false;
+        }
+
+        $sql  = 'SELECT COUNT(rowid) AS nb FROM ' . $this->db->prefix() . 'digiquali_answer WHERE status = 1';
+        $sql .= ' AND ((correct = 1 AND fk_question IN (' . implode(',', $questionIds) . '))';
+        if (!empty($weightedQuestionIds)) {
+            // An answer weighted by option earns the share set on the options picked
+            $sql .= ' OR (weight_percent > 0 AND fk_question IN (' . implode(',', $weightedQuestionIds) . '))';
+        }
+        $sql .= ')';
+        $resql = $this->db->query($sql);
+        $obj   = $resql ? $this->db->fetch_object($resql) : null;
+
+        return is_object($obj) && (int) $obj->nb > 0;
     }
 
     /**
