@@ -515,7 +515,9 @@ class ActionsDigiquali
         }
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
-            $sql = ' LEFT JOIN ' . $this->db->prefix() . 'element_element AS ee ON (t.rowid = ee.fk_target AND ee.targettype = "' . $object->module . '_' . $object->element . '")';
+            // The link of a response to its collect session is no linked object to filter on : joined, it listed the
+            // response once more (see lib/digiquali_survey.lib.php)
+            $sql = ' LEFT JOIN ' . $this->db->prefix() . 'element_element AS ee ON (t.rowid = ee.fk_target AND ee.targettype = "' . $object->module . '_' . $object->element . '" AND ee.sourcetype <> "digiquali_surveysession")';
             $this->resprints = $sql;
         }
 

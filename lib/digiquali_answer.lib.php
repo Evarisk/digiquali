@@ -708,3 +708,96 @@ function digiquali_answer_media_dir_is_allowed(CommonObject $object, string $act
 
     return false;
 }
+
+/**
+ * Tell whether a question type is answered by picking one or several of its answers
+ *
+ * The answer of such a question stores the positions of the answers picked, which start at 1.
+ *
+ * @param  string $questionType Type of the question
+ * @return bool                 True for the choice types
+ */
+function digiquali_question_type_is_choice(string $questionType): bool
+{
+    return in_array($questionType, ['UniqueChoice', 'MultipleChoices', 'OkKo', 'OkKoToFixNonApplicable', 'MarqueNF', 'Iso9001'], true);
+}
+
+/**
+ * Tell whether an answer is missing
+ *
+ * An empty answer is never an answer. On a choice type, 0 is not one either : the positions start
+ * at 1, and the 0 found in the data was written by a hidden field that defaulted to it.
+ *
+ * @param  string     $questionType Type of the question
+ * @param  mixed|null $answer       Answer of the line
+ * @return bool                     True when the question has no answer
+ */
+function digiquali_answer_is_empty(string $questionType, $answer): bool
+{
+    if ($answer === null || is_array($answer)) {
+        return true;
+    }
+
+    $answer = trim((string) $answer);
+    if ($answer === '') {
+        return true;
+    }
+
+    if (digiquali_question_type_is_choice($questionType)) {
+        foreach (explode(',', $answer) as $position) {
+            if ((int) trim($position) > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get the valid answers of a choice question, keyed by their position
+ *
+ * @param  Question $question Question
+ * @return array              Validated Answer objects keyed by their position
+ */
+function digiquali_get_question_answers_by_position(Question $question): array
+{
+    static $answersByQuestion = [];
+
+    if (!isset($answersByQuestion[$question->id])) {
+        require_once __DIR__ . '/../class/answer.class.php';
+
+        $answer  = new Answer($question->db);
+        $answers = $answer->fetchAll('ASC', 'position', 0, 0, ['customsql' => 't.status = ' . Answer::STATUS_VALIDATED . ' AND t.fk_question = ' . ((int) $question->id)]);
+
+        $answersByQuestion[$question->id] = [];
+        if (is_array($answers)) {
+            foreach ($answers as $questionAnswer) {
+                $answersByQuestion[$question->id][(int) $questionAnswer->position] = $questionAnswer;
+            }
+        }
+    }
+
+    return $answersByQuestion[$question->id];
+}
+
+/**
+ * Get the bounds of a numeric range question, set on the question card
+ *
+ * @param  Question $question Question
+ * @return array{min: float|null, max: float|null} Bounds, null when not set
+ */
+function digiquali_get_question_range_bounds(Question $question): array
+{
+    $rangeConfig = json_decode((string) $question->json, true)['config'][$question->type] ?? [];
+
+    $bounds = ['min' => null, 'max' => null];
+    foreach (['min' => 'answer-min-value', 'max' => 'answer-max-value'] as $boundKey => $configKey) {
+        if (isset($rangeConfig[$configKey]) && is_numeric($rangeConfig[$configKey])) {
+            $bounds[$boundKey] = (float) $rangeConfig[$configKey];
+        }
+    }
+
+    return $bounds;
+}

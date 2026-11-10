@@ -187,3 +187,16 @@ ALTER TABLE llx_digiquali_surveydet ADD earned_points FLOAT AFTER comment;
 ALTER TABLE llx_digiquali_surveydet ADD score_rate FLOAT AFTER earned_points;
 INSERT INTO llx_c_question_type (rowid, entity, ref, label, description, active, position) VALUES(10, 0, 'Duration', 'Duration', '', 1, 45) ON DUPLICATE KEY UPDATE ref = ref;
 INSERT INTO llx_c_question_type (rowid, entity, ref, label, description, active, position) VALUES(11, 0, 'PhotoMultiple', 'PhotoMultiple', '', 1, 90) ON DUPLICATE KEY UPDATE ref = ref;
+
+-- 23.5.0
+-- A label for every survey ; the planned closing date and the nominative mode of a collect session, the name and e-mail
+-- a respondent gives to a nominative session
+ALTER TABLE llx_digiquali_survey ADD label varchar(255) NULL AFTER ref_ext;
+ALTER TABLE llx_digiquali_survey ADD date_end datetime NULL AFTER date_creation;
+ALTER TABLE llx_digiquali_survey ADD nominative smallint DEFAULT 0 NOT NULL AFTER status;
+ALTER TABLE llx_digiquali_survey ADD respondent_name varchar(255) NULL AFTER nominative;
+ALTER TABLE llx_digiquali_survey ADD respondent_email varchar(255) NULL AFTER respondent_name;
+
+-- The invitees of a nominative collect session (name, e-mail, personal token, response, dates of the invitation and of
+-- the reminders), as JSON: read and written by lib/digiquali_survey.lib.php only, never a field of the class
+ALTER TABLE llx_digiquali_survey ADD invitees text NULL AFTER respondent_email;

@@ -87,6 +87,7 @@ require_once __DIR__ . '/../class/questiongroup.class.php';
 require_once __DIR__ . '/../class/answer.class.php';
 require_once __DIR__ . '/../lib/digiquali_sheet.lib.php';
 require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+require_once __DIR__ . '/../lib/digiquali_survey.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
 require_once __DIR__ . '/../lib/digiquali_control.lib.php';
 
@@ -132,6 +133,25 @@ $conf->setEntityValues($db, $entity);
 
 // Load object
 $object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'");
+
+// A collect session is never answered itself, every respondent gets a survey of their own : its direct public link
+// leads to the session page, before any action (an auto-save on the session would write into the template of all)
+$responseSessionClosed = false;
+if ($object->element == 'survey' && $object->id > 0) {
+    if (digiquali_survey_is_session($object)) {
+        header('Location: ' . digiquali_survey_session_url($object));
+        exit;
+    }
+
+    // Once its session is closed, a response still in progress is closed too : read only, and the answers sent
+    // afterwards are refused (see digiquali_answers_save_action.tpl.php). A planned closing date applies as soon as it
+    // is past, even when nobody opened the page of the session : the session is closed now. The page says that the
+    // answers were not sent, never thanks for them
+    $responseSessionClosed = (int) $object->status === (int) $object::STATUS_DRAFT && digiquali_survey_response_session_closed($object);
+    if ($responseSessionClosed) {
+        $object->status = $object::STATUS_LOCKED;
+    }
+}
 
 $linkableElements = saturne_get_objects_metadata();
 $object->fetchObjectLinked(null, '', null, 'digiquali_control');
@@ -271,6 +291,11 @@ complete_substitutions_array($substitutionArray, $langs, $object);
 $answerPublicInterfaceTitle = make_substitutions($langs->transnoentities($conf->global->DIGIQUALI_ANSWER_PUBLIC_INTERFACE_TITLE), $substitutionArray);
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_SHOW_TITLE')) {
     print '<h2 class="page-title center">' . (dol_strlen($answerPublicInterfaceTitle) > 0 ? $answerPublicInterfaceTitle : $langs->transnoentities('AnswerPublicInterface')) . '</h2>';
+}
+
+// A response left in progress when its collect closed was not sent : it is told so, not thanked
+if ($responseSessionClosed) {
+    print saturne_show_notice($langs->transnoentities('SurveySessionClosedPublic'), $langs->transnoentities('SurveySessionClosedNotSent'), 'warning', 'public-answer-closed', true, false);
 }
 
 print '<div class="question-answer-container question-answer-container-pwa public-card__container" data-public-interface="true">';

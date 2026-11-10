@@ -114,6 +114,11 @@ $permissiontoadd    = $user->rights->digiquali->survey->write;
 $permissiontodelete = $user->rights->digiquali->survey->delete || ($permissiontoadd && isset($object->status) && $object->status == Survey::STATUS_DRAFT);
 saturne_check_access($permissionToRead);
 
+// A collect session closes by itself once its planned closing date is past (see lib/digiquali_survey.lib.php)
+if ($object->id > 0 && digiquali_survey_session_close_if_due($object)) {
+    setEventMessages($langs->trans('SurveySessionClosedAuto', dol_print_date($object->date_end, 'dayhour', 'tzuserrel')), []);
+}
+
 /*
  * Actions
  */
@@ -177,11 +182,132 @@ if (empty($resHook)) {
         }
     }
 
+    // The answer of a collect session closed (or due to close) is no longer sent, as its answers are no longer saved
+    if ($action == 'confirm_validate' && $confirm == 'yes' && $object->id > 0 && digiquali_survey_response_session_closed($object)) {
+        setEventMessages($langs->trans('SurveySessionClosedNotSaved'), [], 'errors');
+        $action = '';
+    }
+
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     require_once DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
     // Actions set_thirdparty, set_project
     require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
+
+    // A collect session : one link gives each respondent a survey of his own (see lib/digiquali_survey.lib.php)
+    if ($action == 'open_session' && $permissiontoadd && $object->id > 0) {
+        if (digiquali_survey_open_session($object) > 0) {
+            setEventMessages($langs->trans('SurveySessionOpened'), []);
+        } else {
+            setEventMessages($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element)))), [], 'errors');
+        }
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+        exit;
+    }
+
+    // Closing a session validates it : the mandatory questions are those of the responses, not of the session
+    if ($action == 'close_session' && $permissiontoadd && $object->id > 0 && digiquali_survey_is_session($object)) {
+        // validate() gives the session its definitive reference, a closed session kept its (PROV) one
+        if ($object->status == Survey::STATUS_DRAFT && $object->validate($user) > 0) {
+            setEventMessages($langs->trans('SurveySessionClosed'), []);
+        }
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+        exit;
+    }
+
+    if ($action == 'reopen_session' && $permissiontoadd && $object->id > 0 && digiquali_survey_is_session($object)) {
+        if ($object->status == Survey::STATUS_VALIDATED && $object->setStatusCommon($user, Survey::STATUS_DRAFT, 0, 'SURVEY_UNVALIDATE') > 0) {
+            // A planned closing date already past would close it again at once: it is dropped
+            if (!empty($object->date_end) && $object->date_end <= dol_now()) {
+                $db->query('UPDATE ' . $db->prefix() . $object->table_element . ' SET date_end = NULL WHERE rowid = ' . ((int) $object->id));
+            }
+        }
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+        exit;
+    }
+
+    // Planned closing date and mode of an open session
+    if ($action == 'set_session_options' && $permissiontoadd && $object->id > 0 && digiquali_survey_is_session($object) && $object->status == Survey::STATUS_DRAFT) {
+        $dateEnd = dol_mktime(GETPOSTINT('date_endhour'), GETPOSTINT('date_endmin'), 0, GETPOSTINT('date_endmonth'), GETPOSTINT('date_endday'), GETPOSTINT('date_endyear'), 'tzuserrel');
+        if (!empty($dateEnd) && $dateEnd <= dol_now()) {
+            setEventMessages($langs->trans('SurveySessionDateEndInPast'), [], 'errors');
+        } else {
+            $object->date_end = !empty($dateEnd) ? $dateEnd : null;
+            // The mode is what the welcome page promised the respondents : it no longer changes once one has started,
+            // nor once there are invitees, whose personal links are nominative
+            if (empty(digiquali_survey_session_get_responses($object)) && empty(digiquali_survey_session_get_invitees($object))) {
+                $object->nominative = GETPOSTINT('nominative') > 0 ? 1 : 0;
+            }
+            if ($object->update($user) > 0) {
+                setEventMessages($langs->trans('RecordSaved'), []);
+            } else {
+                setEventMessages($object->error, $object->errors, 'errors');
+            }
+        }
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+        exit;
+    }
+
+    // Invitees of a nominative session: each one gets a personal link by e-mail, and those who have not answered can be
+    // reminded. Only while the collect is open: a closed session neither invites nor reminds
+    if (in_array($action, ['add_invitees', 'remove_invitee', 'confirm_send_invitations', 'confirm_remind_invitees'], true) && $permissiontoadd && $object->id > 0 && digiquali_survey_is_session($object)) {
+        if ($object->status != Survey::STATUS_DRAFT || empty($object->nominative)) {
+            setEventMessages($langs->trans($object->status != Survey::STATUS_DRAFT ? 'SurveySessionClosedNoInvitation' : 'SurveySessionInviteesNominativeOnly'), [], 'errors');
+        } elseif ($action == 'add_invitees') {
+            // One invitee typed in the fields, and as many as pasted lines "Name ; e-mail"
+            $lines = GETPOST('invitee_lines', 'alphawithlgt');
+            if (GETPOST('invitee_email', 'alphanohtml') !== '' || GETPOST('invitee_name', 'alphanohtml') !== '') {
+                $lines = trim(GETPOST('invitee_name', 'alphanohtml') . ' ; ' . GETPOST('invitee_email', 'alphanohtml'), ' ;') . "\n" . $lines;
+            }
+            $parsed = digiquali_survey_session_parse_invitees($lines);
+            $added  = !empty($parsed['people']) ? digiquali_survey_session_add_invitees($object, $parsed['people']) : ['added' => 0, 'duplicates' => [], 'overflow' => 0];
+            if ($added === false) {
+                setEventMessages($langs->trans('ErrorFailedToSaveFile'), [], 'errors');
+            } else {
+                if ($added['added'] > 0) {
+                    setEventMessages($langs->trans('SurveySessionInviteesAdded', $added['added']), []);
+                }
+                $warnings = [];
+                foreach ($parsed['errors'] as $badLine) {
+                    $warnings[] = $langs->trans('SurveySessionInviteeBadLine', dol_escape_htmltag($badLine));
+                }
+                foreach ($added['duplicates'] as $duplicate) {
+                    $warnings[] = $langs->trans('SurveySessionInviteeDuplicate', dol_escape_htmltag($duplicate));
+                }
+                if ($added['overflow'] > 0) {
+                    $warnings[] = $langs->trans('SurveySessionInviteesTooMany', digiquali_survey_session_invitees_max(), $added['overflow']);
+                }
+                if (!empty($warnings)) {
+                    setEventMessages('', $warnings, 'warnings');
+                } elseif ($added['added'] == 0) {
+                    setEventMessages($langs->trans('SurveySessionInviteesNone'), [], 'warnings');
+                }
+            }
+        } elseif ($action == 'remove_invitee') {
+            $removed = digiquali_survey_session_remove_invitee($object, GETPOSTINT('invitee_id'));
+            if ($removed !== null) {
+                setEventMessages($langs->trans('SurveySessionInviteeRemoved', dol_escape_htmltag($removed['name'])), []);
+            }
+        } elseif ($confirm == 'yes') {
+            $sheet->fetch($object->fk_sheet);
+            $isReminder = $action == 'confirm_remind_invitees';
+            $sending    = digiquali_survey_session_send_invitations($object, $sheet, $user, $isReminder);
+            if ($sending['sent'] > 0) {
+                setEventMessages($langs->trans($isReminder ? 'SurveySessionRemindersSent' : 'SurveySessionInvitationsSent', $sending['sent']), []);
+            } elseif (empty($sending['errors']) && empty($sending['skipped'])) {
+                setEventMessages($langs->trans($isReminder ? 'SurveySessionRemindNone' : 'SurveySessionSendInvitationsNone'), [], 'warnings');
+            }
+            // Who was left out and why : reminded less than a day ago
+            if (!empty($sending['skipped'])) {
+                setEventMessages($langs->trans('SurveySessionRemindSkippedRecent', $sending['skipped'], dol_print_date($sending['next_reminder'], 'dayhour', 'tzuserrel')), [], 'warnings');
+            }
+            if (!empty($sending['errors'])) {
+                setEventMessages('', array_map('dol_escape_htmltag', $sending['errors']), 'errors');
+            }
+        }
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '#survey-session-invitees');
+        exit;
+    }
 
     if ($action == 'set_categories' && $permissiontoadd) {
         if ($object->fetch($id) > 0) {
@@ -418,6 +544,19 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('DeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmDeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), 'confirm_delete', '', 'yes', 1);
     }
 
+    // Sending confirmation: the personal links to the invitees not invited yet, or the reminder to those who have not answered
+    if (in_array($action, ['send_invitations', 'remind_invitees'], true) && $permissiontoadd && digiquali_survey_is_session($object)) {
+        $isReminder    = $action == 'remind_invitees';
+        $inviteeCounts = digiquali_survey_session_count_invitees(digiquali_survey_session_get_invitees($object), digiquali_survey_session_get_responses($object));
+        $recipients    = $isReminder ? $inviteeCounts['remindable'] : $inviteeCounts['new'];
+        $confirmText   = $langs->trans($isReminder ? 'SurveySessionConfirmRemind' : 'SurveySessionConfirmSendInvitations', $recipients);
+        // Those reminded less than a day ago are left out : said before sending
+        if ($isReminder && $inviteeCounts['reminded_recently'] > 0) {
+            $confirmText .= '<br><br>' . $langs->trans('SurveySessionRemindSkippedRecent', $inviteeCounts['reminded_recently'], dol_print_date($inviteeCounts['next_reminder'], 'dayhour', 'tzuserrel'));
+        }
+        $formConfirm  .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans($isReminder ? 'SurveySessionRemindNonRespondents' : 'SurveySessionSendInvitations', $recipients), $confirmText, 'confirm_' . $action, '', 'yes', 1);
+    }
+
     // Call Hook formConfirm
     $parameters = ['formConfirm' => $formConfirm];
     $resHook    = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
@@ -443,7 +582,23 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     // Common attributes
     unset($object->fields['projectid']); // Hide field already shown in banner
 
-    if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
+    // A collect session is never answered itself : its card gives the link of the session, with its QR code to print or
+    // project, instead of the public links of the survey. The link opens the session to anyone : it is only shown to the
+    // users who may change the survey
+    $isSession = digiquali_survey_is_session($object);
+    if ($isSession && getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE') && $permissiontoadd) {
+        $sessionUrl = digiquali_survey_session_url($object);
+        print '<tr><td class="titlefield">' . $langs->trans('SurveySessionLink');
+        print showValueWithClipboardCPButton($sessionUrl, 0, '&nbsp;');
+        print '</td><td>';
+        print '<a href="' . dol_escape_htmltag($sessionUrl) . '" target="_blank">' . $langs->trans('SurveySessionGoToPage') . ' <i class="fa fa-external-link"></i></a>';
+        print '<div class="survey-qrcode">' . digiquali_qrcode_img($sessionUrl, 160);
+        print '<a class="survey-qrcode__download" href="' . digiquali_qrcode_data_uri($sessionUrl) . '" download="qrcode-' . dol_sanitizeFileName($object->ref) . '.svg"><i class="fas fa-download"></i> ' . $langs->trans('SurveyQrCodeDownload') . '</a>';
+        print '</div>';
+        print '</td></tr>';
+    }
+
+    if (!$isSession && getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
         $publicInterfaceUrl = dol_buildpath('/digiquali/public/survey/public_survey.php', 3) . '?track_id=' . $object->track_id . '&entity=' . $conf->entity;
         print '<tr><td class="titlefield">' . $langs->trans('PublicInterface') . ' <a href="' . $publicInterfaceUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';
         print showValueWithClipboardCPButton($publicInterfaceUrl, 0, '&nbsp;');
@@ -456,6 +611,13 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         print showValueWithClipboardCPButton($publicAnswerUrl, 0, '&nbsp;');
         print '</td><td>';
         print '<a href="' . $publicAnswerUrl . '" target="_blank">' . $langs->trans('GoToPublicAnswerPage') . ' <i class="fa fa-external-link"></a>';
+        print '</td></tr>';
+    }
+
+    // The respondent of a nominative collect session, by the name he gave
+    if (dol_strlen((string) $object->respondent_name) > 0) {
+        print '<tr><td class="titlefield">' . $langs->trans('SurveyRespondent') . '</td><td>' . dol_escape_htmltag($object->respondent_name);
+        print dol_strlen((string) $object->respondent_email) > 0 ? ' - ' . dol_print_email($object->respondent_email, 0, 0, 1) : '';
         print '</td></tr>';
     }
 
@@ -669,6 +831,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             $displayButton = $onPhone ? '<i class="fas fa-clone fa-2x"></i>' : '<i class="fas fa-clone"></i>' . ' ' . $langs->trans('ToClone');
             print '<span class="butAction" id="actionButtonClone">' . $displayButton . '</span>';
 
+            // Collect session : one link, one survey per respondent
+            if ($permissiontoadd) {
+                $isSession = digiquali_survey_is_session($object);
+                if (!$isSession && $object->status == Survey::STATUS_DRAFT) {
+                    $displayButton = $onPhone ? '<i class="fas fa-users fa-2x"></i>' : '<i class="fas fa-users"></i>' . ' ' . $langs->trans('SurveySessionOpen');
+                    print '<a class="butAction classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionOpenHelp')) . '" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=open_session&token=' . newToken() . '">' . $displayButton . '</a>';
+                } elseif ($isSession && $object->status == Survey::STATUS_DRAFT) {
+                    $displayButton = $onPhone ? '<i class="fas fa-lock fa-2x"></i>' : '<i class="fas fa-lock"></i>' . ' ' . $langs->trans('SurveySessionClose');
+                    print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=close_session&token=' . newToken() . '">' . $displayButton . '</a>';
+                } elseif ($isSession && $object->status == Survey::STATUS_VALIDATED) {
+                    $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('SurveySessionReopen');
+                    print '<a class="butAction" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=reopen_session&token=' . newToken() . '">' . $displayButton . '</a>';
+                }
+            }
+
             // Delete (need delete permission, or if draft, just need create/modify permission)
             $displayButton = $onPhone ? '<i class="fas fa-trash fa-2x"></i>' : '<i class="fas fa-trash"></i>' . ' ' . $langs->trans('Delete');
             print dolGetButtonAction($displayButton, '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete&token=' . newToken(), '', $permissiontodelete || ($object->status == Survey::STATUS_DRAFT && $permissiontoadd));
@@ -713,6 +890,78 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
     print '</div>';
     print '</form>';
     print dol_get_fiche_end();
+
+    // Responses of a collect session, each one a survey of its own
+    if (digiquali_survey_is_session($object)) {
+        $sessionResponses = digiquali_survey_session_get_responses($object);
+        $surveyIsScored   = digiquali_survey_is_scored($object);
+        $sessionInvitees  = digiquali_survey_session_get_invitees($object);
+        $isNominative     = !empty($object->nominative);
+        $showRespondent   = $isNominative || !empty(array_filter(array_column($sessionResponses, 'respondent_name')));
+
+        $sessionButtons  = '<a class="butAction" href="' . dol_buildpath('/digiquali/view/survey/survey_session_summary.php', 1) . '?id=' . $object->id . '"><i class="fas fa-chart-bar"></i> ' . $langs->trans('SurveySessionSummary') . '</a>';
+        $sessionButtons .= '<a class="butAction" href="' . dol_buildpath('/digiquali/view/survey/survey_answers_export.php', 1) . '?session_id=' . $object->id . '&token=' . newToken() . '"><i class="fas fa-file-csv"></i> ' . $langs->trans('SurveyAnswersExportCsv') . '</a>';
+
+        print '<div class="survey-session">';
+        print load_fiche_titre($langs->trans('SurveySessionResponses', count($sessionResponses)), $sessionButtons, 'fontawesome_fa-users_fas');
+        print '<div class="survey-session__infos opacitymedium">';
+        print '<span>' . $langs->trans($object->status == Survey::STATUS_DRAFT ? 'SurveySessionOpenSince' : 'SurveySessionClosedOn', dol_print_date($object->status == Survey::STATUS_DRAFT ? $object->date_creation : $object->tms, 'dayhour', 'tzuserrel')) . '</span>';
+        if ($object->status == Survey::STATUS_DRAFT && !empty($object->date_end)) {
+            print '<span>' . $langs->trans('SurveySessionClosesOn', dol_print_date($object->date_end, 'dayhour', 'tzuserrel')) . '</span>';
+        }
+        print '<span>' . $langs->trans($isNominative ? 'SurveySessionModeNominative' : 'SurveySessionModeAnonymous') . '</span>';
+        print '</div>';
+
+        // While the collect is open: its planned closing date, and whether the respondents give their name
+        if ($permissiontoadd && $object->status == Survey::STATUS_DRAFT) {
+            $modeLocked = !empty($sessionResponses) || !empty($sessionInvitees);
+            print '<form method="POST" class="survey-session__options" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
+            print '<input type="hidden" name="token" value="' . newToken() . '">';
+            print '<input type="hidden" name="action" value="set_session_options">';
+            print '<div class="survey-session__option">';
+            print '<span class="survey-session__option-label">' . $form->textwithpicto($langs->trans('SurveySessionDateEnd'), $langs->trans('SurveySessionDateEndHelp')) . '</span>';
+            print $form->selectDate(!empty($object->date_end) ? $object->date_end : -1, 'date_end', 1, 1, 1, '', 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel');
+            print '</div>';
+            print '<fieldset class="survey-session__option survey-session__mode"' . ($modeLocked ? ' disabled' : '') . '>';
+            print '<legend class="survey-session__option-label">' . $langs->trans('SurveySessionMode') . '</legend>';
+            foreach ([0 => 'SurveySessionModeAnonymousHelp', 1 => 'SurveySessionModeNominativeHelp'] as $modeValue => $modeLabel) {
+                print '<label class="survey-session__mode-choice"><input type="radio" name="nominative" value="' . $modeValue . '"' . ((int) $isNominative == $modeValue ? ' checked' : '') . '> ' . $langs->trans($modeLabel) . '</label>';
+            }
+            if ($modeLocked) {
+                print '<span class="survey-session__mode-locked">' . $langs->trans(!empty($sessionResponses) ? 'SurveySessionModeLocked' : 'SurveySessionModeLockedInvitees') . '</span>';
+            }
+            print '</fieldset>';
+            print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('Save')) . '">';
+            print '</form>';
+        }
+
+        print '<table class="noborder centpercent">';
+        print '<tr class="liste_titre"><td>' . $langs->trans('Ref') . '</td>' . ($showRespondent ? '<td>' . $langs->trans('SurveyRespondent') . '</td>' : '') . '<td>' . $langs->trans('DateCreation') . '</td><td>' . $langs->trans('Status') . '</td>' . ($surveyIsScored ? '<td class="right">' . $langs->trans('SuccessScore') . '</td>' : '') . '</tr>';
+        if (empty($sessionResponses)) {
+            print '<tr><td colspan="' . (3 + ($showRespondent ? 1 : 0) + ($surveyIsScored ? 1 : 0)) . '"><span class="opacitymedium">' . $langs->trans('SurveySessionNoResponse') . '</span></td></tr>';
+        }
+        foreach ($sessionResponses as $sessionResponse) {
+            print '<tr class="oddeven"><td>' . $sessionResponse->getNomUrl(1) . '</td>';
+            if ($showRespondent) {
+                print '<td>' . dol_escape_htmltag((string) $sessionResponse->respondent_name);
+                print dol_strlen((string) $sessionResponse->respondent_email) > 0 ? ' <span class="opacitymedium">' . dol_escape_htmltag($sessionResponse->respondent_email) . '</span>' : '';
+                print '</td>';
+            }
+            print '<td>' . dol_print_date($sessionResponse->date_creation, 'dayhour', 'tzuserrel') . '</td>';
+            print '<td>' . $sessionResponse->getLibStatut(5) . '</td>';
+            // The success rate of the responses only for a scored survey : they all share the sheet of the session
+            if ($surveyIsScored) {
+                print '<td class="right">' . ($sessionResponse->success_rate !== null && $sessionResponse->success_rate !== '' ? price2num($sessionResponse->success_rate, 2) . ' %' : '') . '</td>';
+            }
+            print '</tr>';
+        }
+        print '</table>';
+
+        // Invitees of a nominative session: personal links by e-mail, follow-up and reminders
+        require __DIR__ . '/../../core/tpl/survey/survey_session_invitees.tpl.php';
+
+        print '</div>';
+    }
 
     if ($action != 'presend') {
         print '<div class="fichecenter"><div class="fichehalfleft">';

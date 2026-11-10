@@ -1,0 +1,367 @@
+/* DigiQuali collect sessions of surveys: public welcome page (public/survey/public_survey_session.php), QR code and
+   block of the session on the back-office card, printable summary (view/survey/survey_session_summary.php) */
+
+/* ----- Collect session of a survey: its public welcome page ----- */
+.public-survey-session {
+  .public-survey-session__title {
+    margin: 0 0 10px;
+    font-size: 22px;
+    line-height: 1.3;
+  }
+
+  .public-survey-session__description {
+    margin-bottom: 16px;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  .public-survey-session__start {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    border-radius: 12px !important;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .public-survey-session__hint,
+  .public-survey-session__privacy {
+    font-size: 15px;
+    line-height: 1.45;
+    color: #334155;
+  }
+
+  .public-survey-session__privacy {
+    margin-top: 18px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: $pwa-bg;
+  }
+
+  .public-survey-session__closed {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(#b45309, 0.12);
+    color: #92400e;
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+/* QR code of the answer link, on the back-office card of a survey */
+.survey-qrcode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 8px;
+
+  .digiquali-qrcode {
+    background: #ffffff;
+  }
+}
+
+.public-survey-session .public-survey-session__start i {
+  color: #ffffff;
+}
+
+/* ----- Public welcome page of a session ----- */
+.public-survey-session {
+  .public-survey-session__subtitle {
+    margin: -4px 0 12px;
+    font-size: 15px;
+    color: #475569;
+  }
+
+  .public-survey-session__deadline {
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .public-survey-session__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .public-survey-session__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 48px;
+      padding: 8px 12px;
+      border: 1px solid #94a3b8;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    input[aria-invalid="true"] {
+      border-color: #b91c1c;
+    }
+  }
+
+  .public-survey-session__required,
+  .public-survey-session__error {
+    color: #b91c1c;
+  }
+
+  .public-survey-session__optional {
+    font-weight: 400;
+    color: #475569;
+  }
+
+  .public-survey-session__error {
+    font-size: 15px;
+  }
+}
+
+/* ----- Block of a collect session on the back-office card of the survey ----- */
+.survey-session__infos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-bottom: 10px;
+}
+
+.survey-session__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 28px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  .button-save {
+    margin: 0;
+  }
+}
+
+.survey-session__option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.survey-session__option-label {
+  padding: 0;
+  font-weight: 700;
+}
+
+.survey-session__mode-choice {
+  display: block;
+}
+
+.survey-session__mode-locked {
+  font-size: 0.9em;
+  color: #64748b;
+}
+
+/* ----- Printable summary of a session ----- */
+.survey-session-summary {
+  max-width: 900px;
+  color: #1e293b;
+}
+
+.survey-session-summary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .butAction {
+    margin: 0;
+  }
+}
+
+.survey-session-summary__company {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.survey-session-summary__title {
+  margin: 4px 0 12px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.survey-session-summary__meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0 0 18px;
+
+  dt {
+    font-weight: 700;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.survey-session-summary__figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.survey-session-summary__figure {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.survey-session-summary__figure-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.survey-session-summary__figure-label {
+  color: #475569;
+}
+
+.survey-session-summary__question {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.survey-session-summary__question-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.survey-session-summary__question-count,
+.survey-session-summary__muted {
+  color: #475569;
+}
+
+.survey-session-summary__question-count {
+  margin-bottom: 8px;
+}
+
+.survey-session-summary__options {
+  width: 100%;
+  border-collapse: collapse;
+
+  td {
+    padding: 4px 8px 4px 0;
+    vertical-align: middle;
+  }
+
+  progress {
+    width: 100%;
+    height: 12px;
+    accent-color: #1d4ed8;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+.survey-session-summary__option-label {
+  width: 40%;
+}
+
+.survey-session-summary__option-count {
+  width: 14%;
+  white-space: nowrap;
+}
+
+.survey-session-summary__option-percent {
+  width: 8%;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.survey-session-summary__average {
+  margin: 0;
+  font-size: 15px;
+}
+
+.survey-session-summary__comments-title {
+  margin: 10px 0 4px;
+  font-size: 14px;
+}
+
+.survey-session-summary__verbatims {
+  margin: 0;
+  padding-left: 20px;
+
+  li {
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+}
+
+.survey-session-summary__table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+  }
+}
+
+/* Printed, the summary alone: no menu, no button, no message of the back office */
+@media print {
+  body.survey-session-summary-page {
+    #id-top,
+    #id-left,
+    .side-nav,
+    .login_block,
+    .noprint,
+    .jnotify-container,
+    #topmenu-login-dropdown {
+      display: none !important;
+    }
+
+    #id-container,
+    #id-right,
+    .id-container,
+    div.fiche {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .survey-session-summary {
+      max-width: none;
+      font-size: 11pt;
+    }
+  }
+}
