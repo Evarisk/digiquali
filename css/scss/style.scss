@@ -4,6 +4,7 @@
 @import "page/sheet-stats";
 @import "page/pwa";
 @import "page/public-control"; // after the PWA shell, whose variables it uses
+@import "page/survey-session"; // after the public pages, whose layout the welcome page of a session takes
 @import "page/pwa-control-create";
 @import "page/import-console";
 @import "modal/modal";
