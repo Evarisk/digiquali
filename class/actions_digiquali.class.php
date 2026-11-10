@@ -326,9 +326,199 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context']) && $object instanceof CommonObject) {
             $this->resprints .= $this->getLinkedElementSortSelect($object, (string) $sortfield, (string) $sortorder);
+            $this->resprints .= $this->getLinkedObjectSortSelect($object, (string) $sortfield, (string) $sortorder);
         }
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Return the element types a list shows in its single linked object column, in the order the column
+     * displays and sorts them : by translated type label.
+     *
+     * Only the types switched on in the configuration are kept. 'contrat' is registered as an alias of
+     * 'contract' and points at the same links : it is dropped, so a contract is not shown twice.
+     *
+     * @return array<string, array> Objects metadata, indexed by link name
+     * @throws Exception
+     */
+    protected function getLinkedObjectTypes(): array
+    {
+        global $conf, $langs;
+
+        if (isset($conf->cache['digiqualiLinkedObjectTypes'])) {
+            return $conf->cache['digiqualiLinkedObjectTypes'];
+        }
+
+        if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
+            dol_include_once('/saturne/lib/object.lib.php');
+            $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
+        }
+
+        $linkedObjectTypes = [];
+        foreach ($conf->cache['objectsMetadata'] as $objectMetadata) {
+            if (empty($objectMetadata['conf']) || !empty($objectMetadata['alias_of']) || empty($objectMetadata['link_name']) || isset($linkedObjectTypes[$objectMetadata['link_name']])) {
+                continue;
+            }
+            $linkedObjectTypes[$objectMetadata['link_name']] = $objectMetadata;
+        }
+
+        uasort($linkedObjectTypes, function (array $first, array $second) use ($langs): int {
+            return strcasecmp(dol_string_unaccent($langs->transnoentities($first['langs'] ?? '')), dol_string_unaccent($langs->transnoentities($second['langs'] ?? '')));
+        });
+
+        $conf->cache['digiqualiLinkedObjectTypes'] = $linkedObjectTypes;
+
+        return $linkedObjectTypes;
+    }
+
+    /**
+     * Return the columns holding the name of an element type, among the ones its metadata declares.
+     *
+     * A metadata can name a column its table does not have (the label of an accident investigation) : one
+     * such column in the sort or the search of the linked object column, which spans every element type,
+     * would break the whole list query. The columns are read once for all the types, and an element type
+     * none of them exists for falls back on its id.
+     *
+     * @param  array    $objectMetadata Metadata of the element type
+     * @param  string[] $moreColumns    Other columns to use when the table has them
+     * @return string[]                 Existing columns, never empty
+     */
+    protected function getLinkedObjectNameColumns(array $objectMetadata, array $moreColumns = []): array
+    {
+        global $conf;
+
+        if (!isset($conf->cache['digiqualiLinkedObjectColumns'])) {
+            $tables = [];
+            foreach ($this->getLinkedObjectTypes() as $linkedObjectType) {
+                if (!empty($linkedObjectType['table_element'])) {
+                    $tables[] = '\'' . $this->db->escape(strtolower($this->db->prefix() . $linkedObjectType['table_element'])) . '\'';
+                }
+            }
+
+            $tableColumns = [];
+            if (!empty($tables)) {
+                $sql  = 'SELECT LOWER(TABLE_NAME) AS table_name, LOWER(COLUMN_NAME) AS column_name FROM information_schema.COLUMNS';
+                $sql .= ' WHERE TABLE_SCHEMA = DATABASE() AND LOWER(TABLE_NAME) IN (' . implode(', ', $tables) . ')';
+                $resql = $this->db->query($sql);
+                if ($resql) {
+                    while ($obj = $this->db->fetch_object($resql)) {
+                        $tableColumns[$obj->table_name][$obj->column_name] = true;
+                    }
+                    $this->db->free($resql);
+                }
+            }
+            $conf->cache['digiqualiLinkedObjectColumns'] = $tableColumns;
+        }
+
+        $tableColumns = $conf->cache['digiqualiLinkedObjectColumns'][strtolower($this->db->prefix() . ($objectMetadata['table_element'] ?? ''))] ?? [];
+
+        $columns = [];
+        foreach (array_merge(explode(',', $objectMetadata['name_field'] ?? ''), $moreColumns) as $column) {
+            $column = strtolower(trim($column));
+            if ($column !== '' && isset($tableColumns[$column]) && !in_array($column, $columns, true)) {
+                $columns[] = $column;
+            }
+        }
+
+        return !empty($columns) ? $columns : ['rowid'];
+    }
+
+    /**
+     * Build the SELECT expressions that let a list be sorted on its single linked object column.
+     *
+     * The column gathers the elements of every type linked to the listed object, so the sort key is made of
+     * the rank of the first linked type, in the order the column shows them, followed by the name of the
+     * first element of that type : the list is grouped by element type, each group sorted by name. Like the
+     * columns per element type, two aliases are produced, the value and a flag keeping the objects linked to
+     * nothing at the bottom whatever the direction.
+     *
+     * The names come from tables whose collations can differ (latin1 on the oldest instances, utf8mb4 on the
+     * tables of the newer modules) : each one is converted to utf8mb4, otherwise COALESCE() would fail on an
+     * illegal mix of collations.
+     *
+     * The expressions are emitted only when the list is sorted on that column.
+     *
+     * @param  CommonObject $object    Listed object (control or survey)
+     * @param  string       $sortfield Requested sort field(s), comma separated
+     * @param  string       $sortorder Requested sort order(s), comma separated
+     * @return string                  SQL to append to the SELECT, empty when the column is not sorted on
+     * @throws Exception
+     */
+    protected function getLinkedObjectSortSelect(CommonObject $object, string $sortfield, string $sortorder): string
+    {
+        if (!isset($object->fields['linked_object']) || !in_array('sortvalue_linked_object', array_map('trim', explode(',', $sortfield)), true)) {
+            return '';
+        }
+
+        // The direction is repeated for every token by saturne_get_title_field_of_list, so the first one
+        // is the direction the empty flag will be sorted with
+        $isDescending = (bool) preg_match('/^desc/i', trim((string) (explode(',', $sortorder)[0] ?? '')));
+
+        $sortValues = [];
+        $typeRank   = 0;
+        foreach ($this->getLinkedObjectTypes() as $objectMetadata) {
+            $typeRank++;
+            if (empty($objectMetadata['table_element'])) {
+                continue;
+            }
+
+            $nameColumns = $this->getLinkedObjectNameColumns($objectMetadata);
+            $nameSelect  = 'CONVERT(' . (count($nameColumns) > 1 ? 'CONCAT_WS(\' \', lnk.' . implode(', lnk.', $nameColumns) . ')' : 'lnk.' . $nameColumns[0]) . ' USING utf8mb4)';
+
+            // Name of the first element of this type linked to the listed object
+            $subQuery  = '(SELECT ' . $nameSelect . ' FROM ' . $this->db->prefix() . $objectMetadata['table_element'] . ' AS lnk';
+            $subQuery .= ' INNER JOIN ' . $this->db->prefix() . 'element_element AS eelnk ON (eelnk.fk_source = lnk.rowid)';
+            $subQuery .= ' WHERE eelnk.fk_target = t.rowid';
+            $subQuery .= ' AND eelnk.targettype = \'' . $this->db->escape($object->module . '_' . $object->element) . '\'';
+            $subQuery .= ' AND eelnk.sourcetype = \'' . $this->db->escape($objectMetadata['link_name']) . '\'';
+            $subQuery .= ' ORDER BY ' . $nameSelect . ' LIMIT 1)';
+
+            $sortValues[] = 'CONCAT(\'' . sprintf('%03d', $typeRank) . '\', ' . $subQuery . ')';
+        }
+
+        if (empty($sortValues)) {
+            return '';
+        }
+
+        $sortValue = 'COALESCE(' . implode(', ', $sortValues) . ')';
+
+        return ', ' . $sortValue . ' AS sortvalue_linked_object, (' . $sortValue . ($isDescending ? ' IS NOT NULL' : ' IS NULL') . ') AS sortempty_linked_object';
+    }
+
+    /**
+     * Build the WHERE clause of the search on the single linked object column : the objects linked to an
+     * element of any type whose name, ref or label matches the searched text.
+     *
+     * @param  CommonObject $object      Listed object (control or survey)
+     * @param  string       $searchValue Searched text
+     * @return string                    SQL to append to the WHERE
+     * @throws Exception
+     */
+    protected function getLinkedObjectSearchWhere(CommonObject $object, string $searchValue): string
+    {
+        $conditions = [];
+        foreach ($this->getLinkedObjectTypes() as $objectMetadata) {
+            if (empty($objectMetadata['table_element'])) {
+                continue;
+            }
+
+            $searchedColumns = [];
+            foreach ($this->getLinkedObjectNameColumns($objectMetadata, ['ref', 'label']) as $column) {
+                $searchedColumns[] = 'lnk.' . $column;
+            }
+
+            $condition  = 'EXISTS (SELECT 1 FROM ' . $this->db->prefix() . $objectMetadata['table_element'] . ' AS lnk';
+            $condition .= ' INNER JOIN ' . $this->db->prefix() . 'element_element AS eelnk ON (eelnk.fk_source = lnk.rowid)';
+            $condition .= ' WHERE eelnk.fk_target = t.rowid';
+            $condition .= ' AND eelnk.targettype = \'' . $this->db->escape($object->module . '_' . $object->element) . '\'';
+            $condition .= ' AND eelnk.sourcetype = \'' . $this->db->escape($objectMetadata['link_name']) . '\'';
+            $condition .= natural_search($searchedColumns, $searchValue) . ')';
+
+            $conditions[] = $condition;
+        }
+
+        return ' AND ' . (!empty($conditions) ? '(' . implode(' OR ', $conditions) . ')' : '1 = 0');
     }
 
     /**
@@ -514,7 +704,9 @@ class ActionsDigiquali
             $this->resprints = $sql;
         }
 
-        if (preg_match('/surveylist|controllist/', $parameters['context'])) {
+        // The join serves the search on the columns per element type. A list with the single linked object
+        // column filters through EXISTS instead, and the join would return an object once per linked element
+        if (preg_match('/surveylist|controllist/', $parameters['context']) && !isset($object->fields['linked_object'])) {
             $sql = ' LEFT JOIN ' . $this->db->prefix() . 'element_element AS ee ON (t.rowid = ee.fk_target AND ee.targettype = "' . $object->module . '_' . $object->element . '")';
             $this->resprints = $sql;
         }
@@ -540,6 +732,14 @@ class ActionsDigiquali
         }
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
+            if ($parameters['key'] == 'linked_object') {
+                $searchValue = trim((string) $parameters['val']);
+                if ($searchValue !== '' && $object instanceof CommonObject) {
+                    $this->resprints = $this->getLinkedObjectSearchWhere($object, $searchValue);
+                }
+                return 1; // The column has no t.linked_object to filter on
+            }
+
             if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
                 dol_include_once('/saturne/lib/object.lib.php');
                 $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
@@ -610,20 +810,23 @@ class ActionsDigiquali
                 $sql   .= ' AND eelot.sourcetype = "productlot" AND eelot.fk_source IN (' . $lotIds . '))';
             }
 
-            // Tab of an element the object also carries on one of its own columns (the controller of a
-            // control, the project of both) : the tab filters on the union of the link in llx_element_element
-            // and of that column, which no $search criteria can express since they are all ANDed. Read from
-            // the cache, set by the list page. The union is held in a single AND (...) and emitted before the
-            // verdict clause below, whose OR would otherwise pull it out of the filter. The link is matched
-            // by EXISTS rather than by the ee alias joined by printFieldListFrom : an OR on a LEFT JOIN
-            // returns the object once per linked element
+            // Tab of an element : the objects linked to it in llx_element_element, read from the cache set
+            // by the list page. When the object also carries that element on one of its own columns (the
+            // controller of a control, the project of both), the tab filters on the union of the link and of
+            // that column, which no $search criteria can express since they are all ANDed. The filter is held
+            // in a single AND (...) and emitted before the verdict clause below, whose OR would otherwise pull
+            // it out of the filter. The link is matched by EXISTS rather than by the ee alias joined by
+            // printFieldListFrom : an OR on a LEFT JOIN returns the object once per linked element
             if (!empty($conf->cache['digiqualiLinkedElementOrColumn']) && is_object($object)) {
                 $orFilter  = $conf->cache['digiqualiLinkedElementOrColumn'];
                 $elementId = (int) $orFilter['id'];
                 $sql      .= ' AND (EXISTS (SELECT 1 FROM ' . $this->db->prefix() . 'element_element AS eeor';
                 $sql      .= ' WHERE eeor.fk_target = t.rowid AND eeor.targettype = "' . $this->db->escape($object->module . '_' . $object->element) . '"';
                 $sql      .= ' AND eeor.sourcetype = "' . $this->db->escape($orFilter['link_name']) . '" AND eeor.fk_source = ' . $elementId . ')';
-                $sql      .= ' OR t.' . $this->db->sanitize($orFilter['column']) . ' = ' . $elementId . ')';
+                if (!empty($orFilter['column'])) {
+                    $sql .= ' OR t.' . $this->db->sanitize($orFilter['column']) . ' = ' . $elementId;
+                }
+                $sql .= ')';
             }
 
             if (isset($parameters['search']['verdict']) && $parameters['search']['verdict'] != '' && $parameters['search']['verdict'] == 0) {
@@ -1216,6 +1419,18 @@ class ActionsDigiquali
                     }
                     $out[$parameters['key']] = implode('<br>', $links);
                 }
+            }
+
+            // Single linked object column : the elements of every type, in the order the column is sorted on
+            if ($parameters['key'] == 'linked_object') {
+                $links = [];
+                foreach ($this->getLinkedObjectTypes() as $linkName => $objectMetadata) {
+                    foreach ($object->linkedObjects[$linkName] ?? [] as $linkedObject) {
+                        $links[] = $linkedObject->getNomUrl(1);
+                    }
+                }
+                // Always feed the column, an empty value would let the template fall back on a field the object does not have
+                $out[$parameters['key']] = !empty($links) ? implode('<br>', $links) : '&nbsp;';
             }
 
             // The controls tab of a product carries a warehouse column on its lots/serials list. A

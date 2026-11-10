@@ -100,7 +100,7 @@ if (!$sortorder) {
 
 // Definition of custom fields for columns
 $nbLinkableElements             = 0;
-$objectPosition                 = 21;
+$linkedElementFormerColumns     = [];
 $excludeFields                  = [];
 $objectsMetadata                = saturne_get_objects_metadata();
 $conf->cache['objectsMetadata'] = $objectsMetadata;
@@ -116,27 +116,24 @@ foreach($objectsMetadata as $objectMetadata) {
         continue;
     }
 
-    // A tab shows the column of the element it filters on, plus, on a product, the lot/serial each
-    // control concerns : that one belongs to another metadata than the one the tab was opened from
-    if (empty($fromType) || $fromType == $objectMetadata['link_name'] || ($fromType == 'product' && $objectMetadata['link_name'] == 'productlot')) {
-        $object->fields[$objectMetadata['post_name']] = [
-            'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
-            'label'      => $langs->trans($objectMetadata['langs']),
-            'enabled'    => 1,
-            'position'   => $objectPosition,
-            'visible'    => 2,
-            'csslist'    => 'minwidth150 maxwidth200',
-            // Sort on the aliases the printFieldListSelect hook builds from llx_element_element, not on a
-            // t.<key> column that does not exist. The empty flag comes first so the controls without any
-            // linked element stay at the bottom in both directions
-            'otheralias' => 'sortempty_' . $objectMetadata['post_name'] . ',sortvalue_'
-        ];
-
-        $objectPosition++;
-        $nbLinkableElements++;
-        $excludeFields[] = $objectMetadata['post_name'];
-    }
+    $nbLinkableElements++;
+    $linkedElementFormerColumns[] = 't.' . $objectMetadata['post_name'];
 }
+
+// Every element a control can be linked to (lot/serial, user, thirdparty, etc.) shares one column instead of
+// one column per element type. It is filled by the hooks from llx_element_element, so it is no column of
+// the control table : sorting goes through the aliases the printFieldListSelect hook builds, the empty flag
+// first so the controls linked to nothing stay at the bottom in both directions
+$object->fields['linked_object'] = [
+    'label'      => 'ControlledObject',
+    'enabled'    => 1,
+    'position'   => 21,
+    'visible'    => 2,
+    'noedit'     => 1,
+    'csslist'    => 'minwidth200 maxwidth300',
+    'otheralias' => 'sortempty_linked_object,sortvalue_'
+];
+$excludeFields[] = 'linked_object';
 
 $signatoriesInDictionary                = saturne_fetch_dictionary('c_' . $object->element . '_attendants_role');
 $conf->cache['signatoriesInDictionary'] = $signatoriesInDictionary;
@@ -180,22 +177,21 @@ foreach ($object->fields as $key => $val) {
     }
 }
 
-// An element can be tied to a control twice : by a link in llx_element_element and by a column of the
-// control itself (the user who carried it out, the project it belongs to). Its tab must show the union of
-// the two, and $search only knows how to AND its criterias, so the OR is emitted by the printFieldListWhere
-// hook. The element travels through the cache rather than through $search : the latter lands in the URL,
-// where the purge of the search criterias would drop it and leave the tab showing every control
+// The tab of an element lists the controls linked to it, which the printFieldListWhere hook filters on : the
+// list has no column of that element type any more to carry the criteria. An element can also be tied to a
+// control by a column of the control itself (the user who carried it out, the project it belongs to) : its
+// tab then shows the union of the two, an OR that $search, whose criterias are all ANDed, cannot express.
+// The element travels through the cache rather than through $search : the latter lands in the URL, where
+// the purge of the search criterias would drop it and leave the tab showing every control
 $columnMatchingLinkedElement = ['user' => 'fk_user_controller', 'project' => 'projectid'];
 
 if (!empty($fromType)) {
-    if (isset($columnMatchingLinkedElement[$fromType])) {
+    if (isset($columnMatchingLinkedElement[$fromType]) || !empty($fromObjectMetadata)) {
         $conf->cache['digiqualiLinkedElementOrColumn'] = [
             'link_name' => $fromType,
-            'column'    => $columnMatchingLinkedElement[$fromType],
+            'column'    => $columnMatchingLinkedElement[$fromType] ?? '',
             'id'        => $fromId
         ];
-    } elseif (!empty($fromObjectMetadata)) {
-        $search[$fromObjectMetadata['post_name']] = $fromId;
     }
     if ($fromType == 'fk_sheet') {
         $search['fk_sheet'] = $fromId;
@@ -221,6 +217,17 @@ foreach ($object->fields as $key => $val) {
             'position' => $val['position'],
             'help'     => $val['help'] ?? '',
         ];
+    }
+}
+
+// A saved selection of columns still naming one of the former columns per element type would hide the
+// column that replaces them : it is shown as long as one of them was
+$selectedFieldsConf = 'MAIN_SELECTEDFIELDS_' . $contextpage;
+if (!empty($user->conf->$selectedFieldsConf)) {
+    $savedSelectedFields = explode(',', $user->conf->$selectedFieldsConf);
+    if (!in_array('t.linked_object', $savedSelectedFields, true) && !empty(array_intersect($savedSelectedFields, $linkedElementFormerColumns))) {
+        $savedSelectedFields[]           = 't.linked_object';
+        $user->conf->$selectedFieldsConf = implode(',', $savedSelectedFields);
     }
 }
 
