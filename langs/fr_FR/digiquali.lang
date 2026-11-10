@@ -933,6 +933,7 @@ SurveySessionInviteesNominativeOnly     = Les invitations par e-mail se font en 
 SurveySessionInviteesNone               = Aucun invité ajouté : indiquez un nom et un e-mail, ou collez des lignes « Nom ; e-mail ».
 SurveySessionInviteesNotSent            = %s lien(s) pas encore envoyé(s)
 SurveySessionInviteesPaste              = Coller plusieurs invités
+SurveySessionInviteesPasteAdd           = Ajouter ces invités
 SurveySessionInviteesPasteHelp          = Une ligne par invité : Nom ; e-mail (%s invités au plus)
 SurveySessionInviteesPastePlaceholder   = Jeanne Martin ; jeanne.martin@exemple.fr
 SurveySessionInviteesToRemind           = %s sans réponse

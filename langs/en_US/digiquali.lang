@@ -352,6 +352,7 @@ SurveySessionInviteesNominativeOnly     = E-mail invitations need the nominative
 SurveySessionInviteesNone               = No invitee added: give a name and an e-mail, or paste lines "Name ; e-mail".
 SurveySessionInviteesNotSent            = %s link(s) not sent yet
 SurveySessionInviteesPaste              = Paste several invitees
+SurveySessionInviteesPasteAdd           = Add these invitees
 SurveySessionInviteesPasteHelp          = One line per invitee: Name ; e-mail (%s invitees at most)
 SurveySessionInviteesPastePlaceholder   = Jane Martin ; jane.martin@example.com
 SurveySessionInviteesToRemind           = %s without response

@@ -91,18 +91,25 @@ print '</div>';
 
 // One invitee typed in the fields, or several pasted, one per line
 if ($canInvite) {
-    print '<form method="POST" class="survey-session__options survey-session__invitee-form" action="' . $cardUrl . '#survey-session-invitees">';
+    // One row for one invitee, and under it, folded, the box for many: each with its own button, posting the same form
+    print '<form method="POST" class="survey-session__invitee-form" action="' . $cardUrl . '#survey-session-invitees">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="action" value="add_invitees">';
-    print '<label class="survey-session__option"><span class="survey-session__option-label">' . $langs->trans('SurveyRespondentName') . '</span>';
-    print '<input type="text" name="invitee_name" class="flat minwidth200" maxlength="255" autocomplete="off"></label>';
-    print '<label class="survey-session__option"><span class="survey-session__option-label">' . $langs->trans('SurveyRespondentEmail') . '</span>';
-    print '<input type="email" name="invitee_email" class="flat minwidth200" maxlength="255" autocomplete="off"></label>';
-    print '<details class="survey-session__option"><summary class="survey-session__option-label">' . $langs->trans('SurveySessionInviteesPaste') . '</summary>';
-    print '<textarea name="invitee_lines" rows="5" cols="60" class="flat" placeholder="' . dol_escape_htmltag($langs->transnoentities('SurveySessionInviteesPastePlaceholder')) . '"></textarea>';
-    print '<span class="survey-session__mode-locked">' . $langs->trans('SurveySessionInviteesPasteHelp', digiquali_survey_session_invitees_max()) . '</span>';
-    print '</details>';
+    print '<div class="survey-session__invitee-row">';
+    print '<label class="survey-session__option survey-session__invitee-field"><span class="survey-session__option-label">' . $langs->trans('SurveyRespondentName') . '</span>';
+    print '<input type="text" name="invitee_name" class="flat" maxlength="255" autocomplete="off"></label>';
+    print '<label class="survey-session__option survey-session__invitee-field"><span class="survey-session__option-label">' . $langs->trans('SurveyRespondentEmail') . '</span>';
+    print '<input type="email" name="invitee_email" class="flat" maxlength="255" autocomplete="off"></label>';
     print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('SurveySessionInviteeAdd')) . '">';
+    print '</div>';
+    print '<details class="survey-session__invitee-paste">';
+    print '<summary class="survey-session__invitee-paste-title"><i class="fas fa-chevron-right survey-session__invitee-paste-chevron"></i><i class="fas fa-paste"></i> ' . $langs->trans('SurveySessionInviteesPaste') . '</summary>';
+    print '<div class="survey-session__invitee-paste-body">';
+    print '<textarea name="invitee_lines" rows="5" class="flat" placeholder="' . dol_escape_htmltag($langs->transnoentities('SurveySessionInviteesPastePlaceholder')) . '"></textarea>';
+    print '<span class="survey-session__hint">' . $langs->trans('SurveySessionInviteesPasteHelp', digiquali_survey_session_invitees_max()) . '</span>';
+    print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('SurveySessionInviteesPasteAdd')) . '">';
+    print '</div>';
+    print '</details>';
     print '</form>';
 }
 

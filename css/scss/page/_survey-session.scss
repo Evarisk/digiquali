@@ -138,18 +138,35 @@
   margin-bottom: 10px;
 }
 
-.survey-session__options {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px 28px;
+/* The forms of a session: its options (closing date, mode), and the invitees to add */
+.survey-session__options,
+.survey-session__invitee-form {
   margin-bottom: 14px;
   padding: 12px 14px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 
+  // eldy forces side margins on every save button (margin-left / right: 8px !important): the gaps of the form place them
+  input.button.button-save {
+    margin: 0 !important;
+  }
+}
+
+/* The fields on one row, the last one taking the room left, the button at the end of the row */
+.survey-session__options,
+.survey-session__invitee-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 28px;
+}
+
+/* Options of different heights: their labels on one line at the top, the button at the bottom of the row */
+.survey-session__options {
+  align-items: flex-start;
+
   .button-save {
-    margin: 0;
+    align-self: flex-end;
   }
 }
 
@@ -167,13 +184,88 @@
   font-weight: 700;
 }
 
-.survey-session__mode-choice {
-  display: block;
-}
-
-.survey-session__mode-locked {
+.survey-session__hint {
   font-size: 0.9em;
   color: #64748b;
+}
+
+/* Date and hour of the planned closing on one line */
+.survey-session__date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.survey-session__mode {
+  flex: 1 1 320px;
+}
+
+.survey-session__mode-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+
+  input {
+    margin: 0;
+  }
+}
+
+/* Locked once a respondent started: the choices read as fixed */
+.survey-session__mode--locked .survey-session__mode-choice {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.survey-session__invitee-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.survey-session__invitee-field {
+  flex: 1 1 220px;
+  max-width: 340px;
+
+  // The theme gives a text field and an e-mail field different heights
+  input.flat {
+    width: 100%;
+    height: 34px;
+    box-sizing: border-box;
+  }
+}
+
+.survey-session__invitee-paste-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* The flex summary loses the marker of the browser: a chevron says that it unfolds */
+.survey-session__invitee-paste-chevron {
+  font-size: 0.8em;
+  transition: transform 0.15s;
+}
+
+.survey-session__invitee-paste[open] .survey-session__invitee-paste-chevron {
+  transform: rotate(90deg);
+}
+
+.survey-session__invitee-paste-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+
+  textarea {
+    width: 100%;
+    max-width: 708px;
+    box-sizing: border-box;
+  }
 }
 
 /* ----- Printable summary of a session ----- */

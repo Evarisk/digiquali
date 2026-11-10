@@ -961,17 +961,18 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             print '<input type="hidden" name="action" value="set_session_options">';
             print '<div class="survey-session__option">';
             print '<span class="survey-session__option-label">' . $form->textwithpicto($langs->trans('SurveySessionDateEnd'), $langs->trans('SurveySessionDateEndHelp')) . '</span>';
-            print $form->selectDate(!empty($object->date_end) ? $object->date_end : -1, 'date_end', 1, 1, 1, '', 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel');
+            print '<div class="survey-session__date">' . $form->selectDate(!empty($object->date_end) ? $object->date_end : -1, 'date_end', 1, 1, 1, '', 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel') . '</div>';
             print '</div>';
-            print '<fieldset class="survey-session__option survey-session__mode"' . ($modeLocked ? ' disabled' : '') . '>';
-            print '<legend class="survey-session__option-label">' . $langs->trans('SurveySessionMode') . '</legend>';
+            // A group of radios rather than a fieldset : the theme forces a border and wide paddings on every fieldset
+            print '<div class="survey-session__option survey-session__mode' . ($modeLocked ? ' survey-session__mode--locked' : '') . '" role="radiogroup" aria-labelledby="survey-session-mode-label">';
+            print '<span class="survey-session__option-label" id="survey-session-mode-label">' . $langs->trans('SurveySessionMode') . '</span>';
             foreach ([0 => 'SurveySessionModeAnonymousHelp', 1 => 'SurveySessionModeNominativeHelp'] as $modeValue => $modeLabel) {
-                print '<label class="survey-session__mode-choice"><input type="radio" name="nominative" value="' . $modeValue . '"' . ((int) $isNominative == $modeValue ? ' checked' : '') . '> ' . $langs->trans($modeLabel) . '</label>';
+                print '<label class="survey-session__mode-choice"><input type="radio" name="nominative" value="' . $modeValue . '"' . ((int) $isNominative == $modeValue ? ' checked' : '') . ($modeLocked ? ' disabled' : '') . '> ' . $langs->trans($modeLabel) . '</label>';
             }
             if ($modeLocked) {
-                print '<span class="survey-session__mode-locked">' . $langs->trans(!empty($sessionResponses) ? 'SurveySessionModeLocked' : 'SurveySessionModeLockedInvitees') . '</span>';
+                print '<span class="survey-session__hint">' . $langs->trans(!empty($sessionResponses) ? 'SurveySessionModeLocked' : 'SurveySessionModeLockedInvitees') . '</span>';
             }
-            print '</fieldset>';
+            print '</div>';
             print '<input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('Save')) . '">';
             print '</form>';
         }
