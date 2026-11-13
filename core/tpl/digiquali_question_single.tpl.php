@@ -116,7 +116,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                 <div class="question__footer">
                     <label class="question__footer-comment">
                         <i class="far fa-comment-dots question-comment-icon"></i>
-                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
+                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" rows="1" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
                     </label>
                     <?php if (!$commentDisabled && !empty($commentLibrary)) : ?>
                         <div class="question__comment-library">
