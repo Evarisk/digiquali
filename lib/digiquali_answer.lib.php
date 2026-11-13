@@ -576,7 +576,8 @@ function show_answer_from_question(Question $question, CommonObject $object, str
         case 'Percentage':
             $step = 100;
             if (!empty($questionConfig[$question->type]['step'])) {
-                $step = $questionConfig[$question->type]['step'];
+                // A slider needs at least two positions (0 and 100), and step - 1 is the divisor below
+                $step = max(2, (int) $questionConfig[$question->type]['step']);
             }
 
 			if ($showCorrection && $question->type == $question::TYPE_RANGE) {

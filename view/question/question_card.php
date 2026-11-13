@@ -295,7 +295,7 @@ if (empty($reshook)) {
 
             $objectConfig = ['config' => []];
             if (GETPOSTISSET('step') && !empty(GETPOSTINT('step'))) {
-                $objectConfig['config'][$object->type]['step'] = GETPOSTINT('step');
+                $objectConfig['config'][$object->type]['step'] = max(2, GETPOSTINT('step'));
             } else {
 				unset($objectConfig['config'][$object->type]['step']);
 			}
@@ -472,7 +472,7 @@ if (empty($reshook)) {
 
 		$objectConfig = ['config' => [$questionType => null]];
 		if (GETPOSTISSET('step') && !empty(GETPOSTINT('step'))) {
-			$objectConfig['config'][$questionType]['step'] = GETPOSTINT('step');
+			$objectConfig['config'][$questionType]['step'] = max(2, GETPOSTINT('step'));
 		} else {
 			unset($objectConfig['config'][$questionType]['step']);
 		}
@@ -1163,7 +1163,7 @@ if (($id || $ref) && $action == 'edit') {
 
     // Step for percentage question type default hidden
     print '<tr class="' . ($object->type == 'Percentage' ? '' : 'hidden') . '" id="percentage-question-step"><td class="fieldrequired"><label for="step">' . $langs->transnoentities('PercentageQuestionStep') . '</label></td><td>';
-    print '<input type="number" name="step" id="step" min="1" value="' . ($objectConfig['config'][$object->type]['step'] ?? 100) . '">';
+    print '<input type="number" name="step" id="step" min="2" value="' . ($objectConfig['config'][$object->type]['step'] ?? 100) . '">';
     print '</td></tr>';
 
 	// Min value
