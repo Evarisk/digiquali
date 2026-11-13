@@ -51,6 +51,8 @@ ChooseControlSheet                      = Choose a sheet
 NoControlSheetAvailable                 = No control sheet available
 ControlledObject                        = Controlled object
 StartControl                            = Start the control
+NextControlDateBeforeControlDate        = The next control date (%s) is before the control date (%s): check the input.
+NextControlDateBeforeControlDateShort   = Before the control date
 
 # Deletion errors
 ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
