@@ -57,13 +57,49 @@ if ($action == 'uploadFile' && !empty($conf->global->MAIN_UPLOAD_DOC)) {
         }
 
         if ($answerLine->id > 0) {
-            $uploadDir = $conf->digiquali->dir_output . '/controldet/' . dol_sanitizeFileName($answerLine->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
+            $uploadedFiles = isset($_FILES['userfile']) ? $_FILES['userfile'] : [];
+            $invalidFile   = false;
+            $invalidName   = '';
+
+            if (!empty($uploadedFiles['tmp_name'])) {
+                $forbiddenExt  = ['html', 'htm', 'xhtml', 'shtml', 'svg', 'svgz', 'xml', 'xsl', 'js', 'mjs', 'php', 'phtml', 'phar', 'php3', 'php4', 'php5', 'php7', 'pht', 'sh', 'bash', 'ksh', 'pl', 'py', 'cgi', 'bat', 'cmd', 'exe', 'com', 'swf', 'hta', 'vbs', 'ps1'];
+                $forbiddenMime = ['text/html', 'image/svg+xml', 'application/xhtml+xml', 'text/xml', 'application/xml', 'text/javascript', 'application/javascript', 'application/x-httpd-php', 'text/x-php', 'application/x-sh', 'application/x-msdownload', 'application/x-executable', 'application/x-csh', 'application/x-bat'];
+
+                $tmpNames  = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
+                $origNames = is_array($uploadedFiles['name']) ? $uploadedFiles['name'] : [$uploadedFiles['name']];
+
+                foreach ($tmpNames as $key => $tmpName) {
+                    if (empty($tmpName)) {
+                        continue;
+                    }
+
+                    $origName = (string) ($origNames[$key] ?? '');
+                    $nameParts = explode('.', strtolower($origName));
+                    array_shift($nameParts);
+
+                    $finfo    = new finfo(FILEINFO_MIME_TYPE);
+                    $mimeType = $finfo->file($tmpName);
+
+                    if (array_intersect($nameParts, $forbiddenExt) || in_array($mimeType, $forbiddenMime, true) || strpos($mimeType, 'text/html') === 0 || strpos($mimeType, 'image/svg+xml') === 0) {
+                        $invalidFile = true;
+                        $invalidName = $origName;
+                        break;
+                    }
+                }
             }
 
-            $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
-            dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
+            if ($invalidFile) {
+                $langs->load('errors');
+                setEventMessages($langs->trans('ErrorFilenameExtensionNotAllowed', $invalidName), null, 'errors');
+            } else {
+                $uploadDir = $conf->digiquali->dir_output . '/controldet/' . dol_sanitizeFileName($answerLine->ref);
+                if (!dol_is_dir($uploadDir)) {
+                    dol_mkdir($uploadDir);
+                }
+
+                $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
+                dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
+            }
         }
     }
 }
