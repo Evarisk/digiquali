@@ -115,6 +115,11 @@ body.page-public-control {
       color: inherit;
       text-decoration: none;
     }
+
+    // getNomUrl() keeps a ref on one line (nowraponall, a product for one): a long one widened the whole page on a phone
+    .nowraponall {
+      white-space: normal;
+    }
   }
 }
 
