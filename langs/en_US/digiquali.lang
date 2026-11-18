@@ -95,6 +95,7 @@ CleanUnusedLinks                        = Clean unused links
 CleanUnusedLinksConfirm                 = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
 LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
 LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
+LinkedObjectExtraFieldsKeptForExport    = Extrafield(s) kept although their link is disabled: a saved export model still uses them. Remove them from the export model to have them deleted
 
 #
 # Controls of a product

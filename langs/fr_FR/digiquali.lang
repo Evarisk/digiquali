@@ -415,6 +415,7 @@ CleanUnusedLinks                               = Nettoyer les liens inutilisés
 CleanUnusedLinksConfirm                        = Les champs complémentaires, onglets et hooks des liens désactivés vont être supprimés. Confirmer ?
 LinkedObjectSyncDone                           = Synchronisation effectuée : %d onglet(s), %d hook(s), %d champ(s) complémentaire(s) ajouté(s), %d supprimé(s)
 LinkedObjectSyncError                          = La synchronisation des liens a échoué, aucune modification n'a été enregistrée
+LinkedObjectExtraFieldsKeptForExport           = Champ(s) complémentaire(s) conservé(s) malgré leur lien désactivé : un modèle d'export enregistré les utilise encore. Retirez-les du modèle d'export pour qu'ils soient supprimés
 LinkFicheinter                                 = Activer le lien avec les fiches d'intervention
 LinkFicheinterDescription                      = Permet la liaison entre les fiches d'intervention et les modèles
 LinkBom                                        = Activer le lien avec les nomenclatures BOM
