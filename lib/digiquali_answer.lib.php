@@ -716,7 +716,7 @@ function digiquali_answer_media_dir_is_allowed(CommonObject $object, string $act
  * The answer photos are stored under the ref of the object (see digiquali_get_answer_photo_sub_dir()). An object
  * keeping (PROVn) until its validation leaves them under a directory nothing reads once it is validated :
  * SaturneObject::validate() does not move the directory of a DigiQuali object. The status is not touched, the
- * object stays a draft, and its directory, if it already has one, follows the ref.
+ * object stays a draft, and its directories, that of its generated documents included, follow the ref.
  *
  * @param  SaturneObject $object Control or survey, already created
  * @param  User          $user   User giving the ref
@@ -748,10 +748,25 @@ function digiquali_set_definitive_ref(SaturneObject $object, User $user): int
 }
 
 /**
- * Move the files of an object left under its (PROVn) directory into the directory of its definitive ref
+ * Directories of an answered object that carry its ref, under the DigiQuali output directory
  *
- * Nothing is overwritten : a file the definitive directory already has stays under (PROVn), which is kept as long as
- * it holds something. The rows of llx_ecm_files of the files moved follow them.
+ * The one of the object (answer photos, QR code...) and the one of its generated documents, apart under
+ * <element>document, where its card lists them.
+ *
+ * @param  SaturneObject $object Control or survey
+ * @return string[]              Directories, relative to the DigiQuali output directory, without the ref
+ */
+function digiquali_get_ref_directories(SaturneObject $object): array
+{
+    return [$object->element, $object->element . 'document'];
+}
+
+/**
+ * Move the files of an object left under its (PROVn) directories into the directories of its definitive ref
+ *
+ * Its answer photos and other files as well as the documents generated while it was a draft (see
+ * digiquali_get_ref_directories()). Nothing is overwritten : a file the definitive directory already has stays under
+ * (PROVn), which is kept as long as it holds something. The rows of llx_ecm_files of the files moved follow them.
  *
  * @param  SaturneObject $object Control or survey, with its definitive ref
  * @param  string        $oldRef Ref the files were stored under, ex. (PROV12)
@@ -759,7 +774,7 @@ function digiquali_set_definitive_ref(SaturneObject $object, User $user): int
  */
 function digiquali_move_prov_directory(SaturneObject $object, string $oldRef): int
 {
-    global $conf, $db;
+    global $conf;
 
     require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
@@ -771,8 +786,37 @@ function digiquali_move_prov_directory(SaturneObject $object, string $oldRef): i
     // Same root as the media blocks, the module may not be enabled yet when its init() runs this
     $entity    = !empty($object->entity) ? (int) $object->entity : (int) $conf->entity;
     $outputDir = $conf->digiquali->multidir_output[$entity] ?? DOL_DATA_ROOT . ($entity > 1 ? '/' . $entity : '') . '/digiquali';
-    $srcDir    = $outputDir . '/' . $object->element . '/' . dol_sanitizeFileName($oldRef);
-    $destDir   = $outputDir . '/' . $object->element . '/' . dol_sanitizeFileName($newRef);
+
+    // A directory that cannot move does not keep the others back
+    $nbMoved = 0;
+    $error   = false;
+    foreach (digiquali_get_ref_directories($object) as $refDirectory) {
+        $result = digiquali_move_directory_files($outputDir . '/' . $refDirectory . '/' . dol_sanitizeFileName($oldRef), $outputDir . '/' . $refDirectory . '/' . dol_sanitizeFileName($newRef), $entity);
+        if ($result < 0) {
+            $error = true;
+        } else {
+            $nbMoved += $result;
+        }
+    }
+
+    return $error ? -1 : $nbMoved;
+}
+
+/**
+ * Move the files of a directory into another one, the rows of llx_ecm_files of the files moved with them
+ *
+ * The directory moves at once when the destination does not exist yet, file by file otherwise : a file the
+ * destination already has is not overwritten and stays where it is, with its directory.
+ *
+ * @param  string $srcDir  Directory the files are in
+ * @param  string $destDir Directory the files go to
+ * @param  int    $entity  Entity of the rows of llx_ecm_files
+ * @return int             Number of files moved, -1 if KO
+ */
+function digiquali_move_directory_files(string $srcDir, string $destDir, int $entity): int
+{
+    global $db;
+
     if (!dol_is_dir($srcDir)) {
         return 0;
     }
@@ -844,12 +888,13 @@ function digiquali_move_prov_directory(SaturneObject $object, string $oldRef): i
  * Move back the files of the controls or surveys left under their (PROVn) directory once given their definitive ref
  *
  * Until #2442 for the controls and #2761 for the surveys, an object kept its (PROVn) ref until its validation, which
- * did not move its directory : its answer photos and its other files stayed under (PROVn), where nothing reads them
- * anymore. Idempotent, run at each activation of the module : an object still in (PROVn), and a (PROVn) directory
- * whose object no longer exists, are left as they are.
+ * did not move its directories : its answer photos, its other files and the documents generated while it was a draft
+ * stayed under (PROVn), where nothing reads them anymore. #2761 brought back the first ones only : the documents are
+ * searched too (#2773). Idempotent, run at each activation of the module : an object still in (PROVn), and a (PROVn)
+ * directory whose object no longer exists, are left as they are.
  *
  * @param  SaturneObject $object Control or survey, only gives the element and the table to read
- * @return int                   Number of objects whose directory was handled, -1 if KO
+ * @return int                   Number of objects whose directories were handled, -1 if KO
  */
 function digiquali_recover_prov_directories(SaturneObject $object): int
 {
@@ -858,14 +903,18 @@ function digiquali_recover_prov_directories(SaturneObject $object): int
     require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
     $outputDir = $conf->digiquali->multidir_output[$conf->entity] ?? DOL_DATA_ROOT . ($conf->entity > 1 ? '/' . $conf->entity : '') . '/digiquali';
-    $provDirs  = dol_dir_list($outputDir . '/' . $object->element, 'directories', 0, '^\(PROV[0-9]+\)$', null, 'name', SORT_ASC, 0, 1);
-    if (empty($provDirs)) {
-        return 0;
-    }
 
+    // Ids of the objects with at least one (PROVn) directory left, by id to count each object once
     $ids = [];
-    foreach ($provDirs as $provDir) {
-        $ids[] = (int) substr($provDir['name'], 5, -1);
+    foreach (digiquali_get_ref_directories($object) as $refDirectory) {
+        $provDirs = dol_dir_list($outputDir . '/' . $refDirectory, 'directories', 0, '^\(PROV[0-9]+\)$', null, 'name', SORT_ASC, 0, 1);
+        foreach ($provDirs as $provDir) {
+            $id       = (int) substr($provDir['name'], 5, -1);
+            $ids[$id] = $id;
+        }
+    }
+    if (empty($ids)) {
+        return 0;
     }
 
     $sql  = 'SELECT rowid, ref, entity FROM ' . MAIN_DB_PREFIX . $object->table_element;
