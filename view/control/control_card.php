@@ -43,9 +43,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../../saturne/lib/medias.lib.php';
-require_once __DIR__ . '/../../../saturne/class/saturnesignature.class.php';
-require_once __DIR__ . '/../../../saturne/class/task/saturnetask.class.php';
+dol_include_once('/saturne/lib/medias.lib.php');
+dol_include_once('/saturne/class/saturnesignature.class.php');
+dol_include_once('/saturne/class/task/saturnetask.class.php');
 
 require_once __DIR__ . '/../../class/control.class.php';
 require_once __DIR__ . '/../../class/sheet.class.php';
@@ -86,7 +86,6 @@ $object           = new Control($db);
 $objectLine       = new ControlLine($db);
 $document         = new ControlDocument($db);
 $signatory        = new SaturneSignature($db, 'digiquali');
-$controlEquipment = new ControlEquipment($db);
 $product          = new Product($db);
 $sheet            = new Sheet($db);
 $question         = new Question($db);
@@ -254,7 +253,7 @@ if (empty($resHook)) {
     include DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
     // Actions set_thirdparty, set_project
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
     // Move linked tasks to the new project so they follow the control
     if ($action == 'set_project' && $permissiontoadd) {
@@ -282,10 +281,10 @@ if (empty($resHook)) {
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_task_action.tpl.php';
 
     // Actions builddoc, forcebuilddoc, remove_file.
-    require_once __DIR__ . '/../../../saturne/core/tpl/documents/documents_action.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/documents/documents_action.tpl.php');
 
     // Action to generate pdf from odt file
-    require_once __DIR__ . '/../../../saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php');
 
     if ($action == 'confirm_setVerdict' && $permissiontosetverdict && !GETPOST('cancel', 'alpha')) {
         $object->fetch($id);
@@ -328,11 +327,14 @@ if (empty($resHook)) {
         }
     }
 
-    // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block
-    require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    // Actions uploadPhoto, linkPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block,
+    // for a user allowed to change the control, as on the PWA answer screen
+    if ($permissiontoadd) {
+        require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    }
 
     // Actions confirm_lock, confirm_archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
 
     // Actions to send emails
     $triggersendname = 'CONTROL_SENTBYMAIL';
@@ -405,7 +407,7 @@ if ($action == 'create') {
         if (!getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET')) {
             print '<div class="wpeo-notice notice-warning notice-red">';
             print '<div class="notice-content">';
-            print '<a href="' . dol_buildpath('/custom/digiquali/admin/sheet.php#sheetCategories', 2) . '">' . '<b><div class="notice-subtitle">' . $langs->trans('GenerateSheetTags') . ' : ' . $langs->trans('ConfigSheet') . '</div></b></a>';
+            print '<a href="' . dol_buildpath('/digiquali/admin/sheet.php', 2) . '#sheetCategories">' . '<b><div class="notice-subtitle">' . $langs->trans('GenerateSheetTags') . ' : ' . $langs->trans('ConfigSheet') . '</div></b></a>';
             print '</div></div>';
             print '</table>';
             print dol_get_fiche_end();
@@ -455,7 +457,7 @@ if ($action == 'create') {
         print '<tr><td class="fieldrequired">' . ($source != 'pwa' ? $langs->trans('Sheet') : img_picto('', $sheet->picto . '_2em', 'class="pictofixedwidth"')) . '</td><td>';
         print ($source != 'pwa' ? img_picto('', $sheet->picto, 'class="pictofixedwidth"') : '') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', $filter, 1);
         if ($source != 'pwa') {
-            print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/custom/digiquali/view/sheet/sheet_card.php?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
+            print '<a class="butActionNew" href="' . dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1) . '?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
         }
         print '</td></tr>';
     }
@@ -590,20 +592,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     $formConfirm = '';
 
     // If conf activated we check that at least one control equipment is outdated
-    $equipmentOutdated = false;
-    if (getDolGlobalInt('DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT')) {
-        $controlEquipments = $controlEquipment->fetchFromParent($object->id);
-        if (is_array($controlEquipments) && !empty($controlEquipments)) {
-            foreach ($controlEquipments as $equipmentControl) {
-                $data = json_decode($equipmentControl->json, true);
-                $dluo = $data['dluo'];
-                if (!empty($dluo) && $dluo <= dol_now()) {
-                    $equipmentOutdated = true;
-                    break;
-                }
-            }
-        }
-    }
+    $equipmentOutdated = $object->hasOutdatedEquipment();
+
+    // Steps left before the lock, listed by the lock button and the notice of a validated control
+    $lockBlockers = $object->getLockBlockers();
 
     if (($action == 'setVerdict' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         $formquestion = [
@@ -641,6 +633,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
         }
         $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('ControlLockConsequences');
 
         $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $lockConfirmContent, 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
     }
@@ -702,7 +695,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
         // Answer public interface
-        $publicAnswerUrl = dol_buildpath('custom/digiquali/public/public_answer.php?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=ControlDocument&entity=' . $conf->entity, 3);
+        $publicAnswerUrl = dol_buildpath('/digiquali/public/public_answer.php', 3) . '?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=ControlDocument&entity=' . $conf->entity;
         print '<tr><td class="titlefield">' . $langs->trans('PublicAnswer') . ' <a href="' . $publicAnswerUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';
         print showValueWithClipboardCPButton($publicAnswerUrl, 0, '&nbsp;');
         print '</td><td>';
@@ -754,7 +747,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     if (isModEnabled('categorie')) {
         print '<tr><td class="valignmiddle">' . $langs->trans('Categories') . '</td>';
         if ($action != 'categories') {
-            print '<td style="display: flex">' . ($object->status < Control::STATUS_LOCKED ? '<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=categories&id=' . $object->id . '">' . img_edit($langs->trans('Modify')) . '</a>' : '<img src="" alt="">');
+            print '<td style="display: flex">' . ($object->status < Control::STATUS_LOCKED ? '<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=categories&token=' . newToken() . '&id=' . $object->id . '">' . img_edit($langs->trans('Modify')) . '</a>' : '<img src="" alt="">');
             print $form->showCategories($object->id, 'control', 1) . '</td>';
         }
         if ($permissiontoadd && $action == 'categories') {
@@ -802,10 +795,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     print '<tr class="linked-medias photo question-table"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list">';
     print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="' . dol_escape_htmltag($object->photo) . '"/>';
+    // The picking buttons offer the device and the media library, as the answers of the control do
     print saturne_render_media_block('digiquali', 'control/' . $object->id . '/photos', '', '', [
-        'show_photo'  => true,
-        'show_audio'  => false,
-        'show_upload' => $object->status < Control::STATUS_LOCKED,
+        'show_photo'   => true,
+        'show_audio'   => false,
+        'show_upload'  => $object->status < Control::STATUS_LOCKED,
+        'show_library' => true,
     ]);
     print '</td></tr>';
 
@@ -887,9 +882,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             <div class="notice-content">
                 <div class="notice-title"><?php echo $langs->trans('ControlEquipmentOutdated') ?></div>
             </div>
-            <a class="butAction" href="<?php echo DOL_URL_ROOT . '/custom/digiquali/view/control/control_equipment.php?id=' . $object->id ?>"><?php echo $langs->trans("GoToEquipmentHours", $usertmp->getFullName($langs)) ?></a>
+            <a class="butAction" href="<?php echo dol_buildpath('/digiquali/view/control/control_equipment.php', 1) . '?id=' . $object->id ?>"><?php echo $langs->trans("GoToEquipmentHours", $usertmp->getFullName($langs)) ?></a>
         </div>
     <?php }
+
+    // A validated control is neither final nor published yet: tell what is left before the lock
+    if ($object->status == Control::STATUS_VALIDATED) {
+        require __DIR__ . '/../../core/tpl/control/control_lock_steps.tpl.php';
+    }
 
     print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?action=save&id=' . $object->id . '" id="saveObject" enctype="multipart/form-data">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
@@ -942,17 +942,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             // Sign
             $displayButton = $onPhone ? '<i class="fas fa-signature fa-2x"></i>' : '<i class="fas fa-signature"></i>' . ' ' . $langs->trans('Sign');
             if ($object->status == $object::STATUS_VALIDATED && !$signatory->checkSignatoriesSignatures($object->id, $object->element) && $object->verdict > 0) {
-                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/custom/saturne/view/saturne_attendants.php?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=ControlDocument&attendant_table_mode=simple', 3) . '">' . $displayButton . '</a>';
+                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/saturne/view/saturne_attendants.php', 3) . '?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=ControlDocument&attendant_table_mode=simple">' . $displayButton . '</a>';
             } else {
                 print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidatedToSign', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
             }
 
             // Lock
             $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('Lock');
-            if ($object->status == $object::STATUS_VALIDATED && $object->verdict != null && $signatory->checkSignatoriesSignatures($object->id, $object->element) && !$equipmentOutdated) {
+            if (empty($lockBlockers)) {
                 print '<span class="butAction" id="actionButtonLock">' . $displayButton . '</span>';
+            } elseif ($object->status < $object::STATUS_LOCKED) {
+                // Name the steps left rather than a generic message: the user knows what to do next
+                $lockBlockersLabels = array_map([$langs, 'transnoentities'], $lockBlockers);
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->transnoentities('ControlLockStepsLeft') . '<br>- ' . implode('<br>- ', $lockBlockersLabels)) . '">' . $displayButton . '</span>';
             } else {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ControlMustBeValidatedToLock')) . '">' . $displayButton . '</span>';
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ControlAlreadyLocked')) . '">' . $displayButton . '</span>';
             }
 
             // Send email
@@ -1266,7 +1270,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 }
 
 // Photo editor modal (required by saturne_render_media_block)
-require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 // End of page
 llxFooter();

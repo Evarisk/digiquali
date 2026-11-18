@@ -150,7 +150,11 @@ PhotoMultipleEmpty            = Prenez ou ajoutez des photos : chacune aura son 
 PhotoMultipleImage            = Image
 PhotoMultipleComment          = Commentaire
 PhotoMultipleStatus           = Statut
-PhotoMultipleSummary          = %s photo(s) - %s OK - %s KO
+PhotoMultipleStatusOK         = OK
+PhotoMultipleStatusKO         = KO
+PhotoMultipleStatusTOFIX      = A réparer
+PhotoMultipleStatusNA         = NA
+PhotoMultipleSummary          = %s photo(s)
 PhotoMultipleNoAnswer         = Aucune photo
 MediaLibrary                  = Bibliothèque de médias
 AddFromMediaLibrary           = Ajouter depuis la bibliothèque de médias
@@ -218,6 +222,8 @@ RemoveQuestionGroupLink       = Groupe de questions retiré du modèle :
 TheQuestiongroup              = groupe de questions
 ObjectAddquestionTrigger      = Question ajoutée
 ObjectAddquestiongroupTrigger = Groupe de questions ajouté
+ObjectRemovequestionTrigger      = Question %s retirée
+ObjectRemovequestiongroupTrigger = Groupe de questions %s retiré
 
 
 #
@@ -324,7 +330,15 @@ ControlDate                                    = Date de contrôle
 Controls                                       = Contrôles
 ControlMustBeDraft                             = Le contrôle doit être brouillon pour accéder à cette fonctionnalité
 ControlMustBeValidated                         = Le contrôle doit être validé pour le rouvrir
-ControlMustBeValidatedToLock                   = Le contrôle doit être validé et avoir un verdict pour le verrouiller
+ControlLockStepsLeft                           = Étapes restantes avant le verrouillage :
+ControlLockStepValidate                        = Valider le contrôle
+ControlLockStepVerdict                         = Définir le verdict (Apte/Inapte)
+ControlLockStepSign                            = Faire signer tous les participants
+ControlLockStepLock                            = Verrouiller : le contrôle est figé, la date du prochain contrôle est calculée et il apparaît sur l'interface publique
+ControlAlreadyLocked                           = Le contrôle est déjà verrouillé
+ControlValidatedNotLocked                      = Contrôle validé, pas encore verrouillé
+ControlValidatedNotLockedHelp                  = Tant qu'il n'est pas verrouillé, le contrôle peut être remis en brouillon, il n'apparaît pas sur l'interface publique et la date du prochain contrôle n'est pas calculée. Étapes pour le terminer :
+ControlLockConsequences                        = Une fois verrouillé, le contrôle ne peut plus être remis en brouillon et apparaît sur l'interface publique.
 ControlVerdictSelected                         = Le verdict a déjà été défini
 ControlMustBeValidatedToSetVerdict             = Le contrôle doit être validé pour définir le verdict
 ControlMustBeValidatedToGenerated              = Le contrôle doit être validé pour générer la fiche de contrôle
@@ -401,6 +415,7 @@ CleanUnusedLinks                               = Nettoyer les liens inutilisés
 CleanUnusedLinksConfirm                        = Les champs complémentaires, onglets et hooks des liens désactivés vont être supprimés. Confirmer ?
 LinkedObjectSyncDone                           = Synchronisation effectuée : %d onglet(s), %d hook(s), %d champ(s) complémentaire(s) ajouté(s), %d supprimé(s)
 LinkedObjectSyncError                          = La synchronisation des liens a échoué, aucune modification n'a été enregistrée
+LinkedObjectExtraFieldsKeptForExport           = Champ(s) complémentaire(s) conservé(s) malgré leur lien désactivé : un modèle d'export enregistré les utilise encore. Retirez-les du modèle d'export pour qu'ils soient supprimés
 LinkFicheinter                                 = Activer le lien avec les fiches d'intervention
 LinkFicheinterDescription                      = Permet la liaison entre les fiches d'intervention et les modèles
 LinkBom                                        = Activer le lien avec les nomenclatures BOM
@@ -575,6 +590,10 @@ LockControlDate                                = Le verrouillage de ce contrôle
 #
 
 # Data - Donnée
+Controldet                              = Réponse au contrôle
+DeleteControldet                        = Supprimer la réponse au contrôle
+EarnedPoints                            = Points obtenus
+ScoreRate                               = Taux de réussite
 AnswerSaved                             = Les réponses ont été sauvegardées
 Repair                                  = SAV
 NotApplicable                           = NA
@@ -642,6 +661,8 @@ surveydocument           = fiche du questionnaire
 surveydocument.odt       = Fiche du Questionnaire
 surveydocument_photo     = fiche du questionnaire avec photos
 surveydocument_photo.odt = Fiche du Questionnaire avec photos
+SurveyDocumentPDF            = Fiche du Questionnaire PDF avec photo
+SurveyDocumentPDFDescription = Synthèse du questionnaire avec son score, réponses et photos de chaque question, participants
 
 #
 # DigiQualiStandard - Standard DigiQuali
@@ -805,6 +826,8 @@ PDFControlGroup               = Groupe : %s
 PDFControlSheetRef            = Modèle %s
 PDFControlTemplate            = Modèle : %s
 PDFControlCorrectiveAction    = Action corrective
+PDFSurveySummary              = Synthèse du questionnaire & détails des questions
+PDFSurveyResult               = Résultat du questionnaire
 
 #
 # Question categories - NF

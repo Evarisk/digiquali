@@ -27,7 +27,7 @@
  * The following vars must be defined :
  * Globals    : $conf, $db, $hookmanager, $langs, $user
  * Objects    : $extrafields, $form, $object
- * Variables  : $arrayfields, $excludeFields, $fromId, $fromType, $objectsMetadata, $search, and every
+ * Variables  : $arrayfields, $excludeFields, $fromId, $fromType, $search, and every
  *              other variable the saturne list templates read
  */
 
@@ -46,7 +46,8 @@ if (!empty($productLotStock)) {
 
     // The product filter belongs to the list above : a control carried out on a lot is not linked to the
     // product itself, so keeping it would leave this list empty
-    $search[$objectsMetadata['product']['post_name']] = '';
+    $productTabFilter = $conf->cache['digiqualiLinkedElementOrColumn'] ?? null;
+    unset($conf->cache['digiqualiLinkedElementOrColumn']);
 
     // A control has no warehouse of its own : the column is filled by the loop hook from the lot the
     // control concerns. It has no column in the control table either, hence its exclusion from the SELECT
@@ -71,20 +72,23 @@ if (!empty($productLotStock)) {
     unset($cardButton, $newCardButton);
 
     // require, not require_once : these very templates already rendered the list above
-    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php';
-    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_header.tpl.php';
+    require dol_buildpath('/saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php');
+    require dol_buildpath('/saturne/core/tpl/list/objectfields_list_header.tpl.php');
 
     // The displayed columns are saved per page and not per list, so the header just unchecked a column
     // the saved selection cannot know about. It belongs to this list only : put it back
     $arrayfields['t.warehouse']['checked'] = 1;
 
-    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_search_input.tpl.php';
-    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
-    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
-    require __DIR__ . '/../../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
+    require dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_input.tpl.php');
+    require dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_title.tpl.php');
+    require dol_buildpath('/saturne/core/tpl/list/objectfields_list_loop_object.tpl.php');
+    require dol_buildpath('/saturne/core/tpl/list/objectfields_list_footer.tpl.php');
 
     print '</div>';
 
-    // The cache drives a hook shared by every control list : leave nothing behind
+    // The cache drives a hook shared by every control list : leave it as it was found
     unset($conf->cache['digiqualiProductLotStock']);
+    if ($productTabFilter !== null) {
+        $conf->cache['digiqualiLinkedElementOrColumn'] = $productTabFilter;
+    }
 }

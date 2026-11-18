@@ -25,7 +25,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Survey
@@ -208,7 +208,7 @@ class Survey extends SaturneObject
     /**
      * @var int Sheet ID
      */
-    public int $fk_sheet;
+    public int $fk_sheet = 0;
 
     /**
      * @var int|string|null Project ID
@@ -249,6 +249,11 @@ class Survey extends SaturneObject
     {
         $result = parent::create($user, $noTrigger);
         if ($result > 0) {
+            // #2761: the definitive ref right away, as for the controls since #2442. The answer photos are stored
+            // under the ref, and a (PROVn) directory was left behind by the validation
+            require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+            digiquali_set_definitive_ref($this, $user);
+
             // Load Digiquali libraries
             require_once __DIR__ . '/sheet.class.php';
 
@@ -276,7 +281,7 @@ class Survey extends SaturneObject
                 }
             }
 
-            if ($this->context['createfromclone'] != 'createfromclone') {
+            if (($this->context['createfromclone'] ?? '') != 'createfromclone') {
                 $objectsMetadata = saturne_get_objects_metadata();
                 foreach ($objectsMetadata as $objectMetadata) {
                     if (!empty(GETPOST($objectMetadata['post_name'])) && GETPOST($objectMetadata['post_name']) > 0) {
@@ -287,6 +292,27 @@ class Survey extends SaturneObject
         }
 
         return $result;
+    }
+
+    /**
+     * Validate object
+     *
+     * A survey created before #2761 may still have its (PROVn) ref : it gets its definitive ref first, and its directory
+     * with it, so that the validation triggers already find its answer photos where they will be read.
+     *
+     * @param  User      $user      User making status change
+     * @param  int<0,1>  $noTrigger 0 = launch triggers after, 1 = disable triggers
+     * @return int<-1,1>            Return integer 0 < if KO, 0 = Nothing done, > 0 if OK
+     * @throws Exception
+     */
+    public function validate(User $user, int $noTrigger = 0): int
+    {
+        if ($this->status == self::STATUS_DRAFT) {
+            require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+            digiquali_set_definitive_ref($this, $user);
+        }
+
+        return parent::validate($user, $noTrigger);
     }
 
     /**
@@ -569,7 +595,7 @@ class Survey extends SaturneObject
     {
         global $conf, $langs;
 
-        $startMonth  = $conf->global->SOCIETE_FISCAL_MONTH_START;
+        $startMonth  = getDolGlobalInt('SOCIETE_FISCAL_MONTH_START', 1);
         $currentYear = date('Y', dol_now());
         $years       = [0 => $currentYear - 2, 1 => $currentYear - 1, 2 => $currentYear];
 

@@ -198,43 +198,44 @@ if (empty($reshook)) {
 	}
 
 	if ($action == 'unlinkQuestion' && $permissiontoadd) {
-		$questionId = GETPOST('questionId');
-		$question->fetch($questionId);
+		$questionId    = GETPOSTINT('questionId');
+		$parentGroupId = GETPOSTINT('parentGroupId');
 
-		$question->fetchObjectLinked();
+		if ($questionId > 0 && $question->fetch($questionId) > 0) {
+			// Remove only the link of the clicked line: the question can also belong to other sheets and groups
+			$sourceId   = $parentGroupId > 0 ? $parentGroupId : $object->id;
+			$sourceType = $parentGroupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet';
 
-		$linkedObjectsIds = $question->linkedObjectsIds;
-		if (isset($linkedObjectsIds['digiquali_questiongroup'])) {
-			$sourceId = array_shift($linkedObjectsIds['digiquali_questiongroup']);
-			$sourceType = 'digiquali_questiongroup';
+			if ($question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question') > 0) {
+				$object->context['removed_ref'] = $question->ref;
+				$object->call_trigger('SHEET_REMOVEQUESTION', $user);
+				setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, []);
+			} else {
+				setEventMessages($question->error, $question->errors, 'errors');
+			}
 		}
-		if (isset($linkedObjectsIds['digiquali_sheet'])) {
-			$sourceId = array_shift($linkedObjectsIds['digiquali_sheet']);
-			$sourceType = 'digiquali_sheet';
-		}
-
-		$question->deleteObjectLinked($sourceId, $sourceType, $questionId, 'digiquali_question');
-
-		setEventMessages($langs->trans('removeQuestionLink') . ' ' . $question->ref, array());
 
 		header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id') . '&page_y=' . GETPOST('page_y'));
 		exit;
 	}
 
     if ($action == 'unlinkQuestionGroup' && $permissiontoadd) {
-        $questionGroupId = GETPOST('questionGroupId');
-        $questionGroup->fetch($questionGroupId);
+        $questionGroupId = GETPOSTINT('questionGroupId');
+        $parentGroupId   = GETPOSTINT('parentGroupId');
 
+        if ($questionGroupId > 0 && $questionGroup->fetch($questionGroupId) > 0) {
+            // Remove only the link of the clicked line: the group can also belong to other sheets and groups
+            $sourceId   = $parentGroupId > 0 ? $parentGroupId : $object->id;
+            $sourceType = $parentGroupId > 0 ? 'digiquali_questiongroup' : 'digiquali_sheet';
 
-		$parentGroupId = $questionGroup->getParentGroupId();
-		if ($parentGroupId == 0) {
-			$sourceElementType = 'sheet';
-		} else {
-			$sourceElementType = $questionGroup->element;
-		}
-		$questionGroup->deleteObjectLinked($parentGroupId, 'digiquali_' . $sourceElementType, $questionGroup->id, 'digiquali_questiongroup');
-
-        setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, array());
+            if ($questionGroup->deleteObjectLinked($sourceId, $sourceType, $questionGroup->id, 'digiquali_questiongroup') > 0) {
+                $object->context['removed_ref'] = $questionGroup->ref;
+                $object->call_trigger('SHEET_REMOVEQUESTIONGROUP', $user);
+                setEventMessages($langs->trans('RemoveQuestionGroupLink') . ' ' . $questionGroup->ref, []);
+            } else {
+                setEventMessages($questionGroup->error, $questionGroup->errors, 'errors');
+            }
+        }
 
         header("Location: " . $_SERVER['PHP_SELF'] . '?id=' . GETPOST('id') . '&page_y=' . GETPOST('page_y'));
         exit;
@@ -574,7 +575,7 @@ if ($action == 'create') {
 	}
 
     // Linked elements
-    $sheetAdminUrl = dol_buildpath('custom/digiquali/admin/sheet.php', 1);
+    $sheetAdminUrl = dol_buildpath('/digiquali/admin/sheet.php', 1);
     print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b> <a href="' . $sheetAdminUrl . '" target="_blank"><span class="opacitymedium">(' . $langs->trans('ConfigureYourObjectsHere') . ')</span></a></td></tr>';
 
     if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
@@ -993,7 +994,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		if (empty($reshook) && $permissiontoadd) {
 			// Create object depending on sheet type
 			if ($object->status == $object::STATUS_LOCKED) {
-				print '<a class="butAction" href="' . dol_buildpath('/custom/digiquali/view/' . $object->type . '/' . $object->type . '_card.php?action=create&fk_sheet=' . $object->id, 1) . '"><i class="fas fa-plus-circle"></i> ' . $langs->trans('New' . ucfirst($object->type)) . '</a>';
+				print '<a class="butAction" href="' . dol_buildpath('/digiquali/view/' . $object->type . '/' . $object->type . '_card.php', 1) . '?action=create&fk_sheet=' . $object->id . '"><i class="fas fa-plus-circle"></i> ' . $langs->trans('New' . ucfirst($object->type)) . '</a>';
 			} else {
 				print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeLocked', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '"><i class="fas fa-plus-circle"></i> ' . $langs->trans('New' . ucfirst($object->type)) . '</span>';
 			}
@@ -1028,7 +1029,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             }
 
 			// Delete (need delete permission, or if draft, just need create/modify permission)
-			print dolGetButtonAction('<i class="fas fa-trash"></i> ' . $langs->trans('Delete'), '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete', '', $permissiontodelete || ($object->status == $object::STATUS_DRAFT && $permissiontoadd));
+			print dolGetButtonAction('<i class="fas fa-trash"></i> ' . $langs->trans('Delete'), '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete&token=' . newToken(), '', $permissiontodelete || ($object->status == $object::STATUS_DRAFT && $permissiontoadd));
 		}
 		print '</div>';
 	}

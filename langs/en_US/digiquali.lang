@@ -20,6 +20,16 @@
 ControlDocumentPDF                      = Control Sheet PDF with photo
 
 #
+# SurveyDocument
+#
+
+SurveyDocumentPDF            = Survey Sheet PDF with photo
+SurveyDocumentPDFDescription = Survey summary with its score, answers and photos of each question, attendants
+PDFSurveySummary             = Survey summary & question details
+PDFSurveyResult              = Survey result
+SuccessScore                 = Success score
+
+#
 # Public control
 #
 
@@ -85,6 +95,7 @@ CleanUnusedLinks                        = Clean unused links
 CleanUnusedLinksConfirm                 = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
 LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
 LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
+LinkedObjectExtraFieldsKeptForExport    = Extrafield(s) kept although their link is disabled: a saved export model still uses them. Remove them from the export model to have them deleted
 
 #
 # Controls of a product
@@ -92,6 +103,20 @@ LinkedObjectSyncError                   = Link synchronisation failed, no change
 
 ControlsOnParentProduct   = Controls carried out on the parent product
 ControlsOnProductLots     = Controls carried out on the lots/serials in stock
+
+#
+# Lock of a control
+#
+
+ControlLockStepsLeft          = Steps left before the lock:
+ControlLockStepValidate       = Validate the control
+ControlLockStepVerdict        = Set the verdict (Compliant/Non-compliant)
+ControlLockStepSign           = Have all the attendants sign
+ControlLockStepLock           = Lock: the control is frozen, the next control date is computed and it appears on the public interface
+ControlAlreadyLocked          = The control is already locked
+ControlValidatedNotLocked     = Control validated, not locked yet
+ControlValidatedNotLockedHelp = Until it is locked, the control can be set back to draft, it does not appear on the public interface and the next control date is not computed. Steps to complete it:
+ControlLockConsequences       = Once locked, the control can no longer be set back to draft and appears on the public interface.
 
 #
 # Action plan
@@ -166,6 +191,13 @@ ConfirmMassGenerateQRCodes    = Generate a sheet of labels with the QR code of t
 QRCodeLabelFormat             = Label format
 
 #
+# Questions removed from a template or a group - Agenda events
+#
+
+ObjectRemovequestionTrigger      = Question %s removed
+ObjectRemovequestiongroupTrigger = Question group %s removed
+
+#
 # Public interface
 #
 
@@ -215,16 +247,30 @@ ISO9001Description = ISO 9001 standard - Quality management systems
 # PhotoMultiple question type
 #
 
-PhotoMultiple         = Multiple photos
-PhotoMultipleEmpty    = Take or add photos: each one gets its own comment and status.
-PhotoMultipleImage    = Image
-PhotoMultipleComment  = Comment
-PhotoMultipleStatus   = Status
-PhotoMultipleSummary  = %s photo(s) - %s OK - %s KO
-PhotoMultipleNoAnswer = No photo
-MediaLibrary          = Media library
-AddFromMediaLibrary   = Add from the media library
-CloneAnswers          = Clone answers (comments and photos included)
+PhotoMultiple            = Multiple photos
+PhotoMultipleEmpty       = Take or add photos: each one gets its own comment and status.
+PhotoMultipleImage       = Image
+PhotoMultipleComment     = Comment
+PhotoMultipleStatus      = Status
+PhotoMultipleStatusOK    = OK
+PhotoMultipleStatusKO    = KO
+PhotoMultipleStatusTOFIX = To fix
+PhotoMultipleStatusNA    = N/A
+PhotoMultipleSummary     = %s photo(s)
+PhotoMultipleNoAnswer    = No photo
+MediaLibrary             = Media library
+AddFromMediaLibrary      = Add from the media library
+CloneAnswers             = Clone answers (comments and photos included)
+
+#
+# ControlDet
+#
+
+Controldet       = Control answer
+ControldetList   = List of control answers
+DeleteControldet = Delete the control answer
+EarnedPoints     = Earned points
+ScoreRate        = Success rate
 
 #
 # Control Document PDF

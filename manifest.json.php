@@ -86,41 +86,42 @@ $manifest->name       = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-DigiQual
 $manifest->icons      = [];
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/digiquali/img/digiquali_color.svg', 1);
+$img->src          = dol_buildpath('/digiquali/img/digiquali_color.svg', 1);
 $img->type         = 'image/svg+xml';
 $img->sizes        = '150x150';
 $manifest->icons[] = $img;
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/digiquali/img/digiquali_color_192.png', 1);
+$img->src          = dol_buildpath('/digiquali/img/digiquali_color_192.png', 1);
 $img->type         = 'image/png';
 $img->sizes        = '192x192';
 $manifest->icons[] = $img;
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/digiquali/img/digiquali_color_512.png', 1);
+$img->src          = dol_buildpath('/digiquali/img/digiquali_color_512.png', 1);
 $img->type         = 'image/png';
 $img->sizes        = '512x512';
 $manifest->icons[] = $img;
 
-$manifest->id               = dol_buildpath('/custom/digiquali/view/frontend/pwa_home.php?source=pwa', 1);
-$manifest->start_url        = dol_buildpath('/custom/digiquali/view/frontend/pwa_home.php?source=pwa', 1);
+$manifest->id               = dol_buildpath('/digiquali/view/frontend/pwa_home.php', 1) . '?source=pwa';
+$manifest->start_url        = dol_buildpath('/digiquali/view/frontend/pwa_home.php', 1) . '?source=pwa';
 $manifest->background_color = '#ffffff';
 $manifest->display          = 'standalone';
 $manifest->display_override = ['window-controls-overlay'];
-$manifest->scope            = dol_buildpath('/custom/digiquali/view/frontend/', 1);
+// The folder is resolved through one of its files: dol_buildpath() falls back to the main root for a path it cannot find
+$manifest->scope            = dirname(dol_buildpath('/digiquali/view/frontend/pwa_home.php', 1)) . '/';
 $manifest->theme_color      = '#ffffff';
 $manifest->description      = 'Système de management de la qualité pour Dolibarr';
 
 $img                     = new stdClass();
-$img->src                = dol_buildpath('/custom/digiquali/img/digiquali_color_512.png', 1);
+$img->src                = dol_buildpath('/digiquali/img/digiquali_color_512.png', 1);
 $img->type               = 'image/png';
 $img->sizes              = '512x512';
 $img->form_factor        = 'narrow';
 $manifest->screenshots[] = $img;
 
 $img                     = new stdClass();
-$img->src                = dol_buildpath('/custom/digiquali/img/digiquali_color_512.png', 1);
+$img->src                = dol_buildpath('/digiquali/img/digiquali_color_512.png', 1);
 $img->type               = 'image/png';
 $img->sizes              = '512x512';
 $img->form_factor        = 'wide';

@@ -100,7 +100,9 @@ if (!$sortorder) {
 // Initialize array of search criterias
 $searchAll        = trim(GETPOST('search_all'));
 $search           = [];
-$search['status'] = [1,2];
+// Archived questions are hidden until asked for, "Remove filters" goes back to these statuses
+$defaultSearchStatus = [Question::STATUS_VALIDATED, Question::STATUS_LOCKED];
+$search['status']    = $defaultSearchStatus;
 foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');
@@ -174,6 +176,8 @@ if (empty($resHook)) {
         $toselect             = [];
         $search_array_options = [];
         $searchCategories     = [];
+        // An emptied status would list the archived questions for this page only, the next sort bringing the default back
+        $search['status'] = $defaultSearchStatus;
     }
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')
         || GETPOST('button_search_x', 'alpha') || GETPOST('button_search.x', 'alpha') || GETPOST('button_search', 'alpha')) {
@@ -245,7 +249,7 @@ if (empty($resHook)) {
     }
 
     // Mass actions archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/list_massactions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/list_massactions.tpl.php');
 }
 
 /*
@@ -255,12 +259,12 @@ if (empty($resHook)) {
 $title = $langs->trans(ucfirst($object->element) . 'List');
 saturne_header(0,'', $title, $helpUrl ?? '', '', 0, 0, [], [], '', 'mod-' . $object->module . '-' . $object->element . ' page-list bodyforlist');
 
-require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php';
-require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_header.tpl.php';
-require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_input.tpl.php';
-require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
-require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
-require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php');
+require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_header.tpl.php');
+require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_input.tpl.php');
+require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_title.tpl.php');
+require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_loop_object.tpl.php');
+require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_footer.tpl.php');
 
 // End of page
 llxFooter();
