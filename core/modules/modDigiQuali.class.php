@@ -949,6 +949,13 @@ class modDigiQuali extends DolibarrModules
 			dolibarr_set_const($this->db, 'DIGIQUALI_DOCUMENT_DIRECTORIES_NAME_BACKWARD_COMPATIBILITY', $this->version, 'integer', 1, '', $conf->entity);
 		}
 
+		// #2761: answer photos of the controls (before #2442) and surveys validated while their files stayed under (PROVn).
+		// At each activation, and so at the first visit of the module index after an update : it only costs a directory listing
+		require_once __DIR__ . '/../../class/control.class.php';
+		require_once __DIR__ . '/../../class/survey.class.php';
+		require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
+		digiquali_recover_prov_directories(new Control($this->db));
+		digiquali_recover_prov_directories(new Survey($this->db));
 
 		dolibarr_set_const($this->db, 'DIGIQUALI_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
 		dolibarr_set_const($this->db, 'DIGIQUALI_DB_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
