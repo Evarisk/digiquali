@@ -122,6 +122,10 @@ if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links'])
         $deletedCount = count($report['deleted']);
 
         setEventMessage($langs->trans('LinkedObjectSyncDone', $report['tabs'], $report['hooks'], $addedCount, $deletedCount));
+
+        if (!empty($report['kept'])) {
+            setEventMessages($langs->trans('LinkedObjectExtraFieldsKeptForExport'), $report['kept'], 'warnings');
+        }
     }
 
     header('Location: ' . $_SERVER['PHP_SELF']);
