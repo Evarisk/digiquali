@@ -196,7 +196,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                     case 'OkKoToFixNonApplicable' :
                                     case 'MarqueNF' :
                                     case 'UniqueChoice' :
-                                        $tmpArray['answer'] = $answersArray[$answerResult];
+                                        $tmpArray['answer'] = $answersArray[$answerResult] ?? ''; // A question not answered yet has no key
                                         break;
                                     case 'Text' :
                                     case 'Range' :
@@ -215,7 +215,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                         $answers = explode(',', $answerResult);
                                         $tmpArray['answer'] = '';
                                         foreach ($answers as $answerId) {
-                                            $tmpArray['answer'] .= $answersArray[$answerId] . ', ';
+                                            $tmpArray['answer'] .= ($answersArray[$answerId] ?? '') . ', ';
                                         }
                                         $tmpArray['answer'] = rtrim($tmpArray['answer'], ', ');
                                         break;
