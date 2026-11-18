@@ -281,7 +281,7 @@ class Survey extends SaturneObject
                 }
             }
 
-            if ($this->context['createfromclone'] != 'createfromclone') {
+            if (($this->context['createfromclone'] ?? '') != 'createfromclone') {
                 $objectsMetadata = saturne_get_objects_metadata();
                 foreach ($objectsMetadata as $objectMetadata) {
                     if (!empty(GETPOST($objectMetadata['post_name'])) && GETPOST($objectMetadata['post_name']) > 0) {
