@@ -44,8 +44,8 @@ if (empty($user->rights->digiquali->sheet->read)) {
 
 $title    = $langs->trans('Sheets');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/digiquali/js/digiquali.min.js'];
-$moreCSS  = ['/custom/digiquali/css/digiquali.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/digiquali/js/digiquali.min.js'];
+$moreCSS  = ['/digiquali/css/digiquali.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;

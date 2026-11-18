@@ -59,8 +59,9 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                 </div>
                 <?php
                 $answerWidget = show_answer_from_question($question, $object, $questionAnswer, $questionGroupId, $showCorrection);
-                // A table of photos does not fit the answer column : it takes the whole width under the header
-                $answerWidgetIsWide = ($question->type == Question::TYPE_PHOTO_MULTIPLE);
+                // A table of photos, or a free text that may be pasted from elsewhere, does not fit the answer column :
+                // it takes the whole width under the header
+                $answerWidgetIsWide = in_array($question->type, [Question::TYPE_PHOTO_MULTIPLE, Question::TYPE_TEXT]);
                 ?>
                 <div class="question__header-answer">
                     <?php print $answerWidgetIsWide ? '' : $answerWidget; ?>
@@ -115,7 +116,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                 <div class="question__footer">
                     <label class="question__footer-comment">
                         <i class="far fa-comment-dots question-comment-icon"></i>
-                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
+                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" rows="1" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
                     </label>
                     <?php if (!$commentDisabled && !empty($commentLibrary)) : ?>
                         <div class="question__comment-library">

@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Sheet.
@@ -762,9 +762,9 @@ class Sheet extends SaturneObject
         list($modQuestion, $modQuestionGroup) = saturne_require_objects_mod($numberingModules, $moduleNameLowerCase);
 
         $questionAndGroups = $this->fetchQuestionsAndGroups();
-        $questionGroupCardUrl = dol_buildpath('/custom/digiquali/view/questiongroup/questiongroup_card.php', 1);
-        $questionCardUrl = dol_buildpath('/custom/digiquali/view/question/question_card.php', 1);
-        $sheetCardUrl = dol_buildpath('/custom/digiquali/view/sheet/sheet_card.php', 1);
+        $questionGroupCardUrl = dol_buildpath('/digiquali/view/questiongroup/questiongroup_card.php', 1);
+        $questionCardUrl = dol_buildpath('/digiquali/view/question/question_card.php', 1);
+        $sheetCardUrl = dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1);
 
         $out = '<div id="id-container" class="id-container question-and-group-tree">';
         $out .= '<input type="hidden" name="token" value="'. newToken() . '"/>';
@@ -926,7 +926,7 @@ class Sheet extends SaturneObject
     {
         global $langs;
 
-        require_once __DIR__ . '/../../saturne/class/saturnedashboard.class.php';
+        dol_include_once('/saturne/class/saturnedashboard.class.php');
 
         switch ($question->type) {
             case 'UniqueChoice':
@@ -1036,17 +1036,18 @@ class Sheet extends SaturneObject
                 break;
 
             case 'PhotoMultiple':
+                require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+
                 // Every photo of every answer counts, each with the status it was given
                 $photoStatuses = [];
                 foreach ($questionAnswerStats[$question->id] ?? [] as $questionAnswer) {
                     $photoStatuses = array_merge($photoStatuses, $questionAnswer['photo_statuses'] ?? []);
                 }
-                $statusCounts = array_count_values($photoStatuses);
 
                 print '<div class="range-bar-container">';
                 print '<div class="range-average-indicator">';
                 print '<div class="range-average-value">';
-                print '<i class="fa fa-images" aria-hidden="true"></i> ' . $langs->trans('PhotoMultipleSummary', count($photoStatuses), $statusCounts['OK'] ?? 0, $statusCounts['KO'] ?? 0);
+                print '<i class="fa fa-images" aria-hidden="true"></i> ' . dol_escape_htmltag(digiquali_photo_multiple_format_summary($photoStatuses));
                 print '</div>';
                 print '</div>';
                 print '</div>';

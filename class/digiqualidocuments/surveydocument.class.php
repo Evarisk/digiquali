@@ -23,7 +23,7 @@
  */
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../../saturne/class/saturnedocuments.class.php';
+dol_include_once('/saturne/class/saturnedocuments.class.php');
 
 /**
  * Class for SurveyDocument

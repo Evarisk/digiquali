@@ -31,6 +31,11 @@ include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
 class modDigiQuali extends DolibarrModules
 {
 	/**
+	 * @var int[] Minimum version of Saturne required by module, same format as need_dolibarr_version: checked by init() and by the Saturne index page
+	 */
+	public $need_saturne_version = [23, 8, 0];
+
+	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
 	 *
 	 * @param DoliDB $db Database handler
@@ -41,8 +46,8 @@ class modDigiQuali extends DolibarrModules
 
 		$this->db = $db;
 
-		if (file_exists(__DIR__ . '/../../../saturne/lib/saturne_functions.lib.php')) {
-			require_once __DIR__ . '/../../../saturne/lib/saturne_functions.lib.php';
+		if (file_exists(dol_buildpath('/saturne/lib/saturne_functions.lib.php'))) {
+			dol_include_once('/saturne/lib/saturne_functions.lib.php');
 			saturne_load_langs(['digiquali@digiquali']);
 		} else {
 			$this->error++;
@@ -77,7 +82,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '23.2.2';
+		$this->version = '23.3.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -317,7 +322,7 @@ class modDigiQuali extends DolibarrModules
 		// Array to add new pages in new tabs
 
 		$this->tabs   = [];
-		$pictopath    = dol_buildpath('/custom/digiquali/img/digiquali_color.png', 1);
+		$pictopath    = dol_buildpath('/digiquali/img/digiquali_color.png', 1);
 		$pictoDigiQuali = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
         // Tabs and hooks are declared for the enabled links only, they are driven from admin/sheet.php
         dol_include_once('/saturne/lib/object.lib.php');
@@ -353,9 +358,9 @@ class modDigiQuali extends DolibarrModules
                 $tabType = $objectMetadata['tab_type'];
             }
             if ($objectMetadata['link_name'] !== 'propal') {
-                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/custom/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+                $this->tabs[] = ['data' => $tabType . ':+control:' . $pictoDigiQuali . $langs->trans('Controls') . ':digiquali@digiquali:$user->rights->digiquali->control->read:/digiquali/view/control/control_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
             }
-            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/custom/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            $this->tabs[] = ['data' => $tabType . ':+survey:' . $pictoDigiQuali . $langs->trans('Surveys') . ':digiquali@digiquali:$user->rights->digiquali->survey->read:/digiquali/view/survey/survey_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
 
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_list'];
             $this->module_parts['hooks'][] = $objectMetadata['hook_name_card'];
@@ -898,6 +903,16 @@ class modDigiQuali extends DolibarrModules
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
+		// Saturne ships separately: refuse one older than need_saturne_version, it lacks functions this release calls
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+		dol_include_once('/saturne/core/modules/modSaturne.class.php');
+		$saturneVersion = class_exists('modSaturne') ? (new modSaturne($this->db))->version : '';
+		if (versioncompare(explode('.', $saturneVersion), $this->need_saturne_version) < 0) {
+			$langs->load('admin'); // activateModuleDependNotSatisfied, not loaded when the Saturne index page runs init()
+			$this->error = $langs->trans('activateModuleDependNotSatisfied', $this->name, 'modSaturne >= ' . versiontostring($this->need_saturne_version) . ' (' . ($saturneVersion ?: '-') . ')', $this->name);
+			return -1;
+		}
+
         // Dolibarr runs init() before activating $this->depends : activate them first, their tables (saturne_object_standard...) are filled below
         if (function_exists('saturne_activate_module_dependencies') && saturne_activate_module_dependencies($this) < 0) {
             return -1;
@@ -934,6 +949,13 @@ class modDigiQuali extends DolibarrModules
 			dolibarr_set_const($this->db, 'DIGIQUALI_DOCUMENT_DIRECTORIES_NAME_BACKWARD_COMPATIBILITY', $this->version, 'integer', 1, '', $conf->entity);
 		}
 
+		// #2761: answer photos of the controls (before #2442) and surveys validated while their files stayed under (PROVn).
+		// At each activation, and so at the first visit of the module index after an update : it only costs a directory listing
+		require_once __DIR__ . '/../../class/control.class.php';
+		require_once __DIR__ . '/../../class/survey.class.php';
+		require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
+		digiquali_recover_prov_directories(new Control($this->db));
+		digiquali_recover_prov_directories(new Survey($this->db));
 
 		dolibarr_set_const($this->db, 'DIGIQUALI_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
 		dolibarr_set_const($this->db, 'DIGIQUALI_DB_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
@@ -1016,24 +1038,14 @@ class modDigiQuali extends DolibarrModules
         }
 
     if (getDolGlobalInt('DIGIQUALI_CONTROL_BACKWARD_COMPATIBILITY') == 0) {
-        require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
         require_once __DIR__ . '/../../class/control.class.php';
         $control  = new Control($this->db);
         $controls = $control->fetchAll();
         if (is_array($controls) && !empty($controls)) {
+            // Tracking id only: #2021 removed the public control page these QR codes pointed to, and their display
             foreach ($controls as $control) {
                 $control->track_id = generate_random_id();
                 $control->update($user, true);
-
-                $url = dol_buildpath('custom/digiquali/public/control/public_control.php?track_id=' . $control->track_id . '&entity=' . $conf->entity, 3);
-
-                $barcode = new TCPDF2DBarcode($url, 'QRCODE,L');
-                dol_mkdir(DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/');
-                $file = DOL_DATA_ROOT . (($conf->entity == 1 ) ? '/' : '/' . $conf->entity . '/') . 'digiquali/control/' . $control->ref . '/qrcode/barcode_' . $control->track_id . '.png';
-
-                $imageData = $barcode->getBarcodePngData();
-                $imageData = imagecreatefromstring($imageData);
-                imagepng($imageData, $file);
             }
         }
 
