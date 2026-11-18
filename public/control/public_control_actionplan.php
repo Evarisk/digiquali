@@ -99,7 +99,8 @@ $user   = new User($db);
 // Initialize view objects
 $form = new Form($db);
 
-$hookmanager->initHooks(['publiccontrolactionplan', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
+// Not the saturnepublicinterface context: Saturne prints the company logo there, already in the header of this page
+$hookmanager->initHooks(['publiccontrolactionplan']); // Note that conf->hooks_modules contains array
 
 // Load user
 if (!isset($_SESSION['dol_login'])) {
