@@ -260,7 +260,7 @@ print '</td></tr>';
 print '</table>';
 print '</form>';
 
-print $langs->trans('ToImportDataGoToImportPage') . ' <a href="' . dol_buildpath('custom/digiquali/view/digiqualitools.php', 1) . '">' . $langs->trans('ClickHere') . '</a>';
+print $langs->trans('ToImportDataGoToImportPage') . ' <a href="' . dol_buildpath('/digiquali/view/digiqualitools.php', 1) . '">' . $langs->trans('ClickHere') . '</a>';
 
 print '</div>';
 // End of page

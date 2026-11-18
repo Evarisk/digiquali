@@ -184,13 +184,16 @@ function digiquali_get_linked_object_usage(): array
  * Idempotent : replaying it converges to the same state whatever the starting point.
  * Must be called from a web request, see saturne_refresh_module_registrations().
  *
- * @return array ['tabs' => int, 'hooks' => int, 'added' => string[], 'deleted' => string[], 'errors' => int]
+ * 'kept' lists the extrafields Saturne keeps on an object whose link is disabled, because a saved export
+ * model still uses them (Evarisk/Saturne#1906) ; always empty with a Saturne that predates it.
+ *
+ * @return array ['tabs' => int, 'hooks' => int, 'added' => string[], 'deleted' => string[], 'kept' => string[], 'errors' => int]
  */
 function digiquali_sync_linked_objects(): array
 {
     $enabledObjectTypes = digiquali_get_enabled_linked_object_types();
 
-    $extraFieldReport = ['added' => [], 'deleted' => [], 'errors' => 0];
+    $extraFieldReport = ['added' => [], 'deleted' => [], 'kept' => [], 'errors' => 0];
     if (function_exists('saturne_sync_linked_object_extrafields')) {
         $extraFieldReport = saturne_sync_linked_object_extrafields(
             digiquali_get_linked_object_extrafield_definitions(),
@@ -209,6 +212,7 @@ function digiquali_sync_linked_objects(): array
         'hooks'   => $registrationReport['hooks'],
         'added'   => $extraFieldReport['added'],
         'deleted' => $extraFieldReport['deleted'],
+        'kept'    => $extraFieldReport['kept'] ?? [],
         'errors'  => $extraFieldReport['errors'] + $registrationReport['errors']
     ];
 }

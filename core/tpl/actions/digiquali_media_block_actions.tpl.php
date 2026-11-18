@@ -20,56 +20,21 @@
  * \ingroup digiquali
  * \brief   Actions posted by the Saturne media block (js/modules/mediaBlock.js).
  *
- * The block posts on document.URL with action=uploadPhoto|uploadFile|deletePhoto|deleteFile
+ * The block posts on document.URL with action=uploadPhoto|linkPhoto|uploadFile|deletePhoto|deleteFile
  * and replays the HTML of the response, so every page hosting the block must handle these
- * four actions and must NOT redirect. Shared by the control card and the PWA answer screen.
+ * actions and must NOT redirect. Shared by the control card and the PWA answer screen.
  *
  * The following vars must be defined:
  * Global     : $conf, $db, $langs, $user
  * Parameters : $action
  */
-// Action to upload a photo via the media block AJAX upload
-if ($action == 'uploadPhoto' && !empty($conf->global->MAIN_UPLOAD_DOC)) {
-    $uploadModuleName = GETPOST('module_name', 'alpha');
-    $uploadSubDir     = GETPOST('sub_dir', 'alpha');
+// Photos sent or taken from the media library: the actions of Saturne shared by every media block, so a
+// photo gets the same thumbs, the same checks and joins the media library of DigiQuali as everywhere else
+if ($action == 'uploadPhoto' || $action == 'linkPhoto') {
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/images.lib.php';
+    dol_include_once('/saturne/lib/medias.lib.php');
 
-    if (!empty($uploadModuleName)) {
-        $uploadModuleNameLowerCase = dol_strtolower($uploadModuleName);
-        $uploadDir                = !empty($conf->$uploadModuleNameLowerCase->dir_output)
-            ? $conf->$uploadModuleNameLowerCase->dir_output
-            : $conf->ecm->dir_output . '/' . $uploadModuleNameLowerCase;
-        if (!empty($uploadSubDir)) {
-            $uploadDir .= '/' . $uploadSubDir;
-        }
-
-        if (!dol_is_dir($uploadDir)) {
-            dol_mkdir($uploadDir);
-        }
-
-        $uploadedFiles = isset($_FILES['userfile']) ? $_FILES['userfile'] : [];
-        $invalidFile   = false;
-        if (!empty($uploadedFiles['tmp_name'])) {
-            $tmpNames = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
-            foreach ($tmpNames as $tmpName) {
-                if (empty($tmpName)) {
-                    continue;
-                }
-                $finfo    = new finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->file($tmpName);
-                if (strpos($mimeType, 'image/') !== 0) {
-                    $invalidFile = true;
-                    break;
-                }
-            }
-        }
-
-        if ($invalidFile) {
-            setEventMessages($langs->trans('ErrorFileNotAnImage'), null, 'errors');
-        } else {
-            $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
-            dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
-        }
-    }
+    require dol_buildpath('/saturne/core/tpl/actions/media_block_actions.tpl.php');
 }
 
 // Action to upload a document into the answer (controldet) linked files via the media block AJAX upload
@@ -92,13 +57,49 @@ if ($action == 'uploadFile' && !empty($conf->global->MAIN_UPLOAD_DOC)) {
         }
 
         if ($answerLine->id > 0) {
-            $uploadDir = $conf->digiquali->dir_output . '/controldet/' . dol_sanitizeFileName($answerLine->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
+            $uploadedFiles = isset($_FILES['userfile']) ? $_FILES['userfile'] : [];
+            $invalidFile   = false;
+            $invalidName   = '';
+
+            if (!empty($uploadedFiles['tmp_name'])) {
+                $forbiddenExt  = ['html', 'htm', 'xhtml', 'shtml', 'svg', 'svgz', 'xml', 'xsl', 'js', 'mjs', 'php', 'phtml', 'phar', 'php3', 'php4', 'php5', 'php7', 'pht', 'sh', 'bash', 'ksh', 'pl', 'py', 'cgi', 'bat', 'cmd', 'exe', 'com', 'swf', 'hta', 'vbs', 'ps1'];
+                $forbiddenMime = ['text/html', 'image/svg+xml', 'application/xhtml+xml', 'text/xml', 'application/xml', 'text/javascript', 'application/javascript', 'application/x-httpd-php', 'text/x-php', 'application/x-sh', 'application/x-msdownload', 'application/x-executable', 'application/x-csh', 'application/x-bat'];
+
+                $tmpNames  = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
+                $origNames = is_array($uploadedFiles['name']) ? $uploadedFiles['name'] : [$uploadedFiles['name']];
+
+                foreach ($tmpNames as $key => $tmpName) {
+                    if (empty($tmpName)) {
+                        continue;
+                    }
+
+                    $origName = (string) ($origNames[$key] ?? '');
+                    $nameParts = explode('.', strtolower($origName));
+                    array_shift($nameParts);
+
+                    $finfo    = new finfo(FILEINFO_MIME_TYPE);
+                    $mimeType = $finfo->file($tmpName);
+
+                    if (array_intersect($nameParts, $forbiddenExt) || in_array($mimeType, $forbiddenMime, true) || strpos($mimeType, 'text/html') === 0 || strpos($mimeType, 'image/svg+xml') === 0) {
+                        $invalidFile = true;
+                        $invalidName = $origName;
+                        break;
+                    }
+                }
             }
 
-            $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
-            dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
+            if ($invalidFile) {
+                $langs->load('errors');
+                setEventMessages($langs->trans('ErrorFilenameExtensionNotAllowed', $invalidName), null, 'errors');
+            } else {
+                $uploadDir = $conf->digiquali->dir_output . '/controldet/' . dol_sanitizeFileName($answerLine->ref);
+                if (!dol_is_dir($uploadDir)) {
+                    dol_mkdir($uploadDir);
+                }
+
+                $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
+                dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
+            }
         }
     }
 }

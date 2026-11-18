@@ -44,8 +44,8 @@ if (empty($user->rights->digiquali->control->read)) {
 
 $title    = $langs->trans('Controls');
 $help_url = 'FR:Module_DigiQuali';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/digiquali/js/digiquali.min.js'];
-$moreCSS  = ['/custom/digiquali/css/digiquali.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/digiquali/js/digiquali.min.js'];
+$moreCSS  = ['/digiquali/css/digiquali.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -61,7 +61,7 @@ require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_header.tpl.php';
 require __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_list.tpl.php';
 
 if ($user->hasRight('digiquali', 'control', 'write')) {
-    print '<a class="pwa-fab" href="' . dol_buildpath('/custom/digiquali/view/frontend/pwa_control_create.php', 1) . '" aria-label="' . dol_escape_htmltag($langs->trans('NewControl')) . '"><i class="fas fa-plus"></i></a>';
+    print '<a class="pwa-fab" href="' . dol_buildpath('/digiquali/view/frontend/pwa_control_create.php', 1) . '" aria-label="' . dol_escape_htmltag($langs->trans('NewControl')) . '"><i class="fas fa-plus"></i></a>';
 }
 
 require_once __DIR__ . '/../../core/tpl/frontend/digiquali_pwa_bottom_nav.tpl.php';

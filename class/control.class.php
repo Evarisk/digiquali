@@ -25,7 +25,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Control.
@@ -290,13 +290,8 @@ class Control extends SaturneObject
         if ($result > 0) {
             // #2442: assign the definitive ref right away instead of keeping the (PROV…) placeholder,
             // so answer medias are never stored under a temporary ref path (which broke on validation).
-            if (preg_match('/^\(?PROV/i', $this->ref) || empty($this->ref)) {
-                $newRef = $this->getNextNumRef();
-                if (!empty($newRef) && $newRef !== $this->ref) {
-                    $this->setValueFrom('ref', $newRef, '', '', 'text', '', $user);
-                    $this->ref = $newRef;
-                }
-            }
+            require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+            digiquali_set_definitive_ref($this, $user);
 
             // Load Digiquali libraries
             require_once __DIR__ . '/sheet.class.php';
@@ -347,7 +342,7 @@ class Control extends SaturneObject
                 }
 
                 // Load Saturne libraries
-                require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+                dol_include_once('/saturne/class/saturnesignature.class.php');
 
                 $signatory = new SaturneSignature($this->db, $this->module, $this->element);
                 $signatory->setSignatory($this->id, $this->element, 'user', [$this->fk_user_controller], 'Controller', 1);
@@ -438,6 +433,27 @@ class Control extends SaturneObject
 
             return -1;
         }
+    }
+
+    /**
+     * Validate object
+     *
+     * A control created before #2442 may still have its (PROVn) ref : it gets its definitive ref first, and its directory
+     * with it, so that the validation triggers already find its answer photos where they will be read.
+     *
+     * @param  User      $user      User making status change
+     * @param  int<0,1>  $noTrigger 0 = launch triggers after, 1 = disable triggers
+     * @return int<-1,1>            Return integer 0 < if KO, 0 = Nothing done, > 0 if OK
+     * @throws Exception
+     */
+    public function validate(User $user, int $noTrigger = 0): int
+    {
+        if ($this->status == self::STATUS_DRAFT) {
+            require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+            digiquali_set_definitive_ref($this, $user);
+        }
+
+        return parent::validate($user, $noTrigger);
     }
 
     /**
@@ -548,6 +564,82 @@ class Control extends SaturneObject
         }
 
         return (int) floor(abs($nextControlDate - ($this->getControlDateTimestamp() ?: dol_now('tzuser'))) / (24 * 3600));
+    }
+
+    /**
+     * Is one of the equipments used by the control past its expiry date?
+     *
+     * Only checked when DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT is enabled : the control can then be
+     * neither validated nor locked.
+     *
+     * @return bool True if an equipment is outdated
+     * @throws Exception
+     */
+    public function hasOutdatedEquipment(): bool
+    {
+        if (!getDolGlobalInt('DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT')) {
+            return false;
+        }
+
+        $controlEquipment  = new ControlEquipment($this->db);
+        $controlEquipments = $controlEquipment->fetchFromParent($this->id);
+        if (is_array($controlEquipments) && !empty($controlEquipments)) {
+            foreach ($controlEquipments as $equipmentControl) {
+                $data = json_decode($equipmentControl->json, true);
+                $dluo = $data['dluo'];
+                if (!empty($dluo) && $dluo <= dol_now()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the steps left before the control can be locked.
+     *
+     * A control is locked once validated, given a verdict and signed by all its attendants : the card
+     * lists these steps and the mass lock skips the controls that still have some.
+     *
+     * @return string[] Translation keys of the steps left, empty when the control can be locked
+     * @throws Exception
+     */
+    public function getLockBlockers(): array
+    {
+        dol_include_once('/saturne/class/saturnesignature.class.php');
+
+        if ($this->status != self::STATUS_VALIDATED) {
+            return ['ControlLockStepValidate'];
+        }
+
+        $blockers = [];
+        if (empty($this->verdict)) {
+            $blockers[] = 'ControlLockStepVerdict';
+        }
+
+        // No attendant at all does not block the lock, an attendant who has not signed yet does
+        $signatory = new SaturneSignature($this->db);
+        if (!$signatory->checkSignatoriesSignatures($this->id, $this->element)) {
+            $blockers[] = 'ControlLockStepSign';
+        }
+
+        if ($this->hasOutdatedEquipment()) {
+            $blockers[] = 'ControlEquipmentOutdated';
+        }
+
+        return $blockers;
+    }
+
+    /**
+     * Can the control be locked now?
+     *
+     * @return bool True if the control is validated, has a verdict and is signed by all its attendants
+     * @throws Exception
+     */
+    public function isLockable(): bool
+    {
+        return empty($this->getLockBlockers());
     }
 
     /**
@@ -889,9 +981,13 @@ class Control extends SaturneObject
             $verdict = 0;
         }
 
-        $this->labelStatus[0] = $langs->trans('NA');
-        $this->labelStatus[1] = $langs->trans('OK');
-        $this->labelStatus[2] = $langs->trans('KO');
+        // Labels of their own: written into labelStatus, they replaced the status labels of the object, which
+        // LibStatut() only fills when empty, and labelStatusShort held the short status labels, not the verdict ones
+        $labelVerdict = [
+            0 => $langs->trans('NA'),
+            1 => $langs->trans('OK'),
+            2 => $langs->trans('KO'),
+        ];
 
         $verdictType = 'status' . $verdict;
         if ($verdict == 0) {
@@ -904,7 +1000,7 @@ class Control extends SaturneObject
             $verdictType = 'status8';
         }
 
-        return dolGetStatus($this->labelStatus[$verdict], $this->labelStatusShort[$verdict], '', $verdictType, $mode);
+        return dolGetStatus($labelVerdict[$verdict] ?? '', $labelVerdict[$verdict] ?? '', '', $verdictType, $mode);
     }
 
     /**
@@ -1190,7 +1286,7 @@ class Control extends SaturneObject
     {
         global $conf, $langs;
 
-        $startMonth  = $conf->global->SOCIETE_FISCAL_MONTH_START;
+        $startMonth  = getDolGlobalInt('SOCIETE_FISCAL_MONTH_START', 1);
         $currentYear = date('Y', dol_now());
         $years       = [0 => $currentYear - 2, 1 => $currentYear - 1, 2 => $currentYear];
 
@@ -1580,6 +1676,39 @@ class ControlLine extends SaturneObject
     public function fetchFromParentWithQuestion(int $controlID, int $questionID)
     {
         return $this->fetchAll('', '', 1, 0, ['customsql' => 't.fk_control = ' . $controlID . ' AND t.fk_question = ' . $questionID . ' AND t.status > 0']);
+    }
+
+    /**
+     * Return HTML string to put an output field into a page
+     *
+     * The answer of a PhotoMultiple question is a JSON of the comment and status of each photo : the
+     * answer card shows it as the photos it describes
+     *
+     * @param  array{type:string,label:string,enabled:int<0,2>|string,position:int,notnull?:int,visible:int<-6,6>,noteditable?:int,default?:int|string,index?:int,foreignkey?:string,searchall?:int,isameasure?:int,css?:string,csslist?:string,cssview?:string,help?:string,showoncombobox?:int,disabled?:int,arrayofkeyval?:array<int|string,string>,comment?:string,validate?:int,required?:int,picto?:string} $val Array of properties of field to show
+     * @param  string          $key       Key of attribute
+     * @param  string|int|null $value     Preselected value to show
+     * @param  string          $moreparam To add more parameters on html tag
+     * @param  string          $keysuffix Suffix string to add into name and id of field
+     * @param  string          $keyprefix Prefix string to add into name and id of field
+     * @param  mixed           $morecss   Value for CSS to use
+     * @return string                     HTML output
+     * @throws Exception
+     */
+    public function showOutputField($val, $key, $value, $moreparam = '', $keysuffix = '', $keyprefix = '', $morecss = '')
+    {
+        if ($key == 'answer' && !empty($value) && !empty($this->fk_question)) {
+            require_once __DIR__ . '/question.class.php';
+
+            $question = new Question($this->db);
+            $control  = new Control($this->db);
+            if ($question->fetch($this->fk_question) > 0 && $question->type == Question::TYPE_PHOTO_MULTIPLE && $control->fetch($this->fk_control) > 0) {
+                require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+
+                return digiquali_photo_multiple_render_output($question, $control, (string) $value);
+            }
+        }
+
+        return parent::showOutputField($val, $key, $value, $moreparam, $keysuffix, $keyprefix, $morecss);
     }
 }
 

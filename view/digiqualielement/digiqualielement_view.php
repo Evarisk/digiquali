@@ -119,7 +119,7 @@ if (empty($reshook)) {
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     require_once DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/component_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/component_actions.tpl.php');
     require_once __DIR__ . '/../../core/tpl/actions/digiquali_activity_actions.tpl.php';
 }
 
@@ -228,7 +228,7 @@ if ((empty($action) || ($action != 'edit' && $action != 'create'))) {
         print '</div>';
     }
 
-    require_once __DIR__ . '/../../../saturne/core/tpl/modal/modal_badge_component.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/modal/modal_badge_component.tpl.php');
     require_once __DIR__ . '/../../core/tpl/modal/activity/modal_activity_add.tpl.php';
 
     require_once __DIR__ . '/../../core/tpl/modal/riskassessment/modal_riskassessment_add.tpl.php';
