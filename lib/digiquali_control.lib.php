@@ -382,7 +382,7 @@ function digiquali_get_controllable_object_options(string $objectType, array $ob
 
     require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
     if ($objectType == 'productlot' && isModEnabled('dolicar')) {
-        require_once __DIR__ . '/../../dolicar/class/registrationcertificatefr.class.php';
+        require_once dol_buildpath('/dolicar/class/registrationcertificatefr.class.php');
     }
 
     $product = new Product($db);
