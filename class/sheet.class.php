@@ -490,15 +490,6 @@ class Sheet extends SaturneObject
 
 		$sql              .= " WHERE s.entity IN (" . getEntity($this->table_element) . ")";
 		if ($filter) $sql .= " AND (" . $filter . ")";
-		if ($moreparam > 0 ) {
-			$children = $this->fetchDigiriskElementFlat($moreparam);
-			if ( ! empty($children) && $children > 0) {
-				foreach ($children as $key => $value) {
-					$sql .= " AND NOT s.rowid =" . $key;
-				}
-			}
-			$sql .= " AND NOT s.rowid =" . $moreparam;
-		}
 
 		$sql .= $this->db->order("rowid", "ASC");
 		$sql .= $this->db->plimit($limit, 0);
