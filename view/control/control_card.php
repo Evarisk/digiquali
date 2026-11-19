@@ -474,6 +474,11 @@ if ($action == 'create') {
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
 
+    // Nature of the control : the default of the sheet, the form is rendered again when the sheet changes
+    print '<tr class="field_mandatory"><td>' . ($source != 'pwa' ? $langs->trans('ControlNature') . ' ' . img_picto($langs->trans('ControlNatureHelp'), 'help') : img_picto($langs->trans('ControlNature'), 'fontawesome_fa-balance-scale_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
+    print ($source != 'pwa' ? img_picto('', 'fontawesome_fa-balance-scale_fas', 'class="pictofixedwidth"') : '') . $form::selectarray('mandatory', [0 => $langs->trans('InformativeControl'), 1 => $langs->trans('MandatoryControl')], GETPOSTISSET('mandatory') ? GETPOSTINT('mandatory') : ($fkSheet > 0 ? (int) $sheet->default_control_mandatory : 0));
+    print '</td></tr>';
+
     // Hidden project input when project field is not visible but sheet has a default project
     if ($fkSheet > 0 && empty($sheetShowProject) && !empty($sheetDefaultProjectId)) {
         print '<input type="hidden" name="projectid" value="' . intval($sheetDefaultProjectId) . '">';
@@ -511,10 +516,7 @@ if ($action == 'create') {
     if ($fkSheet > 0) {
         print '<hr>';
 
-        print '<table class="centpercent tableforfieldcreate object-table linked-objects">';
-
-        print '<tr><td>';
-        print '<div class="fields-content">';
+        print '<table class="border centpercent tableforfieldcreate object-table linked-objects">';
 
         foreach($objectsMetadata as $objectType => $objectMetadata) {
             if (!empty($objectMetadata['conf'] && (!empty(GETPOST('fromtype')) && GETPOST('fromtype') == $objectMetadata['link_name']) || (preg_match('/"'. $objectType .'":1/',$sheet->element_linked)))) {
@@ -539,7 +541,6 @@ if ($action == 'create') {
             }
         }
 
-        print '</div>';
         print '</table>';
     }
 
@@ -733,6 +734,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     print '</td><td class="valuefield fieldname_next_control_date">';
     print $form->editfieldval('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
     print '</td>';
+
+    // Nature : a mandatory control decides the status of the controlled object, changeable until the lock as the dates
+    $natureSelect = 'select;0:' . $langs->trans('InformativeControl') . ',1:' . $langs->trans('MandatoryControl');
+    print '<tr class="field_mandatory"><td class="titlefield fieldname_mandatory">';
+    print $form->editfieldkey('ControlNature', 'mandatory', (string) (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', 0, 0, 'id', $langs->trans('ControlNatureHelp'));
+    print '</td><td class="valuefield fieldname_mandatory">';
+    print $form->editfieldval('ControlNature', 'mandatory', (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', null, null, 'id=' . $object->id);
+    print '</td></tr>';
 
     print '<tr class="field_verdict"><td class="titlefield fieldname_verdict">';
     print $langs->trans('Verdict');
