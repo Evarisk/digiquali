@@ -102,6 +102,9 @@ if ($action == 'data_migration_export_global' && $permissionToRead) {
 				$sheetExportArray['element_linked']      = $sheetSingle->element_linked;
                 $sheetExportArray['success_rate']        = $sheetSingle->success_rate;
 				$sheetExportArray['mandatory_questions'] = $sheetSingle->mandatory_questions;
+				$sheetExportArray['qc_frequency']        = $sheetSingle->qc_frequency;
+				$sheetExportArray['qc_frequency_unit']   = $sheetSingle->qc_frequency_unit;
+				$sheetExportArray['default_control_mandatory'] = (int) $sheetSingle->default_control_mandatory;
 
 				$digiqualiExportArray['sheets'][$sheetSingle->id] = $sheetExportArray;
 
@@ -428,6 +431,10 @@ if (GETPOST('dataMigrationImportZip', 'alpha') && $permissionToWrite) {
 					$sheet->element_linked      = $sheetSingle['element_linked'];
                     $sheet->success_rate        = $sheetSingle['success_rate'];
 					$sheet->mandatory_questions = $sheetSingle['mandatory_questions'];
+					// Absent from the exports made before the control period and the default nature of the controls
+					$sheet->qc_frequency        = !empty($sheetSingle['qc_frequency']) ? (int) $sheetSingle['qc_frequency'] : null;
+					$sheet->qc_frequency_unit   = in_array($sheetSingle['qc_frequency_unit'] ?? '', Sheet::PERIOD_UNITS, true) ? $sheetSingle['qc_frequency_unit'] : 'd';
+					$sheet->default_control_mandatory = !empty($sheetSingle['default_control_mandatory']) ? 1 : 0;
 					$sheet->status              = Sheet::STATUS_VALIDATED;
 					$sheet->import_key          = $importKey;
 
