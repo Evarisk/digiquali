@@ -115,9 +115,13 @@ if (empty($reshook)) {
 		}
 	}
 
-    // Block content-modifying actions on read-only (locked/archived) objects
-    $modifyingActions = ['addQuestionGroup', 'addQuestion', 'unlinkQuestion', 'unlinkQuestionGroup', 'update', 'moveLine', 'set_mandatory'];
-    if ((in_array($action, $modifyingActions) || preg_match('/^set[a-z]/', $action)) && isset($object->status) && !$object->isModifiable()) {
+    // Block content-modifying actions on read-only (locked/archived) objects. The control period and the default nature
+    // of the controls decide the next control dates and the nature of the new controls, not the questions : they stay
+    // editable on a locked sheet, still in use, not on an archived one
+    $modifyingActions   = ['addQuestionGroup', 'addQuestion', 'unlinkQuestion', 'unlinkQuestionGroup', 'update', 'moveLine', 'set_mandatory'];
+    $controlRuleActions = ['setcontrolperiod', 'setdefault_control_mandatory'];
+    $isControlRuleAction = in_array($action, $controlRuleActions) && isset($object->status) && $object->status != Sheet::STATUS_ARCHIVED;
+    if ((in_array($action, $modifyingActions) || preg_match('/^set[a-z]/', $action)) && !$isControlRuleAction && isset($object->status) && !$object->isModifiable()) {
         setEventMessages($langs->trans('ObjectIsReadOnly', ucfirst($langs->transnoentities('The' . ucfirst($object->element)))), [], 'warnings');
         $action = '';
     }
@@ -395,8 +399,59 @@ if (empty($reshook)) {
 		}
 	}
 
+	// The control period is a positive number of days, months or years : anything else means the sheet has none
+	if (in_array($action, ['add', 'update']) && GETPOSTISSET('qc_frequency')) {
+		$_POST['qc_frequency']      = GETPOSTINT('qc_frequency') > 0 ? (string) GETPOSTINT('qc_frequency') : '';
+		$_POST['qc_frequency_unit'] = in_array(GETPOST('qc_frequency_unit', 'aZ09'), Sheet::PERIOD_UNITS, true) ? GETPOST('qc_frequency_unit', 'aZ09') : 'd';
+	}
+
+	// The number and the unit of the period are edited together
+	if ($action == 'setcontrolperiod' && $permissiontoadd && !$cancel) {
+		$object->qc_frequency      = GETPOSTINT('qc_frequency') > 0 ? GETPOSTINT('qc_frequency') : null;
+		$object->qc_frequency_unit = in_array(GETPOST('qc_frequency_unit', 'aZ09'), Sheet::PERIOD_UNITS, true) ? GETPOST('qc_frequency_unit', 'aZ09') : 'd';
+		if ($object->update($user) > 0) {
+			setEventMessages($langs->trans('RecordSaved'), null);
+			// The controls already made keep the former next control date : ask whether they follow
+			$alignScope = 'period';
+			$action     = !empty($object->getControlsToAlign(false)) ? 'aligncontrols' : '';
+		} else {
+			setEventMessages($object->error, $object->errors, 'errors');
+			$action = '';
+		}
+	}
+
+	// The controls already made from the sheet do not follow a new rule by themselves : once the nature or the
+	// period saved, the card asks whether they do. The update keeps the page to ask it, it redirects otherwise
+	$actionBeforeSave = $action;
+	if ($action == 'update' && $permissiontoadd) {
+		$noback = 1;
+	}
+
 	// Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
 	include DOL_DOCUMENT_ROOT.'/core/actions_addupdatedelete.inc.php';
+
+	if ($action == 'view' && in_array($actionBeforeSave, ['update', 'setdefault_control_mandatory'])) {
+		$alignScope = $actionBeforeSave == 'update' ? 'all' : 'nature';
+		if (!empty($object->getControlsToAlign(true, $alignScope == 'all'))) {
+			$action = 'aligncontrols';
+		} elseif ($actionBeforeSave == 'update') {
+			header('Location: ' . str_replace('__ID__', (string) $object->id, $backtopage ?: $backurlforlist));
+			exit;
+		}
+	}
+
+	// The controls already made from the sheet follow its nature and its period
+	if ($action == 'confirm_aligncontrols' && $confirm == 'yes' && $permissiontoadd && $object->status != Sheet::STATUS_ARCHIVED) {
+		$align  = GETPOST('align', 'aZ09');
+		$result = $object->alignControls($align != 'period', $align != 'nature');
+		if ($result >= 0) {
+			setEventMessages($langs->trans('ControlsAligned', $result), null);
+		} else {
+			setEventMessages($object->error, $object->errors, 'errors');
+		}
+		header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+		exit;
+	}
 
 	// Action to set status STATUS_LOCKED
 	if ($action == 'confirm_lock' && $permissiontoadd) {
@@ -507,6 +562,15 @@ $objectsMetadata = saturne_get_objects_metadata();
 
 saturne_header(1,'', $title, $help_url);
 
+// Control period : a number and its unit (days, months, years)
+$periodUnitOptions = ['d' => dol_strtolower($langs->trans('Days')), 'm' => dol_strtolower($langs->trans('Months')), 'y' => dol_strtolower($langs->trans('Years'))];
+$printPeriodInputs = function (int $number, string $unit) use ($form, $periodUnitOptions): string {
+	$out  = '<input class="flat maxwidth75" type="number" min="1" step="1" name="qc_frequency" value="' . ($number > 0 ? $number : '') . '">';
+	$out .= ' ' . $form::selectarray('qc_frequency_unit', $periodUnitOptions, in_array($unit, Sheet::PERIOD_UNITS, true) ? $unit : 'd', 0, 0, 0, '', 0, 0, 0, '', 'maxwidth100');
+	return $out;
+};
+$natureOptions = [0 => $langs->trans('InformativeControl'), 1 => $langs->trans('MandatoryControl')];
+
 // Part to create
 if ($action == 'create') {
 	print load_fiche_titre($langs->trans('NewSheet'), '', 'object_' . $object->picto);
@@ -573,6 +637,15 @@ if ($action == 'create') {
 		print $form::selectarray('ctrl_show_tags', [0 => $langs->trans('No'), 1 => $langs->trans('Yes')], GETPOSTISSET('ctrl_show_tags') ? GETPOST('ctrl_show_tags') : 1);
 		print '</td></tr>';
 	}
+
+	// Control period and default nature of the controls
+	print '<tr><td>' . $langs->trans('ControlPeriod') . ' ' . img_picto($langs->trans('ControlPeriodHelp'), 'help') . '</td><td>';
+	print $printPeriodInputs(GETPOSTINT('qc_frequency'), GETPOSTISSET('qc_frequency_unit') ? GETPOST('qc_frequency_unit', 'aZ09') : 'd');
+	print '</td></tr>';
+
+	print '<tr><td>' . $langs->trans('DefaultControlNature') . ' ' . img_picto($langs->trans('DefaultControlNatureHelp'), 'help') . '</td><td>';
+	print $form::selectarray('default_control_mandatory', $natureOptions, GETPOSTISSET('default_control_mandatory') ? GETPOSTINT('default_control_mandatory') : 0);
+	print '</td></tr>';
 
     // Linked elements
     $sheetAdminUrl = dol_buildpath('/digiquali/admin/sheet.php', 1);
@@ -733,6 +806,15 @@ if (($id || $ref) && $action == 'edit') {
 		print '</td></tr>';
 	}
 
+	// Control period and default nature of the controls
+	print '<tr><td>' . $langs->trans('ControlPeriod') . ' ' . img_picto($langs->trans('ControlPeriodHelp'), 'help') . '</td><td>';
+	print $printPeriodInputs(GETPOSTISSET('qc_frequency') ? GETPOSTINT('qc_frequency') : (int) $object->qc_frequency, GETPOSTISSET('qc_frequency_unit') ? GETPOST('qc_frequency_unit', 'aZ09') : (string) $object->qc_frequency_unit);
+	print '</td></tr>';
+
+	print '<tr><td>' . $langs->trans('DefaultControlNature') . ' ' . img_picto($langs->trans('DefaultControlNatureHelp'), 'help') . '</td><td>';
+	print $form::selectarray('default_control_mandatory', $natureOptions, GETPOSTISSET('default_control_mandatory') ? GETPOSTINT('default_control_mandatory') : (int) $object->default_control_mandatory);
+	print '</td></tr>';
+
     // Linked elements
     print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b></td></tr>';
 
@@ -831,6 +913,25 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('Delete') . ' ' . $langs->transnoentities('The' . ucfirst($object->element)), $langs->trans('ConfirmDeleteObject', $langs->transnoentities('The' . ucfirst($object->element))), 'confirm_delete', '', 'yes', 1);
 	}
 
+	// Controls already made that do not follow the nature or the period just saved
+	if ($action == 'aligncontrols' && $permissiontoadd && $object->status != Sheet::STATUS_ARCHIVED) {
+		$alignScope   = $alignScope ?? 'all';
+		$alignChanges = $object->getControlsToAlign($alignScope != 'period', $alignScope != 'nature');
+		if (!empty($alignChanges)) {
+			$natureCount  = count(array_filter($alignChanges, static function ($change) { return isset($change['mandatory']); }));
+			$dateCount    = count(array_filter($alignChanges, static function ($change) { return isset($change['next_control_date']); }));
+			$alignDetails = [];
+			if ($natureCount > 0) {
+				$alignDetails[] = $langs->trans('AlignControlsNature', $langs->transnoentities(!empty($object->default_control_mandatory) ? 'MandatoryControl' : 'InformativeControl'), $natureCount);
+			}
+			if ($dateCount > 0) {
+				$alignDetails[] = $langs->trans('AlignControlsNextDate', $object->getControlPeriodLabel(), $dateCount);
+			}
+			$alignQuestion = $langs->trans('AlignControlsQuestion', count($alignChanges)) . '<ul><li>' . implode('</li><li>', $alignDetails) . '</li></ul>' . $langs->trans('AlignControlsConfirm');
+			$formconfirm  .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id . '&align=' . $alignScope, $langs->trans('AlignControlsTitle'), $alignQuestion, 'confirm_aligncontrols', '', 'yes', 1, 300, 600);
+		}
+	}
+
 	// Call Hook formConfirm
 	$parameters = ['formConfirm' => $formconfirm];
 	$reshook = $hookmanager->executeHooks('formConfirm', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
@@ -924,6 +1025,37 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 		// Show tags on control
 		print '<tr><td>' . $langs->trans('ShowTagsOnControl') . '</td><td>';
 		print yn($object->show_tags);
+		print '</td></tr>';
+	}
+
+	// Control period and default nature of the controls : a survey has neither a next date nor a nature
+	if ($object->type == 'control') {
+		$permissionToEditControlRules = $permissiontoadd && $object->status != Sheet::STATUS_ARCHIVED;
+
+		print '<tr class="field_qc_frequency"><td>';
+		print $form->editfieldkey('ControlPeriod', 'qc_frequency', (string) (int) $object->qc_frequency, $object, $permissionToEditControlRules, 'integer', '', 0, 3, 'id', $langs->trans('ControlPeriodHelp'));
+		print '</td><td>';
+		if ($action == 'editqc_frequency' && $permissionToEditControlRules) {
+			print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
+			print '<input type="hidden" name="token" value="' . newToken() . '">';
+			print '<input type="hidden" name="action" value="setcontrolperiod">';
+			print '<input type="hidden" name="id" value="' . $object->id . '">';
+			print $printPeriodInputs((int) $object->qc_frequency, (string) $object->qc_frequency_unit);
+			print ' <input type="submit" class="button smallpaddingimp" name="modify" value="' . $langs->trans('Modify') . '">';
+			print ' <input type="submit" class="button smallpaddingimp button-cancel" name="cancel" value="' . $langs->trans('Cancel') . '">';
+			print '</form>';
+		} elseif ((int) $object->qc_frequency > 0) {
+			print $object->getControlPeriodLabel();
+		} else {
+			print '<span class="opacitymedium">' . $langs->trans('SheetQcFrequencyFromObject') . '</span>';
+		}
+		print '</td></tr>';
+
+		$natureSelect = 'select;0:' . $langs->trans('InformativeControl') . ',1:' . $langs->trans('MandatoryControl');
+		print '<tr class="field_default_control_mandatory"><td>';
+		print $form->editfieldkey('DefaultControlNature', 'default_control_mandatory', (string) (int) $object->default_control_mandatory, $object, $permissionToEditControlRules, $natureSelect, '', 0, 3, 'id', $langs->trans('DefaultControlNatureHelp'));
+		print '</td><td>';
+		print $form->editfieldval('DefaultControlNature', 'default_control_mandatory', (int) $object->default_control_mandatory, $object, $permissionToEditControlRules, $natureSelect, '', null, null, 'id=' . $object->id);
 		print '</td></tr>';
 	}
 

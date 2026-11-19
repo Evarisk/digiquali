@@ -61,7 +61,12 @@ $controlVerdictDisplays = [
                             </div>
                             <div class="pwa-card-field">
                                 <span class="pwa-card-field-label"><?php echo $langs->transnoentities('Sheet'); ?></span>
-                                <span class="pwa-card-field-value"><?php echo dol_escape_htmltag($controlInfo['sheet']); ?></span>
+                                <span class="pwa-card-field-value">
+                                    <?php echo dol_escape_htmltag($controlInfo['sheet']);
+                                    if (!empty($controlInfo['mandatory'])) : ?>
+                                        <span class="public-control-panel__muted"><?php echo $langs->transnoentities('MandatoryControl'); ?></span>
+                                    <?php endif; ?>
+                                </span>
                             </div>
                             <?php if (!empty($controlInfo['controller'])) : ?>
                                 <div class="pwa-card-field">
