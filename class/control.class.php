@@ -1357,7 +1357,7 @@ class Control extends SaturneObject
 
         // Graph parameters
         $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'LinkedObject', 'Controller', 'Project', 'Sheet', 'ControlDate', 'NextControl', 'Verdict'];
+        $array['labels'] = ['Ref', 'ControlledObject', 'Controller', 'Project', 'Sheet', 'ControlDate', 'NextControl', 'Verdict'];
 
         $arrayControlListsByNextControl = [];
         $controls                       = $this->fetchAll('ASC', 'next_control_date', 10, 0, ['customsql' => 't.status = ' . self::STATUS_LOCKED . ' AND t.next_control_date IS NOT NULL']);
