@@ -1778,7 +1778,7 @@ class ActionsDigiquali
         $fullUrl = digiquali_public_control_history_url($object);
 
         if (isModEnabled('easyurl')) {
-            require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
+            require_once dol_buildpath('/easyurl/class/shortener.class.php');
 
             $urls      = "'" . $this->db->escape($fullUrl) . "', '" . $this->db->escape(digiquali_public_control_history_url($object, false)) . "'";
             $shortener = new Shortener($this->db);

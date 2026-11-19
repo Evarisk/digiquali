@@ -132,7 +132,7 @@ class doc_surveydocument_odt extends SaturneDocumentModel
                                         case 'OkKoToFixNonApplicable' :
                                         case 'MarqueNF' :
                                         case 'UniqueChoice' :
-                                            $tmpArray['answer'] = $answersArray[$line->answer];
+                                            $tmpArray['answer'] = $answersArray[$line->answer] ?? ''; // A question not answered yet has no key
                                             break;
                                         case 'Text' :
                                         case 'Range' :
@@ -151,7 +151,7 @@ class doc_surveydocument_odt extends SaturneDocumentModel
                                             $tmpArray['answer'] = '';
                                             $answers            = explode(',', $line->answer);
                                             foreach ($answers as $answerValue) {
-                                                $tmpArray['answer'] .= $answersArray[$answerValue] . ', ';
+                                                $tmpArray['answer'] .= ($answersArray[$answerValue] ?? '') . ', ';
                                             }
                                             $tmpArray['answer'] = rtrim($tmpArray['answer'], ', ');
                                             break;
@@ -261,6 +261,8 @@ class doc_surveydocument_odt extends SaturneDocumentModel
         $project->fetch($object->projectid);
 
         $object->fetchObjectLinked('', '', $object->id, 'digiquali_survey',  'OR', 1, 'sourcetype', 0);
+        $tmpArray['object_label_ref'] = '';
+        $tmpArray['object_type']      = '';
 
         $linkableElements = saturne_get_objects_metadata();
         if (!empty($linkableElements)) {

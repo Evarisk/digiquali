@@ -972,7 +972,8 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 	print '<div class="clearboth"></div>';
 
-	print '<div id="dialog-moved-error" title="' . $langs->trans('Error') . '">';
+	// Hidden until sheet.js opens it on a refused move: jQuery UI shows it then (not the hidden class, !important)
+	print '<div id="dialog-moved-error" style="display: none;" title="' . $langs->trans('Error') . '">';
 	print '<p>';
 	print $langs->trans("LineMovedOutsideParentError");
 	print '</p>';
