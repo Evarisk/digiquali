@@ -33,6 +33,9 @@ CREATE TABLE llx_digiquali_sheet(
   show_project        smallint DEFAULT 1,
   show_tags           smallint DEFAULT 1,
   default_control_tags text,
+  qc_frequency        integer,
+  qc_frequency_unit   varchar(8) DEFAULT 'd',
+  default_control_mandatory smallint DEFAULT 0,
   fk_user_creat       integer NOT NULL,
   fk_user_modif       integer
 ) ENGINE=innodb;

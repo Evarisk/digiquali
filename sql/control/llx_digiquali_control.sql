@@ -27,6 +27,7 @@ CREATE TABLE llx_digiquali_control(
     note_private       text,
     type               varchar(128),
     verdict            smallint,
+    mandatory          smallint DEFAULT 0,
     photo              text,
     track_id           varchar(128) NOT NULL,
     control_date       datetime,
