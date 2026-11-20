@@ -35,3 +35,27 @@ function question_prepare_head(Question $object): array
 {
     return saturne_object_prepare_head($object);
 }
+
+/**
+ * Render the help of the question types whose answer works unlike a choice, to print under the type selector
+ *
+ * One block per such type, the one of the picked type shown : question.js swaps them when another type is picked
+ *
+ * @param  string $selectedType Type picked on the form, or type of the question
+ * @return string               HTML output
+ */
+function digiquali_question_type_help(string $selectedType): string
+{
+    global $langs;
+
+    $typeHelps = [Question::TYPE_PHOTO_MULTIPLE => 'PhotoMultipleTypeHelp'];
+
+    $out = '';
+    foreach ($typeHelps as $type => $helpKey) {
+        $out .= '<div class="question-type-help opacitymedium' . ($type == $selectedType ? '' : ' hidden') . '" data-question-type="' . dol_escape_htmltag($type) . '">';
+        $out .= '<i class="fas fa-info-circle" aria-hidden="true"></i> ' . $langs->trans($helpKey);
+        $out .= '</div>';
+    }
+
+    return $out;
+}

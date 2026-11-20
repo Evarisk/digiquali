@@ -165,6 +165,7 @@ window.digiquali.photoMultiple.sync = function($widget, save) {
   const $question  = $widget.closest('.question');
 
   $answer.val(answer);
+  window.digiquali.photoMultiple.refreshSummary($widget, rows);
   // Refreshes the save buttons and the progress of the answer screen, like any other answer input
   $answer.trigger('change');
   // The generic change handler marks the question complete unconditionally, which is wrong once every photo is gone
@@ -176,6 +177,42 @@ window.digiquali.photoMultiple.sync = function($widget, save) {
     $widget.attr('data-saved-answer', answer);
     window.digiquali.object.saveAnswer(questionId, answer, comment);
   }
+};
+
+/**
+ * Rewrite the summary of the question, the line the lists and the documents show, once a status has changed
+ *
+ * Same format as digiquali_photo_multiple_format_summary() : the number of photos, then of each status given,
+ * in the order of the buttons, whose labels are already translated
+ *
+ * @memberof DigiQuali_PhotoMultiple
+ *
+ * @since   23.3.0
+ * @version 23.3.0
+ *
+ * @param  {jQuery} $widget The .question-photo-multiple element
+ * @param  {Object} rows    Rows returned by readRows()
+ * @return {void}
+ */
+window.digiquali.photoMultiple.refreshSummary = function($widget, rows) {
+  const $summary = $widget.find('.question-photo-multiple__summary-text');
+  if (!$summary.length) {
+    return;
+  }
+
+  const statuses = Object.keys(rows).map(function(fileName) { return rows[fileName].status; });
+  const parts    = [String($summary.attr('data-photo-count-label') || '%s').replace('%s', String(statuses.length))];
+
+  $widget.find('.question-photo-multiple__row').first().find('.question-photo-multiple__status-button').each(function() {
+    const status = $(this).attr('data-status');
+    const count  = statuses.filter(function(rowStatus) { return rowStatus === status; }).length;
+    // Four statuses at zero would bury the ones that were given
+    if (count > 0) {
+      parts.push(count + ' ' + $(this).text().trim());
+    }
+  });
+
+  $summary.text(parts.join(' - '));
 };
 
 /**
