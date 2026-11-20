@@ -274,6 +274,11 @@ body.page-public-control {
     color: $public-control-ko;
   }
 
+  &--overdue {
+    background: rgba($public-control-overdue, 0.12);
+    color: $public-control-overdue;
+  }
+
   .media-container,
   .inline-block {
     width: 100%;
@@ -315,6 +320,11 @@ body.page-public-control {
   &--ko {
     background: rgba($public-control-ko, 0.12);
     color: $public-control-ko;
+  }
+
+  &--overdue {
+    background: rgba($public-control-overdue, 0.12);
+    color: $public-control-overdue;
   }
 }
 
