@@ -374,6 +374,25 @@ function digiquali_render_photo_multiple_answer(Question $question, CommonObject
     $out  = '<div class="question-photo-multiple" id="question-photo-multiple-' . $question->id . '" data-question-id="' . $question->id . '" data-sub-dir="' . dol_escape_htmltag(digiquali_get_answer_photo_sub_dir($object, $question)) . '" data-saved-answer="' . dol_escape_htmltag($questionAnswer) . '">';
     $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '" value="' . dol_escape_htmltag(digiquali_photo_multiple_encode($answerRows)) . '">';
 
+    // The question has no OK/KO of its own : its summary, the one the lists and the documents show, stands for it.
+    // photo_multiple.js rewrites it as statuses are given, from the count label and the labels of the buttons
+    if (!empty($rows)) {
+        $out .= '<div class="question-photo-multiple__summary">';
+        $out .= '<i class="fas fa-images" aria-hidden="true"></i> ';
+        $out .= '<strong>' . $langs->trans('PhotoMultipleBalance') . ' :</strong> ';
+        $out .= '<span class="question-photo-multiple__summary-text" data-photo-count-label="' . dol_escape_htmltag($langs->transnoentities('PhotoMultipleSummary', '%s')) . '">' . dol_escape_htmltag(digiquali_photo_multiple_format_summary(array_column($rows, 'status'))) . '</span>';
+        $out .= '</div>';
+    }
+
+    // How the photo statuses and the question relate is not what an OK/KO question taught : say it while answering
+    if (!$readOnly) {
+        $out .= '<p class="question-photo-multiple__help opacitymedium">';
+        $out .= '<i class="fas fa-info-circle" aria-hidden="true"></i> ';
+        // Only a control has a verdict to mention
+        $out .= $langs->trans($object->element == 'control' ? 'PhotoMultipleHelpControl' : 'PhotoMultipleHelp');
+        $out .= '</p>';
+    }
+
     if (empty($rows)) {
         $out .= '<p class="question-photo-multiple__empty opacitymedium">' . $langs->trans('PhotoMultipleEmpty') . '</p>';
     } else {

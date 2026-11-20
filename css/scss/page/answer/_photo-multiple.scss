@@ -16,6 +16,22 @@ $photo-multiple__statuses: (
   flex-direction: column;
   gap: 0.4em;
 
+  // What the question amounts to, in place of the OK/KO an other question would have
+  .question-photo-multiple__summary {
+    padding: 0 0.4em;
+
+    .fas {
+      opacity: 0.6;
+    }
+  }
+
+  .question-photo-multiple__help {
+    margin: 0;
+    padding: 0 0.4em;
+    font-size: 0.85em;
+    line-height: 1.4;
+  }
+
   .question-photo-multiple__empty {
     margin: 0;
     padding: 0.8em;
