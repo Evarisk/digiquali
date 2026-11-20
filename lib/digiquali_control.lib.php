@@ -243,7 +243,8 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
  * Get control infos
  *
  * Returns data only, the public templates render it: the status of the linked object, drawn from its locked
- * controls by digiquali_get_object_control_status(), and the list of its locked controls.
+ * controls by digiquali_get_object_control_status(), and the list of its locked controls, only the mandatory ones
+ * once it has some.
  *
  * @param  CommonObject $linkedObject Linked object (product, productlot, project, etc.)
  * @return array        $out          ['status' => [...], 'control' => [id => [...]]]
@@ -279,11 +280,26 @@ function get_control_infos(CommonObject $linkedObject): array
         return $b->control_date - $a->control_date;
     });
 
+    // The next control starts from the last one, whatever its nature
+    $lastControl = reset($controls);
+
+    // The status comes from the mandatory controls when the object has some, else from its last control
+    $controlStatus = digiquali_get_object_control_status($controls);
+    $statusKeys    = $controlStatus['keys'];
+
+    // Once the object has mandatory controls, the public page shows only them: an informative control (a quarterly
+    // check) neither changes the status nor appears in the list
+    if ($controlStatus['mandatory']) {
+        $controls = array_filter($controls, function ($control) {
+            return !empty($control->mandatory);
+        });
+    }
+
     // The project names the customer or the site: only a user allowed to read projects sees it
     $permissionToReadProject = $user->hasRight('projet', 'lire');
 
     $controllers    = [];
-    $getControlCard = function ($control) use ($conf, $db, $langs, $permissionToReadControl, $permissionToReadProject, &$controllers): array {
+    $getControlCard = function ($control) use ($conf, $db, $langs, $permissionToReadControl, $permissionToReadProject, $statusKeys, &$controllers): array {
         $sheet = $control->getSheet() ?? new Sheet($db);
 
         // No link on the thumbnail: it would open the photo editor, and the whole card is already a link
@@ -314,6 +330,8 @@ function get_control_infos(CommonObject $linkedObject): array
             'project'           => $project,
             'note'              => dol_trunc(trim(dol_string_nohtmltag((string) $control->note_public, 1)), 160),
             'verdict'           => $control->verdict == 1 ? 'ok' : 'ko',
+            // The last control of a sheet whose next control date is reached is no longer OK: a later one is due
+            'status'            => $statusKeys[$control->id] ?? ($control->verdict == 1 ? 'ok' : 'ko'),
             'image'             => strpos($image, 'nophoto') === false ? $image : ''
         ];
     };
@@ -326,8 +344,6 @@ function get_control_infos(CommonObject $linkedObject): array
         }
     }
 
-    // The status comes from the mandatory controls when the object has some, else from its last control
-    $controlStatus = digiquali_get_object_control_status($controls);
     $statusControl = $controlStatus['control'];
     if ($statusControl !== null) {
         $out['status']['key']          = $controlStatus['key'];
@@ -341,9 +357,6 @@ function get_control_infos(CommonObject $linkedObject): array
             $out['status']['next_control_color'] = $statusControl->getNextControlDateColor();
         }
     }
-
-    // The next control starts from the last one
-    $lastControl = reset($controls);
 
     // The control is created in the PWA, without going through the back office
     if (getDolGlobalInt('DIGIQUALI_SHOW_ADD_CONTROL_BUTTON_ON_PUBLIC_INTERFACE') && $permissionToWriteControl) {
@@ -372,12 +385,15 @@ function get_control_infos(CommonObject $linkedObject): array
  *
  * Only a locked control carries a verdict. A mandatory control is the one that decides : once the object has one,
  * the status comes from the last mandatory control of each sheet, and the informative controls (a quarterly check) no
- * longer change it. Without any, the last control decides. A control of an archived sheet, no longer used, decides
- * only when the object has no other control, and it is then never overdue.
+ * longer change it. Without any, the last control decides : an informative control redone since is no longer due. A
+ * control of an archived sheet, no longer used, decides only when the object has no other control, and it is then
+ * never overdue.
  *
  * @param  CommonObject[] $controls Controls of the object, in any order and any status
  * @return array                   ['key' => none, ok, ko or overdue, 'control' => the control the status comes from
- *                                  or null, 'controls' => the controls deciding the status, the worst first]
+ *                                  or null, 'controls' => the controls deciding the status, the worst first,
+ *                                  'keys' => the status of each deciding control, by control id, 'mandatory' => whether
+ *                                  the status comes from mandatory controls]
  * @throws Exception
  */
 function digiquali_get_object_control_status(array $controls): array
@@ -385,7 +401,7 @@ function digiquali_get_object_control_status(array $controls): array
     require_once __DIR__ . '/../class/control.class.php';
     require_once __DIR__ . '/../class/sheet.class.php';
 
-    $out = ['key' => 'none', 'control' => null, 'controls' => []];
+    $out = ['key' => 'none', 'control' => null, 'controls' => [], 'keys' => [], 'mandatory' => false];
 
     $controls = array_filter($controls, function ($control) {
         return $control instanceof Control && $control->status == Control::STATUS_LOCKED;
@@ -439,9 +455,11 @@ function digiquali_get_object_control_status(array $controls): array
         return [$ranks[$keys[$a->id]], $nextA] <=> [$ranks[$keys[$b->id]], $nextB];
     });
 
-    $out['controls'] = $decidingControls;
-    $out['control']  = reset($decidingControls);
-    $out['key']      = $keys[$out['control']->id];
+    $out['controls']  = $decidingControls;
+    $out['control']   = reset($decidingControls);
+    $out['key']       = $keys[$out['control']->id];
+    $out['keys']      = $keys;
+    $out['mandatory'] = !empty($mandatoryControls);
 
     return $out;
 }

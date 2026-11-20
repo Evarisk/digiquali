@@ -949,6 +949,14 @@ class modDigiQuali extends DolibarrModules
 			dolibarr_set_const($this->db, 'DIGIQUALI_DOCUMENT_DIRECTORIES_NAME_BACKWARD_COMPATIBILITY', $this->version, 'integer', 1, '', $conf->entity);
 		}
 
+		// #2791: the controls made before the control nature (#2789) all decided the status of their object, so they are
+		// mandatory, and so are the next controls of their sheets. Once per entity: the nature chosen afterwards is kept
+		if (getDolGlobalInt('DIGIQUALI_CONTROL_NATURE_BACKWARD_COMPATIBILITY') == 0) {
+			$this->db->query('UPDATE ' . MAIN_DB_PREFIX . 'digiquali_control SET mandatory = 1 WHERE entity = ' . (int) $conf->entity);
+			$this->db->query('UPDATE ' . MAIN_DB_PREFIX . "digiquali_sheet SET default_control_mandatory = 1 WHERE type = 'control' AND entity = " . (int) $conf->entity);
+			dolibarr_set_const($this->db, 'DIGIQUALI_CONTROL_NATURE_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
+		}
+
 		// #2761: answer photos of the controls (before #2442) and surveys validated while their files stayed under (PROVn),
 		// #2773: and their documents generated as a draft, under <element>document/(PROVn).
 		// At each activation, and so at the first visit of the module index after an update : it only costs a directory listing
