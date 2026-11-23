@@ -50,7 +50,7 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
         $this->family      = 'demo';
         $this->description = 'DigiQuali triggers.';
         $this->version     = '23.3.0';
-        $this->picto       = 'digiquali@digiquali';
+        $this->picto       = 'digiquali_color@digiquali';
     }
 
     /**
