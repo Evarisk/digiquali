@@ -16,7 +16,7 @@
  */
 
 /**
- * ile    core/tpl/actions/digiquali_media_block_actions.tpl.php
+ * \file    core/tpl/actions/digiquali_media_block_actions.tpl.php
  * \ingroup digiquali
  * \brief   Actions posted by the Saturne media block (js/modules/mediaBlock.js).
  *

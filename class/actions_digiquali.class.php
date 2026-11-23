@@ -187,13 +187,13 @@ class ActionsDigiquali
     /**
      * Overloading the doActions function : replacing the parent's function with the one below
      *
-     * @param  array  $parameters Hook metadata (context, etc...)
-     * @param  object $object     The object to process
-     * @param  string $action     Current action (if set). Generally create or edit or null
-     * @return int                0 < on error, 0 on success, 1 to replace standard code
+     * @param  array       $parameters Hook metadata (context, etc...)
+     * @param  object      $object     The object to process
+     * @param  string|null $action     Current action (if set). Generally create or edit or null
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function doActions(array $parameters, $object, string $action): int
+    public function doActions(array $parameters, $object, ?string $action): int
     {
         global $conf;
 
@@ -1778,7 +1778,7 @@ class ActionsDigiquali
         $fullUrl = digiquali_public_control_history_url($object);
 
         if (isModEnabled('easyurl')) {
-            require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
+            require_once dol_buildpath('/easyurl/class/shortener.class.php');
 
             $urls      = "'" . $this->db->escape($fullUrl) . "', '" . $this->db->escape(digiquali_public_control_history_url($object, false)) . "'";
             $shortener = new Shortener($this->db);

@@ -154,6 +154,22 @@ window.digiquali.question.changeQuestionType = function() {
 
   window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
   window.digiquali.question.lockAnswerPhotoCheckbox();
+  window.digiquali.question.showQuestionTypeHelp(questionType);
+};
+
+/**
+ * Show the help of the picked question type under the selector, rendered by digiquali_question_type_help()
+ *
+ * @since   23.3.0
+ * @version 23.3.0
+ *
+ * @param  {string} questionType Picked question type
+ * @return {void}
+ */
+window.digiquali.question.showQuestionTypeHelp = function(questionType) {
+  $('.question-type-help').each(function() {
+    $(this).toggleClass('hidden', $(this).attr('data-question-type') !== questionType);
+  });
 };
 
 /**

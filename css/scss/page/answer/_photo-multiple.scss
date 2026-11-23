@@ -16,6 +16,22 @@ $photo-multiple__statuses: (
   flex-direction: column;
   gap: 0.4em;
 
+  // What the question amounts to, in place of the OK/KO an other question would have
+  .question-photo-multiple__summary {
+    padding: 0 0.4em;
+
+    .fas {
+      opacity: 0.6;
+    }
+  }
+
+  .question-photo-multiple__help {
+    margin: 0;
+    padding: 0 0.4em;
+    font-size: 0.85em;
+    line-height: 1.4;
+  }
+
   .question-photo-multiple__empty {
     margin: 0;
     padding: 0.8em;
@@ -100,8 +116,16 @@ $photo-multiple__statuses: (
       display: none;
     }
 
+    // On a narrow phone the photo gives up some of its width (down to 64px) rather than the statuses, whose labels
+    // need about 125px
     .question-photo-multiple__row {
-      grid-template-columns: 120px minmax(0, 1fr);
+      grid-template-columns: minmax(64px, 120px) minmax(125px, 1fr);
+    }
+
+    .question-photo-multiple__photo img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
     }
 
     .question-photo-multiple__comment {
@@ -115,9 +139,14 @@ $photo-multiple__statuses: (
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    // Icon above the label, which then gets the whole width of the button: "A réparer" no longer breaks inside its
+    // words (the question inherits word-break: break-word)
     .question-photo-multiple__status-button {
+      flex-direction: column;
+      gap: 0.15em;
       justify-content: center;
-      padding: 0.5em;
+      padding: 0.5em 0.25em;
+      text-align: center;
     }
   }
 }
