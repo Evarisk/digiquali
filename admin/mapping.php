@@ -39,8 +39,8 @@ require_once __DIR__ . '/../lib/digiquali.lib.php';
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $moduleName, $moduleNameLowerCase, $user;
 
-// Load translation files required by the page
-saturne_load_langs();
+// Load translation files required by the page ('projects' for AddProject, the project creation link)
+saturne_load_langs(['projects']);
 
 // Initialize view objects
 $formProjects = new FormProjets($db);
