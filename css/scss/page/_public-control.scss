@@ -115,6 +115,11 @@ body.page-public-control {
       color: inherit;
       text-decoration: none;
     }
+
+    // getNomUrl() keeps a ref on one line (nowraponall, a product for one): a long one widened the whole page on a phone
+    .nowraponall {
+      white-space: normal;
+    }
   }
 }
 
@@ -269,6 +274,11 @@ body.page-public-control {
     color: $public-control-ko;
   }
 
+  &--overdue {
+    background: rgba($public-control-overdue, 0.12);
+    color: $public-control-overdue;
+  }
+
   .media-container,
   .inline-block {
     width: 100%;
@@ -310,6 +320,11 @@ body.page-public-control {
   &--ko {
     background: rgba($public-control-ko, 0.12);
     color: $public-control-ko;
+  }
+
+  &--overdue {
+    background: rgba($public-control-overdue, 0.12);
+    color: $public-control-overdue;
   }
 }
 

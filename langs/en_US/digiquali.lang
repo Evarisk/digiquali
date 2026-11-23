@@ -41,6 +41,7 @@ ControlStatusOverdue                    = Overdue
 ControlStatusOverdueDetail              = A new control is due
 NoControlYet                            = No control has been carried out yet
 LastControlOn                           = Last control on %s
+MandatoryControlOn                      = Mandatory control on %s
 NextControlDeadline                     = Due
 NextControlInDays                       = In %s days
 NextControlTomorrow                     = Tomorrow
@@ -51,6 +52,8 @@ ChooseControlSheet                      = Choose a sheet
 NoControlSheetAvailable                 = No control sheet available
 ControlledObject                        = Controlled object
 StartControl                            = Start the control
+NextControlDateBeforeControlDate        = The next control date (%s) is before the control date (%s): check the input.
+NextControlDateBeforeControlDateShort   = Before the control date
 
 # Deletion errors
 ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
@@ -258,6 +261,10 @@ PhotoMultipleStatusTOFIX = To fix
 PhotoMultipleStatusNA    = N/A
 PhotoMultipleSummary     = %s photo(s)
 PhotoMultipleNoAnswer    = No photo
+PhotoMultipleBalance     = Question summary
+PhotoMultipleHelp        = One status per photo, optional. The question has no overall status and does not count in the points.
+PhotoMultipleHelpControl = One status per photo, optional. The question has no overall status and counts neither in the points nor in the verdict.
+PhotoMultipleTypeHelp    = One row per photo, with a comment and a status. No overall status and no points: the question comes down to its summary, e.g. "3 photo(s) - 2 OK - 1 KO".
 MediaLibrary             = Media library
 AddFromMediaLibrary      = Add from the media library
 CloneAnswers             = Clone answers (comments and photos included)
@@ -297,3 +304,26 @@ PDFControlGroup                = Group: %s
 PDFControlSheetRef             = Template %s
 PDFControlTemplate             = Template: %s
 PDFControlCorrectiveAction     = Corrective action
+
+#
+# Sheet and control - Control period and nature
+#
+
+QcFrequency                    = Control periodicity (days)
+ControlPeriod                  = Control period
+ControlPeriodUnit              = Unit of the control period
+ControlPeriodHelp              = Time between two controls made from this template, in days, months or years: the next control date is computed when the control is locked (2 years = the same day two years later). It comes before the periodicity of the controlled object; when empty, the one of the controlled object applies. When it changes, the card offers to compute again the next date of the controls already locked.
+SheetQcFrequencyFromObject     = The one of the controlled object
+DefaultControlNature           = Nature of the controls
+DefaultControlNatureHelp       = Nature given to the controls made from this template, from the mobile app and the vehicle logbook too. Each control keeps its own, changeable until it is locked. When it changes, the card offers to apply it to the controls already made.
+ControlNature                  = Control nature
+ControlNatureHelp              = A mandatory control is blocking: once the object has one, its status (compliant, non-compliant, overdue) comes from the last mandatory control of each template, and the informative controls no longer change it nor appear on the public page.
+MandatoryControl               = Mandatory
+InformativeControl             = Informative
+LastMandatoryControl           = Mandatory control
+AlignControlsTitle             = Controls already made
+AlignControlsQuestion          = %s control(s) already made from this template do not follow this setting:
+AlignControlsNature            = nature "%s": %s control(s)
+AlignControlsNextDate          = next date computed again with the period of %s, from the control date: %s locked control(s)
+AlignControlsConfirm           = Update them? Otherwise only the next controls follow this setting.
+ControlsAligned                = %s control(s) updated

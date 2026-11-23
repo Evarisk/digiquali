@@ -55,7 +55,7 @@ $form = new Form($db);
 $hookmanager->initHooks(['publicinterfaceadmin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread = $user->hasRight($moduleNameLowerCase, 'adminpage', 'read');
 saturne_check_access($permissiontoread);
 
 /*

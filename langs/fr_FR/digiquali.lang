@@ -48,6 +48,24 @@ ShowProjectOnControlHelp       = Si activé, le champ projet sera visible lors d
 ShowTagsOnControlHelp          = Si activé, le champ tags/catégories sera visible lors de la création d'un contrôle depuis ce modèle
 DefaultControlTagsHelp         = Catégories qui seront pré-sélectionnées lors de la création d'un contrôle depuis ce modèle
 DefaultControlProject          = Projet par défaut du contrôle
+ControlPeriod                  = Période de contrôle
+ControlPeriodUnit              = Unité de la période de contrôle
+ControlPeriodHelp              = Durée entre deux contrôles faits avec ce modèle, en jours, mois ou années : la prochaine date de contrôle est calculée au verrouillage du contrôle (2 années = le même jour deux ans plus tard). Passe avant la périodicité de l'objet contrôlé ; vide, c'est celle de l'objet contrôlé qui s'applique. Quand on la change, la fiche propose de recalculer la prochaine date des contrôles déjà verrouillés.
+SheetQcFrequencyFromObject     = Celle de l'objet contrôlé
+DefaultControlNature           = Nature des contrôles
+DefaultControlNatureHelp       = Nature donnée aux contrôles créés depuis ce modèle, depuis l'application mobile et le carnet de bord compris. Chaque contrôle garde la sienne, modifiable jusqu'à son verrouillage. Quand on la change, la fiche propose de l'appliquer aux contrôles déjà faits.
+ControlNature                  = Nature du contrôle
+ControlNatureHelp              = Un contrôle obligatoire est bloquant : dès que l'objet en a un, son état (conforme, non conforme, en retard) vient du dernier contrôle obligatoire de chaque modèle, et les contrôles informatifs ne le changent plus ni n'apparaissent sur la page publique.
+MandatoryControl               = Obligatoire
+InformativeControl             = Informatif
+LastMandatoryControl           = Contrôle obligatoire
+MandatoryControlOn             = Contrôle obligatoire du %s
+AlignControlsTitle             = Contrôles déjà réalisés
+AlignControlsQuestion          = %s contrôle(s) déjà fait(s) avec ce modèle ne suivent pas ce réglage :
+AlignControlsNature            = nature « %s » : %s contrôle(s)
+AlignControlsNextDate          = prochaine date recalculée avec la période de %s, depuis la date du contrôle : %s contrôle(s) verrouillé(s)
+AlignControlsConfirm           = Les mettre à jour ? Sinon, seuls les prochains contrôles suivront ce réglage.
+ControlsAligned                = %s contrôle(s) mis à jour
 ConfigureYourObjectsHere       = Configurez vos Objets ici
 ControlledObjectsTitle         = Objets contrôlés par ce Contrôle/Questionnaire
 ElementLinked                  = Objets contrôlés
@@ -156,6 +174,10 @@ PhotoMultipleStatusTOFIX      = A réparer
 PhotoMultipleStatusNA         = NA
 PhotoMultipleSummary          = %s photo(s)
 PhotoMultipleNoAnswer         = Aucune photo
+PhotoMultipleBalance          = Bilan de la question
+PhotoMultipleHelp             = Un statut par photo, facultatif. La question n'a pas de statut global et ne compte pas dans les points.
+PhotoMultipleHelpControl      = Un statut par photo, facultatif. La question n'a pas de statut global et ne compte ni dans les points ni dans le verdict.
+PhotoMultipleTypeHelp         = Une ligne par photo, avec commentaire et statut. Pas de statut global ni de points : la question se résume à son bilan, ex. « 3 photo(s) - 2 OK - 1 KO ».
 MediaLibrary                  = Bibliothèque de médias
 AddFromMediaLibrary           = Ajouter depuis la bibliothèque de médias
 ToFix                         = A réparer
@@ -582,6 +604,8 @@ NoControlSheetAvailable                        = Aucun modèle de contrôle disp
 ControlledObject                               = Objet contrôlé
 StartControl                                   = Démarrer le contrôle
 LockControlDate                                = Le verrouillage de ce contrôle en date du &emsp;&emsp;&emsp; : <b> %s </b> <br> entrainera une date de prochain contrôle pour le : <b> %s </b> <br> soit dans &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; : <b> %d jours. </b>
+NextControlDateBeforeControlDate               = La prochaine date de contrôle (%s) est antérieure à la date du contrôle (%s) : vérifiez la saisie.
+NextControlDateBeforeControlDateShort          = Antérieure à la date du contrôle
 
 
 
