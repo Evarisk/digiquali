@@ -74,7 +74,7 @@ $error = 0; // Error counter.
 $hookmanager->initHooks([$object->element . 'admin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user.
-$permissiontoread = $user->rights->digiquali->adminpage->read;
+$permissiontoread = $user->hasRight('digiquali', 'adminpage', 'read');
 saturne_check_access($permissiontoread);
 
 /*

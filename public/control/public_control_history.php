@@ -103,7 +103,8 @@ $object = new Control($db);
 $sheet  = new Sheet($db);
 $user   = new User($db);
 
-$hookmanager->initHooks(['publiccontrol', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
+// Not the saturnepublicinterface context: Saturne prints the company logo there, already in the header of this page
+$hookmanager->initHooks(['publiccontrol']); // Note that conf->hooks_modules contains array
 
 // Load user
 if (!isset($_SESSION['dol_login'])) {

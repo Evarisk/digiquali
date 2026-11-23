@@ -1,148 +1,132 @@
-# [DigiQuali] [23.3.0] - Verrouillage en masse des contrôles - PDF des questionnaires - Statuts À réparer et NA des photos
+# [DigiQuali] [23.4.0] - Contrôles obligatoires ou informatifs - Période de contrôle sur le modèle - Bilan des Photos multiples
 
-Description : Les contrôles se verrouillent en une fois depuis leur liste, et un contrôle validé dit enfin ce qu'il reste à faire avant de pouvoir le verrouiller. Les questionnaires ont leur propre fiche PDF, les photos d'une question Photos multiples reçoivent les statuts **À réparer** et **NA**, et la liste des contrôles réunit tous les objets contrôlés dans une seule colonne qui se trie et se filtre.
+Description : Chaque modèle de contrôle porte désormais sa période (en jours, mois ou années) et la nature de ses contrôles. Obligatoires, ils décident de l'état de l'objet contrôlé ; informatifs, ils ne le changent plus et n'encombrent plus la page publique. Les questions Photos multiples affichent leur bilan et expliquent comment elles se remplissent, et une prochaine date de contrôle saisie avant la date du contrôle est désormais signalée.
 
-**Cette version demande Saturne 23.8.0 ou supérieur.**
+**Cette version demande Saturne 23.9.1 ou supérieur.**
+
+## 🎬 La nouveauté en vidéo
+
+<a href="https://github.com/Evarisk/digiquali/releases/download/23.4.0/digiquali-23.4.0-controles-obligatoires.mp4"><img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/video_poster_23.4.0.jpeg" alt="Contrôles obligatoires ou informatifs : la période et la nature réglées sur le modèle, les contrôles déjà faits mis à jour, la page publique d'un lot, en vidéo (24 s)"></a>
+
+*Cliquez sur l'image pour voir la vidéo (24 s).*
 
 ## Nouvelles fonctionnalités et innovations
 
-### Verrouillage : les étapes restantes, puis le verrouillage en masse
+### Période et nature des contrôles, réglées sur le modèle
 
-* **Un contrôle validé explique où il en est.** Un encart rappelle que, tant qu'il n'est pas verrouillé, le contrôle peut être remis en brouillon, n'apparaît pas sur l'interface publique et sa date de prochain contrôle n'est pas calculée. Les étapes restantes sont cochées selon l'état réel du contrôle : verdict donné, participants signés, puis verrouillage.
-* **Le bouton « Verrouiller » grisé dit pourquoi.** Son infobulle nomme les étapes qui manquent, signatures comprises, au lieu d'un message général.
-* **Une confirmation claire.** Avant de verrouiller, DigiQuali rappelle que le verrouillage est définitif et qu'il publie le contrôle sur l'interface publique.
-* **Verrouillage en masse.** Sur la liste des contrôles, cochez les contrôles puis choisissez l'action **« Verrouiller »** : ils sont verrouillés en une fois, avec les mêmes effets que depuis leur fiche. Ceux qui ne sont pas encore prêts (sans verdict, non signés, brouillons…) sont ignorés et signalés, sans interrompre le lot.
+* **Période de contrôle** : un nombre et une unité (jours, mois ou années) sur la fiche du modèle. Au verrouillage d'un contrôle, la prochaine date de contrôle en est tirée, à partir de la date du contrôle. « 2 années » tombe le même jour deux ans plus tard, même avec un 29 février en route.
+* Elle passe avant la périodicité de l'objet contrôlé. Laissée vide, c'est celle de l'objet qui s'applique, comme avant.
+* **Nature des contrôles** : **Obligatoire** ou **Informatif**, donnée à chaque nouveau contrôle fait avec le modèle, y compris depuis l'application mobile et le carnet de bord de DoliCar.
+* Les deux réglages se modifient directement sur un modèle verrouillé, déjà en service (pas sur un modèle archivé). Le clone, l'export et l'import d'un modèle les reprennent ; un ancien export s'importe toujours.
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/verrouillage-etapes.png" alt="Fiche d'un contrôle validé : encart « Contrôle validé, pas encore verrouillé », verdict défini, signatures des participants à faire, puis verrouillage ; bouton Verrouiller grisé">
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/modele-periode-nature.png" alt="Fiche d'un modèle de contrôle, options de création du contrôle : Période de contrôle 1 année et Nature des contrôles Obligatoire, chacune avec son aide et son crayon de modification">
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/verrouillage-masse.png" alt="Liste des contrôles : quatre contrôles validés cochés et le menu des actions de masse ouvert sur Verrouiller">
+### Les contrôles déjà réalisés suivent, si vous le décidez
 
-### Questionnaires : une fiche PDF native
+* Après un changement de nature ou de période, la fiche du modèle compte les contrôles déjà faits qui ne suivent pas le nouveau réglage et demande **« Les mettre à jour ? »**.
+* **Oui** : la nature passe sur tous les contrôles du modèle, et la prochaine date des contrôles verrouillés et conformes est recalculée depuis leur date de contrôle.
+* **Non** : seuls les prochains contrôles suivent le réglage. Une échéance saisie à la main n'est jamais écrasée sans votre accord.
+* Les rappels déjà créés dans l'agenda ne sont pas déplacés.
 
-* Nouveau modèle **« Fiche du Questionnaire PDF avec photo »**, à activer dans Configuration → Documents. Il reprend la mise en page de la fiche de contrôle PDF.
-* **Une synthèse en tête** : date, objets liés, projet, progression, score de réussite attendu, score obtenu et participants. Le résultat OK ou KO, avec son pourcentage, est calculé comme sur la fiche du questionnaire.
-* **Les questions groupe par groupe**, avec leurs réponses, leurs photos, le tableau d'une question Photos multiples et les tâches.
-* **En fin de document** : les signatures des participants, puis le plan d'action.
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/controles-deja-faits.png" alt="Fenêtre Contrôles déjà réalisés : 2 contrôles faits avec ce modèle ne suivent pas le réglage, nature Obligatoire pour 2 contrôles, prochaine date recalculée avec la période de 1 année pour 2 contrôles verrouillés, boutons Oui et Non">
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/questionnaire-pdf.png" alt="Fiche PDF d'un questionnaire : synthèse avec score de réussite 40 % et résultat OK à 43,75 %, tableau des photos d'une question Photos multiples avec les statuts OK et À réparer, réponses texte, pourcentage et OK/KO">
+### Une nature sur chaque contrôle
 
-### Photos multiples : statuts « À réparer » et « NA »
+* À la création, la **Nature du contrôle** est préremplie avec celle du modèle choisi. Elle reste modifiable sur la fiche jusqu'au verrouillage, comme les dates.
+* La liste des contrôles gagne une colonne **Nature du contrôle**, filtrable.
+* La prochaine date annoncée par la confirmation de verrouillage, puis enregistrée, tient compte de la période du modèle.
 
-* Chaque photo d'une question Photos multiples reçoit l'un des quatre statuts **OK, KO, À réparer ou NA**, avec les couleurs des réponses d'une question OK/KO/À réparer/NA.
-* Les statuts suivent partout : fiche du contrôle, page publique, application mobile, résumé des listes, documents ODT et PDF, statistiques du modèle.
-* Le résumé ne cite que les statuts donnés, par exemple « 3 photo(s) - 2 OK - 1 A réparer ».
-* Sur téléphone, les quatre boutons se rangent en grille 2 × 2, à la hauteur de la photo.
-* La fiche d'une réponse affiche le tableau des photos (miniature, commentaire, statut) au lieu d'un texte illisible.
-* Rien à migrer : les réponses OK / KO déjà saisies restent telles quelles.
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/controle-nature.png" alt="Formulaire Nouveau contrôle : modèle Vérification annuelle de la trousse de secours, contrôleur, Nature du contrôle préremplie sur Obligatoire, choix du lot">
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/photos-multiples-statuts.png" alt="Question Photos multiples d'un contrôle : quatre photos d'outils, chacune avec son commentaire et un statut différent, OK, KO, À réparer et NA">
+### Une prochaine date saisie avant la date du contrôle est signalée
 
-### Liste des contrôles : une seule colonne « Objet contrôlé »
+* Une prochaine date de contrôle saisie à la main avant la date du contrôle (une erreur d'année, par exemple) est signalée sur la fiche : une pastille **« Antérieure à la date du contrôle »** à côté de la date, avec le détail en infobulle.
+* Le même avertissement s'affiche à l'enregistrement de l'une des deux dates, puis dans la confirmation de verrouillage. C'est la dernière occasion de corriger : un contrôle verrouillé ne se modifie plus, et l'objet contrôlé paraîtrait en retard (le statut d'un véhicule dans DoliCar, par exemple).
+* Rien n'est bloqué : la date reste celle saisie. La pastille reste visible sur un contrôle verrouillé, pour expliquer un retard affiché.
 
-* Une colonne **« Objet contrôlé »** remplace les colonnes par type d'objet : elle affiche, avec leur pictogramme, tous les objets reliés au contrôle (lot, produit, tiers, utilisateur, projet, ticket…).
-* **Elle se trie** : les contrôles sont regroupés par type d'objet, puis rangés par nom. Ceux qui ne sont reliés à rien restent en bas, dans les deux sens.
-* **Elle se filtre** sur le nom, la référence ou le libellé de l'objet relié.
-* Un contrôle relié à plusieurs objets n'apparaît plus qu'une fois dans la liste.
-* Une sélection de colonnes enregistrée qui contenait une ancienne colonne par type affiche d'office la nouvelle.
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/prochaine-date-anterieure.png" alt="Fiche d'un contrôle daté du 10/11/2026 : prochaine date de contrôle 10/11/2025 suivie de la pastille Antérieure à la date du contrôle, et l'infobulle « La prochaine date de contrôle (10/11/2025) est antérieure à la date du contrôle (10/11/2026) : vérifiez la saisie. »">
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/liste-objet-controle.png" alt="Liste des contrôles triée sur la colonne Objet contrôlé : un utilisateur, un tiers, des tickets et des projets, chacun avec son pictogramme">
+### L'état d'un objet vient de ses contrôles obligatoires
 
-### Le thème moderne habille aussi les écrans propres à DigiQuali
+* Dès qu'un objet a des contrôles obligatoires, son état (conforme, non conforme, en retard) vient du **dernier contrôle obligatoire de chaque modèle**. Une ronde informative, même plus récente, ne le change plus. Sans contrôle obligatoire, c'est le dernier contrôle qui compte, comme avant.
+* Le pire état l'emporte, puis l'échéance la plus proche. Un contrôle fait avec un modèle archivé ne met jamais l'objet en retard.
+* **Page publique de suivi** : l'état cite le « Contrôle obligatoire du … » et la période de contrôle du modèle ; la liste des contrôles ne garde que les contrôles obligatoires, marqués « Obligatoire ».
+* **À la mise à jour**, une seule fois : vos contrôles et modèles existants passent en « Obligatoire ». Ils décidaient tous de l'état de leurs objets : rien ne change pour vous. Un nouveau modèle est « Informatif » par défaut : choisissez « Obligatoire » pour un contrôle réglementaire.
 
-* Arrivé avec Saturne 23.7.0 sur les blocs communs, le thème moderne s'applique désormais aux composants de DigiQuali : verdict en pastille teintée (fiche, listes, widget), jours avant le prochain contrôle, barre de progression, bascule Questions / Statistiques.
-* Les questions deviennent des cartes blanches dont le liseré suit l'état de la réponse, avec le type de question en pastille et les suggestions de commentaires en étiquettes.
-* Le plan d'action (liste et Gantt), les statistiques, la fiche d'un modèle et son arbre de groupes et de questions, la galerie des médias suivent le même style. La fiche d'une réponse adopte aussi le thème partagé.
+<img width="32%" src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/suivi-public-etat.png" alt="Page publique de suivi d'un lot sur téléphone : Conforme, contrôle obligatoire du 05/03/26, prochain contrôle le 05/03/27 dans 102 jours, période de contrôle 1 année"> <img width="32%" src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/suivi-public-historique.png" alt="Liste des contrôles de la page publique sur téléphone : le contrôle obligatoire FC2611-0056, conforme, modèle Vérification annuelle de la trousse de secours marqué Obligatoire ; la ronde mensuelle informative, plus récente, n'y figure pas">
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/theme-modele.png" alt="Fiche d'un modèle de contrôle au thème moderne : arbre des groupes de questions à gauche, informations en cartes, groupes de questions en liste">
+### Widget « Prochains contrôles à réaliser »
+
+* Seul le dernier contrôle de chaque modèle sur chaque objet est listé : un contrôle refait ne réapparaît plus. Les modèles archivés sont écartés.
+* Un contrôle relié aussi à un objet d'un type désactivé n'est plus sauté : le widget affiche bien ses dix lignes.
+
+### Photos multiples : le bilan de la question, et une aide pour bien la remplir
+
+* En tête du tableau des photos, le **Bilan de la question** : « 4 photo(s) - 1 OK - 1 KO - 1 A réparer - 1 NA ». Il se met à jour à chaque statut donné, sur le contrôle, le questionnaire, la page publique et l'application mobile.
+* Tant que la saisie est ouverte, une ligne rappelle qu'un statut par photo est facultatif et que la question n'a pas de statut global : elle ne compte pas dans les points, ni dans le verdict d'un contrôle.
+* Sur la fiche d'une question, une aide apparaît sous le type **Photos multiples** dès qu'on le choisit.
+
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/photos-multiples-bilan.png" alt="Question Photos multiples d'un contrôle : Bilan de la question 4 photos, 1 OK, 1 KO, 1 A réparer, 1 NA, ligne d'aide, puis quatre photos d'outils avec leur commentaire et leur statut">
+
+<img width="32%" src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/photos-multiples-telephone.png" alt="Même question sur la page publique de réponse, sur téléphone : bilan, ligne d'aide, et pour chaque photo les boutons OK, KO, A réparer et NA en grille, A réparer écrit en entier">
+
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.4.0/question-type-aide.png" alt="Fiche d'une nouvelle question : type Photos multiples choisi, l'aide dessous explique une ligne par photo avec commentaire et statut, sans statut global ni points ; nombre de points à 0">
 
 ## Améliorations & corrections
 
-### Saisie des réponses
+### Pages publiques
 
-* **Les photos des réponses d'un questionnaire validé** disparaissaient de sa fiche et de ses documents : elles restaient rangées sous la référence provisoire. Un questionnaire reçoit désormais sa référence définitive dès sa création, comme un contrôle, et les photos des questionnaires et contrôles déjà validés sont remises à leur place à la mise à jour, à la première ouverture de l'accueil de DigiQuali.
-* Plus d'avertissement PHP à la création d'un questionnaire.
-* **Réponse Texte en pleine largeur.** Le champ était coincé à côté de l'énoncé, sur environ deux lignes : il passe sous la question, s'ouvre sur quatre lignes et grandit avec le texte tapé ou collé. Sur un contrôle verrouillé, la réponse s'affiche en entier. Fiche, questionnaire, page publique et application mobile en profitent.
-* **Le commentaire d'une question grandit avec son texte**, y compris quand il est rempli depuis la bibliothèque de commentaires. Sur téléphone, il fait au moins trois lignes.
-* **Questions Pourcentage** : une question enregistrée avec une seule étape faisait planter la fiche du contrôle. Elle s'affiche avec un curseur à deux positions, et le formulaire de la question exige désormais au moins deux étapes.
-* **Photo du contrôle** : le bloc Photo de la fiche propose la bibliothèque de médias en plus de l'appareil, comme les réponses, et la photo rejoint la bibliothèque de DigiQuali.
+* **Liste des contrôles** : le contrôle qui fait l'état de l'objet affiche « Échéance dépassée » une fois sa prochaine date atteinte. Avant, un contrôle conforme mais échu restait affiché « Conforme ».
+* **« A réparer » ne se coupe plus au milieu du mot** sur téléphone, sur les boutons de statut d'une photo : l'icône passe au-dessus du libellé et, sur un écran étroit, c'est la photo qui cède de la place.
+* **Suivi d'un lot** : une longue référence de produit ne fait plus déborder toute la page sur téléphone.
+* **Logo de la société** : il ne s'affiche plus deux fois sur le suivi des contrôles et sur le plan d'action.
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/DoliSMQ/refs/heads/assets/release-23.3.0/reponse-texte.png" alt="Question Texte d'un contrôle : la réponse de trois lignes occupe toute la largeur de la question">
+### Documents et fichiers
 
-### Modèles de contrôle
+* **Documents générés en brouillon** : ceux d'anciens contrôles et questionnaires, restés sous leur référence provisoire (PROV…), disparaissaient de la fiche à la validation. Ils sont remis sous la référence définitive à la mise à jour, sans rien écraser.
+* **Activation depuis Accueil > Modules** : les fichiers des modèles et autres objets validés restés sous (PROV…) sont désormais repris là aussi, et plus seulement depuis l'accueil de DigiQuali (avec Saturne 23.9.1).
+* **Documents ODT** du contrôle et du questionnaire : plus d'avertissement PHP pour une question à choix restée sans réponse.
 
-* **Retirer une question ou un groupe d'un modèle ne retire que ce lien-là.** Une question partagée par plusieurs modèles pouvait disparaître d'un autre modèle que celui de la page, et retirer un groupe à la racine le retirait de tous les modèles. Chaque retrait laisse maintenant un événement dans l'agenda.
-* **Statistiques d'un modèle** : plus d'erreur fatale quand la page est ouverte sans modèle.
-* **Configuration des modèles** : quand le lien vers un type d'objet est désactivé, les champs complémentaires encore utilisés par un modèle d'export enregistré sont conservés (Saturne 23.8.0). La page les nomme et explique comment les faire supprimer, au lieu d'annoncer « 0 supprimé ».
+### Modèles et tableau de bord
 
-### Listes et fiches
+* **Fiche d'un modèle** : le message « Il n'est pas possible de déplacer un élément en dehors de son parent » ne s'affiche plus en permanence sous les champs ; il n'apparaît qu'en cas de déplacement refusé.
+* **Widget « Prochains contrôles à réaliser »** : la colonne s'intitule « Objet contrôlé » au lieu d'afficher une clé de traduction brute.
 
-* **« Supprimer les filtres »** sur les listes des contrôles, des modèles et des questions revient au filtre de statut par défaut. Avant, la liste affichait tout, archivés compris, puis le filtre revenait sans prévenir au premier tri.
-* **La fiche d'une réponse** charge la feuille de style du module, affiche la réponse en entier (elle était coupée à 250 px) et traduit son titre, son onglet et ses champs de points.
-* **Verdict** : plus d'avertissement PHP sur un contrôle sans verdict, et les libellés de statut ne sont plus écrasés.
-* **Tableau de bord** : sans début d'exercice fiscal configuré, les graphiques par mois commençaient par décembre. Ils commencent en janvier.
+### Compatibilité et stabilité
 
-### Documents
-
-* L'aperçu du modèle de fiche de contrôle, fait sur un contrôle vide, ne lève plus d'avertissement PHP sur la section des moyens de contrôle.
-
-### Sécurité
-
-* **Jeton anti-CSRF** sur les liens qui en manquaient (modification des catégories, retrait d'un moyen de contrôle, suppression d'une question, d'un groupe ou d'un modèle, modification d'une réponse). Avec la protection CSRF renforcée de Dolibarr, ces liens tombaient en erreur 403.
-* **Documents joints à une réponse** : les fichiers dangereux (HTML, SVG, scripts, exécutables) sont refusés avec un message, sur l'extension comme sur le contenu.
-
-### Installation et compatibilité
-
-* **Version minimale de Saturne.** DigiQuali refuse de s'activer sur un Saturne absent ou plus ancien que 23.8.0, avec un message qui nomme la version demandée, au lieu d'une erreur fatale.
-* **Racine alternative et liens symboliques.** DigiQuali fonctionne installé ailleurs que dans `custom/` ou par lien symbolique : liens, onglets, pages de l'application mobile, inclusions de Saturne.
-* **Activation plus légère** : elle ne génère plus, pour chaque contrôle, un QR code vers une ancienne page publique qui n'existe plus.
-* Plus d'avertissement PHP sur la fiche d'un élément, ni à chaque affichage du temps consommé d'un projet.
+* **Plus d'erreur fatale** quand un autre module annule un formulaire alors que DigiQuali est actif (par exemple la fiche d'une enveloppe de DoliLetter).
+* **Racine alternative** : DigiQuali trouve EasyURL et DoliCar même quand ils sont installés dans une autre racine que la sienne.
+* **Choix du modèle** : la liste des modèles n'appelle plus une fonction héritée de Digirisk, absente de DigiQuali, qui pouvait finir en erreur fatale sous PHP 8.
+* **Icône de DigiQuali** rétablie dans la liste des déclencheurs (Configuration > Modules > Déclencheurs).
+* **Pages de configuration** : plus d'avertissements PHP dans le journal à chaque affichage pour un utilisateur qui n'a pas le droit de lire la configuration de DigiQuali. L'accès reste refusé sans ce droit, et accordé avec.
 
 ## Testez les nouveautés maintenant
 
-**Allez tester le verrouillage en masse des contrôles sur la démo : [https://demodoli.digirisk.com/](https://demodoli.digirisk.com/)**
+**Allez tester les contrôles obligatoires et la période de contrôle sur la démo : [https://demodoli.digirisk.com/](https://demodoli.digirisk.com/)**
 
-## Comparaison des versions [23.2.2](https://github.com/Evarisk/digiquali/compare/23.2.2...23.3.0) et 23.3.0
+## Comparaison des versions [23.3.0](https://github.com/Evarisk/digiquali/compare/23.3.0...23.4.0) et 23.4.0
 
-* [#2761] [Survey] fix: référence définitive dès la création, les photos des réponses suivent la référence [`5e12d9e1`](https://github.com/Evarisk/digiquali/commit/5e12d9e1)
-* [#2763] [Survey] fix: plus de warning createfromclone à la création d'un questionnaire [`97ebeca2`](https://github.com/Evarisk/digiquali/commit/97ebeca2)
-* [#2759] [Sheet] fix: tell the admin which extrafields stay for a saved export model [`ed665bf3`](https://github.com/Evarisk/digiquali/commit/ed665bf3)
-* [#2757] [Media] fix: restriction et validation des types de fichiers sur l'upload de documents [`a0f0c218`](https://github.com/Evarisk/digiquali/commit/a0f0c218)
-* [#2755] [Question] fix: comment field grows with its text, three lines on phone [`4b3a2b27`](https://github.com/Evarisk/digiquali/commit/4b3a2b27)
-* [#2753] [CI] fix: phpstan baseline messages for the clamped step type [`b35ab567`](https://github.com/Evarisk/digiquali/commit/b35ab567)
-* [#2753] [Question] fix: percentage slider needs at least two steps [`18e54bb4`](https://github.com/Evarisk/digiquali/commit/18e54bb4)
-* [#2751] [Control] feat: single sortable controlled object column on control list [`bf132502`](https://github.com/Evarisk/digiquali/commit/bf132502)
-* [#2747] [Dashboard] fix: default fiscal month start to January in the by-month graphs [`215f73b5`](https://github.com/Evarisk/digiquali/commit/215f73b5)
-* [Medias] fix: bloc Photo du contrôle relié à la bibliothèque, actions photo de Saturne [`08704643`](https://github.com/Evarisk/digiquali/commit/08704643)
-* [#2719] [CI] ci: retrait du workflow Generate Auto Changelog sur main [`e510b894`](https://github.com/Evarisk/digiquali/commit/e510b894)
-* [#2738] [ControlDocument] fix: section équipements sautée quand la lecture échoue [`c98736b4`](https://github.com/Evarisk/digiquali/commit/c98736b4)
-* [#2737] [Sheet] fix: plus de fatale count() sur les statistiques sans trame [`8de231a3`](https://github.com/Evarisk/digiquali/commit/8de231a3)
-* [#2735] [Control] fix: plus de QR code vers public_control.php à l'activation [`553db04d`](https://github.com/Evarisk/digiquali/commit/553db04d)
-* [#2735] [Module] fix: chemins relatifs confiés au cœur sans custom/ [`6dc289a2`](https://github.com/Evarisk/digiquali/commit/6dc289a2)
-* [#2735] [Module] fix: dol_buildpath('/custom/…') sans custom/ [`92bd3201`](https://github.com/Evarisk/digiquali/commit/92bd3201)
-* [#2735] [Module] fix: URL construites avec DOL_URL_ROOT . '/custom/…' [`a1561089`](https://github.com/Evarisk/digiquali/commit/a1561089)
-* [#2731] [Public] fix: variables globales déclarées avant la validation, fetchObjectLinked() avec null [`fe814abe`](https://github.com/Evarisk/digiquali/commit/fe814abe)
-* [#2731] [Public] fix: valider object_type et échapper track_id sur les pages publiques de réponse et d'enquête [`b180ecac`](https://github.com/Evarisk/digiquali/commit/b180ecac)
-* [#2729] [Control] fix: libellés propres au verdict, plus de warning ni de statut écrasé [`8a889cb2`](https://github.com/Evarisk/digiquali/commit/8a889cb2)
-* [#2727] [List] fix: la suppression des filtres revient au statut par défaut [`5f290f93`](https://github.com/Evarisk/digiquali/commit/5f290f93)
-* [#2725] [Control] feat: étapes avant le verrouillage et verrouillage en masse [`c303e7b7`](https://github.com/Evarisk/digiquali/commit/c303e7b7)
-* [#2723] [CI] ci: actions GitHub en Node 24 (checkout@v7, cache@v6) [`20cb0a90`](https://github.com/Evarisk/digiquali/commit/20cb0a90)
-* [#2721] [CI] ci: contrôle « API Saturne publiée » dans la CI qualité [`a2810e3b`](https://github.com/Evarisk/digiquali/commit/a2810e3b)
-* [#2719] [CI] ci: retrait du workflow Generate Auto Changelog [`57fb66ca`](https://github.com/Evarisk/digiquali/commit/57fb66ca)
-* [#2717] [Mod] feat: version minimale de Saturne, activation refusee sur un Saturne trop ancien [`fe32c1fd`](https://github.com/Evarisk/digiquali/commit/fe32c1fd)
-* [#2715] [Registre] fix: chemins du registre publies tels qu'installes, lisibles par Saturne < 23.3.0 [`3b66c01f`](https://github.com/Evarisk/digiquali/commit/3b66c01f)
-* [#2713] [QRCode] fix: warning Undefined array key massaction sur le temps consomme d'un projet [`86a725fa`](https://github.com/Evarisk/digiquali/commit/86a725fa)
-* [#2711] [SurveyDocument] add: PDF natif pour les questionnaires [`55258fa9`](https://github.com/Evarisk/digiquali/commit/55258fa9)
-* [#2659] [CSRF] fix: ajouter le token au crayon d'edition d'une reponse [`37ab5ef0`](https://github.com/Evarisk/digiquali/commit/37ab5ef0)
-* [#2650] [ControlDet] fix: fiche réponse avec le CSS du module et la réponse affichée en entier [`1f9f9ef1`](https://github.com/Evarisk/digiquali/commit/1f9f9ef1)
-* [#2650] [ControlDet] fix: traduire le titre, l'onglet et les champs de points de la fiche réponse [`8cf0bbd6`](https://github.com/Evarisk/digiquali/commit/8cf0bbd6)
-* [#2650] [Question] fix: couleurs des statuts et réponse lisible sur la fiche réponse [`d599c5ac`](https://github.com/Evarisk/digiquali/commit/d599c5ac)
-* [#2650] [Question] add: statuts A réparer et NA sur les photos d'une question Photos multiples [`ea194cff`](https://github.com/Evarisk/digiquali/commit/ea194cff)
-* [#2707] [Element] fix: plus de HTML envoye avant les en-tetes par la fiche element [`77fc1785`](https://github.com/Evarisk/digiquali/commit/77fc1785)
-* [#2705] [CI] ci: refuser les inclusions relatives de Saturne [`d2efb285`](https://github.com/Evarisk/digiquali/commit/d2efb285)
-* [#2680] [Header] feat: thème partagé sur la fiche des réponses de contrôle [`53cc55cc`](https://github.com/Evarisk/digiquali/commit/53cc55cc)
-* [#2680] [SCSS] feat: thème moderne des écrans DigiQuali [`10f54cfa`](https://github.com/Evarisk/digiquali/commit/10f54cfa)
-* [#2659] [CSRF] fix: ajouter le token CSRF aux liens et appels AJAX [`bb956217`](https://github.com/Evarisk/digiquali/commit/bb956217)
-* [#2657] [Saturne] fix: inclure Saturne par dol_include_once / dol_buildpath [`c23321a5`](https://github.com/Evarisk/digiquali/commit/c23321a5)
-* [#2112] [Control] fix: text answer field full width, growing with its text [`7aabc410`](https://github.com/Evarisk/digiquali/commit/7aabc410)
-* [#2321] [CI] chore: retirer de la baseline phpstan les erreurs corrigées [`444fe5c5`](https://github.com/Evarisk/digiquali/commit/444fe5c5)
-* [#2321] [Sheet] fix: événement agenda et retrait du seul lien cliqué sur une question ou un groupe [`68b08b0b`](https://github.com/Evarisk/digiquali/commit/68b08b0b)
+* [#2802] [Admin] fix: droit de lecture de la configuration lu par hasRight(), sans avertissement pour un utilisateur qui ne l'a pas [`02261f32`](https://github.com/Evarisk/digiquali/commit/02261f32)
+* [#2798] [Mod] fix: fichiers des objets validés restés sous (PROVn) repris à l'activation depuis Accueil > Modules [`20a74834`](https://github.com/Evarisk/digiquali/commit/20a74834)
+* [#2799] [Trigger] fix: picto digiquali_color@digiquali, l'image digiquali@digiquali n'existe pas [`3161185d`](https://github.com/Evarisk/digiquali/commit/3161185d)
+* [#2796] [Hook] fix: doActions accepte $action nul [`115c45de`](https://github.com/Evarisk/digiquali/commit/115c45de)
+* [#2791] [Langs] fix: informative controls hidden from the public page [`919814c0`](https://github.com/Evarisk/digiquali/commit/919814c0)
+* [#2791] [Public] fix: only the mandatory controls on the public page, controls made before the nature are mandatory [`52a2d2f6`](https://github.com/Evarisk/digiquali/commit/52a2d2f6)
+* [#2793] [Langs] add: PhotoMultiple question summary and help [`c4f3d8d8`](https://github.com/Evarisk/digiquali/commit/c4f3d8d8)
+* [#2793] [Question] feat: help of the PhotoMultiple type under the question type selector [`e9d68970`](https://github.com/Evarisk/digiquali/commit/e9d68970)
+* [#2793] [Answer] feat: question summary and help line on a PhotoMultiple question [`6e5cde43`](https://github.com/Evarisk/digiquali/commit/6e5cde43)
+* [#2789] [Langs] add: control period, control nature and controls already made [`9c667ea7`](https://github.com/Evarisk/digiquali/commit/9c667ea7)
+* [#2789] [Control] feat: mandatory or informative control, object status from the last mandatory control, next controls widget [`5e05e584`](https://github.com/Evarisk/digiquali/commit/5e05e584)
+* [#2789] [Sheet] feat: control period in days, months or years, default nature of the controls, align the controls already made [`984145d3`](https://github.com/Evarisk/digiquali/commit/984145d3)
+* [#2789] [DB] add: control period and default nature on the sheet, nature on the control [`f1446265`](https://github.com/Evarisk/digiquali/commit/f1446265)
+* [#2778] [ODT] fix: plus de warning pour une question sans réponse dans les documents ODT [`debffb7c`](https://github.com/Evarisk/digiquali/commit/debffb7c)
+* [#2776] [Public] fix: logo de la société affiché une seule fois sur les pages publiques au design PWA [`52152291`](https://github.com/Evarisk/digiquali/commit/52152291)
+* [#2775] [Public] fix: vue État du suivi d'un lot sans débordement avec une longue référence produit [`11f86af6`](https://github.com/Evarisk/digiquali/commit/11f86af6)
+* [#2774] [Public] fix: « A réparer » ne se coupe plus au milieu du mot sur téléphone [`abb75578`](https://github.com/Evarisk/digiquali/commit/abb75578)
+* [#2772] [Media] fix: balise \file du docblock de digiquali_media_block_actions.tpl.php [`a4c3eb25`](https://github.com/Evarisk/digiquali/commit/a4c3eb25)
+* [#2773] [Survey] fix: les documents générés en brouillon suivent la référence définitive [`28b08851`](https://github.com/Evarisk/digiquali/commit/28b08851)
+* [#2771] [Sheet] fix: selectSheetList() n'appelle plus fetchDigiriskElementFlat() [`2dbb5aa3`](https://github.com/Evarisk/digiquali/commit/2dbb5aa3)
+* [#2770] [Module] fix: classes d'EasyURL et de DoliCar cherchées dans toutes les racines [`d6898274`](https://github.com/Evarisk/digiquali/commit/d6898274)
+* [#2769] [Dashboard] fix: en-tête « Objet contrôlé » dans le widget Prochains contrôles [`b59e1554`](https://github.com/Evarisk/digiquali/commit/b59e1554)
+* [#2768] [Sheet] fix: message de déplacement hors du parent masqué jusqu'au déplacement refusé [`b3ab961d`](https://github.com/Evarisk/digiquali/commit/b3ab961d)
+* [#2743] [Control] feat: avertir quand la prochaine date de controle precede la date du controle [`42e88b6f`](https://github.com/Evarisk/digiquali/commit/42e88b6f)

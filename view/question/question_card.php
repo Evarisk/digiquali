@@ -982,6 +982,7 @@ if ($action == 'create') {
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
 	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
+	print digiquali_question_type_help(GETPOST('type') ?: 'OkKoToFixNonApplicable');
 	print '</td></tr>';
 
 	// Points
@@ -1144,6 +1145,7 @@ if (($id || $ref) && $action == 'edit') {
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
 	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
+	print digiquali_question_type_help($object->type);
 	print '</td></tr>';
 
 	// Points -- Nombre de points
@@ -1341,6 +1343,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print '</td>';
 	print '<td>';
 	print $langs->transnoentities($object->type);
+	print digiquali_question_type_help($object->type);
 	print '</td></tr>';
 
 	// Points -- Nombre de points

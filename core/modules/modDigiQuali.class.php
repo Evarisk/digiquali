@@ -33,7 +33,7 @@ class modDigiQuali extends DolibarrModules
 	/**
 	 * @var int[] Minimum version of Saturne required by module, same format as need_dolibarr_version: checked by init() and by the Saturne index page
 	 */
-	public $need_saturne_version = [23, 8, 0];
+	public $need_saturne_version = [23, 9, 1];
 
 	/**
 	 * Constructor. Define names, constants, directories, boxes, permissions
@@ -82,7 +82,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '23.3.0';
+		$this->version = '23.4.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -949,7 +949,16 @@ class modDigiQuali extends DolibarrModules
 			dolibarr_set_const($this->db, 'DIGIQUALI_DOCUMENT_DIRECTORIES_NAME_BACKWARD_COMPATIBILITY', $this->version, 'integer', 1, '', $conf->entity);
 		}
 
-		// #2761: answer photos of the controls (before #2442) and surveys validated while their files stayed under (PROVn).
+		// #2791: the controls made before the control nature (#2789) all decided the status of their object, so they are
+		// mandatory, and so are the next controls of their sheets. Once per entity: the nature chosen afterwards is kept
+		if (getDolGlobalInt('DIGIQUALI_CONTROL_NATURE_BACKWARD_COMPATIBILITY') == 0) {
+			$this->db->query('UPDATE ' . MAIN_DB_PREFIX . 'digiquali_control SET mandatory = 1 WHERE entity = ' . (int) $conf->entity);
+			$this->db->query('UPDATE ' . MAIN_DB_PREFIX . "digiquali_sheet SET default_control_mandatory = 1 WHERE type = 'control' AND entity = " . (int) $conf->entity);
+			dolibarr_set_const($this->db, 'DIGIQUALI_CONTROL_NATURE_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
+		}
+
+		// #2761: answer photos of the controls (before #2442) and surveys validated while their files stayed under (PROVn),
+		// #2773: and their documents generated as a draft, under <element>document/(PROVn).
 		// At each activation, and so at the first visit of the module index after an update : it only costs a directory listing
 		require_once __DIR__ . '/../../class/control.class.php';
 		require_once __DIR__ . '/../../class/survey.class.php';
@@ -1179,6 +1188,13 @@ class modDigiQuali extends DolibarrModules
         $cronJob = new Cronjob($this->db);
         $cronJob->fetch(0, 'ActionComm', 'sendEmailsReminder');
         $cronJob->reprogram_jobs($user->login, dol_now());
+
+        // Files of the other Saturne objects (sheets...) validated while they stayed under (PROVn) : moved back
+        // once the module is enabled, from Home > Modules as well (Saturne#1939). A Saturne without the function
+        // leaves them
+        if ($result > 0 && function_exists('saturne_recover_prov_directories')) {
+            saturne_recover_prov_directories($this->name);
+        }
 
 		 return $result;
 	}

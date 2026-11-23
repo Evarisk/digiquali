@@ -252,6 +252,11 @@ if (empty($resHook)) {
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     include DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
+    // #2743: warn as soon as the typed dates disagree, the date is kept as typed
+    if ($action == 'view' && in_array(GETPOST('action', 'aZ09'), ['setcontrol_date', 'setnext_control_date']) && $object->isNextControlDateBeforeControlDate()) {
+        setEventMessages($langs->trans('NextControlDateBeforeControlDate', dol_print_date($object->getNextControlDate(), 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')), [], 'warnings');
+    }
+
     // Actions set_thirdparty, set_project
     require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
@@ -474,6 +479,11 @@ if ($action == 'create') {
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
 
+    // Nature of the control : the default of the sheet, the form is rendered again when the sheet changes
+    print '<tr class="field_mandatory"><td>' . ($source != 'pwa' ? $langs->trans('ControlNature') . ' ' . img_picto($langs->trans('ControlNatureHelp'), 'help') : img_picto($langs->trans('ControlNature'), 'fontawesome_fa-balance-scale_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
+    print ($source != 'pwa' ? img_picto('', 'fontawesome_fa-balance-scale_fas', 'class="pictofixedwidth"') : '') . $form::selectarray('mandatory', [0 => $langs->trans('InformativeControl'), 1 => $langs->trans('MandatoryControl')], GETPOSTISSET('mandatory') ? GETPOSTINT('mandatory') : ($fkSheet > 0 ? (int) $sheet->default_control_mandatory : 0));
+    print '</td></tr>';
+
     // Hidden project input when project field is not visible but sheet has a default project
     if ($fkSheet > 0 && empty($sheetShowProject) && !empty($sheetDefaultProjectId)) {
         print '<input type="hidden" name="projectid" value="' . intval($sheetDefaultProjectId) . '">';
@@ -511,10 +521,7 @@ if ($action == 'create') {
     if ($fkSheet > 0) {
         print '<hr>';
 
-        print '<table class="centpercent tableforfieldcreate object-table linked-objects">';
-
-        print '<tr><td>';
-        print '<div class="fields-content">';
+        print '<table class="border centpercent tableforfieldcreate object-table linked-objects">';
 
         foreach($objectsMetadata as $objectType => $objectMetadata) {
             if (!empty($objectMetadata['conf'] && (!empty(GETPOST('fromtype')) && GETPOST('fromtype') == $objectMetadata['link_name']) || (preg_match('/"'. $objectType .'":1/',$sheet->element_linked)))) {
@@ -539,7 +546,6 @@ if ($action == 'create') {
             }
         }
 
-        print '</div>';
         print '</table>';
     }
 
@@ -633,6 +639,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
         }
         $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+        // #2743: last chance to correct a next control date typed before the control date
+        if ($object->isNextControlDateBeforeControlDate()) {
+            $lockConfirmContent .= '<br>' . img_warning('', '', 'paddingright') . '<span class="warning">' . $langs->transnoentities('NextControlDateBeforeControlDate', dol_print_date($nextControlDate, 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')) . '</span>';
+        }
         $lockConfirmContent .= '<br><br>' . $langs->transnoentities('ControlLockConsequences');
 
         $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $lockConfirmContent, 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
@@ -726,13 +736,26 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     print $form->editfieldkey('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
     print '</td><td class="valuefield fieldname_control_date">';
     print $form->editfieldval('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
-    print '</td>';
+    print '</td></tr>';
 
     print '<tr class="field_next_control_date"><td class="titlefield fieldname_next_control_date">';
     print $form->editfieldkey('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
     print '</td><td class="valuefield fieldname_next_control_date">';
     print $form->editfieldval('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
-    print '</td>';
+    // #2743: indicative only, a locked control keeps it too so the overdue status can be explained
+    if ($object->isNextControlDateBeforeControlDate()) {
+        $nextControlDateWarning = $langs->trans('NextControlDateBeforeControlDate', dol_print_date($object->getNextControlDate(), 'day'), dol_print_date($object->getControlDateTimestamp(), 'day'));
+        print ' <span class="warning classfortooltip" title="' . dol_escape_htmltag($nextControlDateWarning) . '">' . img_warning('', '', 'paddingright') . $langs->trans('NextControlDateBeforeControlDateShort') . '</span>';
+    }
+    print '</td></tr>';
+
+    // Nature : a mandatory control decides the status of the controlled object, changeable until the lock as the dates
+    $natureSelect = 'select;0:' . $langs->trans('InformativeControl') . ',1:' . $langs->trans('MandatoryControl');
+    print '<tr class="field_mandatory"><td class="titlefield fieldname_mandatory">';
+    print $form->editfieldkey('ControlNature', 'mandatory', (string) (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', 0, 0, 'id', $langs->trans('ControlNatureHelp'));
+    print '</td><td class="valuefield fieldname_mandatory">';
+    print $form->editfieldval('ControlNature', 'mandatory', (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', null, null, 'id=' . $object->id);
+    print '</td></tr>';
 
     print '<tr class="field_verdict"><td class="titlefield fieldname_verdict">';
     print $langs->trans('Verdict');

@@ -26,9 +26,11 @@
  * Variable : $controlInfoArray
  */
 
-$controlVerdictDisplays = [
-    'ok' => ['icon' => 'fa-check', 'label' => 'ControlStatusOk'],
-    'ko' => ['icon' => 'fa-exclamation', 'label' => 'ControlStatusKo']
+// The last control of a sheet is overdue once its next control date is reached, whatever its verdict was
+$controlStatusDisplays = [
+    'ok'      => ['icon' => 'fa-check', 'label' => 'ControlStatusOk'],
+    'ko'      => ['icon' => 'fa-exclamation', 'label' => 'ControlStatusKo'],
+    'overdue' => ['icon' => 'fa-hourglass-end', 'label' => 'ControlStatusOverdue']
 ]; ?>
 
 <div class="pwa-container public-control-screen">
@@ -42,16 +44,16 @@ $controlVerdictDisplays = [
     <?php else : ?>
         <div class="pwa-list">
             <?php foreach ($controlInfoArray['control'] as $controlInfo) :
-                $controlVerdictDisplay = $controlVerdictDisplays[$controlInfo['verdict']]; ?>
+                $controlStatusDisplay = $controlStatusDisplays[$controlInfo['status']]; ?>
                 <div class="pwa-card public-control-card">
-                    <div class="public-control-card__thumbnail public-control-card__thumbnail--<?php echo $controlInfo['verdict']; ?>">
-                        <?php echo !empty($controlInfo['image']) ? $controlInfo['image'] : '<i class="fas ' . $controlVerdictDisplay['icon'] . '"></i>'; ?>
+                    <div class="public-control-card__thumbnail public-control-card__thumbnail--<?php echo $controlInfo['status']; ?>">
+                        <?php echo !empty($controlInfo['image']) ? $controlInfo['image'] : '<i class="fas ' . $controlStatusDisplay['icon'] . '"></i>'; ?>
                     </div>
                     <div class="pwa-card-body">
                         <div class="pwa-card-head">
                             <span class="pwa-card-title"><?php echo dol_escape_htmltag($controlInfo['ref']); ?></span>
                             <span class="pwa-card-status">
-                                <span class="public-control-badge public-control-badge--<?php echo $controlInfo['verdict']; ?>"><?php echo $langs->transnoentities($controlVerdictDisplay['label']); ?></span>
+                                <span class="public-control-badge public-control-badge--<?php echo $controlInfo['status']; ?>"><?php echo $langs->transnoentities($controlStatusDisplay['label']); ?></span>
                             </span>
                         </div>
                         <div class="pwa-card-fields">
@@ -61,7 +63,12 @@ $controlVerdictDisplays = [
                             </div>
                             <div class="pwa-card-field">
                                 <span class="pwa-card-field-label"><?php echo $langs->transnoentities('Sheet'); ?></span>
-                                <span class="pwa-card-field-value"><?php echo dol_escape_htmltag($controlInfo['sheet']); ?></span>
+                                <span class="pwa-card-field-value">
+                                    <?php echo dol_escape_htmltag($controlInfo['sheet']);
+                                    if (!empty($controlInfo['mandatory'])) : ?>
+                                        <span class="public-control-panel__muted"><?php echo $langs->transnoentities('MandatoryControl'); ?></span>
+                                    <?php endif; ?>
+                                </span>
                             </div>
                             <?php if (!empty($controlInfo['controller'])) : ?>
                                 <div class="pwa-card-field">

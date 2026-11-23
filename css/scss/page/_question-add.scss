@@ -1,4 +1,11 @@
 .question-table {
+  // How a question of the picked type is answered, under the type selector (question.js shows the one of the type)
+  .question-type-help {
+    max-width: 700px;
+    margin-top: 0.5em;
+    line-height: 1.4;
+  }
+
   .linked-medias-list {
     display: flex;
     gap: 10px;
