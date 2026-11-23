@@ -225,7 +225,7 @@ AnswerCorrectnessMinBound     = Minimum correct answer value
 AnswerCorrectnessMaxBound     = Maximum correct answer value
 QuestionMinBoundExceeded      = The minimum correct answer value of a percentage cannot be lower than 0
 QuestionMaxBoundExceeded      = The maximum correct answer value of a percentage cannot be higher than 100
-AddProject                    = Please set a project for this control to be able to use tasks
+ProjectNeededForTasks         = Please set a project for this control to be able to use tasks
 NoQuestion                    = No question
 
 
