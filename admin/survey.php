@@ -64,7 +64,7 @@ $hookmanager->initHooks(['surveyadmin', 'globalcard']); // Note that conf->hooks
 $elementtype = $moduleNameLowerCase . '_' . $object->element; // Must be the $table_element of the class that manage extrafield
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread = $user->hasRight($moduleNameLowerCase, 'adminpage', 'read');
 saturne_check_access($permissiontoread);
 
 /*

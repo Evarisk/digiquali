@@ -67,7 +67,7 @@ $elementtype = $moduleNameLowerCase . '_' . $objectType; // Must be the $table_e
 $form = new Form($db);
 
 // Access control
-$permissiontoread = $user->rights->digiquali->adminpage->read;
+$permissiontoread = $user->hasRight('digiquali', 'adminpage', 'read');
 saturne_check_access($permissiontoread);
 
 /*

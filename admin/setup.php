@@ -48,7 +48,7 @@ $backtopage = GETPOST('backtopage', 'alpha');
 $form       = new Form($db);
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->digiquali->adminpage->read;
+$permissiontoread = $user->hasRight('digiquali', 'adminpage', 'read');
 
 saturne_check_access($permissiontoread);
 /*
