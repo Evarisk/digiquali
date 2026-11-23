@@ -1189,6 +1189,13 @@ class modDigiQuali extends DolibarrModules
         $cronJob->fetch(0, 'ActionComm', 'sendEmailsReminder');
         $cronJob->reprogram_jobs($user->login, dol_now());
 
+        // Files of the other Saturne objects (sheets...) validated while they stayed under (PROVn) : moved back
+        // once the module is enabled, from Home > Modules as well (Saturne#1939). A Saturne without the function
+        // leaves them
+        if ($result > 0 && function_exists('saturne_recover_prov_directories')) {
+            saturne_recover_prov_directories($this->name);
+        }
+
 		 return $result;
 	}
 }
