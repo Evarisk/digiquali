@@ -3,7 +3,7 @@
 ## Informations
 
 - Numéro du module : 436301
-- Dernière mise à jour : 18/11/2026
+- Dernière mise à jour : 23/11/2026
 - Éditeur : [Evarisk](https://evarisk.com)
 - Thème : Eldy Menu
 - Licence : GPLv3
@@ -11,10 +11,10 @@
 
 ### Version
 
-- Version : 23.3.0
+- Version : 23.4.0
 - PHP : 7.4.33
 - Compatibilité : Dolibarr 23.0.0 - 24.0.0
-- Saturne Framework : 23.8.0
+- Saturne Framework : 23.9.1
 
 ## Liens
 
@@ -22,7 +22,7 @@
 - Demo : [Demo DigiQuali](https://demodoli.digirisk.com) - ID: demo - Password: demo
 - Documentation : [Wiki DigiQuali](https://wiki.dolibarr.org/index.php/Module_DigiQuali)
 - Projet Github : [Projet DigiQuali](https://github.com/Evarisk/digiquali/projects?query=is%3Aopen)
-- Saturne Framework : 23.8.0
+- Saturne Framework : 23.9.1
 - D'autres modules développés par Evarisk disponibles sur [Dolistore.com](https://dolistore.com)
 
 ## Fonctionnalités
