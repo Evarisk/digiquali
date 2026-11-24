@@ -150,7 +150,7 @@ window.digiquali.photoMultiple.readRows = function($widget) {
  * @memberof DigiQuali_PhotoMultiple
  *
  * @since   23.2.0
- * @version 23.2.0
+ * @version 23.4.0
  *
  * @param  {jQuery}  $widget The .question-photo-multiple element
  * @param  {boolean} save    True to send the answer to the server if it changed since the last save
@@ -187,8 +187,8 @@ window.digiquali.photoMultiple.sync = function($widget, save) {
  *
  * @memberof DigiQuali_PhotoMultiple
  *
- * @since   23.3.0
- * @version 23.3.0
+ * @since   23.4.0
+ * @version 23.4.0
  *
  * @param  {jQuery} $widget The .question-photo-multiple element
  * @param  {Object} rows    Rows returned by readRows()
