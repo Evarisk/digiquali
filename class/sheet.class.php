@@ -735,16 +735,41 @@ class Sheet extends SaturneObject
         }
 
         if ($reindexLast) {
-            $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
-            $sql .= ' SET position = ( SELECT (COALESCE(MAX(position), 0) + 1) FROM ' . MAIN_DB_PREFIX . 'element_element WHERE fk_source = '. (int) $fk_source .' AND sourcetype = \'' . $this->db->escape($sourcetype) . '\' )';
-            $sql .= ' WHERE fk_source = ' . $fk_source;
-            $sql .= ' AND sourcetype = \'' . $this->db->escape($sourcetype) . '\'';
-            $sql .= ' AND (targettype = "digiquali_question" OR targettype = "digiquali_questiongroup")';
-            $sql .= ' AND position IS NULL';
+            // #2822: MySQL refuses an UPDATE whose subquery reads the table it updates (error 1093), MariaDB
+            // accepts it. The last position is read first, then each link still without position goes after it,
+            // in the order the links were made : a single new link gets the last position plus one, as before.
+            $sqlSource = ' FROM ' . MAIN_DB_PREFIX . 'element_element';
+            $sqlSource .= ' WHERE fk_source = ' . (int) $fk_source;
+            $sqlSource .= " AND sourcetype = '" . $this->db->escape($sourcetype) . "'";
 
-            $res = $this->db->query($sql);
+            $resql = $this->db->query('SELECT MAX(position) AS last_position' . $sqlSource);
+            if ($resql) {
+                $obj      = $this->db->fetch_object($resql);
+                $position = (int) ($obj->last_position ?? 0);
 
-            if (!$res) {
+                $sql = 'SELECT rowid' . $sqlSource;
+                $sql .= " AND targettype IN ('digiquali_question', 'digiquali_questiongroup')";
+                $sql .= ' AND position IS NULL';
+                $sql .= ' ORDER BY rowid';
+
+                $resql = $this->db->query($sql);
+                if ($resql) {
+                    $linkIds = [];
+                    while ($obj = $this->db->fetch_object($resql)) {
+                        $linkIds[] = (int) $obj->rowid;
+                    }
+                    foreach ($linkIds as $linkId) {
+                        $position++;
+                        $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
+                        $sql .= ' SET position = ' . $position . ' WHERE rowid = ' . $linkId;
+                        if (!$this->db->query($sql)) {
+                            $error++;
+                        }
+                    }
+                } else {
+                    $error++;
+                }
+            } else {
                 $error++;
             }
         }
