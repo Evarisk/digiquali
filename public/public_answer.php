@@ -130,8 +130,19 @@ if (!isModEnabled('multicompany')) {
 
 $conf->setEntityValues($db, $entity);
 
-// Load object
-$object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'");
+// Load object : a link that is empty or finds nothing gets the answer of an unknown record and stops before the
+// actions. They all work on the object loaded here, and the save action would otherwise load the object from the id
+// of the URL, which nothing checks on this page
+if (empty($trackID) || $object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'") <= 0) {
+    $conf->dol_hide_topmenu  = 1;
+    $conf->dol_hide_leftmenu = 1;
+
+    http_response_code(404);
+    saturne_header(0, '', $langs->trans('PublicAnswer'), '', '', 0, 0, [], [], '', 'page-public-card page-public-answer');
+    print saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true);
+    llxFooter('', 'public');
+    exit;
+}
 
 $linkableElements = saturne_get_objects_metadata();
 $object->fetchObjectLinked(null, '', null, 'digiquali_control');
