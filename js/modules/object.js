@@ -91,8 +91,8 @@ window.digiquali.object.event = function() {
  *
  * @memberof DigiQuali_Object
  *
- * @since   23.2.0
- * @version 23.6.0
+ * @since   23.3.0
+ * @version 23.3.0
  *
  * @returns {void}
  */
@@ -530,8 +530,8 @@ window.digiquali.object.placePercents = function() {
  * row, and completes them by hand. The blur is then triggered so that the save goes through
  * saveCommentAuto, the very path a typed comment takes.
  *
- * @since   23.5.0
- * @version 23.5.0
+ * @since   23.1.0
+ * @version 23.1.0
  *
  * @returns {void}
  */
