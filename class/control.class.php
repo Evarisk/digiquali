@@ -178,9 +178,10 @@ class Control extends SaturneObject
     public $status;
 
     /**
-     * @var string|null Label.
+     * @var string|null Label, optional : null until set, so that a control created without one (API, CLI) can be
+     *                  saved. #2823: a typed property without default is fatal when createCommon() reads it.
      */
-    public ?string $label;
+    public ?string $label = null;
 
     /**
      * @var string Public note.
