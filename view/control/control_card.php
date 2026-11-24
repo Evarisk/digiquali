@@ -630,15 +630,17 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     // Lock confirmation. The next control date is only written in database by the lock itself :
     // preview the date it will set, otherwise the confirmation always announces NA and 0 day.
-    $nextControlDate = $object->getNextControlDate();
-    $days            = $object->getNextControlDelay();
+    // #2811: the deadline is counted from today, a next control date already past is announced as overdue.
+    $nextControlDate     = $object->getNextControlDate();
+    $nextControlDeadline = digiquali_get_next_control_deadline_label($object->getNextControlDelay());
+    $nextControlDeadline = $nextControlDeadline ?: $langs->transnoentities('NA');
     if (($action == 'lock' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // A KO verdict has its own periodicity : the warning does not replace the announced dates
         $lockConfirmContent = $langs->trans('ConfirmLockObject', $langs->transnoentities('The' . ucfirst($object->element)));
         if ($object->verdict == 2) {
             $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
         }
-        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $nextControlDeadline);
         // #2743: last chance to correct a next control date typed before the control date
         if ($object->isNextControlDateBeforeControlDate()) {
             $lockConfirmContent .= '<br>' . img_warning('', '', 'paddingright') . '<span class="warning">' . $langs->transnoentities('NextControlDateBeforeControlDate', dol_print_date($nextControlDate, 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')) . '</span>';

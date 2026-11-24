@@ -43,20 +43,7 @@ $isMandatory     = !empty($lastControl['mandatory']);
 // The period of the sheet comes before the periodicity of the object, as when the next control date is computed
 $periodLabel     = !empty($lastControl['period']) ? 'ControlPeriod' : 'QcFrequency';
 $periodValue     = !empty($lastControl['period']) ? $lastControl['period'] : ($linkedObjectInfoArray['linkedObject']['qc_frequency'] ?? '');
-$nextControlDays = $controlStatus['next_control_days'];
-if ($nextControlDays === null) {
-    $nextControlDeadline = '';
-} elseif ($nextControlDays < -1) {
-    $nextControlDeadline = $langs->transnoentities('NextControlOverdueSince', abs($nextControlDays));
-} elseif ($nextControlDays == -1) {
-    $nextControlDeadline = $langs->transnoentities('NextControlOverdueOneDay');
-} elseif ($nextControlDays == 0) {
-    $nextControlDeadline = $langs->transnoentities('NextControlToday');
-} elseif ($nextControlDays == 1) {
-    $nextControlDeadline = $langs->transnoentities('NextControlTomorrow');
-} else {
-    $nextControlDeadline = $langs->transnoentities('NextControlInDays', $nextControlDays);
-}
+$nextControlDeadline = digiquali_get_next_control_deadline_label($controlStatus['next_control_days']);
 
 $hasObjectImage = !empty($linkedObjectInfoArray['images']) && strpos($linkedObjectInfoArray['images'], 'nophoto') === false; ?>
 
