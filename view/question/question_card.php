@@ -981,17 +981,18 @@ if ($action == 'create') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\' data-question-types-without-points=\'' . json_encode(Question::getQuestionTypesWithoutPoints()) . '\'');
 	print digiquali_question_type_help(GETPOST('type') ?: 'OkKoToFixNonApplicable');
 	print '</td></tr>';
 
-	// Points
+	// Points : locked at 0 for a type without points (#2812), question.js follows the type picked
 	$points = GETPOST('points');
 	if ($points === '') {
 		$points = $object->getDefaultPoints();
 	}
+	$pointsLocked = in_array(GETPOST('type') ?: 'OkKoToFixNonApplicable', Question::getQuestionTypesWithoutPoints());
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
-	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$points.'">';
+	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="' . ($pointsLocked ? 0 : $points) . '"' . ($pointsLocked ? ' disabled' : '') . '>';
 	print '</td></tr>';
 
 	// Grading Policy
@@ -1144,13 +1145,13 @@ if (($id || $ref) && $action == 'edit') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\' data-question-types-without-points=\'' . json_encode(Question::getQuestionTypesWithoutPoints()) . '\'');
 	print digiquali_question_type_help($object->type);
 	print '</td></tr>';
 
-	// Points -- Nombre de points
+	// Points -- Nombre de points : locked at 0 for a type without points (#2812), question.js follows the type picked
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
-	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$object->points.'">';
+	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="' . ($object->hasPoints() ? $object->points : 0) . '"' . ($object->hasPoints() ? '' : ' disabled') . '>';
 	print '</td></tr>';
 
 	// Grading Policy
