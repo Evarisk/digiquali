@@ -188,7 +188,8 @@ class Digiquali extends SaturneApi
     /**
      * Create a control.
      *
-     * @param array<string, mixed>|null $request_data Control data
+     * @param array                     $request_data Control data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New control id
      *
@@ -203,7 +204,8 @@ class Digiquali extends SaturneApi
      * Update a control.
      *
      * @param int                       $id           Control id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned, freshly-fetched control
      *
@@ -335,7 +337,8 @@ class Digiquali extends SaturneApi
      * Add a line to a control.
      *
      * @param int                       $id           Control id
-     * @param array<string, mixed>|null $request_data Line data
+     * @param array                     $request_data Line data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New line id
      *
@@ -351,7 +354,8 @@ class Digiquali extends SaturneApi
      *
      * @param int                       $id           Control id
      * @param int                       $lineid       Line id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned line
      *
@@ -416,7 +420,8 @@ class Digiquali extends SaturneApi
     /**
      * Create a survey.
      *
-     * @param array<string, mixed>|null $request_data Survey data
+     * @param array                     $request_data Survey data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New survey id
      *
@@ -431,7 +436,8 @@ class Digiquali extends SaturneApi
      * Update a survey.
      *
      * @param int                       $id           Survey id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned survey
      *
@@ -530,7 +536,8 @@ class Digiquali extends SaturneApi
      * Add a line to a survey.
      *
      * @param int                       $id           Survey id
-     * @param array<string, mixed>|null $request_data Line data
+     * @param array                     $request_data Line data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New line id
      *
@@ -546,7 +553,8 @@ class Digiquali extends SaturneApi
      *
      * @param int                       $id           Survey id
      * @param int                       $lineid       Line id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned line
      *
@@ -611,7 +619,8 @@ class Digiquali extends SaturneApi
     /**
      * Create a sheet.
      *
-     * @param array<string, mixed>|null $request_data Sheet data
+     * @param array                     $request_data Sheet data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New sheet id
      *
@@ -626,7 +635,8 @@ class Digiquali extends SaturneApi
      * Update a sheet.
      *
      * @param int                       $id           Sheet id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned sheet
      *
@@ -746,7 +756,8 @@ class Digiquali extends SaturneApi
     /**
      * Create a question.
      *
-     * @param array<string, mixed>|null $request_data Question data
+     * @param array                     $request_data Question data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New question id
      *
@@ -761,7 +772,8 @@ class Digiquali extends SaturneApi
      * Update a question.
      *
      * @param int                       $id           Question id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned question
      *
@@ -881,7 +893,8 @@ class Digiquali extends SaturneApi
     /**
      * Create an answer.
      *
-     * @param array<string, mixed>|null $request_data Answer data
+     * @param array                     $request_data Answer data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New answer id
      *
@@ -896,7 +909,8 @@ class Digiquali extends SaturneApi
      * Update an answer.
      *
      * @param int                       $id           Answer id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned answer
      *
@@ -1016,7 +1030,8 @@ class Digiquali extends SaturneApi
     /**
      * Create a question group.
      *
-     * @param array<string, mixed>|null $request_data Question group data
+     * @param array                     $request_data Question group data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New question group id
      *
@@ -1031,7 +1046,8 @@ class Digiquali extends SaturneApi
      * Update a question group.
      *
      * @param int                       $id           Question group id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned question group
      *
@@ -1151,7 +1167,8 @@ class Digiquali extends SaturneApi
     /**
      * Create an activity.
      *
-     * @param array<string, mixed>|null $request_data Activity data
+     * @param array                     $request_data Activity data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New activity id
      *
@@ -1166,7 +1183,8 @@ class Digiquali extends SaturneApi
      * Update an activity.
      *
      * @param int                       $id           Activity id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned activity
      *
@@ -1286,7 +1304,8 @@ class Digiquali extends SaturneApi
     /**
      * Create a risk assessment.
      *
-     * @param array<string, mixed>|null $request_data Risk assessment data
+     * @param array                     $request_data Risk assessment data
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return int New risk assessment id
      *
@@ -1301,7 +1320,8 @@ class Digiquali extends SaturneApi
      * Update a risk assessment.
      *
      * @param int                       $id           Risk assessment id
-     * @param array<string, mixed>|null $request_data Fields to update
+     * @param array                     $request_data Fields to update
+     * @phpstan-param array<string, mixed>|null $request_data
      *
      * @return object Cleaned risk assessment
      *
