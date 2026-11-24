@@ -124,7 +124,7 @@ window.digiquali.question.selectAnswerPicto = function() {
  * Change question type
  *
  * @since   20.1.0
- * @version 20.1.0
+ * @version 23.4.0
  *
  * @return {void}
  */
@@ -160,8 +160,8 @@ window.digiquali.question.changeQuestionType = function() {
 /**
  * Show the help of the picked question type under the selector, rendered by digiquali_question_type_help()
  *
- * @since   23.3.0
- * @version 23.3.0
+ * @since   23.4.0
+ * @version 23.4.0
  *
  * @param  {string} questionType Picked question type
  * @return {void}
