@@ -624,19 +624,23 @@ class Control extends SaturneObject
     }
 
     /**
-     * Get the delay, in days, between the date the control was performed and the next control date.
+     * Get the number of days left before the next control date, counted from today.
      *
-     * @return int<0,max> Number of days, 0 when there is no next control date
+     * Signed : a next control date already past gives a negative number, the delay the object is overdue by.
+     * Same computation as the status of the controlled object and its public page, so that the lock confirmation
+     * announces the deadline they will show.
+     *
+     * @return int|null Number of days, negative once the date is past, null when there is no next control date
      * @throws Exception
      */
-    public function getNextControlDelay(): int
+    public function getNextControlDelay(): ?int
     {
         $nextControlDate = $this->getNextControlDate();
         if ($nextControlDate <= 0) {
-            return 0;
+            return null;
         }
 
-        return (int) floor(abs($nextControlDate - ($this->getControlDateTimestamp() ?: dol_now('tzuser'))) / (24 * 3600));
+        return (int) round(($nextControlDate - dol_now('tzuser')) / (24 * 3600));
     }
 
     /**

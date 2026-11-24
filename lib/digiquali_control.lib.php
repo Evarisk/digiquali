@@ -353,7 +353,7 @@ function get_control_infos(CommonObject $linkedObject): array
         $statusSheet = $statusControl->getSheet();
         if (!empty($statusControl->next_control_date) && ($statusSheet === null || $statusSheet->status != Sheet::STATUS_ARCHIVED)) {
             $out['status']['next_control_date']  = $statusControl->next_control_date;
-            $out['status']['next_control_days']  = (int) round(($statusControl->next_control_date - dol_now('tzuser')) / (3600 * 24));
+            $out['status']['next_control_days']  = $statusControl->getNextControlDelay();
             $out['status']['next_control_color'] = $statusControl->getNextControlDateColor();
         }
     }
@@ -482,13 +482,43 @@ function digiquali_get_control_status_key(Control $control): string
 
     $sheet = $control->getSheet();
     if (!empty($control->next_control_date) && ($sheet === null || $sheet->status != Sheet::STATUS_ARCHIVED)) {
-        $nextControlDays = (int) round(((int) $control->next_control_date - dol_now('tzuser')) / (3600 * 24));
-        if ($nextControlDays <= 0) {
+        $nextControlDays = $control->getNextControlDelay();
+        if ($nextControlDays !== null && $nextControlDays <= 0) {
             return 'overdue';
         }
     }
 
     return 'ok';
+}
+
+/**
+ * Get the deadline of a next control date, as the public page and the lock confirmation show it.
+ *
+ * @param  int|null $days Days left before the next control date, negative once past (Control::getNextControlDelay())
+ * @return string         Translated deadline, empty when there is no next control date
+ */
+function digiquali_get_next_control_deadline_label(?int $days): string
+{
+    global $langs;
+
+    if ($days === null) {
+        return '';
+    }
+
+    if ($days < -1) {
+        return $langs->transnoentities('NextControlOverdueSince', abs($days));
+    }
+    if ($days == -1) {
+        return $langs->transnoentities('NextControlOverdueOneDay');
+    }
+    if ($days == 0) {
+        return $langs->transnoentities('NextControlToday');
+    }
+    if ($days == 1) {
+        return $langs->transnoentities('NextControlTomorrow');
+    }
+
+    return $langs->transnoentities('NextControlInDays', $days);
 }
 
 /**

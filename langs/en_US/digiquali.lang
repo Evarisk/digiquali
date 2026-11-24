@@ -603,7 +603,7 @@ ChooseControlSheet                             = Choose a template
 NoControlSheetAvailable                        = No control template available
 ControlledObject                               = Controlled object
 StartControl                                   = Start the control
-LockControlDate                                = Locking this control dated &emsp;&emsp;&emsp;: <b> %s </b> <br> will set the next control date to: <b> %s </b> <br> that is in &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;: <b> %d days. </b>
+LockControlDate                                = Locking this control dated &emsp;&emsp;&emsp;: <b> %s </b> <br> will set the next control date to: <b> %s </b> <br> deadline &ensp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;: <b> %s </b>
 NextControlDateBeforeControlDate               = The next control date (%s) is before the control date (%s): check the input.
 NextControlDateBeforeControlDateShort          = Before the control date
 
