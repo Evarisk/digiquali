@@ -71,7 +71,8 @@ class Digiquali extends SaturneApi
                 'fields'         => ['fk_sheet', 'fk_user_controller'],
                 'permissions'    => [
                     'read'       => 'control->read',
-                    'create'     => 'control->create',
+                    // #2826: DigiQuali has no control->create right, creating a control asks for write, as on screen
+                    'create'     => 'control->write',
                     'write'      => 'control->write',
                     'delete'     => 'control->delete',
                     'setverdict' => 'control->setverdict',
