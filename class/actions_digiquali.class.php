@@ -273,6 +273,11 @@ class ActionsDigiquali
     {
         global $conf, $extrafields, $langs;
 
+        // Public ticket page: the core passes an ActionsTicket, not a Dolibarr element, nothing to add
+        if (!is_object($object) || empty($object->element)) {
+            return 0;
+        }
+
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
             dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata                = saturne_get_objects_metadata();
