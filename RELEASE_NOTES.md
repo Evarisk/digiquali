@@ -1,25 +1,25 @@
-# [DigiQuali] [23.4.2] - Pages publiques plus sûres
+# [DigiQuali] [23.4.3] - Création sans avertissement en multi-société
 
-Description : les pages publiques de DigiQuali contrôlent l'entité de leur lien, et les formulaires de création d'un contrôle ou d'un questionnaire contrôlent le produit et la catégorie choisis. **Mise à jour recommandée pour toutes les instances.**
+Description : les formulaires de création d'un contrôle, d'un questionnaire ou d'une ligne de contrôle n'affichent plus d'avertissement dans les sociétés autres que la principale, et l'absence de Saturne est signalée clairement.
 
-**Cette version demande Saturne 23.10.0 ou supérieur.**
+**Cette version demande Saturne 23.10.1 ou supérieur.**
 
 ## Améliorations & corrections
 
-### Pages publiques : contrôles renforcés
+### Multi-société
 
-* L'entité du lien est contrôlée avant toute lecture sur les pages publiques de réponse, de questionnaire, d'historique et de plan d'action d'un contrôle.
-* Un lien de plan d'action sans entité s'ouvre dans l'entité courante au lieu d'afficher une erreur.
+* Créer un contrôle, un questionnaire ou une ligne de contrôle dans une autre société que la principale n'affiche plus l'avertissement « Undefined array key 1 » : leurs documents vont dans le dossier de la société courante.
 
-### Création d'un contrôle ou d'un questionnaire
+### Installation
 
-* Le produit parent et la catégorie de modèle choisis dans le formulaire de création sont contrôlés.
+* Quand Saturne est introuvable, DigiQuali l'indique par un message explicite au lieu d'une page d'erreur.
 
 ## Testez les nouveautés maintenant
 
-**Allez tester un contrôle et sa page publique sur la démo : [https://demodoli.digirisk.com/](https://demodoli.digirisk.com/)**
+**Allez tester la création d'un contrôle sur la démo : [https://demodoli.digirisk.com/](https://demodoli.digirisk.com/)**
 
-## Comparaison des versions [23.4.1](https://github.com/Evarisk/digiquali/compare/23.4.1...23.4.2) et 23.4.2
+## Comparaison des versions [23.4.2](https://github.com/Evarisk/digiquali/compare/23.4.2...23.4.3) et 23.4.3
 
-* [Control] fix: produit parent et catégorie du formulaire de création lus comme des nombres [`f6e79881`](https://github.com/Evarisk/digiquali/commit/f6e79881)
-* [Public] fix: entité du lien lue comme un nombre [`593fe153`](https://github.com/Evarisk/digiquali/commit/593fe153)
+* [#2842] [Multi-entité] fix: test isset() gardé pour les propriétés entity typées int (PHPStan) [`345138d5`](https://github.com/Evarisk/digiquali/commit/345138d5)
+* [#2842] [Multi-entité] fix: dossier des documents lu dans l'entité courante quand l'objet n'est pas chargé [`23172314`](https://github.com/Evarisk/digiquali/commit/23172314)
+* [#2840] [Saturne] fix: message explicite quand l'amorçage ne trouve pas Saturne [`e6fb8d68`](https://github.com/Evarisk/digiquali/commit/e6fb8d68)
