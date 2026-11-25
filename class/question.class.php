@@ -530,7 +530,7 @@ class Question extends SaturneObject
 				}
 			}
 			if (!empty($options['photos'])) {
-				$dirFiles = $conf->digiquali->multidir_output[$object->entity ?? 1] . '/question/';
+				$dirFiles = $conf->digiquali->multidir_output[$object->entity ?? $conf->entity] . '/question/';
 				$oldDirFiles = $dirFiles . $oldRef;
 				$newDirFiles = $dirFiles . $object->ref;
 
