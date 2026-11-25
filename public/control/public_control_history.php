@@ -95,7 +95,7 @@ saturne_load_langs();
 // Get parameters
 $trackId = GETPOST('track_id', 'alpha');
 $action  = GETPOST('action', 'aZ09');
-$entity  = GETPOST('entity');
+$entity  = GETPOSTINT('entity');
 $route   = GETPOSTISSET('route') ? GETPOST('route') : 'linkedObjectAndControl';
 
 // Initialize technical objects
@@ -114,8 +114,8 @@ if (!isset($_SESSION['dol_login'])) {
     $user->getrights();
 }
 
-// Load entity
-if (!isModEnabled('multicompany')) {
+// Load entity: the entity of the link is a number, without one the page keeps the setup of the current entity
+if (!isModEnabled('multicompany') || $entity <= 0) {
     $entity = $conf->entity;
 }
 $conf->setEntityValues($db, $entity);

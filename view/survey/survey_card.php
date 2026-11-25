@@ -292,9 +292,9 @@ if ($action == 'create') {
             $objectPost     = GETPOST($objectPostName) ?: (GETPOST('fromtype') == $objectMetadata['link_name'] ? GETPOST('fromid') : '');
 
             $objectFilter = [];
-            if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOST($objectMetadata['parent_post']) > 0)) {
+            if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOSTINT($objectMetadata['parent_post']) > 0)) {
                 $objectFilter = [
-                    'customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOST($objectMetadata['parent_post'])
+                    'customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOSTINT($objectMetadata['parent_post'])
                 ];
             } elseif (!empty($objectMetadata['filter'])) {
                 $objectFilter = ['customsql' => $objectMetadata['filter']];
