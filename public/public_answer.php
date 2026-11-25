@@ -119,7 +119,7 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
     }
     $signatory = new SaturneSignature($db, $moduleNameLowerCase, $object->element);
 
-    $upload_dir = $conf->$moduleNameLowerCase->multidir_output[$object->entity ?? 1];
+    $upload_dir = $conf->$moduleNameLowerCase->multidir_output[$object->entity ?? $conf->entity];
 }
 
 $hookmanager->initHooks(['publicanswer', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array

@@ -106,7 +106,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php'; // Must be
 
 $objectsMetadata = saturne_get_objects_metadata();
 
-$upload_dir = $conf->digiquali->multidir_output[$object->entity ?? 1];
+$upload_dir = $conf->digiquali->multidir_output[$object->entity ?? $conf->entity];
 
 // Security check - Protection if external user
 $permissionToRead   = $user->rights->digiquali->survey->read;
