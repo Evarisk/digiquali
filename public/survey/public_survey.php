@@ -63,14 +63,15 @@ saturne_load_langs();
 
 // Get parameters
 $track_id = GETPOST('track_id', 'alpha');
-$entity   = GETPOST('entity');
+$entity   = GETPOSTINT('entity');
 
 // Initialize technical objects
 $object = new Survey($db);
 
 $hookmanager->initHooks(['publicsurvey', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
 
-if (!isModEnabled('multicompany')) {
+// The entity of the link is a number: without one, the page keeps the setup of the current entity
+if (!isModEnabled('multicompany') || $entity <= 0) {
     $entity = $conf->entity;
 }
 
