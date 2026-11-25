@@ -647,9 +647,10 @@ if ($action == 'create') {
 	print $form::selectarray('default_control_mandatory', $natureOptions, GETPOSTISSET('default_control_mandatory') ? GETPOSTINT('default_control_mandatory') : 0);
 	print '</td></tr>';
 
-    // Linked elements
-    $sheetAdminUrl = dol_buildpath('/digiquali/admin/sheet.php', 1);
-    print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b> <a href="' . $sheetAdminUrl . '" target="_blank"><span class="opacitymedium">(' . $langs->trans('ConfigureYourObjectsHere') . ')</span></a></td></tr>';
+    // Linked elements: the shortcut to the configuration is only offered to the users allowed to change it
+    $sheetAdminUrl  = dol_buildpath('/digiquali/admin/sheet.php', 1);
+    $sheetAdminLink = saturne_check_admin_write_access() ? ' <a href="' . $sheetAdminUrl . '" target="_blank"><span class="opacitymedium">(' . $langs->trans('ConfigureYourObjectsHere') . ')</span></a>' : '';
+    print '<tr class="liste_titre"><td colspan="2"><b>' . $langs->trans('ControlledObjectsTitle') . '</b>' . $sheetAdminLink . '</td></tr>';
 
     if (getDolGlobalInt('DIGIQUALI_SHEET_LINKED_OBJECT_SELECT2')) {
         // Compact dropdown (select2) rendering, opt-in via admin config
@@ -678,7 +679,7 @@ if ($action == 'create') {
             }
             print '</td></tr>';
         } else {
-            $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+            $noticeMessage = digiquali_sheet_config_notice_message($langs->transnoentities('MissingConfigElementTypeMessage'), $langs->transnoentities('MissingConfigElementTypeAskAdmin'));
             print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
         }
     } else {
@@ -701,7 +702,7 @@ if ($action == 'create') {
         }
 
         if ($nbLinkableElements == 0) {
-            $noticeMessage = '<a href="' . $sheetAdminUrl . '">' . $langs->transnoentities('MissingConfigElementTypeMessage') . '</a>';
+            $noticeMessage = digiquali_sheet_config_notice_message($langs->transnoentities('MissingConfigElementTypeMessage'), $langs->transnoentities('MissingConfigElementTypeAskAdmin'));
             print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
         }
     }
