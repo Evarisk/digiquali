@@ -49,7 +49,7 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'DigiQuali triggers.';
-        $this->version     = '23.4.2';
+        $this->version     = '23.4.3';
         $this->picto       = 'digiquali_color@digiquali';
     }
 

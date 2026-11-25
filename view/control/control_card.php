@@ -147,7 +147,7 @@ $permissionToAddTask             = $canManageControlActions && ($user->hasRight(
 $permissionToDeleteTask          = $canManageControlActions && ($user->hasRight('project', 'supprimer') || $user->hasRight('project', 'all', 'supprimer'));
 $permissionToManageTaskTimeSpent = $canManageControlActions && $user->hasRight('project', 'time');
 
-$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : 1];
+$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : $conf->entity];
 
 // Security check - Protection if external user
 saturne_check_access($permissiontoread, $object);
