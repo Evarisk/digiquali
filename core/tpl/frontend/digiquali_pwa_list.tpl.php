@@ -32,7 +32,7 @@ global $langs;
 $selfUrl = $_SERVER['PHP_SELF'];
 $types   = digiquali_pwa_get_object_types();
 $listCfg = $types[$pwaListType] ?? null;
-$ajaxUrl = dol_buildpath('/custom/digiquali/ajax/pwa_search.php', 1);
+$ajaxUrl = dol_buildpath('/digiquali/ajax/pwa_search.php', 1);
 ?>
 <div class="pwa-container">
     <form class="pwa-search" method="GET" action="<?php echo dol_escape_htmltag($selfUrl); ?>">

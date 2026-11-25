@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Sheet.
@@ -127,6 +127,9 @@ class Sheet extends SaturneObject
         'show_project'        => ['type' => 'boolean',      'label' => 'ShowProjectOnControl', 'enabled' => 1, 'position' => 101, 'notnull' => 0, 'visible' => 0, 'default' => 1],
         'show_tags'           => ['type' => 'boolean',      'label' => 'ShowTagsOnControl',    'enabled' => 1, 'position' => 102, 'notnull' => 0, 'visible' => 0, 'default' => 1],
         'default_control_tags' => ['type' => 'text',        'label' => 'DefaultControlTags',   'enabled' => 1, 'position' => 103, 'notnull' => 0, 'visible' => 0],
+        'qc_frequency'        => ['type' => 'integer',      'label' => 'ControlPeriod',        'enabled' => 1, 'position' => 104, 'notnull' => 0, 'visible' => 0],
+        'qc_frequency_unit'   => ['type' => 'varchar(8)',   'label' => 'ControlPeriodUnit',    'enabled' => 1, 'position' => 105, 'notnull' => 0, 'visible' => 0, 'default' => 'd'],
+        'default_control_mandatory' => ['type' => 'boolean', 'label' => 'DefaultControlNature', 'enabled' => 1, 'position' => 106, 'notnull' => 0, 'visible' => 0, 'default' => 0],
         'fk_user_creat'       => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserAuthor', 'picto' => 'user', 'enabled' => 1, 'position' => 110, 'notnull' => 1, 'visible' => -2, 'foreignkey' => 'user.rowid'],
         'fk_user_modif'       => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserModif',  'picto' => 'user', 'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => -2, 'foreignkey' => 'user.rowid']
     ];
@@ -225,6 +228,147 @@ class Sheet extends SaturneObject
      * @var string|null Default control tags JSON.
      */
     public ?string $default_control_tags = null;
+
+    /**
+     * @var int|string|null Period of the controls made from this sheet, a number of qc_frequency_unit : it comes before
+     *                      the periodicity of the controlled object. Empty when the sheet has none.
+     */
+    public $qc_frequency = null;
+
+    /**
+     * @var string|null Unit of the period : d (days), m (months) or y (years). Two years is the same date two years
+     *                  later, which 730 days is not across a 29th of February.
+     */
+    public $qc_frequency_unit = 'd';
+
+    /**
+     * @var int|string|null Nature given to the controls made from this sheet : 1 mandatory, 0 informative. Each control
+     *                      keeps its own, changeable until it is locked.
+     */
+    public $default_control_mandatory = 0;
+
+    /**
+     * Units of a control period, for dol_time_plus_duree()
+     */
+    public const PERIOD_UNITS = ['d', 'm', 'y'];
+
+    /**
+     * Get the period of the sheet as a text : « 2 années », « 3 mois », « 15 jours ».
+     *
+     * @return string Period, empty when the sheet has none
+     */
+    public function getControlPeriodLabel(): string
+    {
+        global $langs;
+
+        $number = (int) $this->qc_frequency;
+        if ($number <= 0) {
+            return '';
+        }
+
+        $unitKeys = ['d' => ['Day', 'Days'], 'm' => ['Month', 'Months'], 'y' => ['Year', 'Years']];
+        $unit     = in_array($this->qc_frequency_unit, self::PERIOD_UNITS, true) ? $this->qc_frequency_unit : 'd';
+
+        return $number . ' ' . dol_strtolower($langs->transnoentities($unitKeys[$unit][$number > 1 ? 1 : 0]));
+    }
+
+    /**
+     * Get the controls already made from this sheet that do not follow its control rules.
+     *
+     * The rules only reach a control when it is created (nature) or locked (next control date) : the controls made
+     * before a rule was set keep the former values, and a locked control can no longer be edited. The nature is the
+     * one of the sheet, whatever the status of the control. The next control date is the one a lock would compute
+     * today : only on a locked OK control (a KO one has its own 30 days), from its control date and the period of the
+     * sheet, when the sheet has one.
+     *
+     * @param  bool  $nature Check the nature of the controls
+     * @param  bool  $period Check the next control date of the locked controls
+     * @return array<int, array{mandatory?: int<0,1>, next_control_date?: int}> Values to write, by control id
+     * @throws Exception
+     */
+    public function getControlsToAlign(bool $nature = true, bool $period = true): array
+    {
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+        require_once __DIR__ . '/control.class.php';
+
+        $mandatory = !empty($this->default_control_mandatory) ? 1 : 0;
+        $number    = (int) $this->qc_frequency;
+        $unit      = in_array($this->qc_frequency_unit, self::PERIOD_UNITS, true) ? $this->qc_frequency_unit : 'd';
+        $period    = $period && $number > 0;
+        $this->error = '';
+        if (empty($this->id) || (!$nature && !$period)) {
+            return [];
+        }
+
+        $sql  = 'SELECT t.rowid, t.mandatory, t.status, t.verdict, t.control_date, t.date_creation, t.next_control_date';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'digiquali_control AS t';
+        $sql .= ' WHERE t.fk_sheet = ' . ((int) $this->id) . ' AND t.entity IN (' . getEntity('digiquali_control') . ')';
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            $this->error = $this->db->lasterror();
+            return [];
+        }
+
+        $changes = [];
+        while ($obj = $this->db->fetch_object($resql)) {
+            $change = [];
+            if ($nature && (int) $obj->mandatory !== $mandatory) {
+                $change['mandatory'] = $mandatory;
+            }
+            if ($period && (int) $obj->status === Control::STATUS_LOCKED && (int) $obj->verdict === 1) {
+                $from = $this->db->jdate($obj->control_date ?: $obj->date_creation);
+                $next = dol_time_plus_duree($from, $number, $unit);
+                // Compared on the day : the lock writes the time of the control date, a date typed in has none
+                if (empty($obj->next_control_date) || dol_print_date($this->db->jdate($obj->next_control_date), 'dayrfc') !== dol_print_date($next, 'dayrfc')) {
+                    $change['next_control_date'] = $next;
+                }
+            }
+            if (!empty($change)) {
+                $changes[(int) $obj->rowid] = $change;
+            }
+        }
+        $this->db->free($resql);
+
+        return $changes;
+    }
+
+    /**
+     * Make the controls already made from this sheet follow its control rules, see getControlsToAlign().
+     *
+     * Written straight in database, as the lock writes the next control date : no trigger per control, a sheet can
+     * have hundreds of them. The reminders of the next control already in the agenda are not moved.
+     *
+     * @param  bool $nature Align the nature of the controls
+     * @param  bool $period Align the next control date of the locked controls
+     * @return int          Number of controls updated, < 0 on error
+     * @throws Exception
+     */
+    public function alignControls(bool $nature = true, bool $period = true): int
+    {
+        $changes = $this->getControlsToAlign($nature, $period);
+        if (!empty($this->error)) {
+            return -1;
+        }
+
+        $this->db->begin();
+        foreach ($changes as $controlId => $change) {
+            $sets = [];
+            if (isset($change['mandatory'])) {
+                $sets[] = 'mandatory = ' . ((int) $change['mandatory']);
+            }
+            if (isset($change['next_control_date'])) {
+                $sets[] = "next_control_date = '" . $this->db->idate($change['next_control_date']) . "'";
+            }
+            if (!$this->db->query('UPDATE ' . MAIN_DB_PREFIX . 'digiquali_control SET ' . implode(', ', $sets) . ' WHERE rowid = ' . ((int) $controlId))) {
+                $this->error = $this->db->lasterror();
+                $this->db->rollback();
+                return -1;
+            }
+        }
+        $this->db->commit();
+
+        return count($changes);
+    }
 
     /**
      * @var int User ID.
@@ -490,15 +634,6 @@ class Sheet extends SaturneObject
 
 		$sql              .= " WHERE s.entity IN (" . getEntity($this->table_element) . ")";
 		if ($filter) $sql .= " AND (" . $filter . ")";
-		if ($moreparam > 0 ) {
-			$children = $this->fetchDigiriskElementFlat($moreparam);
-			if ( ! empty($children) && $children > 0) {
-				foreach ($children as $key => $value) {
-					$sql .= " AND NOT s.rowid =" . $key;
-				}
-			}
-			$sql .= " AND NOT s.rowid =" . $moreparam;
-		}
 
 		$sql .= $this->db->order("rowid", "ASC");
 		$sql .= $this->db->plimit($limit, 0);
@@ -600,16 +735,41 @@ class Sheet extends SaturneObject
         }
 
         if ($reindexLast) {
-            $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
-            $sql .= ' SET position = ( SELECT (COALESCE(MAX(position), 0) + 1) FROM ' . MAIN_DB_PREFIX . 'element_element WHERE fk_source = '. (int) $fk_source .' AND sourcetype = \'' . $this->db->escape($sourcetype) . '\' )';
-            $sql .= ' WHERE fk_source = ' . $fk_source;
-            $sql .= ' AND sourcetype = \'' . $this->db->escape($sourcetype) . '\'';
-            $sql .= ' AND (targettype = "digiquali_question" OR targettype = "digiquali_questiongroup")';
-            $sql .= ' AND position IS NULL';
+            // #2822: MySQL refuses an UPDATE whose subquery reads the table it updates (error 1093), MariaDB
+            // accepts it. The last position is read first, then each link still without position goes after it,
+            // in the order the links were made : a single new link gets the last position plus one, as before.
+            $sqlSource = ' FROM ' . MAIN_DB_PREFIX . 'element_element';
+            $sqlSource .= ' WHERE fk_source = ' . (int) $fk_source;
+            $sqlSource .= " AND sourcetype = '" . $this->db->escape($sourcetype) . "'";
 
-            $res = $this->db->query($sql);
+            $resql = $this->db->query('SELECT MAX(position) AS last_position' . $sqlSource);
+            if ($resql) {
+                $obj      = $this->db->fetch_object($resql);
+                $position = (int) ($obj->last_position ?? 0);
 
-            if (!$res) {
+                $sql = 'SELECT rowid' . $sqlSource;
+                $sql .= " AND targettype IN ('digiquali_question', 'digiquali_questiongroup')";
+                $sql .= ' AND position IS NULL';
+                $sql .= ' ORDER BY rowid';
+
+                $resql = $this->db->query($sql);
+                if ($resql) {
+                    $linkIds = [];
+                    while ($obj = $this->db->fetch_object($resql)) {
+                        $linkIds[] = (int) $obj->rowid;
+                    }
+                    foreach ($linkIds as $linkId) {
+                        $position++;
+                        $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_element';
+                        $sql .= ' SET position = ' . $position . ' WHERE rowid = ' . $linkId;
+                        if (!$this->db->query($sql)) {
+                            $error++;
+                        }
+                    }
+                } else {
+                    $error++;
+                }
+            } else {
                 $error++;
             }
         }
@@ -762,9 +922,9 @@ class Sheet extends SaturneObject
         list($modQuestion, $modQuestionGroup) = saturne_require_objects_mod($numberingModules, $moduleNameLowerCase);
 
         $questionAndGroups = $this->fetchQuestionsAndGroups();
-        $questionGroupCardUrl = dol_buildpath('/custom/digiquali/view/questiongroup/questiongroup_card.php', 1);
-        $questionCardUrl = dol_buildpath('/custom/digiquali/view/question/question_card.php', 1);
-        $sheetCardUrl = dol_buildpath('/custom/digiquali/view/sheet/sheet_card.php', 1);
+        $questionGroupCardUrl = dol_buildpath('/digiquali/view/questiongroup/questiongroup_card.php', 1);
+        $questionCardUrl = dol_buildpath('/digiquali/view/question/question_card.php', 1);
+        $sheetCardUrl = dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1);
 
         $out = '<div id="id-container" class="id-container question-and-group-tree">';
         $out .= '<input type="hidden" name="token" value="'. newToken() . '"/>';
@@ -926,7 +1086,7 @@ class Sheet extends SaturneObject
     {
         global $langs;
 
-        require_once __DIR__ . '/../../saturne/class/saturnedashboard.class.php';
+        dol_include_once('/saturne/class/saturnedashboard.class.php');
 
         switch ($question->type) {
             case 'UniqueChoice':
@@ -1036,17 +1196,18 @@ class Sheet extends SaturneObject
                 break;
 
             case 'PhotoMultiple':
+                require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+
                 // Every photo of every answer counts, each with the status it was given
                 $photoStatuses = [];
                 foreach ($questionAnswerStats[$question->id] ?? [] as $questionAnswer) {
                     $photoStatuses = array_merge($photoStatuses, $questionAnswer['photo_statuses'] ?? []);
                 }
-                $statusCounts = array_count_values($photoStatuses);
 
                 print '<div class="range-bar-container">';
                 print '<div class="range-average-indicator">';
                 print '<div class="range-average-value">';
-                print '<i class="fa fa-images" aria-hidden="true"></i> ' . $langs->trans('PhotoMultipleSummary', count($photoStatuses), $statusCounts['OK'] ?? 0, $statusCounts['KO'] ?? 0);
+                print '<i class="fa fa-images" aria-hidden="true"></i> ' . dol_escape_htmltag(digiquali_photo_multiple_format_summary($photoStatuses));
                 print '</div>';
                 print '</div>';
                 print '</div>';

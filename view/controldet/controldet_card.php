@@ -108,7 +108,7 @@ $permissiontodelete = $user->hasRight('digiquali', 'control', 'delete') || ($per
 $permissionnote = $user->hasRight('digiquali', 'control', 'write'); // Used by the include of actions_setnotes.inc.php
 $permissiondellink = $user->hasRight('digiquali', 'control', 'write'); // Used by the include of actions_dellink.inc.php
 
-$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : 1].'/test';
+$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : $conf->entity].'/test';
 
 // Security check (enable the most restrictive one)
 //if ($user->socid > 0) accessforbidden();
@@ -197,7 +197,8 @@ if ($action == 'create') {
 }
 $help_url = '';
 
-llxHeader('', $title, $help_url, '', 0, 0, '', '', '', 'mod-controldet page-card');
+// The module stylesheet draws the photos of a PhotoMultiple answer
+saturne_header(0, '', $title, $help_url, '', 0, 0, [], [], '', 'mod-controldet page-card');
 
 // Example : Adding jquery code
 // print '<script type="text/javascript">

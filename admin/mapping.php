@@ -39,8 +39,8 @@ require_once __DIR__ . '/../lib/digiquali.lib.php';
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $moduleName, $moduleNameLowerCase, $user;
 
-// Load translation files required by the page
-saturne_load_langs();
+// Load translation files required by the page ('projects' for AddProject, the project creation link)
+saturne_load_langs(['projects']);
 
 // Initialize view objects
 $formProjects = new FormProjets($db);
@@ -52,7 +52,7 @@ $backtopage = GETPOST('backtopage', 'alpha');
 $hookmanager->initHooks(['mappingadmin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissiontoread  = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread  = $user->hasRight($moduleNameLowerCase, 'adminpage', 'read');
 $permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
@@ -96,7 +96,7 @@ $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, 'mapping', $title, -1, 'digiquali_color@digiquali');
 
 // Warns a user allowed to read the settings but not to change them
-require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/admin_write_access_notice.tpl.php');
 
 print load_fiche_titre($langs->trans("TasksManagement"), '', '');
 

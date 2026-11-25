@@ -101,7 +101,7 @@ if (!$sortorder) {
 
 // Definition of custom fields for columns
 $nbLinkableElements             = 0;
-$objectPosition                 = 21;
+$linkedElementFormerColumns     = [];
 $excludeFields                  = [];
 $objectsMetadata                = saturne_get_objects_metadata();
 $conf->cache['objectsMetadata'] = $objectsMetadata;
@@ -117,27 +117,24 @@ foreach($objectsMetadata as $objectMetadata) {
         continue;
     }
 
-    // A tab shows the column of the element it filters on, plus, on a product, the lot/serial each
-    // control concerns : that one belongs to another metadata than the one the tab was opened from
-    if (empty($fromType) || $fromType == $objectMetadata['link_name'] || ($fromType == 'product' && $objectMetadata['link_name'] == 'productlot')) {
-        $object->fields[$objectMetadata['post_name']] = [
-            'type'       => 'integer:' . $objectMetadata['class_name'] . ':' . $objectMetadata['class_path'],
-            'label'      => $langs->trans($objectMetadata['langs']),
-            'enabled'    => 1,
-            'position'   => $objectPosition,
-            'visible'    => 2,
-            'csslist'    => 'minwidth150 maxwidth200',
-            // Sort on the aliases the printFieldListSelect hook builds from llx_element_element, not on a
-            // t.<key> column that does not exist. The empty flag comes first so the controls without any
-            // linked element stay at the bottom in both directions
-            'otheralias' => 'sortempty_' . $objectMetadata['post_name'] . ',sortvalue_'
-        ];
-
-        $objectPosition++;
-        $nbLinkableElements++;
-        $excludeFields[] = $objectMetadata['post_name'];
-    }
+    $nbLinkableElements++;
+    $linkedElementFormerColumns[] = 't.' . $objectMetadata['post_name'];
 }
+
+// Every element a control can be linked to (lot/serial, user, thirdparty, etc.) shares one column instead of
+// one column per element type. It is filled by the hooks from llx_element_element, so it is no column of
+// the control table : sorting goes through the aliases the printFieldListSelect hook builds, the empty flag
+// first so the controls linked to nothing stay at the bottom in both directions
+$object->fields['linked_object'] = [
+    'label'      => 'ControlledObject',
+    'enabled'    => 1,
+    'position'   => 21,
+    'visible'    => 2,
+    'noedit'     => 1,
+    'csslist'    => 'minwidth200 maxwidth300',
+    'otheralias' => 'sortempty_linked_object,sortvalue_'
+];
+$excludeFields[] = 'linked_object';
 
 $signatoriesInDictionary                = saturne_fetch_dictionary('c_' . $object->element . '_attendants_role');
 $conf->cache['signatoriesInDictionary'] = $signatoriesInDictionary;
@@ -168,7 +165,9 @@ $excludeFields = array_merge($excludeFields, ['days_remaining_before_next_contro
 // Initialize array of search criterias
 $searchAll = trim(GETPOST('search_all'));
 $search    = [];
-$search['status'] = saturne_get_status_search_filter([Control::STATUS_DRAFT, Control::STATUS_VALIDATED, Control::STATUS_LOCKED]);
+// Archived controls are hidden until asked for, "Remove filters" goes back to these statuses
+$defaultSearchStatus = [Control::STATUS_DRAFT, Control::STATUS_VALIDATED, Control::STATUS_LOCKED];
+$search['status']    = saturne_get_status_search_filter($defaultSearchStatus);
 foreach ($object->fields as $key => $val) {
     if (GETPOST('search_' . $key, 'alpha') !== '') {
         $search[$key] = GETPOST('search_' . $key, 'alpha');
@@ -179,22 +178,21 @@ foreach ($object->fields as $key => $val) {
     }
 }
 
-// An element can be tied to a control twice : by a link in llx_element_element and by a column of the
-// control itself (the user who carried it out, the project it belongs to). Its tab must show the union of
-// the two, and $search only knows how to AND its criterias, so the OR is emitted by the printFieldListWhere
-// hook. The element travels through the cache rather than through $search : the latter lands in the URL,
-// where the purge of the search criterias would drop it and leave the tab showing every control
+// The tab of an element lists the controls linked to it, which the printFieldListWhere hook filters on : the
+// list has no column of that element type any more to carry the criteria. An element can also be tied to a
+// control by a column of the control itself (the user who carried it out, the project it belongs to) : its
+// tab then shows the union of the two, an OR that $search, whose criterias are all ANDed, cannot express.
+// The element travels through the cache rather than through $search : the latter lands in the URL, where
+// the purge of the search criterias would drop it and leave the tab showing every control
 $columnMatchingLinkedElement = ['user' => 'fk_user_controller', 'project' => 'projectid'];
 
 if (!empty($fromType)) {
-    if (isset($columnMatchingLinkedElement[$fromType])) {
+    if (isset($columnMatchingLinkedElement[$fromType]) || !empty($fromObjectMetadata)) {
         $conf->cache['digiqualiLinkedElementOrColumn'] = [
             'link_name' => $fromType,
-            'column'    => $columnMatchingLinkedElement[$fromType],
+            'column'    => $columnMatchingLinkedElement[$fromType] ?? '',
             'id'        => $fromId
         ];
-    } elseif (!empty($fromObjectMetadata)) {
-        $search[$fromObjectMetadata['post_name']] = $fromId;
     }
     if ($fromType == 'fk_sheet') {
         $search['fk_sheet'] = $fromId;
@@ -223,6 +221,17 @@ foreach ($object->fields as $key => $val) {
     }
 }
 
+// A saved selection of columns still naming one of the former columns per element type would hide the
+// column that replaces them : it is shown as long as one of them was
+$selectedFieldsConf = 'MAIN_SELECTEDFIELDS_' . $contextpage;
+if (!empty($user->conf->$selectedFieldsConf)) {
+    $savedSelectedFields = explode(',', $user->conf->$selectedFieldsConf);
+    if (!in_array('t.linked_object', $savedSelectedFields, true) && !empty(array_intersect($savedSelectedFields, $linkedElementFormerColumns))) {
+        $savedSelectedFields[]           = 't.linked_object';
+        $user->conf->$selectedFieldsConf = implode(',', $savedSelectedFields);
+    }
+}
+
 // Extra fields
 require_once DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_list_array_fields.tpl.php';
 
@@ -237,8 +246,9 @@ $permissiontodelete = $user->hasRight($object->module, $object->element, 'delete
 // Security check
 saturne_check_access($permissiontoread, $object);
 
-// Enable the "Validate" mass action offered by the saturne list templates
+// Enable the "Validate" and "Lock" mass actions offered by the saturne list templates
 $enableMassValidate = 1;
+$enableMassLock     = 1;
 
 /*
  * Actions
@@ -267,6 +277,8 @@ if (empty($resHook)) {
         $toselect             = [];
         $search_array_options = [];
         $searchCategories     = [];
+        // An emptied status would list the archived controls for this page only, the next sort bringing the default back
+        $search['status'] = $defaultSearchStatus;
     }
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')
         || GETPOST('button_search_x', 'alpha') || GETPOST('button_search.x', 'alpha') || GETPOST('button_search', 'alpha')) {
@@ -285,7 +297,7 @@ if (empty($resHook)) {
     require_once DOL_DOCUMENT_ROOT . '/core/actions_massactions.inc.php';
 
     // Mass actions archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/list_massactions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/list_massactions.tpl.php');
 }
 
 /*
@@ -360,12 +372,12 @@ if ($nbLinkableElements == 0) {
     $noticeMessage = digiquali_sheet_config_notice_message($langs->transnoentities('MissingConfigElementTypeMessage'), $langs->transnoentities('MissingConfigElementTypeAskAdmin'));
     print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
 } else {
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_header.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_input.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_header.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_input.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_title.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_loop_object.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_footer.tpl.php');
 }
 
 // Controls carried out on the lots/serials of the product, grouped by warehouse : they are linked to the

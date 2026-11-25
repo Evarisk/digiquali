@@ -95,7 +95,7 @@ saturne_load_langs();
 // Get parameters
 $trackId = GETPOST('track_id', 'alpha');
 $action  = GETPOST('action', 'aZ09');
-$entity  = GETPOST('entity');
+$entity  = GETPOSTINT('entity');
 $route   = GETPOSTISSET('route') ? GETPOST('route') : 'linkedObjectAndControl';
 
 // Initialize technical objects
@@ -103,7 +103,8 @@ $object = new Control($db);
 $sheet  = new Sheet($db);
 $user   = new User($db);
 
-$hookmanager->initHooks(['publiccontrol', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
+// Not the saturnepublicinterface context: Saturne prints the company logo there, already in the header of this page
+$hookmanager->initHooks(['publiccontrol']); // Note that conf->hooks_modules contains array
 
 // Load user
 if (!isset($_SESSION['dol_login'])) {
@@ -113,8 +114,8 @@ if (!isset($_SESSION['dol_login'])) {
     $user->getrights();
 }
 
-// Load entity
-if (!isModEnabled('multicompany')) {
+// Load entity: the entity of the link is a number, without one the page keeps the setup of the current entity
+if (!isModEnabled('multicompany') || $entity <= 0) {
     $entity = $conf->entity;
 }
 $conf->setEntityValues($db, $entity);
@@ -122,18 +123,43 @@ $conf->setEntityValues($db, $entity);
 // Load linkable elements
 $linkableElements = saturne_get_objects_metadata();
 
-// Load object
-$objectDataJson = base64_decode($trackId);
-$objectData     = json_decode($objectDataJson);
-$objectType     = $objectData->type;
-$objectId       = $objectData->id;
+// Load object: the track id carries the element and the id of the controlled object. It comes from the URL of a
+// public page, so it is decoded defensively and only a Dolibarr object can be instantiated from it. Signed track ids
+// are base64 "URL safe" (- and _), the former unsigned ones plain base64: both decode once - and _ are put back
+$objectData = json_decode((string) base64_decode(strtr($trackId, '-_', '+/'), true));
+$objectType = (is_object($objectData) && isset($objectData->type) && is_string($objectData->type)) ? $objectData->type : '';
+$objectId   = (is_object($objectData) && isset($objectData->id)) ? (int) $objectData->id : 0;
+$objectKey  = (is_object($objectData) && isset($objectData->key) && is_string($objectData->key)) ? $objectData->key : '';
+
+if ($objectType === '' || $objectId <= 0 || !class_exists($objectType) || !is_subclass_of($objectType, 'CommonObject')) {
+    httponly_accessforbidden($langs->trans('ErrorRecordNotFound'), 404);
+}
+
+// Without its key, a track id can be guessed from one object to the next: only a signed one opens the page, apart
+// from the links that were not guessed (see digiquali_public_control_unsigned_allowed())
+$isSigned = $objectKey !== '' && hash_equals(digiquali_public_control_key($objectType, $objectId), $objectKey);
+if (!$isSigned && !digiquali_public_control_unsigned_allowed($trackId, $user)) {
+    httponly_accessforbidden($langs->trans('ErrorRecordNotFound'), 404);
+}
 
 $linkedObject = new $objectType($db);
+if ($linkedObject->fetch($objectId) <= 0) {
+    httponly_accessforbidden($langs->trans('ErrorRecordNotFound'), 404);
+}
 
-$linkedObject->fetch($objectId);
-
-$linkableElement = $linkableElements[$linkedObject->element];
-$linkedObject->fetchObjectLinked($objectId, $linkedObject->element, '', 'digiquali_control');
+// The registry of Saturne is keyed by type (thirdparty, productlot...), not by element (societe...): look the
+// entry up by key, then by class. An object missing from the registry keeps an empty entry, its optional parts
+// (picto, parent object) being skipped
+$linkableElement = $linkableElements[$linkedObject->element] ?? [];
+if (empty($linkableElement)) {
+    foreach ($linkableElements as $metadata) {
+        if (isset($metadata['class_name']) && strcasecmp($metadata['class_name'], get_class($linkedObject)) === 0) {
+            $linkableElement = $metadata;
+            break;
+        }
+    }
+}
+$linkedObject->fetchObjectLinked($objectId, $linkedObject->element, null, 'digiquali_control');
 
 // Routes to display different views
 $routes = [

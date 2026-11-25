@@ -25,7 +25,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for Control.
@@ -122,10 +122,11 @@ class Control extends SaturneObject
         'next_control_date'  => ['type' => 'date',         'label' => 'NextControlDate',  'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 2],
         'success_rate'       => ['type' => 'real',         'label' => 'SuccessScore',     'enabled' => 1, 'position' => 140, 'notnull' => 0, 'visible' => 2, 'help' => 'PercentageValue'],
         'status'             => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 220, 'notnull' => 1, 'visible' => 5, 'index' => 1, 'searchmulti' => 1, 'default' => 0, 'arrayofkeyval' => [0 => 'StatusDraft', 1 => 'Validated', 2 => 'Locked', 3 => 'Archived'], 'csslist' => 'minwidth200'],
-        'label'              => ['type' => 'varchar(255)', 'label' => 'Label',            'enabled' => 1, 'position' => 30,  'notnull' => 0, 'visible' => 4, 'showinpwa' => 1, 'searchall' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx'],
+        'label'              => ['type' => 'varchar(255)', 'label' => 'Label',            'enabled' => 1, 'position' => 30,  'notnull' => 0, 'visible' => 4, 'showinpwa' => 1, 'searchall' => 1, 'css' => 'maxwidth500 widthcentpercentminusxx', 'picto' => 'fontawesome_fa-font_fas'],
         'note_public'        => ['type' => 'html',         'label' => 'NotePublic',       'enabled' => 1, 'position' => 150, 'notnull' => 0, 'visible' => -2],
         'note_private'       => ['type' => 'html',         'label' => 'NotePrivate',      'enabled' => 1, 'position' => 160, 'notnull' => 0, 'visible' => -2],
         'verdict'            => ['type' => 'smallint',     'label' => 'Verdict',          'enabled' => 1, 'position' => 170, 'notnull' => 0, 'visible' => 2, 'showinpwa' => 1, 'index' => 1, 'positioncard' => 20, 'arrayofkeyval' => [0 => 'N/A', 1 => 'OK', 2 => 'KO'], 'csslist' => 'center'],
+        'mandatory'          => ['type' => 'smallint',     'label' => 'ControlNature',    'enabled' => 1, 'position' => 175, 'notnull' => 0, 'visible' => 2, 'index' => 0, 'default' => 0, 'arrayofkeyval' => [0 => 'InformativeControl', 1 => 'MandatoryControl'], 'csslist' => 'center'],
         'photo'              => ['type' => 'text',         'label' => 'Photo',            'enabled' => 1, 'position' => 180, 'notnull' => 0, 'visible' => -2],
         'track_id'           => ['type' => 'text',         'label' => 'TrackID',          'enabled' => 1, 'position' => 190, 'notnull' => 0, 'visible' => -2],
         'fk_user_creat'      => ['type' => 'integer:User:user/class/user.class.php',           'label' => 'UserAuthor',  'picto' => 'user',                            'enabled' => 1, 'position' => 200, 'notnull' => 1, 'visible' => -2, 'csslist' => 'maxwidth200', 'foreignkey' => 'user.rowid'],
@@ -177,9 +178,10 @@ class Control extends SaturneObject
     public $status;
 
     /**
-     * @var string|null Label.
+     * @var string|null Label, optional : null until set, so that a control created without one (API, CLI) can be
+     *                  saved. #2823: a typed property without default is fatal when createCommon() reads it.
      */
-    public ?string $label;
+    public ?string $label = null;
 
     /**
      * @var string Public note.
@@ -195,6 +197,12 @@ class Control extends SaturneObject
      * @var int|null Verdict.
      */
     public ?int $verdict = null;
+
+    /**
+     * @var int|string|null Nature of the control : 1 mandatory, it decides the status of the controlled object, 0
+     *                      informative. Null until created : create() then takes the default of the sheet.
+     */
+    public $mandatory = null;
 
     /**
      * @var string|null Photo path.
@@ -234,6 +242,11 @@ class Control extends SaturneObject
      * @var int Sheet ID.
      */
     public int $fk_sheet = 0;
+
+    /**
+     * @var Sheet|null Sheet of the control, kept by getSheet() : private, the REST API does not output it.
+     */
+    private $sheetCache = null;
 
     /**
      * @var int|string|null User ID.
@@ -286,17 +299,19 @@ class Control extends SaturneObject
     {
         global $conf;
 
+        // A control created without a nature (mobile app, vehicle logbook, API) takes the default of its sheet
+        if ($this->mandatory === null || $this->mandatory === '') {
+            $sheet           = $this->getSheet();
+            $this->mandatory = ($sheet !== null && !empty($sheet->default_control_mandatory)) ? 1 : 0;
+        }
+        $this->mandatory = !empty($this->mandatory) ? 1 : 0;
+
         $result = parent::create($user, $noTrigger);
         if ($result > 0) {
             // #2442: assign the definitive ref right away instead of keeping the (PROV…) placeholder,
             // so answer medias are never stored under a temporary ref path (which broke on validation).
-            if (preg_match('/^\(?PROV/i', $this->ref) || empty($this->ref)) {
-                $newRef = $this->getNextNumRef();
-                if (!empty($newRef) && $newRef !== $this->ref) {
-                    $this->setValueFrom('ref', $newRef, '', '', 'text', '', $user);
-                    $this->ref = $newRef;
-                }
-            }
+            require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+            digiquali_set_definitive_ref($this, $user);
 
             // Load Digiquali libraries
             require_once __DIR__ . '/sheet.class.php';
@@ -347,7 +362,7 @@ class Control extends SaturneObject
                 }
 
                 // Load Saturne libraries
-                require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+                dol_include_once('/saturne/class/saturnesignature.class.php');
 
                 $signatory = new SaturneSignature($this->db, $this->module, $this->element);
                 $signatory->setSignatory($this->id, $this->element, 'user', [$this->fk_user_controller], 'Controller', 1);
@@ -441,6 +456,27 @@ class Control extends SaturneObject
     }
 
     /**
+     * Validate object
+     *
+     * A control created before #2442 may still have its (PROVn) ref : it gets its definitive ref first, and its directory
+     * with it, so that the validation triggers already find its answer photos where they will be read.
+     *
+     * @param  User      $user      User making status change
+     * @param  int<0,1>  $noTrigger 0 = launch triggers after, 1 = disable triggers
+     * @return int<-1,1>            Return integer 0 < if KO, 0 = Nothing done, > 0 if OK
+     * @throws Exception
+     */
+    public function validate(User $user, int $noTrigger = 0): int
+    {
+        if ($this->status == self::STATUS_DRAFT) {
+            require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+            digiquali_set_definitive_ref($this, $user);
+        }
+
+        return parent::validate($user, $noTrigger);
+    }
+
+    /**
      * Set draft status
      *
      * @param  User      $user      Object user that modify
@@ -461,21 +497,52 @@ class Control extends SaturneObject
     }
 
     /**
-     * Get the control periodicity, in days, carried by the controlled object.
+     * Get the sheet of the control, fetched once.
      *
-     * A KO verdict imposes its own periodicity, an OK verdict takes the one of the controlled object.
-     *
-     * @return int<0,max> Periodicity in days, 0 when no periodicity applies
+     * @return Sheet|null Sheet, null when the control has none or it no longer exists
      * @throws Exception
      */
-    public function getQcFrequency(): int
+    public function getSheet(): ?Sheet
+    {
+        if ($this->fk_sheet <= 0) {
+            return null;
+        }
+
+        if ($this->sheetCache === null || $this->sheetCache->id != $this->fk_sheet) {
+            require_once __DIR__ . '/sheet.class.php';
+
+            $sheet = new Sheet($this->db);
+            if ($sheet->fetch($this->fk_sheet) <= 0) {
+                return null;
+            }
+            $this->sheetCache = $sheet;
+        }
+
+        return $this->sheetCache;
+    }
+
+    /**
+     * Get the control period, a number and its unit.
+     *
+     * A KO verdict imposes its own period. An OK verdict takes the one of the sheet, the period of this kind of control
+     * (two years for a roadworthiness test), and else the periodicity in days of the controlled object.
+     *
+     * @return array{0: int, 1: string} [number, unit d, m or y], [0, 'd'] when no period applies
+     * @throws Exception
+     */
+    public function getQcPeriod(): array
     {
         if ($this->verdict == 2) {
-            return 30;
+            return [30, 'd'];
         }
 
         if ($this->verdict != 1) {
-            return 0;
+            return [0, 'd'];
+        }
+
+        $sheet = $this->getSheet();
+        if ($sheet !== null && (int) $sheet->qc_frequency > 0) {
+            return [(int) $sheet->qc_frequency, in_array($sheet->qc_frequency_unit, Sheet::PERIOD_UNITS, true) ? $sheet->qc_frequency_unit : 'd'];
         }
 
         if (empty($this->linkedObjects)) {
@@ -487,7 +554,30 @@ class Control extends SaturneObject
         $linkedObjectType = !empty($this->linkedObjects) ? key($this->linkedObjects) : '';
         $linkedObject     = !empty($linkedObjectType) ? current($this->linkedObjects[$linkedObjectType]) : null;
 
-        return !empty($linkedObject->array_options['options_qc_frequency']) ? (int) $linkedObject->array_options['options_qc_frequency'] : 0;
+        return [!empty($linkedObject->array_options['options_qc_frequency']) ? (int) $linkedObject->array_options['options_qc_frequency'] : 0, 'd'];
+    }
+
+    /**
+     * Get the control periodicity, in days : the reminders of the next control count in days.
+     *
+     * @return int<0,max> Number of days from the control date to the next control date, 0 when no period applies
+     * @throws Exception
+     */
+    public function getQcFrequency(): int
+    {
+        [$number, $unit] = $this->getQcPeriod();
+        if ($number <= 0) {
+            return 0;
+        }
+        if ($unit == 'd') {
+            return $number;
+        }
+
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+        $from = $this->getControlDateTimestamp() ?: dol_now('tzuser');
+
+        return (int) round((dol_time_plus_duree($from, $number, $unit) - $from) / (24 * 3600));
     }
 
     /**
@@ -524,30 +614,134 @@ class Control extends SaturneObject
             return is_numeric($this->next_control_date) ? (int) $this->next_control_date : (int) dol_stringtotime((string) $this->next_control_date);
         }
 
-        $qcFrequency = $this->getQcFrequency();
-        if ($qcFrequency <= 0) {
+        [$number, $unit] = $this->getQcPeriod();
+        if ($number <= 0) {
             return 0;
         }
 
-        // The periodicity runs from the date the control was performed, the date the lock confirmation
-        // announces, not from the day the control happens to be locked.
-        return dol_time_plus_duree($this->getControlDateTimestamp() ?: dol_now('tzuser'), $qcFrequency, 'd');
+        // The period runs from the date the control was performed, the date the lock confirmation announces, not
+        // from the day the control happens to be locked. In months or years : the same day, whatever the 29th of February.
+        return dol_time_plus_duree($this->getControlDateTimestamp() ?: dol_now('tzuser'), $number, $unit);
     }
 
     /**
-     * Get the delay, in days, between the date the control was performed and the next control date.
+     * Get the number of days left before the next control date, counted from today.
      *
-     * @return int<0,max> Number of days, 0 when there is no next control date
+     * Signed : a next control date already past gives a negative number, the delay the object is overdue by.
+     * Same computation as the status of the controlled object and its public page, so that the lock confirmation
+     * announces the deadline they will show.
+     *
+     * @return int|null Number of days, negative once the date is past, null when there is no next control date
      * @throws Exception
      */
-    public function getNextControlDelay(): int
+    public function getNextControlDelay(): ?int
     {
         $nextControlDate = $this->getNextControlDate();
         if ($nextControlDate <= 0) {
-            return 0;
+            return null;
         }
 
-        return (int) floor(abs($nextControlDate - ($this->getControlDateTimestamp() ?: dol_now('tzuser'))) / (24 * 3600));
+        return (int) round(($nextControlDate - dol_now('tzuser')) / (24 * 3600));
+    }
+
+    /**
+     * Is the next control date set before the date the control was performed?
+     *
+     * A typing error nothing used to catch : once the control is locked the date can no longer be
+     * corrected, and the controlled object looks overdue (DoliCar reads it for the vehicle status).
+     * A computed next control date always comes after the control date, only a typed one is checked.
+     * Compared by day : the control date keeps the hour it was created at, a typed date is at midnight.
+     *
+     * @return bool True when both dates are set and the next control date falls on an earlier day
+     * @throws Exception
+     */
+    public function isNextControlDateBeforeControlDate(): bool
+    {
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+        if (dol_strlen($this->next_control_date) <= 0) {
+            return false;
+        }
+
+        $controlDate = $this->getControlDateTimestamp();
+
+        return $controlDate > 0 && $this->getNextControlDate() < dol_get_first_hour($controlDate);
+    }
+
+    /**
+     * Is one of the equipments used by the control past its expiry date?
+     *
+     * Only checked when DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT is enabled : the control can then be
+     * neither validated nor locked.
+     *
+     * @return bool True if an equipment is outdated
+     * @throws Exception
+     */
+    public function hasOutdatedEquipment(): bool
+    {
+        if (!getDolGlobalInt('DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT')) {
+            return false;
+        }
+
+        $controlEquipment  = new ControlEquipment($this->db);
+        $controlEquipments = $controlEquipment->fetchFromParent($this->id);
+        if (is_array($controlEquipments) && !empty($controlEquipments)) {
+            foreach ($controlEquipments as $equipmentControl) {
+                $data = json_decode($equipmentControl->json, true);
+                $dluo = $data['dluo'];
+                if (!empty($dluo) && $dluo <= dol_now()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the steps left before the control can be locked.
+     *
+     * A control is locked once validated, given a verdict and signed by all its attendants : the card
+     * lists these steps and the mass lock skips the controls that still have some.
+     *
+     * @return string[] Translation keys of the steps left, empty when the control can be locked
+     * @throws Exception
+     */
+    public function getLockBlockers(): array
+    {
+        dol_include_once('/saturne/class/saturnesignature.class.php');
+
+        if ($this->status != self::STATUS_VALIDATED) {
+            return ['ControlLockStepValidate'];
+        }
+
+        $blockers = [];
+        if (empty($this->verdict)) {
+            $blockers[] = 'ControlLockStepVerdict';
+        }
+
+        // No attendant at all does not block the lock, an attendant who has not signed yet does
+        $signatory = new SaturneSignature($this->db);
+        if (!$signatory->checkSignatoriesSignatures($this->id, $this->element)) {
+            $blockers[] = 'ControlLockStepSign';
+        }
+
+        if ($this->hasOutdatedEquipment()) {
+            $blockers[] = 'ControlEquipmentOutdated';
+        }
+
+        return $blockers;
+    }
+
+    /**
+     * Can the control be locked now?
+     *
+     * @return bool True if the control is validated, has a verdict and is signed by all its attendants
+     * @throws Exception
+     */
+    public function isLockable(): bool
+    {
+        return empty($this->getLockBlockers());
     }
 
     /**
@@ -739,6 +933,10 @@ class Control extends SaturneObject
         if (property_exists($object, 'track_id')) {
             $object->track_id = generate_random_id();
         }
+        // #2687: the controller is chosen in the clone modal, a clone is often made for someone else.
+        if (!empty($options['fk_user_controller']) && (int) $options['fk_user_controller'] > 0) {
+            $object->fk_user_controller = (int) $options['fk_user_controller'];
+        }
 
         $object->context['createfromclone'] = 'createfromclone';
 
@@ -774,15 +972,18 @@ class Control extends SaturneObject
                 // Load signatory from source object.
                 $signatories = $signatory->fetchSignatory('', $fromID, $this->element);
                 if (is_array($signatories) && !empty($signatories)) {
-                    foreach ($signatories as $arrayRole) {
+                    foreach ($signatories as $role => $arrayRole) {
+                        // The controller may have been changed in the clone modal, it is set below.
+                        if ($role == 'Controller') {
+                            continue;
+                        }
                         foreach ($arrayRole as $signatoryRole) {
                             $signatory->createFromClone($user, $signatoryRole->id, $controlID);
                         }
                     }
                 }
-            } else {
-                $signatory->setSignatory($objectFromClone->id, $this->element, 'user', [$objectFromClone->fk_user_controller], 'Controller', 1);
             }
+            $signatory->setSignatory($objectFromClone->id, $this->element, 'user', [$objectFromClone->fk_user_controller], 'Controller', 1);
 
             // Add Photos.
             if (!empty($options['photos'])) {
@@ -790,6 +991,42 @@ class Control extends SaturneObject
                 $path = $dir . '/' . $objectRef . '/photos';
                 dol_mkdir($dir . '/' . $objectFromClone->ref . '/photos');
                 dolCopyDir($path,$dir . '/' . $objectFromClone->ref . '/photos', 0, 1);
+            }
+
+            // #2687: create() rebuilds the lines from the sheet with empty answers, fill them back from the source.
+            if (!empty($options['answers'])) {
+                $controlLine = new ControlLine($this->db);
+                $sourceLines = $controlLine->fetchAll('', '', 0, 0, ['customsql' => 't.fk_control = ' . $fromID . ' AND t.status > 0']);
+                if (is_array($sourceLines) && !empty($sourceLines)) {
+                    foreach ($sourceLines as $sourceLine) {
+                        $clonedLines = $controlLine->fetchFromParentWithQuestion($controlID, (int) $sourceLine->fk_question);
+                        // A question removed from the sheet since has no line on the clone.
+                        if (!is_array($clonedLines) || empty($clonedLines)) {
+                            continue;
+                        }
+
+                        // Typed properties without default stay uninitialized when the column is NULL.
+                        $clonedLine                = array_shift($clonedLines);
+                        $clonedLine->answer        = $sourceLine->answer ?? null;
+                        $clonedLine->comment       = $sourceLine->comment ?? null;
+                        $clonedLine->answer_photo  = $sourceLine->answer_photo ?? null;
+                        $clonedLine->earned_points = $sourceLine->earned_points ?? null;
+                        $clonedLine->score_rate    = $sourceLine->score_rate ?? null;
+                        if ($clonedLine->update($user, 1) < 0) {
+                            $error++;
+                            $this->error  = $clonedLine->error;
+                            $this->errors = $clonedLine->errors;
+                        }
+                    }
+                }
+
+                // Answer photos belong to the answers, PhotoMultiple answers even reference them by file name.
+                $dir  = $conf->digiquali->multidir_output[$conf->entity] . '/control';
+                $path = $dir . '/' . $objectRef . '/answer_photo';
+                if (dol_is_dir($path)) {
+                    dol_mkdir($dir . '/' . $objectFromClone->ref . '/answer_photo');
+                    dolCopyDir($path, $dir . '/' . $objectFromClone->ref . '/answer_photo', '0', 1);
+                }
             }
 
             // Add control equipments
@@ -846,9 +1083,13 @@ class Control extends SaturneObject
             $verdict = 0;
         }
 
-        $this->labelStatus[0] = $langs->trans('NA');
-        $this->labelStatus[1] = $langs->trans('OK');
-        $this->labelStatus[2] = $langs->trans('KO');
+        // Labels of their own: written into labelStatus, they replaced the status labels of the object, which
+        // LibStatut() only fills when empty, and labelStatusShort held the short status labels, not the verdict ones
+        $labelVerdict = [
+            0 => $langs->trans('NA'),
+            1 => $langs->trans('OK'),
+            2 => $langs->trans('KO'),
+        ];
 
         $verdictType = 'status' . $verdict;
         if ($verdict == 0) {
@@ -861,7 +1102,7 @@ class Control extends SaturneObject
             $verdictType = 'status8';
         }
 
-        return dolGetStatus($this->labelStatus[$verdict], $this->labelStatusShort[$verdict], '', $verdictType, $mode);
+        return dolGetStatus($labelVerdict[$verdict] ?? '', $labelVerdict[$verdict] ?? '', '', $verdictType, $mode);
     }
 
     /**
@@ -1147,7 +1388,7 @@ class Control extends SaturneObject
     {
         global $conf, $langs;
 
-        $startMonth  = $conf->global->SOCIETE_FISCAL_MONTH_START;
+        $startMonth  = getDolGlobalInt('SOCIETE_FISCAL_MONTH_START', 1);
         $currentYear = date('Y', dol_now());
         $years       = [0 => $currentYear - 2, 1 => $currentYear - 1, 2 => $currentYear];
 
@@ -1218,13 +1459,43 @@ class Control extends SaturneObject
 
         // Graph parameters
         $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'LinkedObject', 'Controller', 'Project', 'Sheet', 'ControlDate', 'NextControl', 'Verdict'];
+        $array['labels'] = ['Ref', 'ControlledObject', 'Controller', 'Project', 'Sheet', 'ControlDate', 'NextControl', 'Verdict'];
+
+        require_once __DIR__ . '/sheet.class.php';
+
+        // A control is still to be redone only while it is the last one of its sheet on one of the objects it controls :
+        // once redone, the new control carries the next date. A control of an archived sheet, no longer used, is not to
+        // be redone. Filtered here and not after the fetch, so that the 10 lines are all controls to redo.
+        // The date of the last locked control of each sheet on each object is grouped once : no subquery per control,
+        // an object controlled every day for years stays fast. The highest id decides between controls of the same date.
+        $controlTable = $this->db->prefix() . $this->table_element;
+        $linkTable    = $this->db->prefix() . 'element_element';
+        $targetType   = $this->db->escape($this->module . '_' . $this->element);
+        $doneDate     = function (string $alias): string {
+            return 'COALESCE(' . $alias . '.control_date, ' . $alias . '.date_creation)';
+        };
+
+        $lastDates  = 'SELECT eld.fk_source, eld.sourcetype, cld.fk_sheet, MAX(' . $doneDate('cld') . ') AS last_date';
+        $lastDates .= ' FROM ' . $linkTable . ' AS eld INNER JOIN ' . $controlTable . ' AS cld ON cld.rowid = eld.fk_target';
+        $lastDates .= " WHERE eld.targettype = '" . $targetType . "' AND cld.status >= " . self::STATUS_LOCKED;
+        $lastDates .= ' GROUP BY eld.fk_source, eld.sourcetype, cld.fk_sheet';
+
+        $lastControls  = 'SELECT elc.fk_target FROM ' . $linkTable . ' AS elc';
+        $lastControls .= ' INNER JOIN ' . $controlTable . ' AS clc ON clc.rowid = elc.fk_target';
+        $lastControls .= ' INNER JOIN (' . $lastDates . ') AS lastdone ON lastdone.fk_source = elc.fk_source AND lastdone.sourcetype = elc.sourcetype';
+        $lastControls .= ' AND lastdone.fk_sheet = clc.fk_sheet AND lastdone.last_date = ' . $doneDate('clc');
+        $lastControls .= " WHERE elc.targettype = '" . $targetType . "'";
+        $lastControls .= ' AND NOT EXISTS (SELECT 1 FROM ' . $linkTable . ' AS esd INNER JOIN ' . $controlTable . ' AS csd ON csd.rowid = esd.fk_target';
+        $lastControls .= ' WHERE esd.fk_source = elc.fk_source AND esd.sourcetype = elc.sourcetype AND esd.targettype = elc.targettype';
+        $lastControls .= ' AND csd.fk_sheet = clc.fk_sheet AND csd.status >= ' . self::STATUS_LOCKED . ' AND ' . $doneDate('csd') . ' = lastdone.last_date AND csd.rowid > clc.rowid)';
+
+        $customSql  = 't.status = ' . self::STATUS_LOCKED . ' AND t.next_control_date IS NOT NULL';
+        $customSql .= ' AND NOT EXISTS (SELECT 1 FROM ' . $this->db->prefix() . 'digiquali_sheet AS s WHERE s.rowid = t.fk_sheet AND s.status = ' . Sheet::STATUS_ARCHIVED . ')';
+        $customSql .= ' AND t.rowid IN (' . $lastControls . ')';
 
         $arrayControlListsByNextControl = [];
-        $controls                       = $this->fetchAll('ASC', 'next_control_date', 10, 0, ['customsql' => 't.status = ' . self::STATUS_LOCKED . ' AND t.next_control_date IS NOT NULL']);
+        $controls                       = $this->fetchAll('ASC', 'next_control_date', 10, 0, ['customsql' => $customSql]);
         if (is_array($controls) && !empty($controls)) {
-            require_once __DIR__ . '/sheet.class.php';
-
             $objectsMetadata = saturne_get_objects_metadata();
 
             // linkedObjects is keyed by link_name, the metadata by object type : they differ for
@@ -1239,10 +1510,18 @@ class Control extends SaturneObject
             foreach ($controls as $control) {
                 $control->fetchObjectLinked('', '', $control->id, 'digiquali_control');
 
-                // A control with no link, or whose linked object belongs to a disabled module, has
-                // nothing to show in the LinkedObject column : skip it instead of dereferencing null.
-                $linkedObjectType = !empty($control->linkedObjects) ? key($control->linkedObjects) : '';
-                if (empty($linkedObjectType) || empty($metadataByLinkName[$linkedObjectType]['conf'])) {
+                // The first linked object of a type switched on is shown : a control can also be linked to an object
+                // the configuration hides (a lot and its registration certificate). A control with no link, or only
+                // links to disabled modules, has nothing to show in the LinkedObject column : skip it instead of
+                // dereferencing null.
+                $linkedObjectType = '';
+                foreach (!empty($control->linkedObjects) ? array_keys($control->linkedObjects) : [] as $linkName) {
+                    if (!empty($metadataByLinkName[$linkName]['conf'])) {
+                        $linkedObjectType = $linkName;
+                        break;
+                    }
+                }
+                if (empty($linkedObjectType)) {
                     continue;
                 }
 
@@ -1268,7 +1547,7 @@ class Control extends SaturneObject
                     $arrayControlListsByNextControl[$control->id]['Controller']['value']    = $userTmp->getNomUrl(1);
                     $arrayControlListsByNextControl[$control->id]['Project']['value']       = !empty($control->projectid) ? $control->project->getNomUrl(1) : '';
                     $arrayControlListsByNextControl[$control->id]['Sheet']['value']         = $sheet->getNomUrl(1);
-                    $arrayControlListsByNextControl[$control->id]['ControlDate']['value']   = dol_print_date($control->date_creation, 'day');
+                    $arrayControlListsByNextControl[$control->id]['ControlDate']['value']   = dol_print_date($control->control_date ?: $control->date_creation, 'day');
                     $arrayControlListsByNextControl[$control->id]['NextControl']['value']   = '<div class="wpeo-button" style="background-color: ' . $nextControlDateColor .'; border-color: ' . $nextControlDateColor . ' ">' . $nextControl . '<br>' . $langs->trans('Days') . '</div>';
                     $arrayControlListsByNextControl[$control->id]['NextControl']['morecss'] = 'dashboard-control';
                     $arrayControlListsByNextControl[$control->id]['Verdict']['value']       = '<div class="wpeo-button button-'. $verdictColor .'">' . $control->fields['verdict']['arrayofkeyval'][!is_null($control->verdict) ? $control->verdict : 3] . '</div>';
@@ -1537,6 +1816,39 @@ class ControlLine extends SaturneObject
     public function fetchFromParentWithQuestion(int $controlID, int $questionID)
     {
         return $this->fetchAll('', '', 1, 0, ['customsql' => 't.fk_control = ' . $controlID . ' AND t.fk_question = ' . $questionID . ' AND t.status > 0']);
+    }
+
+    /**
+     * Return HTML string to put an output field into a page
+     *
+     * The answer of a PhotoMultiple question is a JSON of the comment and status of each photo : the
+     * answer card shows it as the photos it describes
+     *
+     * @param  array{type:string,label:string,enabled:int<0,2>|string,position:int,notnull?:int,visible:int<-6,6>,noteditable?:int,default?:int|string,index?:int,foreignkey?:string,searchall?:int,isameasure?:int,css?:string,csslist?:string,cssview?:string,help?:string,showoncombobox?:int,disabled?:int,arrayofkeyval?:array<int|string,string>,comment?:string,validate?:int,required?:int,picto?:string} $val Array of properties of field to show
+     * @param  string          $key       Key of attribute
+     * @param  string|int|null $value     Preselected value to show
+     * @param  string          $moreparam To add more parameters on html tag
+     * @param  string          $keysuffix Suffix string to add into name and id of field
+     * @param  string          $keyprefix Prefix string to add into name and id of field
+     * @param  mixed           $morecss   Value for CSS to use
+     * @return string                     HTML output
+     * @throws Exception
+     */
+    public function showOutputField($val, $key, $value, $moreparam = '', $keysuffix = '', $keyprefix = '', $morecss = '')
+    {
+        if ($key == 'answer' && !empty($value) && !empty($this->fk_question)) {
+            require_once __DIR__ . '/question.class.php';
+
+            $question = new Question($this->db);
+            $control  = new Control($this->db);
+            if ($question->fetch($this->fk_question) > 0 && $question->type == Question::TYPE_PHOTO_MULTIPLE && $control->fetch($this->fk_control) > 0) {
+                require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
+
+                return digiquali_photo_multiple_render_output($question, $control, (string) $value);
+            }
+        }
+
+        return parent::showOutputField($val, $key, $value, $moreparam, $keysuffix, $keyprefix, $morecss);
     }
 }
 

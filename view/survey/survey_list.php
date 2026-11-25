@@ -274,7 +274,7 @@ if (empty($resHook)) {
     require_once DOL_DOCUMENT_ROOT . '/core/actions_massactions.inc.php';
 
     // Mass actions archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/list_massactions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/list_massactions.tpl.php');
 }
 
 /*
@@ -302,12 +302,12 @@ if ($nbLinkableElements == 0) {
     $noticeMessage = digiquali_sheet_config_notice_message($langs->transnoentities('MissingConfigElementTypeMessage'), $langs->transnoentities('MissingConfigElementTypeAskAdmin'));
     print saturne_show_notice($langs->transnoentities('MissingConfigElementTypeTitle'), $noticeMessage, 'error', 'notice-infos', true);
 } else {
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_header.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_input.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_search_title.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_loop_object.tpl.php';
-    require_once __DIR__ . '/../../../saturne/core/tpl/list/objectfields_list_footer.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_build_sql_select.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_header.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_input.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_search_title.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_loop_object.tpl.php');
+    require_once dol_buildpath('/saturne/core/tpl/list/objectfields_list_footer.tpl.php');
 }
 
 // End of page

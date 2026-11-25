@@ -43,9 +43,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../../saturne/lib/medias.lib.php';
-require_once __DIR__ . '/../../../saturne/class/saturnesignature.class.php';
-require_once __DIR__ . '/../../../saturne/class/task/saturnetask.class.php';
+dol_include_once('/saturne/lib/medias.lib.php');
+dol_include_once('/saturne/class/saturnesignature.class.php');
+dol_include_once('/saturne/class/task/saturnetask.class.php');
 
 require_once __DIR__ . '/../../class/control.class.php';
 require_once __DIR__ . '/../../class/sheet.class.php';
@@ -86,7 +86,6 @@ $object           = new Control($db);
 $objectLine       = new ControlLine($db);
 $document         = new ControlDocument($db);
 $signatory        = new SaturneSignature($db, 'digiquali');
-$controlEquipment = new ControlEquipment($db);
 $product          = new Product($db);
 $sheet            = new Sheet($db);
 $question         = new Question($db);
@@ -148,7 +147,7 @@ $permissionToAddTask             = $canManageControlActions && ($user->hasRight(
 $permissionToDeleteTask          = $canManageControlActions && ($user->hasRight('project', 'supprimer') || $user->hasRight('project', 'all', 'supprimer'));
 $permissionToManageTaskTimeSpent = $canManageControlActions && $user->hasRight('project', 'time');
 
-$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : 1];
+$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : $conf->entity];
 
 // Security check - Protection if external user
 saturne_check_access($permissiontoread, $object);
@@ -185,6 +184,8 @@ if (empty($resHook)) {
 	// Action clone object
 	if ($action == 'confirm_clone' && $confirm == 'yes') {
         $options['label']              = GETPOST('clone_label');
+        $options['fk_user_controller'] = GETPOSTINT('clone_fk_user_controller');
+        $options['answers']            = GETPOST('clone_answers');
         $options['attendants']         = GETPOST('clone_attendants');
         $options['photos']             = GETPOST('clone_photos');
         $options['control_equipments'] = GETPOST('clone_control_equipments');
@@ -231,11 +232,33 @@ if (empty($resHook)) {
         }
     }
 
+    // #2687: change the controller, its signatory follows (handled before the generic set action which would skip it)
+    if ($action == 'setfk_user_controller' && $permissiontoadd) {
+        $controllerId = GETPOSTINT('fk_user_controller');
+        if ($controllerId > 0 && $object->fetch((int) $id) > 0) {
+            $object->fk_user_controller = $controllerId;
+            $result = $object->update($user);
+            if ($result > 0) {
+                $signatory->setSignatory($object->id, $object->element, 'user', [$controllerId], 'Controller');
+                header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+                exit;
+            } else {
+                setEventMessages($object->error, $object->errors, 'errors');
+            }
+        }
+        $action = '';
+    }
+
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     include DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
+    // #2743: warn as soon as the typed dates disagree, the date is kept as typed
+    if ($action == 'view' && in_array(GETPOST('action', 'aZ09'), ['setcontrol_date', 'setnext_control_date']) && $object->isNextControlDateBeforeControlDate()) {
+        setEventMessages($langs->trans('NextControlDateBeforeControlDate', dol_print_date($object->getNextControlDate(), 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')), [], 'warnings');
+    }
+
     // Actions set_thirdparty, set_project
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
     // Move linked tasks to the new project so they follow the control
     if ($action == 'set_project' && $permissiontoadd) {
@@ -263,10 +286,10 @@ if (empty($resHook)) {
     require_once __DIR__ . '/../../core/tpl/digiquali_answers_task_action.tpl.php';
 
     // Actions builddoc, forcebuilddoc, remove_file.
-    require_once __DIR__ . '/../../../saturne/core/tpl/documents/documents_action.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/documents/documents_action.tpl.php');
 
     // Action to generate pdf from odt file
-    require_once __DIR__ . '/../../../saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/documents/saturne_manual_pdf_generation_action.tpl.php');
 
     if ($action == 'confirm_setVerdict' && $permissiontosetverdict && !GETPOST('cancel', 'alpha')) {
         $object->fetch($id);
@@ -309,11 +332,14 @@ if (empty($resHook)) {
         }
     }
 
-    // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block
-    require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    // Actions uploadPhoto, linkPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block,
+    // for a user allowed to change the control, as on the PWA answer screen
+    if ($permissiontoadd) {
+        require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    }
 
     // Actions confirm_lock, confirm_archive
-    require_once __DIR__ . '/../../../saturne/core/tpl/actions/object_workflow_actions.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
 
     // Actions to send emails
     $triggersendname = 'CONTROL_SENTBYMAIL';
@@ -421,7 +447,7 @@ if ($action == 'create') {
         print '<div class="sheet-grid-images sheet-elements">';
         print '<input type="hidden" name="fk_sheet" value="' . GETPOST('fk_sheet') . '">';
         if (GETPOSTISSET('sheetCategoryID') || (GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined')) {
-            $sheets = saturne_fetch_all_object_type('Sheet', '', '', 0, 0, ['customsql' => 'cp.fk_categorie = ' . ((GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined') ? GETPOST('sheetSubCategoryID') : GETPOST('sheetCategoryID'))], 'AND', false, true, true);
+            $sheets = saturne_fetch_all_object_type('Sheet', '', '', 0, 0, ['customsql' => 'cp.fk_categorie = ' . ((GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined') ? GETPOSTINT('sheetSubCategoryID') : GETPOSTINT('sheetCategoryID'))], 'AND', false, true, true);
             if (is_array($sheets) && !empty($sheets)) {
                 foreach ($sheets as $sheetSingle) {
                     print saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/sheet/' . $sheetSingle->ref . '/photos/', 'small', '', 0, 0, 0, 50, 50, 1, 1, 0, 'sheet/' . $sheetSingle->ref . '/photos/', $sheetSingle, '', 0, 0, 0, 0, 'photo-sheet');
@@ -432,11 +458,11 @@ if ($action == 'create') {
     } else {
         //FK SHEET
         $filter          = 's.type = ' . '"' . $object->element . '" AND s.status = ' . Sheet::STATUS_LOCKED;
-        $filter         .= !empty(GETPOST('fromtype')) ? ' AND s.element_linked LIKE "%' . GETPOST('fromtype') . '%"' : '';
+        $filter         .= !empty(GETPOST('fromtype', 'aZ09')) ? " AND s.element_linked LIKE '%" . $db->escape($db->escapeforlike(GETPOST('fromtype', 'aZ09'))) . "%'" : '';
         print '<tr><td class="fieldrequired">' . ($source != 'pwa' ? $langs->trans('Sheet') : img_picto('', $sheet->picto . '_2em', 'class="pictofixedwidth"')) . '</td><td>';
         print ($source != 'pwa' ? img_picto('', $sheet->picto, 'class="pictofixedwidth"') : '') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', $filter, 1);
         if ($source != 'pwa') {
-            print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/custom/digiquali/view/sheet/sheet_card.php?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
+            print '<a class="butActionNew" href="' . dol_buildpath('/digiquali/view/sheet/sheet_card.php', 1) . '?action=create" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('AddSheet') . '"></span></a>';
         }
         print '</td></tr>';
     }
@@ -452,6 +478,11 @@ if ($action == 'create') {
 
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
+
+    // Nature of the control : the default of the sheet, the form is rendered again when the sheet changes
+    print '<tr class="field_mandatory"><td>' . ($source != 'pwa' ? $langs->trans('ControlNature') . ' ' . img_picto($langs->trans('ControlNatureHelp'), 'help') : img_picto($langs->trans('ControlNature'), 'fontawesome_fa-balance-scale_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
+    print ($source != 'pwa' ? img_picto('', 'fontawesome_fa-balance-scale_fas', 'class="pictofixedwidth"') : '') . $form::selectarray('mandatory', [0 => $langs->trans('InformativeControl'), 1 => $langs->trans('MandatoryControl')], GETPOSTISSET('mandatory') ? GETPOSTINT('mandatory') : ($fkSheet > 0 ? (int) $sheet->default_control_mandatory : 0));
+    print '</td></tr>';
 
     // Hidden project input when project field is not visible but sheet has a default project
     if ($fkSheet > 0 && empty($sheetShowProject) && !empty($sheetDefaultProjectId)) {
@@ -490,10 +521,7 @@ if ($action == 'create') {
     if ($fkSheet > 0) {
         print '<hr>';
 
-        print '<table class="centpercent tableforfieldcreate object-table linked-objects">';
-
-        print '<tr><td>';
-        print '<div class="fields-content">';
+        print '<table class="border centpercent tableforfieldcreate object-table linked-objects">';
 
         foreach($objectsMetadata as $objectType => $objectMetadata) {
             if (!empty($objectMetadata['conf'] && (!empty(GETPOST('fromtype')) && GETPOST('fromtype') == $objectMetadata['link_name']) || (preg_match('/"'. $objectType .'":1/',$sheet->element_linked)))) {
@@ -501,8 +529,8 @@ if ($action == 'create') {
                 $objectPost     = GETPOST($objectPostName) ?: (GETPOST('fromtype') == $objectMetadata['link_name'] ? GETPOST('fromid') : '');
 
                 $objectFilter = [];
-                if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOST($objectMetadata['parent_post']) > 0)) {
-                    $objectFilter = ['customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOST($objectMetadata['parent_post'])];
+                if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOSTINT($objectMetadata['parent_post']) > 0)) {
+                    $objectFilter = ['customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOSTINT($objectMetadata['parent_post'])];
                 } elseif (!empty($objectMetadata['filter'])) {
                     $objectFilter = ['customsql' => $objectMetadata['filter']];
                 }
@@ -512,13 +540,12 @@ if ($action == 'create') {
                 print($source != 'pwa' ? img_picto('', $objectMetadata['picto'], 'class="pictofixedwidth"') : '');
                 print $form->selectArray($objectPostName, $objectArray, $objectPost, $langs->trans('Select') . ' ' . strtolower($langs->trans($objectMetadata['langs'])), 0, 0, '', 0, 0, dol_strlen(GETPOST('fromtype')) > 0 && GETPOST('fromtype') != $objectMetadata['link_name'], '', 'maxwidth500 widthcentpercentminusxx');
                 if ($source != 'pwa') {
-                    print '<a class="butActionNew" href="' . DOL_URL_ROOT . '/' . $objectMetadata['create_url'] . '?action=create&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('Create') . ' ' . strtolower($langs->trans($objectMetadata['langs'])) . '"></span></a>';
+                    print '<a class="butActionNew" href="' . dol_buildpath($objectMetadata['create_url'], 1) . '?action=create&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?action=create') . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('Create') . ' ' . strtolower($langs->trans($objectMetadata['langs'])) . '"></span></a>';
                 }
                 print '</td></tr>';
             }
         }
 
-        print '</div>';
         print '</table>';
     }
 
@@ -571,20 +598,10 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     $formConfirm = '';
 
     // If conf activated we check that at least one control equipment is outdated
-    $equipmentOutdated = false;
-    if (getDolGlobalInt('DIGIQUALI_LOCK_CONTROL_OUTDATED_EQUIPMENT')) {
-        $controlEquipments = $controlEquipment->fetchFromParent($object->id);
-        if (is_array($controlEquipments) && !empty($controlEquipments)) {
-            foreach ($controlEquipments as $equipmentControl) {
-                $data = json_decode($equipmentControl->json, true);
-                $dluo = $data['dluo'];
-                if (!empty($dluo) && $dluo <= dol_now()) {
-                    $equipmentOutdated = true;
-                    break;
-                }
-            }
-        }
-    }
+    $equipmentOutdated = $object->hasOutdatedEquipment();
+
+    // Steps left before the lock, listed by the lock button and the notice of a validated control
+    $lockBlockers = $object->getLockBlockers();
 
     if (($action == 'setVerdict' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         $formquestion = [
@@ -613,15 +630,22 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     // Lock confirmation. The next control date is only written in database by the lock itself :
     // preview the date it will set, otherwise the confirmation always announces NA and 0 day.
-    $nextControlDate = $object->getNextControlDate();
-    $days            = $object->getNextControlDelay();
+    // #2811: the deadline is counted from today, a next control date already past is announced as overdue.
+    $nextControlDate     = $object->getNextControlDate();
+    $nextControlDeadline = digiquali_get_next_control_deadline_label($object->getNextControlDelay());
+    $nextControlDeadline = $nextControlDeadline ?: $langs->transnoentities('NA');
     if (($action == 'lock' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // A KO verdict has its own periodicity : the warning does not replace the announced dates
         $lockConfirmContent = $langs->trans('ConfirmLockObject', $langs->transnoentities('The' . ucfirst($object->element)));
         if ($object->verdict == 2) {
             $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
         }
-        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $nextControlDeadline);
+        // #2743: last chance to correct a next control date typed before the control date
+        if ($object->isNextControlDateBeforeControlDate()) {
+            $lockConfirmContent .= '<br>' . img_warning('', '', 'paddingright') . '<span class="warning">' . $langs->transnoentities('NextControlDateBeforeControlDate', dol_print_date($nextControlDate, 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')) . '</span>';
+        }
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('ControlLockConsequences');
 
         $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $lockConfirmContent, 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
     }
@@ -639,12 +663,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
         $formQuestionClone = [
             ['type' => 'text',     'name' => 'clone_label', 'label' => $langs->trans('NewLabelForClone', $langs->transnoentities('The' . ucfirst($object->element))), 'value' => dol_print_date($object->control_date, '%Y%m%d') . '-' . $linkedObjectName, 'size' => 24],
+            ['type' => 'other',    'name' => 'clone_fk_user_controller', 'label' => $langs->trans('Controller'),             'value' => $form->select_dolusers($object->fk_user_controller, 'clone_fk_user_controller', 0, null, 0, '', '', '0', 0, 0, '', 0, '', 'minwidth200', 1)],
+            ['type' => 'checkbox', 'name' => 'clone_answers',            'label' => $langs->trans('CloneAnswers'),           'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_attendants',         'label' => $langs->trans('CloneAttendants'),        'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_photos',             'label' => $langs->trans('ClonePhotos'),            'value' => 1],
             ['type' => 'checkbox', 'name' => 'clone_control_equipments', 'label' => $langs->trans('CloneControlEquipments'), 'value' => 1]
         ];
 
-        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('CloneObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmCloneObject', $langs->transnoentities('The' . ucfirst($object->element)), $object->ref), 'confirm_clone', $formQuestionClone, 'yes', 'actionButtonClone', 350, 600);
+        $formConfirm .= $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('CloneObject', $langs->transnoentities('The' . ucfirst($object->element))), $langs->trans('ConfirmCloneObject', $langs->transnoentities('The' . ucfirst($object->element)), $object->ref), 'confirm_clone', $formQuestionClone, 'yes', 'actionButtonClone', 420, 600);
     }
 
     // Delete confirmation
@@ -677,10 +703,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     // Common attributes
     unset($object->fields['label']);     // Hide field already shown in banner
     unset($object->fields['projectid']); // Hide field already shown in banner
+    unset($object->fields['fk_user_controller']); // Shown below with its own edit form
 
     if (getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE')) {
         // Answer public interface
-        $publicAnswerUrl = dol_buildpath('custom/digiquali/public/public_answer.php?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=ControlDocument&entity=' . $conf->entity, 3);
+        $publicAnswerUrl = dol_buildpath('/digiquali/public/public_answer.php', 3) . '?track_id=' . $object->track_id . '&object_type=' . $object->element . '&document_type=ControlDocument&entity=' . $conf->entity;
         print '<tr><td class="titlefield">' . $langs->trans('PublicAnswer') . ' <a href="' . $publicAnswerUrl . '" target="_blank"><i class="fas fa-qrcode"></i></a>';
         print showValueWithClipboardCPButton($publicAnswerUrl, 0, '&nbsp;');
         print '</td><td>';
@@ -688,17 +715,49 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
         print '</td></tr>';
     }
 
+    // #2687: the controller stays editable until the control is locked, a clone keeps the source one otherwise
+    $permissionToEditController = $permissiontoadd && $object->status < Control::STATUS_LOCKED;
+    print '<tr class="field_fk_user_controller"><td class="titlefield fieldname_fk_user_controller">';
+    print $form->editfieldkey('Controller', 'fk_user_controller', $object->fk_user_controller, $object, $permissionToEditController);
+    print '</td><td class="valuefield fieldname_fk_user_controller">';
+    if ($action == 'editfk_user_controller' && $permissionToEditController) {
+        print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
+        print '<input type="hidden" name="token" value="' . newToken() . '">';
+        print '<input type="hidden" name="action" value="setfk_user_controller">';
+        print img_picto('', 'user', 'class="pictofixedwidth"') . $form->select_dolusers($object->fk_user_controller, 'fk_user_controller', 0, null, 0, '', '', '0', 0, 0, '', 0, '', 'minwidth200', 1);
+        print '<input type="submit" class="button smallpaddingimp valignmiddle" value="' . $langs->trans('Modify') . '">';
+        print '</form>';
+    } elseif ($object->fk_user_controller > 0) {
+        $controller = new User($db);
+        $controller->fetch($object->fk_user_controller);
+        print $controller->getNomUrl(-1);
+    }
+    print '</td></tr>';
+
     print '<tr class="field_control_date"><td class="titlefield fieldname_control_date">';
     print $form->editfieldkey('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
     print '</td><td class="valuefield fieldname_control_date">';
     print $form->editfieldval('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
-    print '</td>';
+    print '</td></tr>';
 
     print '<tr class="field_next_control_date"><td class="titlefield fieldname_next_control_date">';
     print $form->editfieldkey('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
     print '</td><td class="valuefield fieldname_next_control_date">';
     print $form->editfieldval('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
-    print '</td>';
+    // #2743: indicative only, a locked control keeps it too so the overdue status can be explained
+    if ($object->isNextControlDateBeforeControlDate()) {
+        $nextControlDateWarning = $langs->trans('NextControlDateBeforeControlDate', dol_print_date($object->getNextControlDate(), 'day'), dol_print_date($object->getControlDateTimestamp(), 'day'));
+        print ' <span class="warning classfortooltip" title="' . dol_escape_htmltag($nextControlDateWarning) . '">' . img_warning('', '', 'paddingright') . $langs->trans('NextControlDateBeforeControlDateShort') . '</span>';
+    }
+    print '</td></tr>';
+
+    // Nature : a mandatory control decides the status of the controlled object, changeable until the lock as the dates
+    $natureSelect = 'select;0:' . $langs->trans('InformativeControl') . ',1:' . $langs->trans('MandatoryControl');
+    print '<tr class="field_mandatory"><td class="titlefield fieldname_mandatory">';
+    print $form->editfieldkey('ControlNature', 'mandatory', (string) (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', 0, 0, 'id', $langs->trans('ControlNatureHelp'));
+    print '</td><td class="valuefield fieldname_mandatory">';
+    print $form->editfieldval('ControlNature', 'mandatory', (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', null, null, 'id=' . $object->id);
+    print '</td></tr>';
 
     print '<tr class="field_verdict"><td class="titlefield fieldname_verdict">';
     print $langs->trans('Verdict');
@@ -713,7 +772,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     if (isModEnabled('categorie')) {
         print '<tr><td class="valignmiddle">' . $langs->trans('Categories') . '</td>';
         if ($action != 'categories') {
-            print '<td style="display: flex">' . ($object->status < Control::STATUS_LOCKED ? '<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=categories&id=' . $object->id . '">' . img_edit($langs->trans('Modify')) . '</a>' : '<img src="" alt="">');
+            print '<td style="display: flex">' . ($object->status < Control::STATUS_LOCKED ? '<a class="editfielda" href="' . $_SERVER['PHP_SELF'] . '?action=categories&token=' . newToken() . '&id=' . $object->id . '">' . img_edit($langs->trans('Modify')) . '</a>' : '<img src="" alt="">');
             print $form->showCategories($object->id, 'control', 1) . '</td>';
         }
         if ($permissiontoadd && $action == 'categories') {
@@ -761,10 +820,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     print '<tr class="linked-medias photo question-table"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list">';
     print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="' . dol_escape_htmltag($object->photo) . '"/>';
+    // The picking buttons offer the device and the media library, as the answers of the control do
     print saturne_render_media_block('digiquali', 'control/' . $object->id . '/photos', '', '', [
-        'show_photo'  => true,
-        'show_audio'  => false,
-        'show_upload' => $object->status < Control::STATUS_LOCKED,
+        'show_photo'   => true,
+        'show_audio'   => false,
+        'show_upload'  => $object->status < Control::STATUS_LOCKED,
+        'show_library' => true,
     ]);
     print '</td></tr>';
 
@@ -846,9 +907,14 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             <div class="notice-content">
                 <div class="notice-title"><?php echo $langs->trans('ControlEquipmentOutdated') ?></div>
             </div>
-            <a class="butAction" href="<?php echo DOL_URL_ROOT . '/custom/digiquali/view/control/control_equipment.php?id=' . $object->id ?>"><?php echo $langs->trans("GoToEquipmentHours", $usertmp->getFullName($langs)) ?></a>
+            <a class="butAction" href="<?php echo dol_buildpath('/digiquali/view/control/control_equipment.php', 1) . '?id=' . $object->id ?>"><?php echo $langs->trans("GoToEquipmentHours", $usertmp->getFullName($langs)) ?></a>
         </div>
     <?php }
+
+    // A validated control is neither final nor published yet: tell what is left before the lock
+    if ($object->status == Control::STATUS_VALIDATED) {
+        require __DIR__ . '/../../core/tpl/control/control_lock_steps.tpl.php';
+    }
 
     print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?action=save&id=' . $object->id . '" id="saveObject" enctype="multipart/form-data">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
@@ -901,17 +967,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
             // Sign
             $displayButton = $onPhone ? '<i class="fas fa-signature fa-2x"></i>' : '<i class="fas fa-signature"></i>' . ' ' . $langs->trans('Sign');
             if ($object->status == $object::STATUS_VALIDATED && !$signatory->checkSignatoriesSignatures($object->id, $object->element) && $object->verdict > 0) {
-                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/custom/saturne/view/saturne_attendants.php?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=ControlDocument&attendant_table_mode=simple', 3) . '">' . $displayButton . '</a>';
+                print '<a class="butAction" id="actionButtonSign" href="' . dol_buildpath('/saturne/view/saturne_attendants.php', 3) . '?id=' . $object->id . '&module_name=DigiQuali&object_type=' . $object->element . '&document_type=ControlDocument&attendant_table_mode=simple">' . $displayButton . '</a>';
             } else {
                 print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ObjectMustBeValidatedToSign', ucfirst($langs->transnoentities('The' . ucfirst($object->element))))) . '">' . $displayButton . '</span>';
             }
 
             // Lock
             $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('Lock');
-            if ($object->status == $object::STATUS_VALIDATED && $object->verdict != null && $signatory->checkSignatoriesSignatures($object->id, $object->element) && !$equipmentOutdated) {
+            if (empty($lockBlockers)) {
                 print '<span class="butAction" id="actionButtonLock">' . $displayButton . '</span>';
+            } elseif ($object->status < $object::STATUS_LOCKED) {
+                // Name the steps left rather than a generic message: the user knows what to do next
+                $lockBlockersLabels = array_map([$langs, 'transnoentities'], $lockBlockers);
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->transnoentities('ControlLockStepsLeft') . '<br>- ' . implode('<br>- ', $lockBlockersLabels)) . '">' . $displayButton . '</span>';
             } else {
-                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ControlMustBeValidatedToLock')) . '">' . $displayButton . '</span>';
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('ControlAlreadyLocked')) . '">' . $displayButton . '</span>';
             }
 
             // Send email
@@ -1225,7 +1295,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 }
 
 // Photo editor modal (required by saturne_render_media_block)
-require_once __DIR__ . '/../../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 // End of page
 llxFooter();

@@ -14,42 +14,862 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #
+# Generic
+#
+
+ModuleDigiQualiName      = DigiQuali
+ModuleDigiQualiDesc      = Quality management system for Dolibarr
+DigiQualiDescription     = Quality management system for Dolibarr
+DigiQualiDescriptionLong = Quality management system for Dolibarr
+
+#
+# DigiQuali
+#
+
+# Data
+RedirectAfterConnection            = Redirect after logging in to the site
+RedirectAfterConnectionDescription = Redirects to the DigiQuali welcome page by default instead of the Dolibarr one.
+EnableDigiquali                    = Please enable the DigiQuali module to access this page
+
+#
+# Config page
+#
+
+# Sheet
+GenerateMainSheetCategories    = Generation of the main categories of the control template
+MainSheetCategoriesDescription = This option generates the main categories of the control template. <br> The categories created will be: <ul><li>Control</li><ul><li>Quality</li><ul><li>Health and safety</li><ul><li>First aid kits</li></ul></ul><li>Equipment</li><ul><li>Mask</li></ul><li>Vehicles</li><ul><li>Car</li><li>Industrial vehicle</li></ul></ul></ul>
+SheetMainCategory              = Choice of the main category of the control template
+SheetMainCategoryDescription   = This option lets you choose which category is used when choosing a category while creating a control
+ShowProjectOnControl           = Show the project on the control
+ShowTagsOnControl              = Show the tags on the control
+DefaultControlTags             = Default control tags
+ControlCreationOptions         = Control creation options
+ShowProjectOnControlHelp       = If enabled, the project field is visible when creating a control from this template
+ShowTagsOnControlHelp          = If enabled, the tags/categories field is visible when creating a control from this template
+DefaultControlTagsHelp         = Categories preselected when creating a control from this template
+DefaultControlProject          = Default control project
+ControlPeriod                  = Control period
+ControlPeriodUnit              = Unit of the control period
+ControlPeriodHelp              = Time between two controls made from this template, in days, months or years: the next control date is computed when the control is locked (2 years = the same day two years later). It comes before the periodicity of the controlled object; when empty, the one of the controlled object applies. When it changes, the card offers to compute again the next date of the controls already locked.
+SheetQcFrequencyFromObject     = The one of the controlled object
+DefaultControlNature           = Nature of the controls
+DefaultControlNatureHelp       = Nature given to the controls made from this template, from the mobile app and the vehicle logbook too. Each control keeps its own, changeable until it is locked. When it changes, the card offers to apply it to the controls already made.
+ControlNature                  = Control nature
+ControlNatureHelp              = A mandatory control is blocking: once the object has one, its status (compliant, non-compliant, overdue) comes from the last mandatory control of each template, and the informative controls no longer change it nor appear on the public page.
+MandatoryControl               = Mandatory
+InformativeControl             = Informative
+LastMandatoryControl           = Mandatory control
+MandatoryControlOn             = Mandatory control on %s
+AlignControlsTitle             = Controls already made
+AlignControlsQuestion          = %s control(s) already made from this template do not follow this setting:
+AlignControlsNature            = nature "%s": %s control(s)
+AlignControlsNextDate          = next date computed again with the period of %s, from the control date: %s locked control(s)
+AlignControlsConfirm           = Update them? Otherwise only the next controls follow this setting.
+ControlsAligned                = %s control(s) updated
+ConfigureYourObjectsHere       = Configure your objects here
+ControlledObjectsTitle         = Objects controlled by this Control/Survey
+ElementLinked                  = Controlled objects
+
+# Control
+DisplayMediasSample                                = Show the sample media of the questions
+DisplayControlMediasSampleDescription              = Show the sample media of the questions in the control
+ExtrafieldsControlManagement                       = Management of the control complementary attributes
+ShowAddControlButtonOnPublicInterface              = Show the add control button on the public control interface
+ShowAddControlButtonOnPublicInterfaceDescription   = Allows the add control button to be shown on the public control interface
+ShowParentLinkedObjectOnPublicInterface            = Show the parent object on the public control interface
+ShowParentLinkedObjectOnPublicInterfaceDescription = Allows the parent object to be shown on the public control interface
+NextControlDateColorManagement                     = Control date color management
+NextControlDateColor0                              = Overdue
+NextControlDateColor30                             = Urgent
+NextControlDateColor60                             = Due soon
+NextControlDateColor90                             = Distant date
+NextControlDateColor0Description                   = Color code for the next control date - Overdue
+NextControlDateColor30Description                  = Color code for the next control date - Urgent
+NextControlDateColor60Description                  = Color code for the next control date - Due soon
+NextControlDateColor90Description                  = Color code for the next control date - Distant date
+
+# Survey
+DisplaySurveyMediasSampleDescription = Show the sample media of the questions in the survey
+ExtrafieldsSurveyManagement          = Management of the survey complementary attributes
+
+# Mapping
+SelectProject  = Select a project
+MappingProject = Mapping project
+
+# Public interface
+AnswerPublicInterface                        = Public answer interface for __OBJECT_ELEMENT_REF__
+AnswerPublicInterfaceTitle                   = Title of the public answer interface
+AnswerPublicInterfaceSubstitution            = Generic translation of "TheObject" __REF__
+AnswerPublicInterfaceUseSignatory            = Enable the signature on the public answer interface
+AnswerPublicInterfaceUseSignatoryDescription = Makes the signature mandatory on the public answer interface
+AnswerPublicInterfaceShowTitle               = Enable the title on the public answer interface
+AnswerPublicInterfaceShowTitleDescription    = Allows the control title to be shown on the public answer interface
+AnswerPublicInterfaceAddAction               = Enable corrective actions on the public answer interface
+AnswerPublicInterfaceAddActionDescription    = Lets a visitor read the corrective actions of a question and add one from the public interface. The control has to be attached to a project, which the actions are created into. The assignee, the budget and the time spent stay a back-office matter.
+
+#
+# Questions
+#
+
+# Data
+Question                      = Question
+Questions                     = questions
+TheQuestion                   = the question
+QuestionList                  = List of questions
+ControldetList                = List of control answers
+SelectMultipleQuestion        = Select one or more questions
+NewQuestion                   = New question
+ModifyQuestion                = Edit a question
+LinkedQuestionsList           = List of linked questions (%s)
+AddQuestionLink               = %d question(s) added to the template:
+WarningQuestionLink           = %d question(s) already in the template:
+ConfirmMassAddQuestion        = Confirm the mass adding of questions to the template
+ConfirmMassAddingQuestion     = Are you sure you want to add the %d selected question(s)?
+NbQuestionsAlreadyInSheet     = %d question(s) already in it
+QuestionsInSheetWillBeIgnored = Questions already in the selected template will not be added.
+GenerateQRCodes               = Generate QR codes (PDF)
+ConfirmMassGenerateQRCodes    = Generate a sheet of labels with the QR code of the public control history of the %d selected item(s)?
+QRCodeLabelFormat             = Label format
+removeQuestionLink            = Question removed from the template:
+LockQuestion                  = Question %s is now locked
+LockQuestions                 = All the selected questions are now locked
+ThereAre                      = There are
+YouAnswered                   = You answered
+On                            = out of
+BewareQuestionsAnswered       = Warning: %s answer(s) missing
+QuestionsCategoriesArea       = Questions tags/categories area
+ExtrafieldsQuestionManagement = Management of the question complementary attributes
+PhotoOk                       = Example of a correct photo
+PhotoKo                       = Example of an incorrect photo
+ShowPhoto                     = Show photos
+AuthorizeAnswerPhoto          = Allow photos to be sent on answers
+ShowPhotoTooltip              = Shows the photos and the media library on the question
+AuthorizeAnswerPhotoTooltip   = Allows photos to be sent on the question answers
+NoteControl                   = Public note
+EnterComment                  = Enter comments
+EnterCommentTooltip           = Enter the comment on the question answers
+CommentLibrary                = Comment library
+ErrorQuestionUsedInSheet      = Question %s cannot be deleted, it is used in one or more templates.
+ErrorQuestionGroupUsedInSheet = Question group %s cannot be deleted, it is used in one or more templates.
+ErrorNoQuestionSelected       = No question selected
+AddQuestionIntoCategory       = Assign this category to the question
+QuestionType                  = Question type
+AnswersList                   = List of possible answers
+MultipleChoices               = Multiple choices
+Text                          = Text
+UniqueChoice                  = Single choice
+Range                         = Numeric value
+OkKo                          = OK/KO selector
+OkKoToFixNonApplicable        = OK / KO / N/A / To fix selector
+MarqueNF                      = NF mark selector
+Iso9001                       = ISO 9001 selector
+PhotoMultiple                 = Multiple photos
+PhotoMultipleEmpty            = Take or add photos: each one gets its own comment and status.
+PhotoMultipleImage            = Image
+PhotoMultipleComment          = Comment
+PhotoMultipleStatus           = Status
+PhotoMultipleStatusOK         = OK
+PhotoMultipleStatusKO         = KO
+PhotoMultipleStatusTOFIX      = To fix
+PhotoMultipleStatusNA         = N/A
+PhotoMultipleSummary          = %s photo(s)
+PhotoMultipleNoAnswer         = No photo
+PhotoMultipleBalance          = Question summary
+PhotoMultipleHelp             = One status per photo, optional. The question has no overall status and does not count in the points.
+PhotoMultipleHelpControl      = One status per photo, optional. The question has no overall status and counts neither in the points nor in the verdict.
+PhotoMultipleTypeHelp         = One row per photo, with a comment and a status. No overall status and no points: the question comes down to its summary, e.g. "3 photo(s) - 2 OK - 1 KO".
+MediaLibrary                  = Media library
+AddFromMediaLibrary           = Add from the media library
+ToFix                         = To fix
+NonApplicable                 = N/A
+Conforme                      = Compliant
+NCMajeur                      = Major NC
+NCMineure                     = Minor NC
+Observation                   = Observation
+ProgressTrack                 = Opportunity for improvement
+StrongPoint                   = Strong point
+ISO9001Description            = ISO 9001 standard - Quality management systems
+ISO9001Conforme               = C - Compliant
+ISO9001NonConformite          = NC - Nonconformity
+ISO9001Observation            = OBS - Observation
+ISO9001ProgressTrack          = OFI - Opportunity for improvement
+ISO9001StrongPoint            = SP - Strong point
+TagStatistics                 = Statistics by tag
+AnswersRepartitionByTag       = Answer breakdown by tag
+StatsByTagAndStatus           = Statistics table by tag and status
+DetailByTag                   = Detail by tag
+AllTags                       = All tags
+NoTag                         = No tag
+ConformityRate                = Compliance rate
+Conformity                    = Compliance
+Answer                        = Answer
+EmptyValue                    = The answer value is empty
+ErrorCreateAnswer             = An error occurred while creating the answer
+ErrorUpdateAnswer             = An error occurred while editing the answer
+ErrorDeleteAnswer             = An error occurred while deleting the answer
+AnswerCreated                 = The answer has been successfully created
+AnswerUpdated                 = The answer has been successfully updated
+AnswerDeleted                 = The answer has been successfully deleted
+AnswerMustBeCreated           = Question %s must have at least one answer to be locked
+ShowOnlyQuestionsWithNoAnswer = Show only the questions with no answer
+AveragePercentageQuestions    = Questions average
+AddToSheet                    = Add to the template
+PercentageQuestionStep        = Number of slider steps
+NumberOfPoints                = Number of points
+Point                         = Point
+Points                        = Points
+AnswerCorrectness             = Answer correctness
+ExpectedAnswer                = Correct answer
+QuestionWithOneCorrectAnswer  = This question type accepts only one correct answer
+AnswerCorrectnessMinBound     = Minimum correct answer value
+AnswerCorrectnessMaxBound     = Maximum correct answer value
+QuestionMinBoundExceeded      = The minimum correct answer value of a percentage cannot be lower than 0
+QuestionMaxBoundExceeded      = The maximum correct answer value of a percentage cannot be higher than 100
+ProjectNeededForTasks         = Please set a project for this control to be able to use tasks
+NoQuestion                    = No question
+
+
+#
+# QuestionGroups
+#
+
+# Data
+QuestionGroup                 = Question group
+Questiongroup                 = Question group
+QuestionGroups                = Question groups
+NewQuestionGroup              = New question group
+QuestiongroupList             = List of question groups
+RemoveQuestionFromGroup       = Question removed from the group
+RemoveQuestionGroupLink       = Question group removed from the template:
+TheQuestiongroup              = the question group
+ObjectAddquestionTrigger      = Question added
+ObjectAddquestiongroupTrigger = Question group added
+ObjectRemovequestionTrigger      = Question %s removed
+ObjectRemovequestiongroupTrigger = Question group %s removed
+
+
+#
+# Sheet
+#
+
+# Trigger
+ObjectAddQuestionTrigger = Question added to template %s %s
+
+# Data
+Sheet                          = Template
+Sheets                         = templates
+TheSheet                       = the template
+SheetList                      = List of templates
+NewSheet                       = New template
+ModifySheet                    = Edit a template
+AddSheet                       = Add a template
+AllQuestionsMustHaveLocked     = All the questions must be locked to lock the template
+NoLotForThisProduct            = No lot defined for this product
+ModalAddPhoto                  = Media library
+SheetManagement                = Template management
+ActionsOnSheet                 = Events linked to the template
+SheetsCategoriesArea           = Templates tags/categories area
+ExtrafieldsSheetManagement     = Management of the template complementary attributes
+SheetCategories                = Template categories
+SheetSubCategories             = Template subcategories
+GenerateCategories             = Generation of the default template categories
+AlreadyGenerated               = Already generated
+NotCreated                     = Not created yet
+CategoriesGeneration           = This option generates the default template categories. The categories created will be: <br> - Quality <br> - Hygiene <br> - Safety <br> - Environment <br> - Security <br> - Regulatory <br> - Design office <br> - Vendors <br> - Sales <br> - Production <br> - Methods <br> - Accounting <br> - Logistics <br> - IT <br>
+UniqueLinkedElement            = Single link to the Dolibarr elements
+UniqueLinkedElementDescription = Link a single Dolibarr element to a template
+SheetLinkedObjectSelect2            = Drop-down list for the controlled objects
+SheetLinkedObjectSelect2Description = Show the controlled objects in a compact drop-down list (with search) instead of the checkbox list
+ErrorSheetUsedInControl        = Template %s cannot be deleted, it is used in one or more controls/surveys.
+AddSheetIntoCategory           = Assign this category to the template
+QuestionMandatorized           = Question %s has been made mandatory
+QuestionUnMandatorized         = Question %s is no longer mandatory
+SetAllMandatory                = Make all the questions mandatory / not mandatory
+NoLinkedObjectSelected         = Please select a type of object to control
+ExpandAllGroups                = Expand all
+CollapseAllGroups              = Collapse all
+ExportSheetData                = Template data export
+ExportSheetDataDescription     = Export of the template data and of the linked questions
+ExportWellDone                 = The export has been successfully completed
+ExportFailed                   = The export failed
+ToImportDataGoToImportPage     = To import data, please go to the import page:
+NbQuestions                    = Number of questions
+SuccessScore                   = Success score
+SuccessScoreWithUnit           = Success score (%)
+PercentageValue                = Percentage value
+CreateNewQuestion              = Create a new question
+CreateNewQuestionGroup         = Create a new question group
+
+# Notice
+MissingConfigElementTypeTitle   = Missing configuration for the linked elements
+MissingConfigElementTypeMessage = Please click the link to configure the linked elements
+MissingConfigElementTypeAskAdmin = No element can be linked yet: ask an administrator to enable them in the DigiQuali module configuration.
+LineMovedOutsideParentError     = An element cannot be moved outside its parent
+
+
+
+# Tags
+Quality             = Quality
+HealthSecurity      = Health and safety
+Environment         = Environment
+Safety              = Security
+Regulatory          = Regulatory
+DesignOffice        = Design office
+Suppliers           = Vendors
+CommercialDigiQuali = Sales
+Production          = Production
+Methods             = Methods
+Logistics           = Logistics
+ComputerScience     = IT
+FirstAidKits        = First aid kits
+Materials           = Equipment
+Mask                = Mask
+Vehicles            = Vehicles
+Car                 = Car
+IndustrialVehicles  = Industrial vehicle
+
+
+
+#
+# Control
+#
+
+# Trigger
+ObjectSaveanswerTrigger = Answers saved - %s %s
+ControlReminderTrigger  = %s must be controlled within %s days at the latest
+
+# Data
+Control                                        = Control
+ControlsMin                                    = controls
+TheControl                                     = the control
+CreateControl                                  = Create a control
+AddControl                                     = Add a control
+NewControl                                     = New control
+ControlList                                    = List of controls
+Controller                                     = Controller
+Attendant                                      = Attendant
+ExtSocietyAttendant                            = External attendant
+ControlDate                                    = Control date
+Controls                                       = Controls
+ControlMustBeDraft                             = The control must be a draft to access this feature
+ControlMustBeValidated                         = The control must be validated to reopen it
+ControlLockStepsLeft                           = Steps left before the lock:
+ControlLockStepValidate                        = Validate the control
+ControlLockStepVerdict                         = Set the verdict (Compliant/Non-compliant)
+ControlLockStepSign                            = Have all the attendants sign
+ControlLockStepLock                            = Lock: the control is frozen, the next control date is computed and it appears on the public interface
+ControlAlreadyLocked                           = The control is already locked
+ControlValidatedNotLocked                      = Control validated, not locked yet
+ControlValidatedNotLockedHelp                  = Until it is locked, the control can be set back to draft, it does not appear on the public interface and the next control date is not computed. Steps to complete it:
+ControlLockConsequences                        = Once locked, the control can no longer be set back to draft and appears on the public interface.
+ControlVerdictSelected                         = The verdict has already been set
+ControlMustBeValidatedToSetVerdict             = The control must be validated to set the verdict
+ControlMustBeValidatedToGenerated              = The control must be validated to generate the control sheet
+SetOK/KO                                       = Compliant/Non-compliant
+ControlObject                                  = Controlled object
+Batch                                          = Lot/Serial
+BatchLinked                                    = Controlled lot/serial
+VerdictControl                                 = Verdict choice
+Verdict                                        = Control verdict
+VerdictObject                                  = Verdict
+ValidateControl                                = Validate the control
+ReOpenControl                                  = Reopen the control
+LockControl                                    = Lock the control
+ConfirmValidateControl                         = Are you sure you want to validate the control?
+ConfirmReOpenControl                           = Reopening removes the control verdict.
+ConfirmLockControl                             = Are you sure you want to lock the control? <br> Locking will prevent any change to the control.
+ProjectLinked                                  = Controlled project
+ControlManagement                              = Control management
+ControlData                                    = Configurable control data
+DisplayMedias                                  = Show the media in the control
+DisplayMediasDescription                       = Show the media of the questions in the control
+ChangeUserController                           = Change the controller user
+TaskLinked                                     = Controlled task
+ThirdPartyLinked                               = Controlled third party
+ContactLinked                                  = Controlled contact/address
+InvoiceLinked                                  = Controlled invoice
+OrderLinked                                    = Controlled order
+ContractLinked                                 = Controlled contract
+TicketLinked                                   = Controlled ticket
+LinkProduct                                    = Enable link with products
+LinkProductDescription                         = Allows linking between products and templates
+LinkProductlot                                 = Enable link with lot/serial numbers
+LinkProductlotDescription                      = Allows linking between lot/serial numbers and templates
+LinkUser                                       = Enable link with users
+LinkUserDescription                            = Allows linking between users and templates
+LinkThirdparty                                 = Enable link with third parties
+LinkThirdpartyDescription                      = Allows linking between third parties and templates
+LinkContact                                    = Enable link with contacts/addresses
+LinkContactDescription                         = Allows linking between contacts/addresses and templates
+LinkProject                                    = Enable link with projects
+LinkProjectDescription                         = Allows linking between projects and templates
+LinkTask                                       = Enable link with tasks
+LinkTaskDescription                            = Allows linking between tasks and templates
+LinkInvoice                                    = Enable link with invoices
+LinkInvoiceDescription                         = Allows linking between invoices and templates
+LinkOrder                                      = Enable link with sales orders
+LinkOrderDescription                           = Allows linking between sales orders and templates
+LinkContract                                   = Enable link with contracts
+LinkContractDescription                        = Allows linking between contracts and templates
+LinkTicket                                     = Enable link with tickets
+LinkTicketDescription                          = Allows linking between tickets and templates
+LinkEntrepot                                   = Enable link with warehouses
+LinkEntrepotDescription                        = Allows linking between warehouses and templates
+LinkExpedition                                 = Enable link with shipments
+LinkExpeditionDescription                      = Allows linking between shipments and templates
+LinkPropal                                     = Enable link with commercial proposals
+LinkPropalDescription                          = Allows linking between commercial proposals and templates
+LinkMrp                                        = Enable link with manufacturing orders
+LinkMrpDescription                             = Allows linking between manufacturing orders and templates
+LinkReception                                  = Enable link with receptions
+LinkReceptionDescription                       = Allows linking between receptions and templates
+LinkInventory                                  = Enable link with inventories
+LinkInventoryDescription                       = Allows linking between inventories and templates
+LinkMouvement                                  = Enable link with stock movements
+LinkMouvementDescription                       = Allows linking between stock movements and templates
+LinkableElements                               = Linkable elements
+LinkedObjectUsage                              = Usage
+LinkedObjectUsageDetail                        = %d link(s), %d control frequency value(s)
+NoLinkedObjectUsage                            = Not used
+DisableLinkConfirm                             = The link with "%s" is about to be disabled. %d control frequency value(s) will be permanently deleted. Confirm?
+EnableAllLinksConfirm                          = Every link is about to be enabled: extrafields, tabs and hooks will be created on all available objects. Confirm?
+DisableAllLinksConfirm                         = Every link is about to be disabled: extrafields will be deleted and their values lost. Confirm?
+CleanUnusedLinks                               = Clean unused links
+CleanUnusedLinksConfirm                        = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
+LinkedObjectSyncDone                           = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
+LinkedObjectSyncError                          = Link synchronisation failed, no change has been saved
+LinkedObjectExtraFieldsKeptForExport           = Extrafield(s) kept although their link is disabled: a saved export model still uses them. Remove them from the export model to have them deleted
+LinkFicheinter                                 = Enable link with interventions
+LinkFicheinterDescription                      = Allows linking between interventions and templates
+LinkBom                                        = Enable link with bills of materials (BOM)
+LinkBomDescription                             = Allows linking between bills of materials (BOM) and templates
+LinkShipping                                   = Enable link with shipments
+LinkShippingDescription                        = Allows linking between shipments and templates
+LinkSupplier_order                             = Enable link with purchase orders
+LinkSupplier_orderDescription                  = Allows linking between purchase orders and templates
+LinkDigiquali_question                         = Enable link with questions
+LinkDigiquali_questionDescription              = Allows linking between questions and templates
+LinkDigiquali_answer                           = Enable link with answers
+LinkDigiquali_answerDescription                = Allows linking between answers and templates
+LinkDigiquali_control                          = Enable link with controls
+LinkDigiquali_controlDescription               = Allows linking between controls and templates
+LinkDigiquali_survey                           = Enable link with surveys
+LinkDigiquali_surveyDescription                = Allows linking between surveys and templates
+NoLotDefined                                   = No lot/serial number found
+SelectAProductFirst                            = Select a product first
+ActionsOnControl                               = Events linked to the control
+RegulatoryScore                                = Regulatory score
+WithLastControl                                = With the last control
+ControlMustBeLockedToSendEmail                 = The control must be locked to be sent by email
+SelectUser                                     = Select a user
+ControlsCategoriesArea                         = Controls tags/categories area
+MediaGalleryQuestionAnswers                    = Photo gallery of the question answers
+UseLargeSizeMedia                              = Use the large media size in the photo gallery
+UseLargeSizeMediaDescription                   = Show the photo gallery in large size rather than medium size
+ConfirmCloneControl                            = Are you sure you want to clone this control?
+UserLinked                                     = Controlled user
+AddProduct                                     = Create product or service
+AddProductLot                                  = Create lot/serial number
+AddUser                                        = Create user
+AddControlIntoCategory                         = Assign this category to the control
+ProductOrServiceLinked                         = Controlled product or service
+CanSetVerdict                                  = Set the control verdict
+ControlsRepartition                            = Breakdown of controls by verdict
+ControlsTagsRepartition                        = Breakdown of controls by verdict and by category
+ControlsByFiscalYear                           = Report of the controls over the fiscal year
+OfControl                                      = of the control
+OfAnswer                                       = of the answers
+PublicControl                                  = Public control interface
+QcFrequency                                    = Control periodicity (days)
+ObjectLinked                                   = Linked object(s)
+NextControlDate                                = Next control date
+NextControl                                    = Next control
+QuestionMustBeAnswered                         = You still have to answer %s mandatory question(s)
+ControlEquipment                               = Control equipment
+ControlEquipmentList                           = List of the control equipment used
+AddEquipmentLink                               = Control equipment added:
+UnlinkEquipmentLink                            = Control equipment removed:
+ErrorNoEquipmentSelected                       = No control equipment selected
+OptimalExpirationDate                          = Best before date
+OptimalExpirationDateDescription               = Best before date/Minimum durability date
+LockControlOutdatedEquipment                   = Allow the control to be locked even if the best before date has passed
+LockControlOutdatedEquipmentDescription        = The control can be locked even if the best before date of one or more pieces of control equipment has passed
+ControlListsByNextControl                      = Upcoming controls
+ControlEquipmentOutdated                       = The best before date of one or more pieces of control equipment has passed
+GoToEquipmentHours                             = Go to the control equipment page
+ExpiredSince                                   = Expired since
+RemainingDays                                  = Days before expiry
+NoEquipmentLinked                              = No control equipment linked
+NeedObjectToControl                            = You must select an object to control
+NeedFkSheet                                    = You must select a template
+ControlReminder                                = Control event reminder
+ControlReminderDescription                     = Enable the control event reminder
+ControlReminderFrequency                       = Control event reminder frequency
+ControlReminderFrequencyDescription            = Choose the control event reminder frequency <br> (default: a reminder 30 days, 60 days and 90 days before the control)
+ControlReminderType                            = Control event reminder type
+ControlReminderTypeDescription                 = Choose the control event reminder type <br> (default: browser)
+DisableControlAttachedFiles                    = Disable the upload of attached files
+DisableControlAttachedFilesDescription         = Hides the button to add attached files (PDF, documents) on the question answers of a control
+ManageControlActionsOnLockedControl            = Manage the corrective actions of a locked control
+ManageControlActionsOnLockedControlDescription = Allows corrective actions of a locked control to be added, edited, deleted and followed up. Without this setting, the action plan of a locked control stays readable but can no longer be changed. An archived control is read-only in every case.
+PublicAnswer                                   = Public answer interface
+YourAnswersHaveBeenSaved                       = Your answers have been saved
+DaysBeforeNextControl                          = Days before the next control
+SelectProductLots                              = Select a lot/serial number
+NoProductLot                                   = No lot/serial number
+ErrorEquipmentLink                             = The equipment could not be linked
+LastControl                                    = Last control
+ShowObjectControlHistory                       = See the control history
+NoControlOnThisObject                          = The initial control has not been carried out, please refer to the instructions and contact your quality manager
+ControlsOnParentProduct                        = Controls carried out on the parent product
+ControlsOnProductLots                          = Controls carried out on the lots/serials in stock
+
+#
+# Action plan
+#
+
+ActionPlan                                     = Action plan
+ActionPlanLinkedToControl                      = Action plan linked to the control
+ActionPlanTotalActions                         = Actions in total
+ActionPlanStatusDone                           = Done
+ActionPlanStatusOngoing                        = Ongoing
+ActionPlanStatusLate                           = Late
+ActionPlanAllQuestions                         = Every question
+ActionPlanAllStatus                            = Every status
+ActionPlanAllVerdicts                          = Every verdict
+ActionPlanAllAssignees                         = Every assignee
+ActionPlanNewAction                            = New action
+ActionPlanSelectQuestion                       = Select a question
+ActionPlanLinkedQuestion                       = Linked question
+ActionPlanAction                               = Action / Description
+ActionPlanAssignee                             = Assignee
+ActionPlanVerdict                              = Verdict
+ActionPlanRowActions                           = Actions
+ActionPlanNoAction                             = No action in the plan
+ActionPlanOpenTask                             = Open the task
+ActionPlanConfirmDeleteAction                  = Are you sure you want to delete this action?
+ActionPlanViewGantt                            = Gantt
+ActionPlanViewList                             = List
+ActionPlanGanttWeekShort                       = W
+ActionPlanGanttTruncated                       = Period too long for this granularity, the chart stops on %s
+ActionPlanGanttPeriod                          = Period
+ActionPlanGanttGranularity                     = Granularity
+ActionPlanGanttToday                           = Today
+ActionPlanGanttNoDate                          = Actions without a date, left out of the chart
+ActionPlanGanttDay                             = Day
+ActionPlanGanttWeek                            = Week
+ActionPlanGanttMonth                           = Month
+ActionPlanCount                                = %s action(s)
+PublicActionPlan                               = Public interface of the action plan
+GoToPublicActionPlanPage                       = Go to the public action plan page
+PublicActionPlanDisabled                       = The public interface of the action plan is not enabled
+ControlHistoryLink                             = Public control interface
+EnablePublicControlHistory                     = Show the public control history
+EnablePublicControlHistoryDescription          = Allows the control history to be shown on the public control interface
+ShowLastControlFirstOnPublicHistory            = Show only the last control on the public interface
+ShowLastControlFirstOnPublicHistoryDescription = When this option is enabled, only the last control is shown. <br> Otherwise, every control is visible.
+NonFinalVerdict                                = The control is not locked, <br> the verdict can still change
+GoToPublicAnswerPage                           = Go to the public answer page
+BeCarefullVerdictKO                            = Warning: if the status of your control is KO, the control will have to be carried out again.
+ShowQcFrequencyPublicInterface                 = Show the validity period (in days) on the public control interface
+ShowQcFrequencyPublicInterfaceDescription      = Option to show the validity period (in days) on the public control interface
+GenerateSheetTags                              = You have not generated the main categories, please click here to go to the setup page
+GenerateSheetTagsAskAdmin                      = The main categories have not been generated yet: ask an administrator to create them in the DigiQuali module configuration.
+ObjectReadyToValidate                          = The %s is ready to be validated
+QuestionAnswered                               = Answer/Question
+LastStatusDate                                 = Last status dates
+ValidationDate                                 = Validation date
+ReopeningDate                                  = Reopening date
+LockingDate                                    = Locking date
+ArchivingDate                                  = Archiving date
+DraftValidatedLocked                           = -- (Draft + validated + locked) --
+CloneControlEquipments                         = Clone the control equipment
+CloneAnswers                                   = Clone answers (comments and photos included)
+NoControl                                      = No control
+NoPeriodicityControl                           = No control periodicity
+NoDocumentation                                = No linked document
+PublicControlTracking                          = Control tracking
+ControlStatusOk                                = Compliant
+ControlStatusKo                                = Non-compliant
+ControlStatusOverdue                           = Overdue
+ControlStatusOverdueDetail                     = A new control is due
+NoControlYet                                   = No control has been carried out yet
+LastControlOn                                  = Last control on %s
+NextControlDeadline                            = Due
+NextControlInDays                              = In %s days
+NextControlTomorrow                            = Tomorrow
+NextControlToday                               = Today
+NextControlOverdueOneDay                       = Overdue by 1 day
+NextControlOverdueSince                        = Overdue by %s days
+ChooseControlSheet                             = Choose a template
+NoControlSheetAvailable                        = No control template available
+ControlledObject                               = Controlled object
+StartControl                                   = Start the control
+LockControlDate                                = Locking this control dated &emsp;&emsp;&emsp;: <b> %s </b> <br> will set the next control date to: <b> %s </b> <br> deadline &ensp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;: <b> %s </b>
+NextControlDateBeforeControlDate               = The next control date (%s) is before the control date (%s): check the input.
+NextControlDateBeforeControlDateShort          = Before the control date
+
+
+
+#
+# ControlDet
+#
+
+# Data
+Controldet                              = Control answer
+DeleteControldet                        = Delete the control answer
+EarnedPoints                            = Earned points
+ScoreRate                               = Success rate
+AnswerSaved                             = The answers have been saved
+Repair                                  = Repair
+NotApplicable                           = N/A
+AnswerPhoto                             = Photo
+AutoSaveActionQuestionAnswer            = Automatic saving of the question answers
+AutoSaveActionQuestionAnswerDescription = Automatically saves the question answers when an answer is chosen
+NoObjectLineAnswersPhoto                = No photos on the answers of the %s
+
+#
 # ControlDocument
 #
 
+# Data
+ControlDocument                         = Control Sheet
+Controldocument                         = Control Sheet
 ControlDocumentPDF                      = Control Sheet PDF with photo
+ControlDocumentsMin                     = control sheets
+ControlDocumentDisplayMedias            = Show the media in the control sheet
+ControlDocumentDisplayMediasDescription = Show the media of the questions in the ODT control sheet
+ControlDocumentSentByMailTrigger        = Control sheet email sent
+controldocument                         = control sheet
+controldocument.odt                     = Control Sheet
+controldocument_photo.odt               = Control Sheet with photos
+controldocument_photo                   = control sheet with photos
+controldocument_photo_landscape_actions = control sheet with photos (landscape)
+controldocument_photo_landscape_actions.odt = Control Sheet with photos (landscape)
+controldocument_withgood-notgood-medias = control sheet with photos (good/bad)
+controldocument_withgood-notgood-medias.odt = Control Sheet with photos (good/bad)
+
+
+
 
 #
-# Public control
+# Survey
 #
 
-NoDocumentation                         = No linked document
-PublicControlTracking                   = Control tracking
-ControlStatusOk                         = Compliant
-ControlStatusKo                         = Non-compliant
-ControlStatusOverdue                    = Overdue
-ControlStatusOverdueDetail              = A new control is due
-NoControlYet                            = No control has been carried out yet
-LastControlOn                           = Last control on %s
-NextControlDeadline                     = Due
-NextControlInDays                       = In %s days
-NextControlTomorrow                     = Tomorrow
-NextControlToday                        = Today
-NextControlOverdueOneDay                = Overdue by 1 day
-NextControlOverdueSince                 = Overdue by %s days
-ChooseControlSheet                      = Choose a sheet
-NoControlSheetAvailable                 = No control sheet available
-ControlledObject                        = Controlled object
-StartControl                            = Start the control
+# Data
+Survey                = Survey
+Surveys               = Surveys
+SurveyList            = List of surveys
+NewSurvey             = New survey
+TheSurvey             = the survey
+SurveysCategoriesArea = Surveys tags/categories area
+SurveysByFiscalYear   = Report of the surveys over the fiscal year
+NeedObjectToLink      = You must select an object to link
+ConfirmValidateSurvey = Are you sure you want to validate the survey?
+PublicSurvey          = Public survey interface
+PublicSurveyToCome    = Public survey interface coming soon
+PointsResult          = Points earned
+RateResult            = Success percentage
+NotAnswered           = Not answered
+PartiallyAnswered     = Partially answered
+SurveyKo              = Non-compliant
+SurveyOk              = Compliant
 
-# Deletion errors
-ErrorQuestionUsedInSheet                = Question %s cannot be deleted, it is used in one or more templates.
-ErrorQuestionGroupUsedInSheet           = Question group %s cannot be deleted, it is used in one or more templates.
-ErrorSheetUsedInControl                 = Template %s cannot be deleted, it is used in one or more controls/surveys.
 
-# Sheet tree
-ExpandAllGroups                         = Expand all
-CollapseAllGroups                       = Collapse all
+#
+# SurveyDocument
+#
+
+# Data
+SurveyDocument           = Survey Sheet
+Surveydocument           = Survey sheet
+surveydocument           = survey sheet
+surveydocument.odt       = Survey Sheet
+surveydocument_photo     = survey sheet with photos
+surveydocument_photo.odt = Survey Sheet with photos
+SurveyDocumentPDF            = Survey Sheet PDF with photo
+SurveyDocumentPDFDescription = Survey summary with its score, answers and photos of each question, attendants
+
+#
+# DigiQualiStandard
+#
+
+# Data
+Digiqualistandard  = DigiQuali standard
+DigiQualiStandards = DigiQuali standards
+Mapping            = Mapping
+
+
+
+#
+# DigiQualiElement
+#
+
+# Data
+Digiqualielement  = DigiQuali elements
+DigiQualiElements = DigiQuali elements
+Process           = Process
+SubProcess        = Sub-process
+Subprocess        = Sub-process
+NewProcess        = New process
+NewSubprocess     = New sub-process
+
+
+
+#
+# Activity
+#
+
+# Data
+ProcessusActivities = Activities
+SourceFrom     = Who
+InputData      = Input data
+OutputData     = Output data
+ActualScore    = Actual score
+TargetScore    = Target score
+ActivityCreate = Add activity
+
+# Specimen
+ActivityLabelSpecimen      = Assign roles, responsibilities and authorities within the organisation for occupational health and safety
+ActivitySourceSpecimen     = Management process
+ActivitySourceFromSpecimen = Management
+ActivityInputDataSpecimen  = Company needs in terms of roles.<br>Occupational health and safety management system
+ActivityOutputDataSpecimen = Roles and responsibilities assigned<br>Health, Safety and Working Conditions Committee set up
+
+
+#
+# RiskAssessment
+#
+
+# Data
+Gravity                 = Severity
+ControlPercentage       = Control effectiveness
+ResidualRisk            = Residual risk
+ResidualRiskCalculation = Risk x control effectiveness
+Risk                    = Risk
+RiskCalculation         = Severity x frequency
+RiskAssessmentAdd       = Add assessment
+RiskAssessmentEdit      = Edit assessment
+RiskAssessmentList      = List of assessments
+RiskAssessmentNewLine   = New assessment
+RiskAssessmentReevaluate = Reassess
+RiskAssessmentHistory   = Assessment history
+NoRiskAssessment        = No assessment
+1D                      = 1D
+1W                      = 1W
+1M                      = 1M
+1Y                      = 1Y
+
+
+
+#
+# RiskAssessmentTask
+#
+RiskAssessmentTaskAdd = Add task
+
+
+#
+# Tools
+#
+
+# Data
+DataMigrationDigiQualiToFile        = DigiQuali data export
+DataMigrationExportSQA            = Export Template/Question/Answer to ZIP
+DataMigrationExportSQADescription = Export of the template, question and answer data to a ZIP file
+DataMigrationExportQA             = Export Question/Answer to ZIP
+DataMigrationExportQADescription  = Export of the question and answer data to a ZIP file
+DataMigrationFileToDolibarr       = Data import into DigiQuali
+DataMigrationImportZIP            = Import a ZIP file into Dolibarr
+DataMigrationImportZIPDescription = Import of the template, question and answer data from a ZIP file
+ErrorArchiveNotWellFormattedZIP   = The archive is not supported or is empty. You must attach an import archive in .zip format
+ImportFinishWith                  = The import of the %s finished with %s error(s) out of %s import(s)
+
+#
+# Other
+#
+
+# Data
+SelectProducts           = Select a product
+SelectProductsOrServices = Select a product/service
+Contact                  = Contact/Address
+Remain                   = remaining
+InProgressAndLocked      = -- (In progress + locked) --
+NoObservations           = No observations
+BasedOnModel             = Based on the template
+WriteComment             = Write a comment
+WriteAnswer              = Write an answer
+In                       = In
+See                      = See
+Pts                      = %s pts
+
+# Statistics
+
+Statistics = Statistics
+GlobalStatistics = Global statistics
+QuestionsStatistics = Question statistics
+NumberOfControls = Number of controls
+NumberOfAnswers = Number of answers
+AverageValue = Average value
+LastControlDate = Last control
+OkAnswers = Positive answers
+KoAnswers = Negative answers
+AverageScore = Average score
+AverageVerdictScore = Average verdict score
+NoAnswersYet = No answers yet
+NoDetailedStatisticsAvailable = No detailed statistics available
+NoQuestionsLinked = No question linked to this template
+AnswersStatistics = Answer statistics
+NoControlsLinked = No control linked to this template
+
+#
+# Fields validation errors
+#
+
+FieldMaxValue = Field '%s' must be less than or equal to %s
+FieldMinValue = Field '%s' must be greater than or equal to %s
+
+#
+# Control Document PDF
+#
+
+Role                    = Role
+Equipement              = Equipment
+EstimatedLife           = Remaining lifetime
+ControlEquipementList   = List of equipment and control means
+Sheet                   = Template
+ControlObservationList  = List of the controlled points, observations and answer(s) to the question
+LinkedContactsControl   = Contact(s) linked to the control
+LinkedControllerControl = Controller(s) linked to the control
+NoEquipmentFound        = No equipment found.
+
+PDFControlSummary             = Control summary & question details
+PDFControlQuestionDetails     = Question and answer details
+PDFControlAuditors            = Auditors
+PDFControlResult              = Control result
+PDFControlElectronicallySigned = electronically signed
+PDFControlCommentLabel        = Comment:
+PDFControlGroup               = Group: %s
+PDFControlSheetRef            = Template %s
+PDFControlTemplate            = Template: %s
+PDFControlCorrectiveAction    = Corrective action
+PDFSurveySummary              = Survey summary & question details
+PDFSurveyResult               = Survey result
+
+#
+# Question categories - NF
+#
+
+NF        = NF
+NFSysteme = System
+NFPoste   = Workstation
+NFProduit = Product
+
+#
+# PWA (mobile frontend)
+#
+
+MobileApp    = Mobile app
+LastControls = Latest controls
 
 # Grading Policy
 GradingPolicy = Grading Policy
@@ -72,70 +892,6 @@ LinkContratDescription=Allows linking between contracts and templates
 LinkCall_list=Enable link with calls
 LinkCall_listDescription=Allows linking between call lists and templates
 
-# Linkable elements
-LinkableElements                        = Linkable elements
-ElementLinked                           = Controlled objects
-LinkedObjectUsage                       = Usage
-LinkedObjectUsageDetail                 = %d link(s), %d control frequency value(s)
-NoLinkedObjectUsage                     = Not used
-DisableLinkConfirm                      = The link with "%s" is about to be disabled. %d control frequency value(s) will be permanently deleted. Confirm?
-EnableAllLinksConfirm                   = Every link is about to be enabled: extrafields, tabs and hooks will be created on all available objects. Confirm?
-DisableAllLinksConfirm                  = Every link is about to be disabled: extrafields will be deleted and their values lost. Confirm?
-CleanUnusedLinks                        = Clean unused links
-CleanUnusedLinksConfirm                 = Extrafields, tabs and hooks of the disabled links are about to be deleted. Confirm?
-LinkedObjectSyncDone                    = Synchronisation done: %d tab(s), %d hook(s), %d extrafield(s) added, %d deleted
-LinkedObjectSyncError                   = Link synchronisation failed, no change has been saved
-
-#
-# Controls of a product
-#
-
-ControlsOnParentProduct   = Controls carried out on the parent product
-ControlsOnProductLots     = Controls carried out on the lots/serials in stock
-
-#
-# Action plan
-#
-
-ActionPlan                    = Action plan
-ActionPlanLinkedToControl     = Action plan linked to the control
-ActionPlanTotalActions        = Actions in total
-ActionPlanStatusDone          = Done
-ActionPlanStatusOngoing       = Ongoing
-ActionPlanStatusLate          = Late
-ActionPlanAllQuestions        = Every question
-ActionPlanAllStatus           = Every status
-ActionPlanAllVerdicts         = Every verdict
-ActionPlanAllAssignees        = Every assignee
-ActionPlanNewAction           = New action
-ActionPlanSelectQuestion      = Select a question
-ActionPlanLinkedQuestion      = Linked question
-ActionPlanAction              = Action / Description
-ActionPlanAssignee            = Assignee
-ActionPlanVerdict             = Verdict
-ActionPlanRowActions          = Actions
-ActionPlanNoAction            = No action in the plan
-ActionPlanOpenTask            = Open the task
-ActionPlanConfirmDeleteAction = Are you sure you want to delete this action?
-ActionPlanViewGantt           = Gantt
-ActionPlanViewList            = List
-ActionPlanGanttWeekShort      = W
-ActionPlanGanttTruncated      = Period too long for this granularity, the chart stops on %s
-ActionPlanGanttPeriod         = Period
-ActionPlanGanttGranularity    = Granularity
-ActionPlanGanttToday          = Today
-ActionPlanGanttNoDate         = Actions without a date, left out of the chart
-ActionPlanGanttDay            = Day
-ActionPlanGanttWeek           = Week
-ActionPlanGanttMonth          = Month
-ActionPlanCount               = %s action(s)
-PublicActionPlan              = Public interface of the action plan
-GoToPublicActionPlanPage      = Go to the public action plan page
-PublicActionPlanDisabled      = The public interface of the action plan is not enabled
-
-ManageControlActionsOnLockedControl            = Manage the corrective actions of a locked control
-ManageControlActionsOnLockedControlDescription = Allows corrective actions of a locked control to be added, edited, deleted and followed up. Without this setting, the action plan of a locked control stays readable but can no longer be changed. An archived control is read-only in every case.
-
 #
 # Answer wizard (mobile)
 #
@@ -148,86 +904,3 @@ AnswerWizardAllAnswered   = Every question has an answer
 AnswerWizardRemaining     = %s unanswered question(s)
 AnswerWizardValidateTitle = Finish and validate?
 AnswerWizardValidateText  = You answered %s question(s) out of %s. Once validated, the answers can no longer be changed.
-
-#
-# Comment library - Bibliotheque de commentaires
-#
-
-CommentLibrary = Comment library
-
-#
-# Mass add of questions into a template
-#
-
-NbQuestionsAlreadyInSheet     = %d question(s) already in it
-QuestionsInSheetWillBeIgnored = Questions already in the selected template will not be added.
-
-#
-# Public interface
-#
-
-AnswerPublicInterfaceAddAction            = Enable corrective actions on the public answer interface
-AnswerPublicInterfaceAddActionDescription = Lets a visitor read the corrective actions of a question and add one from the public interface. The control has to be attached to a project, which the actions are created into. The assignee, the budget and the time spent stay a back-office matter.
-
-#
-# DigiQualiElement
-#
-
-# Data
-Digiqualielement  = DigiQuali elements
-DigiQualiElements = DigiQuali elements
-Process           = Process
-SubProcess        = Sub-process
-Subprocess        = Sub-process
-NewProcess        = New process
-NewSubprocess     = New sub-process
-
-#
-# Activity
-#
-
-# Data
-ProcessusActivities = Activities
-SourceFrom          = Who
-InputData           = Input data
-OutputData          = Output data
-ActualScore         = Actual score
-TargetScore         = Target score
-ActivityCreate      = Add activity
-
-# Specimen
-ActivityLabelSpecimen      = Assign roles, responsibilities and authorities within the organisation for occupational health and safety
-ActivitySourceSpecimen     = Management process
-ActivitySourceFromSpecimen = Management
-ActivityInputDataSpecimen  = Company needs in terms of roles.<br>Occupational health and safety management system
-ActivityOutputDataSpecimen = Roles and responsibilities assigned<br>Health, Safety and Working Conditions Committee set up
-
-#
-# Standard
-#
-
-ISO9001Description = ISO 9001 standard - Quality management systems
-
-#
-# PhotoMultiple question type
-#
-
-PhotoMultiple         = Multiple photos
-PhotoMultipleEmpty    = Take or add photos: each one gets its own comment and status.
-PhotoMultipleImage    = Image
-PhotoMultipleComment  = Comment
-PhotoMultipleStatus   = Status
-PhotoMultipleSummary  = %s photo(s) - %s OK - %s KO
-PhotoMultipleNoAnswer = No photo
-MediaLibrary          = Media library
-AddFromMediaLibrary   = Add from the media library
-
-#
-# Notice
-#
-
-MissingConfigElementTypeTitle    = Missing configuration for the linked elements
-MissingConfigElementTypeMessage  = Please click the link to set up the linked elements
-MissingConfigElementTypeAskAdmin = No element can be linked yet: ask an administrator to enable them in the DigiQuali module configuration.
-GenerateSheetTags                = You have not generated the main categories, click here to go to the configuration page
-GenerateSheetTagsAskAdmin        = The main categories have not been generated yet: ask an administrator to create them in the DigiQuali module configuration.

@@ -52,13 +52,31 @@ if (file_exists('../digiquali.main.inc.php')) {
     die('Include of digiquali main fails');
 }
 
+// Global variables definitions
+global $conf, $db, $hookmanager, $moduleNameLowerCase, $langs, $user;
+
 // Get module parameters
 $objectType   = GETPOST('object_type', 'alpha');
 $documentType = GETPOST('document_type', 'alpha');
 
+// The type names the class file loaded below: only the objects answered on this page are accepted, anything
+// else (missing parameter, truncated link) gets the answer of an unknown record instead of a fatal
+if (!in_array($objectType, ['control', 'survey'], true)) {
+    saturne_load_langs();
+
+    $conf->dol_hide_topmenu  = 1;
+    $conf->dol_hide_leftmenu = 1;
+
+    http_response_code(404);
+    saturne_header(0, '', $langs->trans('PublicAnswer'), '', '', 0, 0, [], [], '', 'page-public-card page-public-answer');
+    print saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true);
+    llxFooter('', 'public');
+    exit;
+}
+
 // Load Saturne libraries
 if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
-    require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+    dol_include_once('/saturne/class/saturnesignature.class.php');
 }
 
 // Load DigiQuali libraries
@@ -72,15 +90,12 @@ require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
 require_once __DIR__ . '/../lib/digiquali_control.lib.php';
 
-// Global variables definitions
-global $conf, $db, $hookmanager, $moduleNameLowerCase, $langs, $user;
-
 // Load translation files required by the page
 saturne_load_langs(['projects']);
 
 // Get parameters
 $trackID   = GETPOST('track_id', 'alpha');
-$entity    = GETPOST('entity');
+$entity    = GETPOSTINT('entity');
 $action    = GETPOST('action');
 $subaction = GETPOST('subaction');
 
@@ -104,22 +119,34 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
     }
     $signatory = new SaturneSignature($db, $moduleNameLowerCase, $object->element);
 
-    $upload_dir = $conf->$moduleNameLowerCase->multidir_output[$object->entity ?? 1];
+    $upload_dir = $conf->$moduleNameLowerCase->multidir_output[$object->entity ?? $conf->entity];
 }
 
 $hookmanager->initHooks(['publicanswer', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
 
-if (!isModEnabled('multicompany')) {
+// The entity of the link is a number: without one, the page keeps the setup of the current entity
+if (!isModEnabled('multicompany') || $entity <= 0) {
     $entity = $conf->entity;
 }
 
 $conf->setEntityValues($db, $entity);
 
-// Load object
-$object->fetch(0, '', ' AND track_id = ' . "'" . $trackID . "'");
+// Load object : a link that is empty or finds nothing gets the answer of an unknown record and stops before the
+// actions. They all work on the object loaded here, and the save action would otherwise load the object from the id
+// of the URL, which nothing checks on this page
+if (empty($trackID) || $object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'") <= 0) {
+    $conf->dol_hide_topmenu  = 1;
+    $conf->dol_hide_leftmenu = 1;
+
+    http_response_code(404);
+    saturne_header(0, '', $langs->trans('PublicAnswer'), '', '', 0, 0, [], [], '', 'page-public-card page-public-answer');
+    print saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true);
+    llxFooter('', 'public');
+    exit;
+}
 
 $linkableElements = saturne_get_objects_metadata();
-$object->fetchObjectLinked('', '', '', 'digiquali_control');
+$object->fetchObjectLinked(null, '', null, 'digiquali_control');
 $linkedObjectType = key($object->linkedObjects);
 $linkedObject     = (is_array($object->linkedObjects[$linkedObjectType] ?? null) && !empty($object->linkedObjects[$linkedObjectType]))
     ? current($object->linkedObjects[$linkedObjectType])
@@ -157,7 +184,7 @@ if ($publicInterfaceActions) {
     require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
     // Load Saturne libraries
-    require_once __DIR__ . '/../../saturne/class/task/saturnetask.class.php';
+    dol_include_once('/saturne/class/task/saturnetask.class.php');
 
     if (!empty($object->projectid)) {
         $object->fk_project = $object->projectid; // Need special case because projectid is only on control object
@@ -188,7 +215,7 @@ if ($resHook < 0) {
 if (empty($resHook)) {
     if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signatory->id > 0) {
         // Actions add_signature, builddoc, remove_file
-        require_once __DIR__ . '/../../saturne/core/tpl/actions/signature_actions.tpl.php';
+        require_once dol_buildpath('/saturne/core/tpl/actions/signature_actions.tpl.php');
     }
 
     // Set user for action update and insert for prevent error on public interface
@@ -284,7 +311,7 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY') && $signa
     $previousStatus        = $object->status;
     $object->status        = $object::STATUS_VALIDATED; // Special case because public answer need draft status object to complete question
     $moreParams['moreCSS'] = 'hidden';                  // Needed for prevent click on signature button action
-    require_once __DIR__ . '/../../saturne/core/tpl/signature/public_signature_view.tpl.php';
+    require_once dol_buildpath('/saturne/core/tpl/signature/public_signature_view.tpl.php');
     $object->status = $previousStatus;
 }
 if ($object->status == $object::STATUS_DRAFT) {
@@ -299,7 +326,7 @@ print '</div>';
 print '</form>';
 
 // Required by the media block: without it, picking a photo silently does nothing
-require_once __DIR__ . '/../../saturne/core/tpl/medias/photo_editor_modal.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 llxFooter('', 'public');
 $db->close();

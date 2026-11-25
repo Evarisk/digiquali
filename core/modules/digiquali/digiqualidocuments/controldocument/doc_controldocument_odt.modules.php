@@ -32,8 +32,8 @@ require_once DOL_DOCUMENT_ROOT . '/product/stock/class/productlot.class.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../../../../../saturne/class/saturnesignature.class.php';
-require_once __DIR__ . '/../../../../../../saturne/core/modules/saturne/modules_saturne.php';
+dol_include_once('/saturne/class/saturnesignature.class.php');
+dol_include_once('/saturne/core/modules/saturne/modules_saturne.php');
 
 // Load DigiQuali libraries.
 require_once __DIR__ . '/mod_controldocument_standard.php';
@@ -196,7 +196,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                     case 'OkKoToFixNonApplicable' :
                                     case 'MarqueNF' :
                                     case 'UniqueChoice' :
-                                        $tmpArray['answer'] = $answersArray[$answerResult];
+                                        $tmpArray['answer'] = $answersArray[$answerResult] ?? ''; // A question not answered yet has no key
                                         break;
                                     case 'Text' :
                                     case 'Range' :
@@ -215,7 +215,7 @@ class doc_controldocument_odt extends SaturneDocumentModel
                                         $answers = explode(',', $answerResult);
                                         $tmpArray['answer'] = '';
                                         foreach ($answers as $answerId) {
-                                            $tmpArray['answer'] .= $answersArray[$answerId] . ', ';
+                                            $tmpArray['answer'] .= ($answersArray[$answerId] ?? '') . ', ';
                                         }
                                         $tmpArray['answer'] = rtrim($tmpArray['answer'], ', ');
                                         break;

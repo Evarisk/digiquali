@@ -295,7 +295,7 @@ if (empty($reshook)) {
 
             $objectConfig = ['config' => []];
             if (GETPOSTISSET('step') && !empty(GETPOSTINT('step'))) {
-                $objectConfig['config'][$object->type]['step'] = GETPOSTINT('step');
+                $objectConfig['config'][$object->type]['step'] = max(2, GETPOSTINT('step'));
             } else {
 				unset($objectConfig['config'][$object->type]['step']);
 			}
@@ -472,7 +472,7 @@ if (empty($reshook)) {
 
 		$objectConfig = ['config' => [$questionType => null]];
 		if (GETPOSTISSET('step') && !empty(GETPOSTINT('step'))) {
-			$objectConfig['config'][$questionType]['step'] = GETPOSTINT('step');
+			$objectConfig['config'][$questionType]['step'] = max(2, GETPOSTINT('step'));
 		} else {
 			unset($objectConfig['config'][$questionType]['step']);
 		}
@@ -728,7 +728,7 @@ if (empty($reshook)) {
 
 			$urltogo = $backtopage ? str_replace('__ID__', $result, $backtopage) : $backurlforlist;
 			$urltogo = preg_replace('/--IDFORBACKTOPAGE--/', $object->id, $urltogo); // New method to autoselect project after a New on another form object creation
-			if ($urltogo && !$noback) {
+			if ($urltogo && empty($noback)) {
 				header("Location: " . $urltogo);
 				exit;
 			}
@@ -841,7 +841,7 @@ if (empty($reshook)) {
 			setEventMessages($langs->trans('EmptyValue'), [], 'errors');
 			$urltogo = str_replace('__ID__', $result, $backtopage);
 			$urltogo = preg_replace('/--IDFORBACKTOPAGE--/', $id, $urltogo);
-			header('Location: ' . $urltogo . '&action=editAnswer&answerId='. $answerId .'&answerValue='. $answerValue .'&answerPicto='. $answerPicto . '#answerList');
+			header('Location: ' . $urltogo . '&action=editAnswer&token=' . newToken() . '&answerId='. $answerId .'&answerValue='. $answerValue .'&answerPicto='. $answerPicto . '#answerList');
 			exit;
 		} else {
 
@@ -981,16 +981,18 @@ if ($action == 'create') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', GETPOST('type') ?: 'OkKoToFixNonApplicable', 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\' data-question-types-without-points=\'' . json_encode(Question::getQuestionTypesWithoutPoints()) . '\'');
+	print digiquali_question_type_help(GETPOST('type') ?: 'OkKoToFixNonApplicable');
 	print '</td></tr>';
 
-	// Points
+	// Points : locked at 0 for a type without points (#2812), question.js follows the type picked
 	$points = GETPOST('points');
 	if ($points === '') {
 		$points = $object->getDefaultPoints();
 	}
+	$pointsLocked = in_array(GETPOST('type') ?: 'OkKoToFixNonApplicable', Question::getQuestionTypesWithoutPoints());
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
-	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$points.'">';
+	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="' . ($pointsLocked ? 0 : $points) . '"' . ($pointsLocked ? ' disabled' : '') . '>';
 	print '</td></tr>';
 
 	// Grading Policy
@@ -1143,12 +1145,13 @@ if (($id || $ref) && $action == 'edit') {
 
 	// Type -- Type
 	print '<tr><td class="fieldrequired"><label class="" for="type">' . $langs->trans("QuestionType") . '</label></td><td>';
-	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\'');
+	print saturne_select_dictionary('type','c_question_type', 'ref', 'label', $object->type, 0, 'data-type="question-type" data-default-points=\''.json_encode(Question::getAllDefaultPoints()).'\' data-question-types-with-bounds=\'' . json_encode(Question::getQuestionTypesWithBounds()) . '\' data-question-types-with-answer-photos=\'' . json_encode(Question::getQuestionTypesWithAnswerPhotos()) . '\' data-question-types-without-points=\'' . json_encode(Question::getQuestionTypesWithoutPoints()) . '\'');
+	print digiquali_question_type_help($object->type);
 	print '</td></tr>';
 
-	// Points -- Nombre de points
+	// Points -- Nombre de points : locked at 0 for a type without points (#2812), question.js follows the type picked
 	print '<tr><td>'.$langs->trans("NumberOfPoints").'</td><td>';
-	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="'.$object->points.'">';
+	print '<input class="flat" type="number" name="points" step="0.001" id="points" value="' . ($object->hasPoints() ? $object->points : 0) . '"' . ($object->hasPoints() ? '' : ' disabled') . '>';
 	print '</td></tr>';
 
 	// Grading Policy
@@ -1163,7 +1166,7 @@ if (($id || $ref) && $action == 'edit') {
 
     // Step for percentage question type default hidden
     print '<tr class="' . ($object->type == 'Percentage' ? '' : 'hidden') . '" id="percentage-question-step"><td class="fieldrequired"><label for="step">' . $langs->transnoentities('PercentageQuestionStep') . '</label></td><td>';
-    print '<input type="number" name="step" id="step" min="1" value="' . ($objectConfig['config'][$object->type]['step'] ?? 100) . '">';
+    print '<input type="number" name="step" id="step" min="2" value="' . ($objectConfig['config'][$object->type]['step'] ?? 100) . '">';
     print '</td></tr>';
 
 	// Min value
@@ -1341,6 +1344,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 	print '</td>';
 	print '<td>';
 	print $langs->transnoentities($object->type);
+	print digiquali_question_type_help($object->type);
 	print '</td></tr>';
 
 	// Points -- Nombre de points
@@ -1470,7 +1474,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 			print '<span class="butAction" id="actionButtonClone"><i class="fas fa-clone"></i> ' . $langs->trans('Clone') . '</span>';
 
 			// Delete (need delete permission, or if draft, just need create/modify permission)
-			print dolGetButtonAction('<i class="fas fa-trash"></i> ' . $langs->trans('Delete'), '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete', '', $permissiontodelete || ($object->status == $object::STATUS_DRAFT && $permissiontoadd));
+			print dolGetButtonAction('<i class="fas fa-trash"></i> ' . $langs->trans('Delete'), '', 'delete', $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete&token=' . newToken(), '', $permissiontodelete || ($object->status == $object::STATUS_DRAFT && $permissiontoadd));
 		}
 		print '</div>';
 	}
@@ -1604,7 +1608,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
 
 					print '<td class="center">';
 					if ($object->status < Question::STATUS_LOCKED) {
-						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=editAnswer&answerId=' . $answerSingle->id . '#answerList">';
+						print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $id . '&amp;action=editAnswer&answerId=' . $answerSingle->id . '&token='. newToken() .'#answerList">';
 						print '<div class="wpeo-button button-grey">';
 						print img_edit();
 						print '</div>';

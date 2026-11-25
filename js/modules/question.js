@@ -34,7 +34,7 @@ window.digiquali.question = {};
  * Question init
  *
  * @since   1.1.0
- * @version 1.1.0
+ * @version 23.5.0
  *
  * @return {void}
  */
@@ -42,13 +42,14 @@ window.digiquali.question.init = function() {
   window.digiquali.question.event();
   window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
   window.digiquali.question.lockAnswerPhotoCheckbox();
+  window.digiquali.question.lockPoints();
 };
 
 /**
  * Question event
  *
  * @since   1.1.0
- * @version 1.1.0
+ * @version 23.5.0
  *
  * @return {void}
  */
@@ -59,6 +60,8 @@ window.digiquali.question.event = function() {
   $(document).on('click', '.answer-picto .item, .wpeo-table .item', window.digiquali.question.selectAnswerPicto);
 
   $(document).on('change', 'select[data-type="question-type"]', window.digiquali.question.changeQuestionType);
+  // After changeQuestionType, which puts the default points of the type picked in the field
+  $(document).on('change', 'select[data-type="question-type"]', window.digiquali.question.lockPoints);
 };
 
 /**
@@ -124,7 +127,7 @@ window.digiquali.question.selectAnswerPicto = function() {
  * Change question type
  *
  * @since   20.1.0
- * @version 20.1.0
+ * @version 23.4.0
  *
  * @return {void}
  */
@@ -154,6 +157,22 @@ window.digiquali.question.changeQuestionType = function() {
 
   window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType();
   window.digiquali.question.lockAnswerPhotoCheckbox();
+  window.digiquali.question.showQuestionTypeHelp(questionType);
+};
+
+/**
+ * Show the help of the picked question type under the selector, rendered by digiquali_question_type_help()
+ *
+ * @since   23.4.0
+ * @version 23.4.0
+ *
+ * @param  {string} questionType Picked question type
+ * @return {void}
+ */
+window.digiquali.question.showQuestionTypeHelp = function(questionType) {
+  $('.question-type-help').each(function() {
+    $(this).toggleClass('hidden', $(this).attr('data-question-type') !== questionType);
+  });
 };
 
 /**
@@ -183,6 +202,33 @@ window.digiquali.question.lockAnswerPhotoCheckbox = function() {
   } else if (!isLocked && $checkbox.prop('disabled')) {
     $checkbox.prop('checked', !!$checkbox.data('unlocked-checked')).prop('disabled', false);
   }
+};
+
+/**
+ * Set to 0 and lock the number of points for the question types without points
+ *
+ * Those types never earn their points : any other number would only lower the score of the survey.
+ * The server keeps them at 0 whatever is sent ; another type gets back its default points from changeQuestionType.
+ *
+ * @since   23.5.0
+ * @version 23.5.0
+ *
+ * @return {void}
+ */
+window.digiquali.question.lockPoints = function() {
+  const $typeSelect = $('select[data-type="question-type"]');
+  const $points     = $('#points');
+  if (!$typeSelect.length || !$points.length || !$typeSelect.attr('data-question-types-without-points')) {
+    return;
+  }
+
+  const typesWithoutPoints = JSON.parse($typeSelect.attr('data-question-types-without-points'));
+  const isLocked           = typesWithoutPoints.includes($typeSelect.val());
+
+  if (isLocked) {
+    $points.val(0);
+  }
+  $points.prop('disabled', isLocked);
 };
 
 window.digiquali.question.changeMinMaxUnitLabelDependingQuestionType = function() {

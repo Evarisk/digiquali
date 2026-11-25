@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 require_once __DIR__ . '/answer.class.php';
 
 /**
@@ -239,11 +239,13 @@ class Question extends SaturneObject
 			'correctable' => true,
 			'only_one_correct_answer' => true,
 		],
-		// The answer is made of the answer photos : one row per photo, each with its comment and OK/KO status
+		// The answer is made of the answer photos : one row per photo, each with its comment and status (OK, KO, to fix or N/A)
+		// No points either : the question comes down to its summary (#2793), its points stay at 0 (#2812)
 		self::TYPE_PHOTO_MULTIPLE => [
 			'default_points' => 0,
 			'correctable' => false,
 			'answer_photos' => true,
+			'without_points' => true,
 		],
 	];
 
@@ -329,6 +331,8 @@ class Question extends SaturneObject
         $this->ref      = $this->getNextNumRef();
 		$this->status   = $this->status ?: 1;
 
+        $this->resetPointsOfTypeWithoutPoints();
+
         $result = parent::create($user, $noTrigger);
 
         if ($result > 0) {
@@ -348,6 +352,35 @@ class Question extends SaturneObject
         }
 
         return $result;
+    }
+
+    /**
+     * Update object into database
+     *
+     * @param  User      $user      User that modifies
+     * @param  int<0,1>  $noTrigger 0 = launch triggers after, 1 = disable triggers
+     * @return int<-1,1>            Return integer 0 < if KO, > 0 if OK
+     */
+    public function update(User $user, int $noTrigger = 0): int
+    {
+        $this->resetPointsOfTypeWithoutPoints();
+
+        return parent::update($user, $noTrigger);
+    }
+
+    /**
+     * Set the points to 0 for a question type that has none, whatever the form or the caller sent
+     *
+     * The field is locked at 0 on the question card, but a posted value, a clone or a question saved
+     * before the lock would still add points that can never be earned to the total of the survey.
+     *
+     * @return void
+     */
+    private function resetPointsOfTypeWithoutPoints(): void
+    {
+        if (!$this->hasPoints()) {
+            $this->points = 0;
+        }
     }
 
 	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
@@ -497,7 +530,7 @@ class Question extends SaturneObject
 				}
 			}
 			if (!empty($options['photos'])) {
-				$dirFiles = $conf->digiquali->multidir_output[$object->entity ?? 1] . '/question/';
+				$dirFiles = $conf->digiquali->multidir_output[$object->entity ?? $conf->entity] . '/question/';
 				$oldDirFiles = $dirFiles . $oldRef;
 				$newDirFiles = $dirFiles . $object->ref;
 
@@ -884,6 +917,16 @@ class Question extends SaturneObject
 		return $this->authorize_answer_photo > 0 || (self::QUESTION_TYPES[$this->type]['answer_photos'] ?? false);
 	}
 
+    /**
+     * To know if the question carries points : a type without points neither earns any nor adds any to the total
+     *
+     * @return bool True if the number of points of the question can be set
+     */
+    public function hasPoints(): bool
+    {
+        return empty(self::QUESTION_TYPES[$this->type]['without_points']);
+    }
+
 	/**
 	 * To know if the question has at least one answer which is set as a correct answer
 	 *
@@ -960,6 +1003,18 @@ class Question extends SaturneObject
 		}));
 	}
 
+    /**
+     * List of question types without points, whose number of points is locked at 0
+     *
+     * @return string[] ['PhotoMultiple', etc...]
+     */
+    public static function getQuestionTypesWithoutPoints(): array
+    {
+        return array_keys(array_filter(self::QUESTION_TYPES, function ($questionTypeConfig) {
+            return !empty($questionTypeConfig['without_points']);
+        }));
+    }
+
 	/**
 	 * Return a formatted string to print question score (in points)
 	 * like : 0 / 3 points
@@ -1011,9 +1066,10 @@ class Question extends SaturneObject
 	 * @param Sheet $sheetObject The sheet of the question
 	 * @param string $positionPath The path of the question based on positions
 	 * @param string $tdOffsetStyle Additional CSS styles to put on question
+	 * @param int $containerGroupId Id of the group the question is displayed in, 0 for the sheet root
 	 *
      */
-    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '')
+    public function displayInSheetCard(Sheet $sheetObject, string $positionPath, string $tdOffsetStyle = '', int $containerGroupId = 0)
     {
 		global $conf, $langs;
 		$question = $this;

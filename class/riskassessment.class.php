@@ -30,7 +30,7 @@ use User;
 use SaturneObject;
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for RiskAssessment

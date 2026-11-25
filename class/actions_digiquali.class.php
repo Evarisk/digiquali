@@ -129,10 +129,15 @@ class ActionsDigiquali
         if (preg_match('/elementproperties|category/', $parameters['context'])) {
             $objectElements = ['question', 'questiongroup', 'sheet', 'control', 'survey'];
             if (in_array($parameters['elementType'], $objectElements)) {
+                // Path relative to DOL_DOCUMENT_ROOT as installed (custom/digiquali on a standard install): categories/index.php
+                // prepends DOL_DOCUMENT_ROOT, dol_include_once() resolves it too. Bare name only outside the main document root
+                $moduleDir  = dirname(dol_buildpath('/digiquali/digiqualiindex.php', 0));
+                $modulePath = strpos($moduleDir, DOL_DOCUMENT_ROOT . '/') === 0 ? substr($moduleDir, strlen(DOL_DOCUMENT_ROOT) + 1) : 'digiquali';
+
                 $out = [
                     'module'        => 'digiquali',
                     'table_element' => 'digiquali_' . $parameters['elementType'],
-                    'classpath'     => 'custom/digiquali/class',
+                    'classpath'     => $modulePath . '/class',
                 ];
                 $this->results = $out;
             }
@@ -151,7 +156,7 @@ class ActionsDigiquali
     {
         if (strpos($parameters['context'], 'categoryindex') !== false) {
             $resourcesRequired = [
-                'js'  => '/custom/digiquali/js/digiquali.js'
+                'js'  => '/digiquali/js/digiquali.js'
             ];
 
             $out  = '<!-- Includes JS added by module digiquali -->';
@@ -172,7 +177,7 @@ class ActionsDigiquali
     public function hookSetManifest(array $parameters): int
     {
         if (strpos($_SERVER['PHP_SELF'], 'digiquali') !== false) {
-            $this->resprints = dol_buildpath('custom/digiquali/manifest.json.php', 1);
+            $this->resprints = dol_buildpath('/digiquali/manifest.json.php', 1);
             return 1; // or return 1 to replace standard code
         }
 
@@ -182,13 +187,13 @@ class ActionsDigiquali
     /**
      * Overloading the doActions function : replacing the parent's function with the one below
      *
-     * @param  array  $parameters Hook metadata (context, etc...)
-     * @param  object $object     The object to process
-     * @param  string $action     Current action (if set). Generally create or edit or null
-     * @return int                0 < on error, 0 on success, 1 to replace standard code
+     * @param  array       $parameters Hook metadata (context, etc...)
+     * @param  object      $object     The object to process
+     * @param  string|null $action     Current action (if set). Generally create or edit or null
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function doActions(array $parameters, $object, string $action): int
+    public function doActions(array $parameters, $object, ?string $action): int
     {
         global $conf;
 
@@ -199,12 +204,11 @@ class ActionsDigiquali
             require_once __DIR__ . '/../class/survey.class.php';
         }
 
-        if (strpos($parameters['context'], 'productlotcard') !== false) {
-            if (isModEnabled('easyurl') && $action == 'set_easy_url_link') {
-                //set_easy_url_link($object);
-
-                header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
-                exit;
+        $qrCodeObjectMetadata = $this->getQRCodeObjectMetadata($parameters['context']);
+        if (!empty($qrCodeObjectMetadata) && $action == 'generate_qrcodes' && GETPOST('confirm', 'alpha') == 'yes') {
+            $objectIds = array_map('intval', GETPOST('toselect', 'array'));
+            if ($this->generateQRCodeLabels($qrCodeObjectMetadata, $objectIds, GETPOST('modellabel', 'aZ09')) < 0) {
+                setEventMessages($this->error, $this->errors, 'errors');
             }
         }
 
@@ -267,10 +271,10 @@ class ActionsDigiquali
      */
     public function formObjectOptions(array $parameters, ?object $object): int
     {
-        global $conf, $extrafields, $langs, $user;
+        global $conf, $extrafields, $langs;
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata                = saturne_get_objects_metadata();
             $conf->cache['objectsMetadata'] = $objectsMetadata;
         } else {
@@ -292,35 +296,7 @@ class ActionsDigiquali
         }
 
         if (strpos($parameters['context'], 'productlotcard') !== false) {
-            $objectB64                 = base64_encode(json_encode(['type' => $object->element, 'id' => (int) $object->id]));
-            $publicControlInterfaceUrl = dol_buildpath('custom/digiquali/public/control/public_control_history.php?track_id=' . $objectB64 . '&entity=' . $conf->entity, 3);
-            $setEasyUrlLinkButton      =  '';
-            $assignEasyUrlButton       = '';
-            if (isModEnabled('easyurl')) {
-                require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
-                $shortener = new Shortener($this->db);
-                $result    = $shortener->fetch(0, '', ' AND t.original_url = \'' . $publicControlInterfaceUrl . '\'');
-                if ($result > 0) {
-                    $publicControlInterfaceUrl = $shortener->short_url;
-                } else {
-                    if ($user->hasRight('easyurl', 'shortener', 'write')) {
-                        $setEasyUrlLinkButton .= '<a class="reposition editfielda" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=set_easy_url_link&token=' . newToken() . '">';
-                        $setEasyUrlLinkButton .= img_picto($langs->trans('SetEasyURLLink'), 'fontawesome_fa-redo_fas_#444', 'class="paddingright pictofixedwidth valignmiddle"') . '</a>';
-                        $setEasyUrlLinkButton .= '<span>' . img_picto($langs->trans('GetEasyURLErrors'), 'fontawesome_fa-exclamation-triangle_fas_#bc9526') . '</span>';
-                    }
-                    if ($user->hasRight('easyurl', 'shortener', 'assign')) {
-                        //@Todo assign button
-                        //$assignEasyUrlButton .= dolButtonToOpenUrlInDialogPopup('assignShortener', $langs->transnoentities('AssignShortener'), '<span class="fas fa-link" title="' . $langs->trans('Assign') . '"></span>', '/custom/easyurl/view/shortener/shortener_card.php?element_type=' . $object->element . '&fk_element=' . $object->id . '&from_element=1&original_url=' . $publicControlInterfaceUrl . '&action=edit_assign', '', 'btnTitle', 'window.saturne.toolbox.checkIframeCreation();') . '</td>';
-                    }
-                }
-            }
-
-            $out  = '<a href="' . $publicControlInterfaceUrl . '" target="_blank" title="URL : ' . $publicControlInterfaceUrl . '"><i class="fas fa-external-link-alt paddingrightonly"></i>' . dol_trunc($publicControlInterfaceUrl) . '</a>';
-            $out .= showValueWithClipboardCPButton($publicControlInterfaceUrl, 0, 'none');
-//            $out .= $setEasyUrlLinkButton;
-//            $out .= $assignEasyUrlButton;
-
-            $object->array_options['options_control_history_link'] = $out;
+            $object->array_options['options_control_history_link'] = $this->getPublicControlHistoryLink($object);
         }
 
         return 0; // or return 1 to replace standard code
@@ -350,9 +326,199 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context']) && $object instanceof CommonObject) {
             $this->resprints .= $this->getLinkedElementSortSelect($object, (string) $sortfield, (string) $sortorder);
+            $this->resprints .= $this->getLinkedObjectSortSelect($object, (string) $sortfield, (string) $sortorder);
         }
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Return the element types a list shows in its single linked object column, in the order the column
+     * displays and sorts them : by translated type label.
+     *
+     * Only the types switched on in the configuration are kept. 'contrat' is registered as an alias of
+     * 'contract' and points at the same links : it is dropped, so a contract is not shown twice.
+     *
+     * @return array<string, array> Objects metadata, indexed by link name
+     * @throws Exception
+     */
+    protected function getLinkedObjectTypes(): array
+    {
+        global $conf, $langs;
+
+        if (isset($conf->cache['digiqualiLinkedObjectTypes'])) {
+            return $conf->cache['digiqualiLinkedObjectTypes'];
+        }
+
+        if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
+            dol_include_once('/saturne/lib/object.lib.php');
+            $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
+        }
+
+        $linkedObjectTypes = [];
+        foreach ($conf->cache['objectsMetadata'] as $objectMetadata) {
+            if (empty($objectMetadata['conf']) || !empty($objectMetadata['alias_of']) || empty($objectMetadata['link_name']) || isset($linkedObjectTypes[$objectMetadata['link_name']])) {
+                continue;
+            }
+            $linkedObjectTypes[$objectMetadata['link_name']] = $objectMetadata;
+        }
+
+        uasort($linkedObjectTypes, function (array $first, array $second) use ($langs): int {
+            return strcasecmp(dol_string_unaccent($langs->transnoentities($first['langs'] ?? '')), dol_string_unaccent($langs->transnoentities($second['langs'] ?? '')));
+        });
+
+        $conf->cache['digiqualiLinkedObjectTypes'] = $linkedObjectTypes;
+
+        return $linkedObjectTypes;
+    }
+
+    /**
+     * Return the columns holding the name of an element type, among the ones its metadata declares.
+     *
+     * A metadata can name a column its table does not have (the label of an accident investigation) : one
+     * such column in the sort or the search of the linked object column, which spans every element type,
+     * would break the whole list query. The columns are read once for all the types, and an element type
+     * none of them exists for falls back on its id.
+     *
+     * @param  array    $objectMetadata Metadata of the element type
+     * @param  string[] $moreColumns    Other columns to use when the table has them
+     * @return string[]                 Existing columns, never empty
+     */
+    protected function getLinkedObjectNameColumns(array $objectMetadata, array $moreColumns = []): array
+    {
+        global $conf;
+
+        if (!isset($conf->cache['digiqualiLinkedObjectColumns'])) {
+            $tables = [];
+            foreach ($this->getLinkedObjectTypes() as $linkedObjectType) {
+                if (!empty($linkedObjectType['table_element'])) {
+                    $tables[] = '\'' . $this->db->escape(strtolower($this->db->prefix() . $linkedObjectType['table_element'])) . '\'';
+                }
+            }
+
+            $tableColumns = [];
+            if (!empty($tables)) {
+                $sql  = 'SELECT LOWER(TABLE_NAME) AS table_name, LOWER(COLUMN_NAME) AS column_name FROM information_schema.COLUMNS';
+                $sql .= ' WHERE TABLE_SCHEMA = DATABASE() AND LOWER(TABLE_NAME) IN (' . implode(', ', $tables) . ')';
+                $resql = $this->db->query($sql);
+                if ($resql) {
+                    while ($obj = $this->db->fetch_object($resql)) {
+                        $tableColumns[$obj->table_name][$obj->column_name] = true;
+                    }
+                    $this->db->free($resql);
+                }
+            }
+            $conf->cache['digiqualiLinkedObjectColumns'] = $tableColumns;
+        }
+
+        $tableColumns = $conf->cache['digiqualiLinkedObjectColumns'][strtolower($this->db->prefix() . ($objectMetadata['table_element'] ?? ''))] ?? [];
+
+        $columns = [];
+        foreach (array_merge(explode(',', $objectMetadata['name_field'] ?? ''), $moreColumns) as $column) {
+            $column = strtolower(trim($column));
+            if ($column !== '' && isset($tableColumns[$column]) && !in_array($column, $columns, true)) {
+                $columns[] = $column;
+            }
+        }
+
+        return !empty($columns) ? $columns : ['rowid'];
+    }
+
+    /**
+     * Build the SELECT expressions that let a list be sorted on its single linked object column.
+     *
+     * The column gathers the elements of every type linked to the listed object, so the sort key is made of
+     * the rank of the first linked type, in the order the column shows them, followed by the name of the
+     * first element of that type : the list is grouped by element type, each group sorted by name. Like the
+     * columns per element type, two aliases are produced, the value and a flag keeping the objects linked to
+     * nothing at the bottom whatever the direction.
+     *
+     * The names come from tables whose collations can differ (latin1 on the oldest instances, utf8mb4 on the
+     * tables of the newer modules) : each one is converted to utf8mb4, otherwise COALESCE() would fail on an
+     * illegal mix of collations.
+     *
+     * The expressions are emitted only when the list is sorted on that column.
+     *
+     * @param  CommonObject $object    Listed object (control or survey)
+     * @param  string       $sortfield Requested sort field(s), comma separated
+     * @param  string       $sortorder Requested sort order(s), comma separated
+     * @return string                  SQL to append to the SELECT, empty when the column is not sorted on
+     * @throws Exception
+     */
+    protected function getLinkedObjectSortSelect(CommonObject $object, string $sortfield, string $sortorder): string
+    {
+        if (!isset($object->fields['linked_object']) || !in_array('sortvalue_linked_object', array_map('trim', explode(',', $sortfield)), true)) {
+            return '';
+        }
+
+        // The direction is repeated for every token by saturne_get_title_field_of_list, so the first one
+        // is the direction the empty flag will be sorted with
+        $isDescending = (bool) preg_match('/^desc/i', trim((string) (explode(',', $sortorder)[0] ?? '')));
+
+        $sortValues = [];
+        $typeRank   = 0;
+        foreach ($this->getLinkedObjectTypes() as $objectMetadata) {
+            $typeRank++;
+            if (empty($objectMetadata['table_element'])) {
+                continue;
+            }
+
+            $nameColumns = $this->getLinkedObjectNameColumns($objectMetadata);
+            $nameSelect  = 'CONVERT(' . (count($nameColumns) > 1 ? 'CONCAT_WS(\' \', lnk.' . implode(', lnk.', $nameColumns) . ')' : 'lnk.' . $nameColumns[0]) . ' USING utf8mb4)';
+
+            // Name of the first element of this type linked to the listed object
+            $subQuery  = '(SELECT ' . $nameSelect . ' FROM ' . $this->db->prefix() . $objectMetadata['table_element'] . ' AS lnk';
+            $subQuery .= ' INNER JOIN ' . $this->db->prefix() . 'element_element AS eelnk ON (eelnk.fk_source = lnk.rowid)';
+            $subQuery .= ' WHERE eelnk.fk_target = t.rowid';
+            $subQuery .= ' AND eelnk.targettype = \'' . $this->db->escape($object->module . '_' . $object->element) . '\'';
+            $subQuery .= ' AND eelnk.sourcetype = \'' . $this->db->escape($objectMetadata['link_name']) . '\'';
+            $subQuery .= ' ORDER BY ' . $nameSelect . ' LIMIT 1)';
+
+            $sortValues[] = 'CONCAT(\'' . sprintf('%03d', $typeRank) . '\', ' . $subQuery . ')';
+        }
+
+        if (empty($sortValues)) {
+            return '';
+        }
+
+        $sortValue = 'COALESCE(' . implode(', ', $sortValues) . ')';
+
+        return ', ' . $sortValue . ' AS sortvalue_linked_object, (' . $sortValue . ($isDescending ? ' IS NOT NULL' : ' IS NULL') . ') AS sortempty_linked_object';
+    }
+
+    /**
+     * Build the WHERE clause of the search on the single linked object column : the objects linked to an
+     * element of any type whose name, ref or label matches the searched text.
+     *
+     * @param  CommonObject $object      Listed object (control or survey)
+     * @param  string       $searchValue Searched text
+     * @return string                    SQL to append to the WHERE
+     * @throws Exception
+     */
+    protected function getLinkedObjectSearchWhere(CommonObject $object, string $searchValue): string
+    {
+        $conditions = [];
+        foreach ($this->getLinkedObjectTypes() as $objectMetadata) {
+            if (empty($objectMetadata['table_element'])) {
+                continue;
+            }
+
+            $searchedColumns = [];
+            foreach ($this->getLinkedObjectNameColumns($objectMetadata, ['ref', 'label']) as $column) {
+                $searchedColumns[] = 'lnk.' . $column;
+            }
+
+            $condition  = 'EXISTS (SELECT 1 FROM ' . $this->db->prefix() . $objectMetadata['table_element'] . ' AS lnk';
+            $condition .= ' INNER JOIN ' . $this->db->prefix() . 'element_element AS eelnk ON (eelnk.fk_source = lnk.rowid)';
+            $condition .= ' WHERE eelnk.fk_target = t.rowid';
+            $condition .= ' AND eelnk.targettype = \'' . $this->db->escape($object->module . '_' . $object->element) . '\'';
+            $condition .= ' AND eelnk.sourcetype = \'' . $this->db->escape($objectMetadata['link_name']) . '\'';
+            $condition .= natural_search($searchedColumns, $searchValue) . ')';
+
+            $conditions[] = $condition;
+        }
+
+        return ' AND ' . (!empty($conditions) ? '(' . implode(' OR ', $conditions) . ')' : '1 = 0');
     }
 
     /**
@@ -387,7 +553,7 @@ class ActionsDigiquali
         }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
         }
 
@@ -538,7 +704,9 @@ class ActionsDigiquali
             $this->resprints = $sql;
         }
 
-        if (preg_match('/surveylist|controllist/', $parameters['context'])) {
+        // The join serves the search on the columns per element type. A list with the single linked object
+        // column filters through EXISTS instead, and the join would return an object once per linked element
+        if (preg_match('/surveylist|controllist/', $parameters['context']) && !isset($object->fields['linked_object'])) {
             $sql = ' LEFT JOIN ' . $this->db->prefix() . 'element_element AS ee ON (t.rowid = ee.fk_target AND ee.targettype = "' . $object->module . '_' . $object->element . '")';
             $this->resprints = $sql;
         }
@@ -564,8 +732,16 @@ class ActionsDigiquali
         }
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
+            if ($parameters['key'] == 'linked_object') {
+                $searchValue = trim((string) $parameters['val']);
+                if ($searchValue !== '' && $object instanceof CommonObject) {
+                    $this->resprints = $this->getLinkedObjectSearchWhere($object, $searchValue);
+                }
+                return 1; // The column has no t.linked_object to filter on
+            }
+
             if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+                dol_include_once('/saturne/lib/object.lib.php');
                 $conf->cache['objectsMetadata'] = saturne_get_objects_metadata();
             }
             $objectsMetadata = $conf->cache['objectsMetadata'];
@@ -634,20 +810,23 @@ class ActionsDigiquali
                 $sql   .= ' AND eelot.sourcetype = "productlot" AND eelot.fk_source IN (' . $lotIds . '))';
             }
 
-            // Tab of an element the object also carries on one of its own columns (the controller of a
-            // control, the project of both) : the tab filters on the union of the link in llx_element_element
-            // and of that column, which no $search criteria can express since they are all ANDed. Read from
-            // the cache, set by the list page. The union is held in a single AND (...) and emitted before the
-            // verdict clause below, whose OR would otherwise pull it out of the filter. The link is matched
-            // by EXISTS rather than by the ee alias joined by printFieldListFrom : an OR on a LEFT JOIN
-            // returns the object once per linked element
+            // Tab of an element : the objects linked to it in llx_element_element, read from the cache set
+            // by the list page. When the object also carries that element on one of its own columns (the
+            // controller of a control, the project of both), the tab filters on the union of the link and of
+            // that column, which no $search criteria can express since they are all ANDed. The filter is held
+            // in a single AND (...) and emitted before the verdict clause below, whose OR would otherwise pull
+            // it out of the filter. The link is matched by EXISTS rather than by the ee alias joined by
+            // printFieldListFrom : an OR on a LEFT JOIN returns the object once per linked element
             if (!empty($conf->cache['digiqualiLinkedElementOrColumn']) && is_object($object)) {
                 $orFilter  = $conf->cache['digiqualiLinkedElementOrColumn'];
                 $elementId = (int) $orFilter['id'];
                 $sql      .= ' AND (EXISTS (SELECT 1 FROM ' . $this->db->prefix() . 'element_element AS eeor';
                 $sql      .= ' WHERE eeor.fk_target = t.rowid AND eeor.targettype = "' . $this->db->escape($object->module . '_' . $object->element) . '"';
                 $sql      .= ' AND eeor.sourcetype = "' . $this->db->escape($orFilter['link_name']) . '" AND eeor.fk_source = ' . $elementId . ')';
-                $sql      .= ' OR t.' . $this->db->sanitize($orFilter['column']) . ' = ' . $elementId . ')';
+                if (!empty($orFilter['column'])) {
+                    $sql .= ' OR t.' . $this->db->sanitize($orFilter['column']) . ' = ' . $elementId;
+                }
+                $sql .= ')';
             }
 
             if (isset($parameters['search']['verdict']) && $parameters['search']['verdict'] != '' && $parameters['search']['verdict'] == 0) {
@@ -713,7 +892,7 @@ class ActionsDigiquali
         }
 
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
-            require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+            dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata = saturne_get_objects_metadata();
             $conf->cache['objectsMetadata'] = $objectsMetadata;
         } else {
@@ -747,36 +926,8 @@ class ActionsDigiquali
      */
     public function printFieldListValue(array $parameters): int
     {
-        global $conf, $langs, $user;
-
         if (strpos($parameters['context'], 'product_lotlist') !== false) {
-            $trackId                   = base64_encode(json_encode(['type' => $parameters['object']->element, 'id' => (int) $parameters['object']->id]));
-            $publicControlInterfaceUrl = dol_buildpath('custom/digiquali/public/control/public_control_history.php?track_id=' . $trackId . '&entity=' . $conf->entity, 3);
-            $setEasyUrlLinkButton      =  '';
-            $assignEasyUrlButton       = '';
-            if (isModEnabled('easyurl')) {
-                require_once __DIR__ . '/../../easyurl/class/shortener.class.php';
-                $shortener = new Shortener($this->db);
-                $result    = $shortener->fetch(0, '', ' AND t.original_url = \'' . $publicControlInterfaceUrl . '\'');
-                if ($result > 0) {
-                    $publicControlInterfaceUrl = $shortener->short_url;
-                } else {
-                    if ($user->hasRight('easyurl', 'shortener', 'write')) {
-                        $setEasyUrlLinkButton .= '<a class="reposition editfielda" href="' . $_SERVER['PHP_SELF'] . '?id=' . $parameters['object']->id . '&action=set_easy_url_link&token=' . newToken() . '">';
-                        $setEasyUrlLinkButton .= img_picto($langs->trans('SetEasyURLLink'), 'fontawesome_fa-redo_fas_#444', 'class="paddingright pictofixedwidth valignmiddle"') . '</a>';
-                        $setEasyUrlLinkButton .= '<span>' . img_picto($langs->trans('GetEasyURLErrors'), 'fontawesome_fa-exclamation-triangle_fas_#bc9526') . '</span>';
-                    }
-                    if ($user->hasRight('easyurl', 'shortener', 'assign')) {
-                        //@Todo assign button
-                        //$assignEasyUrlButton .= dolButtonToOpenUrlInDialogPopup('assignShortener', $langs->transnoentities('AssignShortener'), '<span class="fas fa-link" title="' . $langs->trans('Assign') . '"></span>', '/custom/easyurl/view/shortener/shortener_card.php?element_type=' . $parameters['object']->element . '&fk_element=' . $parameters['object']->id . '&from_element=1&original_url=' . $publicControlInterfaceUrl . '&action=edit_assign', '', 'btnTitle', 'window.saturne.toolbox.checkIframeCreation();') . '</td>';
-                    }
-                }
-            }
-
-            $out  = '<a href="' . $publicControlInterfaceUrl . '" target="_blank" title="URL : ' . $publicControlInterfaceUrl . '"><i class="fas fa-external-link-alt paddingrightonly"></i>' . dol_trunc($publicControlInterfaceUrl) . '</a>';
-            $out .= showValueWithClipboardCPButton($publicControlInterfaceUrl, 0, 'none');
-//            $out .= $setEasyUrlLinkButton;
-//            $out .= $assignEasyUrlButton; ?>
+            $out = $this->getPublicControlHistoryLink($parameters['object']); ?>
             <script>
                 var outJS             = <?php echo json_encode($out); ?>;
                 var publicControlCell = $('.liste > tbody > tr.oddeven').find('td[data-key="product_lot.control_history_link"]').last();
@@ -798,7 +949,7 @@ class ActionsDigiquali
     {
         if (strpos($parameters['context'], 'mainloginpage') !== false) {
             if (getDolGlobalInt('DIGIQUALI_REDIRECT_AFTER_CONNECTION')) {
-                $this->resprints = dol_buildpath('/custom/digiquali/digiqualiindex.php?mainmenu=digiquali', 1);
+                $this->resprints = dol_buildpath('/digiquali/digiqualiindex.php', 1) . '?mainmenu=digiquali';
             }
         }
 
@@ -1036,6 +1187,14 @@ class ActionsDigiquali
             $this->resprints = $out;
         }
 
+        if (!empty($this->getQRCodeObjectMetadata($parameters['context']))) {
+            $langs->load('digiquali@digiquali');
+
+            $label = '<span class="fas fa-qrcode paddingrightonly"></span>' . $langs->transnoentities('GenerateQRCodes');
+
+            $this->resprints = '<option value="pre_generate_qrcodes" data-html="' . dol_escape_htmltag($label) . '">' . $label . '</option>';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
@@ -1077,9 +1236,28 @@ class ActionsDigiquali
                     ];
                     $this->resprints = $form->formconfirm($_SERVER['PHP_SELF'], $langs->trans('ConfirmMassAddQuestion'), $langs->trans('ConfirmMassAddingQuestion', count($parameters['toselect'])) . '<br>' . $langs->trans('QuestionsInSheetWillBeIgnored'), 'add_questions', $formQuestion, '', 0, 200, 500, 1);
                 } else {
-                    setEventMessages('<a href="' . dol_buildpath('custom/digiquali/view/sheet/sheet_list.php', 1) . '">' . $langs->transnoentities('ObjectNotFound', img_picto('', $sheet->picto, 'class="paddingrightonly"') . $langs->transnoentities(ucfirst($sheet->element))) . '</a>', [], 'warnings');
+                    setEventMessages('<a href="' . dol_buildpath('/digiquali/view/sheet/sheet_list.php', 1) . '">' . $langs->transnoentities('ObjectNotFound', img_picto('', $sheet->picto, 'class="paddingrightonly"') . $langs->transnoentities(ucfirst($sheet->element))) . '</a>', [], 'warnings');
                 }
             }
+        }
+
+        // projet/tasks/time.php calls this hook without 'massaction' (only massactions_pre.tpl.php passes it)
+        if (($parameters['massaction'] ?? '') == 'pre_generate_qrcodes' && !empty($this->getQRCodeObjectMetadata($parameters['context']))) {
+            // format_cards.lib.php fills $_Avery_Labels at include time with the $db of the including scope
+            global $_Avery_Labels, $db;
+
+            require_once DOL_DOCUMENT_ROOT . '/core/lib/format_cards.lib.php';
+
+            $langs->load('digiquali@digiquali');
+
+            $labelFormats = [];
+            foreach ($_Avery_Labels as $code => $labelFormat) {
+                $labelFormats[$code] = $labelFormat['name'];
+            }
+            $formQuestion = [
+                ['type' => 'select', 'name' => 'modellabel', 'label' => $langs->trans('QRCodeLabelFormat'), 'values' => $labelFormats, 'default' => getDolGlobalString('ADHERENT_ETIQUETTE_TYPE', 'L7163'), 'morecss' => 'maxwidth400 maxwidth200onsmartphone']
+            ];
+            $this->resprints = $form->formconfirm($_SERVER['PHP_SELF'], $langs->trans('GenerateQRCodes'), $langs->trans('ConfirmMassGenerateQRCodes', count($parameters['toselect'])), 'generate_qrcodes', $formQuestion, '', 0, 200, 500, 1);
         }
 
         return 0; // or return 1 to replace standard code
@@ -1098,7 +1276,7 @@ class ActionsDigiquali
 
         if (preg_match('/surveylist|controllist/', $parameters['context'])) {
             // Load Saturne libraries
-            require_once __DIR__ . '/../../saturne/class/saturnesignature.class.php';
+            dol_include_once('/saturne/class/saturnesignature.class.php');
 
             // Load DigiQuali libraries
             require_once __DIR__ . '/sheet.class.php';
@@ -1241,6 +1419,18 @@ class ActionsDigiquali
                     }
                     $out[$parameters['key']] = implode('<br>', $links);
                 }
+            }
+
+            // Single linked object column : the elements of every type, in the order the column is sorted on
+            if ($parameters['key'] == 'linked_object') {
+                $links = [];
+                foreach ($this->getLinkedObjectTypes() as $linkName => $objectMetadata) {
+                    foreach ($object->linkedObjects[$linkName] ?? [] as $linkedObject) {
+                        $links[] = $linkedObject->getNomUrl(1);
+                    }
+                }
+                // Always feed the column, an empty value would let the template fall back on a field the object does not have
+                $out[$parameters['key']] = !empty($links) ? implode('<br>', $links) : '&nbsp;';
             }
 
             // The controls tab of a product carries a warehouse column on its lots/serials list. A
@@ -1483,7 +1673,7 @@ class ActionsDigiquali
                         'img'      => 'fontawesome_fa-' . $picto . '_fas_#d35968',
                         'label'    => $langs->trans(ucfirst($objectName)),
                         'text'     => img_picto('', 'fontawesome_fa-' . $picto . '_fas_#d35968', 'class="pictofixedwidth"') . $langs->trans(ucfirst($objectName)),
-                        'url'      => dol_buildpath('custom/digiquali/view/' . $objectName . '/' . $objectName . '_list.php?mainmenu=digiquali', 1) . (!empty($parameters['search_boxvalue']) ? '&search_all=' . urlencode($parameters['search_boxvalue']) : '')
+                        'url'      => dol_buildpath('/digiquali/view/' . $objectName . '/' . $objectName . '_list.php', 1) . '?mainmenu=digiquali' . (!empty($parameters['search_boxvalue']) ? '&search_all=' . urlencode($parameters['search_boxvalue']) : '')
                     ];
                 }
             }
@@ -1502,6 +1692,11 @@ class ActionsDigiquali
      */
     public function saturneExtendGetObjectsMetadata(array $parameters): int
     {
+        // Paths relative to DOL_DOCUMENT_ROOT as installed (custom/digiquali on a standard install): Saturne < 23.3.0 and older
+        // readers prepend DOL_DOCUMENT_ROOT, newer ones use dol_buildpath(). Bare name only outside the main document root
+        $moduleDir  = dol_buildpath('/digiquali', 0);
+        $modulePath = strpos($moduleDir, DOL_DOCUMENT_ROOT . '/') === 0 ? substr($moduleDir, strlen(DOL_DOCUMENT_ROOT) + 1) : 'digiquali';
+
 
         //@todo faire les autres object
 
@@ -1527,9 +1722,9 @@ class ActionsDigiquali
                 'label_field'    => 'label',
                 'hook_name_card' => $objectName . 'list',
                 'hook_name_list' => $objectName . 'card',
-                'create_url'     => 'custom/digiquali/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
-                'class_path'     => 'custom/digiquali/class/' . $objectName . '.class.php',
-                'lib_path'       => 'custom/digiquali/lib/digiquali_' . $objectName . '.lib.php'
+                'create_url'     => $modulePath . '/view/' . $objectName . '/' . $objectName . '_card.php?action=create',
+                'class_path'     => $modulePath . '/class/' . $objectName . '.class.php',
+                'lib_path'       => $modulePath . '/lib/digiquali_' . $objectName . '.lib.php'
             ];
         }
 
@@ -1561,5 +1756,174 @@ class ActionsDigiquali
         }
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Get the URL of the public control history of an object, as short as possible for QR codes
+     *
+     * An EasyURL link set for this page wins, whether it leads to the signed URL or to the former unsigned one (QR codes
+     * stuck before signing), otherwise a Saturne short URL of the signed URL is created on first call.
+     * The full signed URL is kept only when Saturne is too old to provide short URLs.
+     *
+     * @param  CommonObject $object Object whose controls are shown (product lot, ...)
+     * @return string               Public URL
+     * @throws Exception
+     */
+    protected function getPublicControlHistoryUrl(CommonObject $object): string
+    {
+        global $user;
+
+        require_once __DIR__ . '/../lib/digiquali_control.lib.php';
+
+        $fullUrl = digiquali_public_control_history_url($object);
+
+        if (isModEnabled('easyurl')) {
+            require_once dol_buildpath('/easyurl/class/shortener.class.php');
+
+            $urls      = "'" . $this->db->escape($fullUrl) . "', '" . $this->db->escape(digiquali_public_control_history_url($object, false)) . "'";
+            $shortener = new Shortener($this->db);
+            if ($shortener->fetch(0, '', ' AND t.original_url IN (' . $urls . ')') > 0 && !empty($shortener->short_url)) {
+                return $shortener->short_url;
+            }
+        }
+
+        // Saturne provides short URLs since its s/ entry point
+        if (is_file(dol_buildpath('/saturne/s/index.php'))) {
+            dol_include_once('/saturne/class/saturneredirection.class.php');
+
+            $saturneRedirection = new SaturneRedirection($this->db);
+
+            $shortUrl = $saturneRedirection->getShortUrl($fullUrl, $user);
+            if ($shortUrl !== '') {
+                return $shortUrl;
+            }
+        }
+
+        return $fullUrl;
+    }
+
+    /**
+     * Get the link to the public control history of an object, with its copy button
+     *
+     * @param  CommonObject $object Object whose controls are shown (product lot, ...)
+     * @return string               HTML link
+     * @throws Exception
+     */
+    protected function getPublicControlHistoryLink(CommonObject $object): string
+    {
+        $url = $this->getPublicControlHistoryUrl($object);
+
+        $out  = '<a href="' . dol_escape_htmltag($url) . '" target="_blank" title="URL : ' . dol_escape_htmltag($url) . '"><i class="fas fa-external-link-alt paddingrightonly"></i>' . dol_escape_htmltag(dol_trunc($url, 64)) . '</a>';
+        $out .= showValueWithClipboardCPButton($url, 0, 'none');
+
+        return $out;
+    }
+
+    /**
+     * Get the registry entry of the object listed in a hook context, when it can get QR code labels
+     *
+     * Product lots always can, other objects once DigiQuali may control them (DIGIQUALI_SHEET_LINK_<TYPE>). Contexts are
+     * compared whole: a substring test would take supplierinvoicelist for invoicelist
+     *
+     * @param  string               $context Hook context, contexts joined by ":"
+     * @return array<string, mixed>          Registry entry of the object, empty if none
+     * @throws Exception
+     */
+    protected function getQRCodeObjectMetadata(string $context): array
+    {
+        require_once __DIR__ . '/../lib/digiquali_linked_object.lib.php';
+
+        $contexts     = explode(':', $context);
+        $enabledTypes = array_merge(['productlot'], digiquali_get_enabled_linked_object_types());
+        foreach (digiquali_get_linkable_objects() as $objectType => $objectMetadata) {
+            if (in_array($objectType, $enabledTypes) && !empty($objectMetadata['hook_name_list']) && in_array($objectMetadata['hook_name_list'], $contexts)) {
+                return $objectMetadata;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Send a PDF sheet of labels, one QR code to the public control history per object
+     *
+     * The label engine of Dolibarr core (printsheet, tcpdflabel template) does the layout on the chosen label format.
+     * Next to the QR code: the name of the object, and the product of a product lot.
+     * On success the PDF is streamed and the script ends.
+     *
+     * @param  array<string, mixed> $objectMetadata Registry entry of the objects
+     * @param  int[]                $objectIds      Object ids
+     * @param  string               $modelLabel     Label format code (llx_c_format_cards)
+     * @return int                                  -1 on error, the script ends on success
+     * @throws Exception
+     */
+    protected function generateQRCodeLabels(array $objectMetadata, array $objectIds, string $modelLabel): int
+    {
+        // format_cards.lib.php fills $_Avery_Labels at include time with the $db of the including scope
+        global $_Avery_Labels, $conf, $db, $langs;
+
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/format_cards.lib.php';
+        require_once DOL_DOCUMENT_ROOT . '/core/modules/printsheet/modules_labels.php';
+        require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+        if (!empty($objectMetadata['class_path'])) {
+            require_once dol_buildpath('/' . $objectMetadata['class_path']);
+        }
+
+        $langs->loadLangs(['errors', 'digiquali@digiquali']);
+
+        if (!isset($_Avery_Labels[$modelLabel])) {
+            $this->error = $langs->trans('ErrorFieldRequired', $langs->transnoentities('QRCodeLabelFormat'));
+            return -1;
+        }
+
+        $className = (string) ($objectMetadata['class_name'] ?? '');
+        $nameField = (string) ($objectMetadata['name_field'] ?? 'ref');
+        if ($className === '' || !class_exists($className)) {
+            $this->error = $langs->trans('ErrorRecordNotFound');
+            return -1;
+        }
+
+        $records = [];
+        foreach ($objectIds as $objectId) {
+            $object = new $className($this->db);
+            if ($objectId <= 0 || $object->fetch($objectId) <= 0) {
+                continue;
+            }
+
+            $text = (string) ($object->$nameField ?? $object->ref);
+            if ($object->element == 'productlot') {
+                $product = new Product($this->db);
+                if ($product->fetch($object->fk_product) > 0) {
+                    $text .= "\n" . $product->ref;
+                }
+            }
+
+            $records[] = [
+                'textleft'   => '%BARCODE%',
+                'textheader' => '',
+                'textfooter' => '',
+                'textright'  => $text,
+                'code'       => $this->getPublicControlHistoryUrl($object),
+                'encoding'   => 'QRCODE,M',
+                'is2d'       => 1,
+            ];
+        }
+
+        if (empty($records)) {
+            $this->error = $langs->trans('ErrorRecordNotFound');
+            return -1;
+        }
+
+        $outputDir = $conf->digiquali->multidir_output[$conf->entity] . '/temp';
+        dol_mkdir($outputDir);
+
+        $fileName = 'qrcodes_' . dol_print_date(dol_now(), 'dayhourlog') . '.pdf';
+        if (doc_label_pdf_create($this->db, $records, $modelLabel, $langs, $outputDir, 'tcpdflabel', $fileName) <= 0) {
+            $this->error = $langs->trans('ErrorFailToCreateFile', $fileName);
+            return -1;
+        }
+
+        $this->db->close();
+        exit;
     }
 }

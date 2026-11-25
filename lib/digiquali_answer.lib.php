@@ -51,6 +51,44 @@ function digiquali_format_duration($answer): string
 }
 
 /**
+ * Get the statuses a photo of a PhotoMultiple answer can be given, in the order of their buttons
+ *
+ * The keys are what the answer stores, the icons and colors those of the answers an OK/KO/To fix/N/A
+ * question is created with (the colors are repeated in _photo-multiple.scss). The labels have keys of
+ * their own : the OK and KO of Dolibarr translate as Success and Error.
+ *
+ * @return array Icon, color and translation key of each status, keyed by the stored status
+ */
+function digiquali_photo_multiple_get_statuses(): array
+{
+    return [
+        'OK'    => ['icon' => 'fa-check', 'color' => '#47e58e', 'label' => 'PhotoMultipleStatusOK'],
+        'KO'    => ['icon' => 'fa-times', 'color' => '#e05353', 'label' => 'PhotoMultipleStatusKO'],
+        'TOFIX' => ['icon' => 'fa-tools', 'color' => '#e9ad4f', 'label' => 'PhotoMultipleStatusTOFIX'],
+        'NA'    => ['icon' => 'fa-ban',   'color' => '#989898', 'label' => 'PhotoMultipleStatusNA'],
+    ];
+}
+
+/**
+ * Get the label of the status of a PhotoMultiple photo
+ *
+ * @param  string         $status      Status stored in the answer
+ * @param  Translate|null $outputLangs Langs of the output, those of the user when null
+ * @return string                      Translated label, empty string for a photo without status
+ */
+function digiquali_photo_multiple_get_status_label(string $status, ?Translate $outputLangs = null): string
+{
+    global $langs;
+
+    $statuses = digiquali_photo_multiple_get_statuses();
+    if (!isset($statuses[$status])) {
+        return '';
+    }
+
+    return ($outputLangs ?? $langs)->transnoentities($statuses[$status]['label']);
+}
+
+/**
  * Read the answer of a PhotoMultiple question
  *
  * The answer is a JSON object keyed by the name of each answer photo, so a row follows its photo
@@ -58,7 +96,7 @@ function digiquali_format_duration($answer): string
  * Everything that does not fit that shape is dropped, the answer also comes back from the browser.
  *
  * @param  string|null $answer Answer of the line
- * @return array               Rows keyed by photo file name, each with a comment and a status (OK, KO or empty)
+ * @return array               Rows keyed by photo file name, each with a comment and a status (one of digiquali_photo_multiple_get_statuses() or empty)
  */
 function digiquali_photo_multiple_decode(?string $answer): array
 {
@@ -66,6 +104,8 @@ function digiquali_photo_multiple_decode(?string $answer): array
     if (!is_array($decodedAnswer)) {
         return [];
     }
+
+    $statuses = digiquali_photo_multiple_get_statuses();
 
     $rows = [];
     foreach ($decodedAnswer as $fileName => $row) {
@@ -79,7 +119,7 @@ function digiquali_photo_multiple_decode(?string $answer): array
 
         $rows[$fileName] = [
             'comment' => dol_substr(dol_string_nohtmltag((string) ($row['comment'] ?? ''), 0, 'UTF-8', 0, 0), 0, 2000),
-            'status'  => in_array($status, ['OK', 'KO'], true) ? $status : '',
+            'status'  => isset($statuses[$status]) ? $status : '',
         ];
     }
 
@@ -166,23 +206,42 @@ function digiquali_photo_multiple_get_rows(CommonObject $object, Question $quest
 }
 
 /**
- * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ * Sum up the statuses of PhotoMultiple photos in one line : the number of photos, then of each status given
  *
- * @param  string|null $answer Answer of the line
- * @return string              Number of photos and of OK and KO, empty string when there is no photo
+ * @param  array  $photoStatuses Status of each photo, empty for a photo without status
+ * @return string                Summary, e.g. "3 photo(s) - 2 OK - 1 To fix"
  */
-function digiquali_photo_multiple_summary(?string $answer): string
+function digiquali_photo_multiple_format_summary(array $photoStatuses): string
 {
     global $langs;
 
+    $statusCounts = array_count_values($photoStatuses);
+
+    $summary = [$langs->transnoentities('PhotoMultipleSummary', (string) count($photoStatuses))];
+    foreach (array_keys(digiquali_photo_multiple_get_statuses()) as $status) {
+        // Four statuses at zero would bury the ones that were given
+        if (!empty($statusCounts[$status])) {
+            $summary[] = $statusCounts[$status] . ' ' . digiquali_photo_multiple_get_status_label($status);
+        }
+    }
+
+    return implode(' - ', $summary);
+}
+
+/**
+ * Sum up a PhotoMultiple answer in one line, for the lists and the documents without a photo table
+ *
+ * @param  string|null $answer Answer of the line
+ * @return string              Number of photos and of each status given, empty string when there is no photo
+ */
+function digiquali_photo_multiple_summary(?string $answer): string
+{
     $rows = digiquali_photo_multiple_decode($answer);
     if (empty($rows)) {
         return '';
     }
 
-    $statuses = array_count_values(array_column($rows, 'status'));
-
-    return $langs->transnoentities('PhotoMultipleSummary', (string) count($rows), (string) ($statuses['OK'] ?? 0), (string) ($statuses['KO'] ?? 0));
+    return digiquali_photo_multiple_format_summary(array_column($rows, 'status'));
 }
 
 /**
@@ -204,10 +263,86 @@ function digiquali_photo_multiple_odt_answer(?string $answer): string
     $lines    = [$summary];
     $position = 1;
     foreach (digiquali_photo_multiple_decode($answer) as $row) {
-        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? $row['status'] : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
+        $lines[] = $position++ . '. ' . ($row['status'] !== '' ? digiquali_photo_multiple_get_status_label($row['status']) : '-') . ($row['comment'] !== '' ? ' : ' . $row['comment'] : '');
     }
 
     return implode("\n", $lines);
+}
+
+/**
+ * Get the URLs of a PhotoMultiple photo and of its small thumbnail
+ *
+ * @param  array $row Row of digiquali_photo_multiple_get_rows()
+ * @return array      URL of the photo and of its thumbnail, the photo itself when it has none
+ */
+function digiquali_photo_multiple_get_photo_urls(array $row): array
+{
+    global $conf;
+
+    // Without a session document.php answers the login page : the public answer page goes through the
+    // image wrapper of Saturne, like the reference photos of the questions
+    $imageUrl  = (defined('NOLOGIN') ? dol_buildpath('/saturne/utils/viewimage.php', 1) : DOL_URL_ROOT . '/document.php') . '?modulepart=digiquali&entity=' . $conf->entity . '&file=';
+    $thumbName = saturne_get_thumb_name($row['name'], 'small', dirname($row['path']));
+    $photoUrl  = $imageUrl . urlencode($row['sub_dir'] . '/' . $row['name']);
+
+    return ['photo' => $photoUrl, 'thumb' => is_string($thumbName) ? $imageUrl . urlencode($row['sub_dir'] . '/thumbs/' . $thumbName) : $photoUrl];
+}
+
+/**
+ * Render a PhotoMultiple answer to be read, where it is shown as a field like on the answer card :
+ * its summary, then the thumbnail, comment and status of each photo
+ *
+ * @param  Question     $question Question
+ * @param  CommonObject $object   Answered object (control or survey)
+ * @param  string|null  $answer   Answer of the line
+ * @return string                 HTML output
+ */
+function digiquali_photo_multiple_render_output(Question $question, CommonObject $object, ?string $answer): string
+{
+    global $langs;
+
+    $rows = digiquali_photo_multiple_get_rows($object, $question, $answer);
+    if (empty($rows)) {
+        return '<span class="opacitymedium">' . $langs->trans('PhotoMultipleEmpty') . '</span>';
+    }
+
+    $statuses = digiquali_photo_multiple_get_statuses();
+
+    $out  = '<div class="question-photo-multiple-output">';
+    $out .= '<div class="question-photo-multiple-output__summary">' . dol_escape_htmltag(digiquali_photo_multiple_format_summary(array_column($rows, 'status'))) . '</div>';
+    $out .= '<table class="noborder centpercent">';
+    $out .= '<tr class="liste_titre">';
+    $out .= '<th>' . $langs->trans('PhotoMultipleImage') . '</th>';
+    $out .= '<th>' . $langs->trans('PhotoMultipleComment') . '</th>';
+    $out .= '<th class="center">' . $langs->trans('PhotoMultipleStatus') . '</th>';
+    $out .= '</tr>';
+
+    foreach ($rows as $row) {
+        $photoUrls = digiquali_photo_multiple_get_photo_urls($row);
+
+        $out .= '<tr class="oddeven">';
+        $out .= '<td class="question-photo-multiple-output__photo">';
+        $out .= '<a href="' . dol_escape_htmltag($photoUrls['photo']) . '" target="_blank" rel="noopener">';
+        $out .= '<img src="' . dol_escape_htmltag($photoUrls['thumb']) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
+        $out .= '</a>';
+        $out .= '</td>';
+        $out .= '<td>' . ($row['comment'] !== '' ? dol_nl2br(dol_escape_htmltag($row['comment'], 0, 1)) : '<span class="opacitymedium">-</span>') . '</td>';
+        $out .= '<td class="center">';
+        if (isset($statuses[$row['status']])) {
+            $out .= '<span class="question-photo-multiple-output__status question-photo-multiple-output__status--' . dol_strtolower($row['status']) . '">';
+            $out .= '<i class="fas ' . $statuses[$row['status']]['icon'] . '"></i> ' . $langs->trans($statuses[$row['status']]['label']);
+            $out .= '</span>';
+        } else {
+            $out .= '<span class="opacitymedium">-</span>';
+        }
+        $out .= '</td>';
+        $out .= '</tr>';
+    }
+
+    $out .= '</table>';
+    $out .= '</div>';
+
+    return $out;
 }
 
 /**
@@ -225,7 +360,7 @@ function digiquali_photo_multiple_odt_answer(?string $answer): string
  */
 function digiquali_render_photo_multiple_answer(Question $question, CommonObject $object, string $questionAnswer, bool $readOnly = false): string
 {
-    global $conf, $langs;
+    global $langs;
 
     $disabled = ($readOnly ? ' disabled' : '');
     $rows     = digiquali_photo_multiple_get_rows($object, $question, $questionAnswer);
@@ -239,6 +374,25 @@ function digiquali_render_photo_multiple_answer(Question $question, CommonObject
     $out  = '<div class="question-photo-multiple" id="question-photo-multiple-' . $question->id . '" data-question-id="' . $question->id . '" data-sub-dir="' . dol_escape_htmltag(digiquali_get_answer_photo_sub_dir($object, $question)) . '" data-saved-answer="' . dol_escape_htmltag($questionAnswer) . '">';
     $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '" value="' . dol_escape_htmltag(digiquali_photo_multiple_encode($answerRows)) . '">';
 
+    // The question has no OK/KO of its own : its summary, the one the lists and the documents show, stands for it.
+    // photo_multiple.js rewrites it as statuses are given, from the count label and the labels of the buttons
+    if (!empty($rows)) {
+        $out .= '<div class="question-photo-multiple__summary">';
+        $out .= '<i class="fas fa-images" aria-hidden="true"></i> ';
+        $out .= '<strong>' . $langs->trans('PhotoMultipleBalance') . ' :</strong> ';
+        $out .= '<span class="question-photo-multiple__summary-text" data-photo-count-label="' . dol_escape_htmltag($langs->transnoentities('PhotoMultipleSummary', '%s')) . '">' . dol_escape_htmltag(digiquali_photo_multiple_format_summary(array_column($rows, 'status'))) . '</span>';
+        $out .= '</div>';
+    }
+
+    // How the photo statuses and the question relate is not what an OK/KO question taught : say it while answering
+    if (!$readOnly) {
+        $out .= '<p class="question-photo-multiple__help opacitymedium">';
+        $out .= '<i class="fas fa-info-circle" aria-hidden="true"></i> ';
+        // Only a control has a verdict to mention
+        $out .= $langs->trans($object->element == 'control' ? 'PhotoMultipleHelpControl' : 'PhotoMultipleHelp');
+        $out .= '</p>';
+    }
+
     if (empty($rows)) {
         $out .= '<p class="question-photo-multiple__empty opacitymedium">' . $langs->trans('PhotoMultipleEmpty') . '</p>';
     } else {
@@ -248,24 +402,18 @@ function digiquali_render_photo_multiple_answer(Question $question, CommonObject
         $out .= '<span>' . $langs->trans('PhotoMultipleStatus') . '</span>';
         $out .= '</div>';
 
-        // Without a session document.php answers the login page : the public answer page goes through the
-        // image wrapper of Saturne, like the reference photos of the questions
-        $imageUrl = (defined('NOLOGIN') ? dol_buildpath('/saturne/utils/viewimage.php', 1) : DOL_URL_ROOT . '/document.php') . '?modulepart=digiquali&entity=' . $conf->entity . '&file=';
-
         foreach ($rows as $row) {
-            $thumbName = saturne_get_thumb_name($row['name'], 'small', dirname($row['path']));
-            $photoUrl  = $imageUrl . urlencode($row['sub_dir'] . '/' . $row['name']);
-            $thumbUrl  = is_string($thumbName) ? $imageUrl . urlencode($row['sub_dir'] . '/thumbs/' . $thumbName) : $photoUrl;
+            $photoUrls = digiquali_photo_multiple_get_photo_urls($row);
 
             $out .= '<div class="question-photo-multiple__row" data-file-name="' . dol_escape_htmltag($row['name']) . '">';
-            $out .= '<a class="question-photo-multiple__photo" href="' . dol_escape_htmltag($photoUrl) . '" target="_blank" rel="noopener">';
-            $out .= '<img src="' . dol_escape_htmltag($thumbUrl) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
+            $out .= '<a class="question-photo-multiple__photo" href="' . dol_escape_htmltag($photoUrls['photo']) . '" target="_blank" rel="noopener">';
+            $out .= '<img src="' . dol_escape_htmltag($photoUrls['thumb']) . '" alt="' . dol_escape_htmltag($row['name']) . '" loading="lazy">';
             $out .= '</a>';
             $out .= '<textarea class="question-textarea question-photo-multiple__comment" rows="2" placeholder="' . $langs->transnoentities('WriteComment') . '"' . $disabled . '>' . dol_escape_htmltag($row['comment']) . '</textarea>';
             $out .= '<div class="question-photo-multiple__status">';
-            foreach (['OK' => 'fa-check', 'KO' => 'fa-times'] as $status => $statusIcon) {
+            foreach (digiquali_photo_multiple_get_statuses() as $status => $statusInfo) {
                 $out .= '<button type="button" class="question-photo-multiple__status-button question-photo-multiple__status-button--' . dol_strtolower($status) . ($row['status'] == $status ? ' active' : '') . '" data-status="' . $status . '" aria-pressed="' . ($row['status'] == $status ? 'true' : 'false') . '"' . $disabled . '>';
-                $out .= '<i class="fas ' . $statusIcon . '"></i> ' . $status;
+                $out .= '<i class="fas ' . $statusInfo['icon'] . '"></i> ' . $langs->trans($statusInfo['label']);
                 $out .= '</button>';
             }
             $out .= '</div>';
@@ -440,13 +588,15 @@ function show_answer_from_question(Question $question, CommonObject $object, str
     switch ($question->type) {
         case 'Text':
             $out .= '<div>';
-            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
+            // Opens on a few lines, then grows with its text (see window.digiquali.object.fitTextAnswer)
+            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" rows="4" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
             $out .= '</div>';
             break;
         case 'Percentage':
             $step = 100;
             if (!empty($questionConfig[$question->type]['step'])) {
-                $step = $questionConfig[$question->type]['step'];
+                // A slider needs at least two positions (0 and 100), and step - 1 is the divisor below
+                $step = max(2, (int) $questionConfig[$question->type]['step']);
             }
 
 			if ($showCorrection && $question->type == $question::TYPE_RANGE) {
@@ -577,4 +727,242 @@ function digiquali_answer_media_dir_is_allowed(CommonObject $object, string $act
     }
 
     return false;
+}
+
+/**
+ * Give an answered object (control or survey) its definitive ref while it still has its (PROVn) one
+ *
+ * The answer photos are stored under the ref of the object (see digiquali_get_answer_photo_sub_dir()). An object
+ * keeping (PROVn) until its validation leaves them under a directory nothing reads once it is validated :
+ * SaturneObject::validate() does not move the directory of a DigiQuali object. The status is not touched, the
+ * object stays a draft, and its directories, that of its generated documents included, follow the ref.
+ *
+ * @param  SaturneObject $object Control or survey, already created
+ * @param  User          $user   User giving the ref
+ * @return int<-1,1>             Return integer 0 < if KO, 0 if the ref is already the definitive one, > 0 if OK
+ */
+function digiquali_set_definitive_ref(SaturneObject $object, User $user): int
+{
+    if (!empty($object->ref) && !preg_match('/^\(?PROV/i', $object->ref)) {
+        return 0;
+    }
+
+    $oldRef = (string) $object->ref;
+    $newRef = $object->getNextNumRef();
+    if (empty($newRef) || $newRef === $oldRef) {
+        return -1;
+    }
+
+    // No trigger, as for the controls since #2442 : the object only gets the ref its validation would have given it
+    if ($object->setValueFrom('ref', $newRef, '', null, 'text', '', $user) <= 0) {
+        return -1;
+    }
+    $object->ref = $newRef;
+
+    if ($oldRef !== '') {
+        digiquali_move_prov_directory($object, $oldRef);
+    }
+
+    return 1;
+}
+
+/**
+ * Directories of an answered object that carry its ref, under the DigiQuali output directory
+ *
+ * The one of the object (answer photos, QR code...) and the one of its generated documents, apart under
+ * <element>document, where its card lists them.
+ *
+ * @param  SaturneObject $object Control or survey
+ * @return string[]              Directories, relative to the DigiQuali output directory, without the ref
+ */
+function digiquali_get_ref_directories(SaturneObject $object): array
+{
+    return [$object->element, $object->element . 'document'];
+}
+
+/**
+ * Move the files of an object left under its (PROVn) directories into the directories of its definitive ref
+ *
+ * Its answer photos and other files as well as the documents generated while it was a draft (see
+ * digiquali_get_ref_directories()). Nothing is overwritten : a file the definitive directory already has stays under
+ * (PROVn), which is kept as long as it holds something. The rows of llx_ecm_files of the files moved follow them.
+ *
+ * @param  SaturneObject $object Control or survey, with its definitive ref
+ * @param  string        $oldRef Ref the files were stored under, ex. (PROV12)
+ * @return int                   Number of files moved, -1 if KO
+ */
+function digiquali_move_prov_directory(SaturneObject $object, string $oldRef): int
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $newRef = (string) $object->ref;
+    if ($oldRef === '' || $newRef === '' || $oldRef === $newRef || preg_match('/^\(?PROV/i', $newRef)) {
+        return 0;
+    }
+
+    // Same root as the media blocks, the module may not be enabled yet when its init() runs this
+    $entity    = !empty($object->entity) ? (int) $object->entity : (int) $conf->entity;
+    $outputDir = $conf->digiquali->multidir_output[$entity] ?? DOL_DATA_ROOT . ($entity > 1 ? '/' . $entity : '') . '/digiquali';
+
+    // A directory that cannot move does not keep the others back
+    $nbMoved = 0;
+    $error   = false;
+    foreach (digiquali_get_ref_directories($object) as $refDirectory) {
+        $result = digiquali_move_directory_files($outputDir . '/' . $refDirectory . '/' . dol_sanitizeFileName($oldRef), $outputDir . '/' . $refDirectory . '/' . dol_sanitizeFileName($newRef), $entity);
+        if ($result < 0) {
+            $error = true;
+        } else {
+            $nbMoved += $result;
+        }
+    }
+
+    return $error ? -1 : $nbMoved;
+}
+
+/**
+ * Move the files of a directory into another one, the rows of llx_ecm_files of the files moved with them
+ *
+ * The directory moves at once when the destination does not exist yet, file by file otherwise : a file the
+ * destination already has is not overwritten and stays where it is, with its directory.
+ *
+ * @param  string $srcDir  Directory the files are in
+ * @param  string $destDir Directory the files go to
+ * @param  int    $entity  Entity of the rows of llx_ecm_files
+ * @return int             Number of files moved, -1 if KO
+ */
+function digiquali_move_directory_files(string $srcDir, string $destDir, int $entity): int
+{
+    global $db;
+
+    if (!dol_is_dir($srcDir)) {
+        return 0;
+    }
+
+    $files = dol_dir_list($srcDir, 'files', 1, '', null, 'name', SORT_ASC, 0, 1);
+    if (!dol_is_dir($destDir)) {
+        // Nothing to merge with : the directory moves at once
+        if (!dol_move_dir($srcDir, $destDir, 0, 0, 0)) {
+            dol_syslog(__FUNCTION__ . ' cannot move ' . $srcDir . ' to ' . $destDir, LOG_ERR);
+            return -1;
+        }
+        $nbMoved = count($files);
+    } else {
+        // The card of the object already made some of its directories (empty ones of the answer photos...) : file by file
+        $nbMoved = 0;
+        foreach ($files as $file) {
+            $destFile = $destDir . '/' . $file['relativename'];
+            if (dol_is_file($destFile)) {
+                dol_syslog(__FUNCTION__ . ' ' . $destFile . ' already exists, ' . $file['fullname'] . ' is kept', LOG_WARNING);
+                continue;
+            }
+            dol_mkdir(dirname($destFile));
+            if (@rename(dol_osencode($file['fullname']), dol_osencode($destFile))) {
+                $nbMoved++;
+            }
+        }
+
+        // Remove the directories the move emptied, deepest first : rmdir() leaves the ones still holding a file
+        $dirs = dol_dir_list($srcDir, 'directories', 1, '', null, 'name', SORT_ASC, 0, 1);
+        usort($dirs, function ($a, $b) {
+            return strlen($b['fullname']) <=> strlen($a['fullname']);
+        });
+        foreach ($dirs as $dir) {
+            @rmdir(dol_osencode($dir['fullname']));
+        }
+        @rmdir(dol_osencode($srcDir));
+    }
+
+    // Index of the ECM : only the rows of the files that did move, a file kept under (PROVn) keeps its row
+    $relativeSrcDir  = preg_replace('/^' . preg_quote(DOL_DATA_ROOT, '/') . '\//', '', $srcDir);
+    $relativeDestDir = preg_replace('/^' . preg_quote(DOL_DATA_ROOT, '/') . '\//', '', $destDir);
+
+    $sql  = 'SELECT rowid, filepath, filename FROM ' . MAIN_DB_PREFIX . 'ecm_files';
+    $sql .= ' WHERE entity = ' . $entity;
+    $sql .= " AND (filepath = '" . $db->escape($relativeSrcDir) . "' OR filepath LIKE '" . $db->escape($db->escapeforlike($relativeSrcDir)) . "/%')";
+
+    $ecmFiles = [];
+    $resql    = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $ecmFiles[] = $obj;
+        }
+        $db->free($resql);
+    }
+
+    foreach ($ecmFiles as $ecmFile) {
+        $newFilePath = $relativeDestDir . substr($ecmFile->filepath, strlen($relativeSrcDir));
+        if (dol_is_file(DOL_DATA_ROOT . '/' . $newFilePath . '/' . $ecmFile->filename) && !dol_is_file(DOL_DATA_ROOT . '/' . $ecmFile->filepath . '/' . $ecmFile->filename)) {
+            $db->query('UPDATE ' . MAIN_DB_PREFIX . "ecm_files SET filepath = '" . $db->escape($newFilePath) . "' WHERE rowid = " . ((int) $ecmFile->rowid));
+        }
+    }
+
+    dol_syslog(__FUNCTION__ . ' ' . $nbMoved . ' file(s) moved from ' . $srcDir . ' to ' . $destDir);
+
+    return $nbMoved;
+}
+
+/**
+ * Move back the files of the controls or surveys left under their (PROVn) directory once given their definitive ref
+ *
+ * Until #2442 for the controls and #2761 for the surveys, an object kept its (PROVn) ref until its validation, which
+ * did not move its directories : its answer photos, its other files and the documents generated while it was a draft
+ * stayed under (PROVn), where nothing reads them anymore. #2761 brought back the first ones only : the documents are
+ * searched too (#2773). Idempotent, run at each activation of the module : an object still in (PROVn), and a (PROVn)
+ * directory whose object no longer exists, are left as they are.
+ *
+ * @param  SaturneObject $object Control or survey, only gives the element and the table to read
+ * @return int                   Number of objects whose directories were handled, -1 if KO
+ */
+function digiquali_recover_prov_directories(SaturneObject $object): int
+{
+    global $conf, $db;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $outputDir = $conf->digiquali->multidir_output[$conf->entity] ?? DOL_DATA_ROOT . ($conf->entity > 1 ? '/' . $conf->entity : '') . '/digiquali';
+
+    // Ids of the objects with at least one (PROVn) directory left, by id to count each object once
+    $ids = [];
+    foreach (digiquali_get_ref_directories($object) as $refDirectory) {
+        $provDirs = dol_dir_list($outputDir . '/' . $refDirectory, 'directories', 0, '^\(PROV[0-9]+\)$', null, 'name', SORT_ASC, 0, 1);
+        foreach ($provDirs as $provDir) {
+            $id       = (int) substr($provDir['name'], 5, -1);
+            $ids[$id] = $id;
+        }
+    }
+    if (empty($ids)) {
+        return 0;
+    }
+
+    $sql  = 'SELECT rowid, ref, entity FROM ' . MAIN_DB_PREFIX . $object->table_element;
+    $sql .= ' WHERE rowid IN (' . implode(',', $ids) . ') AND entity = ' . ((int) $conf->entity);
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ' ' . $db->lasterror(), LOG_ERR);
+        return -1;
+    }
+
+    $objects = [];
+    while ($obj = $db->fetch_object($resql)) {
+        if (!empty($obj->ref) && !preg_match('/^\(?PROV/i', $obj->ref)) {
+            $objects[] = $obj;
+        }
+    }
+    $db->free($resql);
+
+    $nbHandled = 0;
+    foreach ($objects as $obj) {
+        $strandedObject         = clone $object;
+        $strandedObject->id     = (int) $obj->rowid;
+        $strandedObject->ref    = $obj->ref;
+        $strandedObject->entity = (int) $obj->entity;
+        if (digiquali_move_prov_directory($strandedObject, '(PROV' . $obj->rowid . ')') >= 0) {
+            $nbHandled++;
+        }
+    }
+
+    return $nbHandled;
 }

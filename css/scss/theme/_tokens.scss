@@ -1,0 +1,84 @@
+/* DigiQuali modern theme: design tokens.
+   The generic restyle of the back office (titles, tabs, lists, forms, buttons, modals) is the shared
+   theme of Saturne. saturne_header() puts its saturne-theme class on the logged-in pages only: the
+   PWA screens and the public pages, which have their own design, never get it. The DigiQuali
+   components below aim at the same scope. */
+$dq-scope: 'body#mainbody.saturne-theme';
+
+/* The values come from the CSS custom properties the shared theme exposes on that scope: this
+   stylesheet is compiled apart from Saturne */
+$dq-bg: var(--saturne-bg);
+$dq-surface: var(--saturne-surface);
+$dq-surface-soft: var(--saturne-surface-soft);
+$dq-border: var(--saturne-border);
+$dq-border-soft: var(--saturne-border-soft);
+$dq-border-strong: var(--saturne-border-strong);
+$dq-text: var(--saturne-text);
+$dq-text-soft: var(--saturne-text-soft);
+$dq-muted: var(--saturne-muted);
+$dq-faint: var(--saturne-faint);
+
+$dq-primary: var(--saturne-primary);
+$dq-primary-strong: var(--saturne-primary-strong);
+$dq-primary-soft: var(--saturne-primary-soft);
+$dq-navy: var(--saturne-navy);
+$dq-success: var(--saturne-success);
+$dq-success-soft: var(--saturne-success-soft);
+$dq-warning: var(--saturne-warning);
+$dq-warning-soft: var(--saturne-warning-soft);
+$dq-danger: var(--saturne-danger);
+$dq-danger-soft: var(--saturne-danger-soft);
+
+/* Text and border shades of the tinted pills, same as the status badges of the shared theme */
+$dq-success-text: #15803d;
+$dq-success-line: rgba(22, 163, 74, 0.3);
+$dq-warning-text: #a16207;
+$dq-warning-line: rgba(233, 173, 79, 0.45);
+$dq-danger-text: #b91c1c;
+$dq-danger-line: rgba(224, 83, 83, 0.3);
+$dq-primary-line: rgba(13, 138, 255, 0.35);
+
+$dq-radius-lg: var(--saturne-radius-lg);
+$dq-radius: var(--saturne-radius);
+$dq-radius-sm: var(--saturne-radius-sm);
+$dq-radius-pill: var(--saturne-radius-pill);
+
+$dq-shadow-sm: var(--saturne-shadow-sm);
+$dq-shadow: var(--saturne-shadow);
+$dq-shadow-hover: var(--saturne-shadow-hover);
+$dq-ring: var(--saturne-ring);
+
+$dq-font: var(--saturne-font);
+$dq-transition: 0.15s ease;
+
+/* Uppercase micro label, used for table headers and field labels */
+@mixin dq-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $dq-muted;
+}
+
+/* White rounded surface */
+@mixin dq-card {
+  background: $dq-surface;
+  border: 1px solid $dq-border;
+  border-radius: $dq-radius-lg;
+  box-shadow: $dq-shadow-sm;
+}
+
+/* Tinted pill (status, verdict) */
+@mixin dq-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: $dq-radius-pill;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}

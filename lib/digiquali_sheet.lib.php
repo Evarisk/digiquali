@@ -22,7 +22,7 @@
  */
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 /**
  * Prepare array of tabs for sheet.
@@ -61,7 +61,7 @@ function sheet_prepare_head(Sheet $object): array
 function digiquali_sheet_config_notice_message(string $linkMessage, string $askAdminMessage, string $anchor = ''): string
 {
     if (saturne_check_admin_write_access()) {
-        return '<a href="' . dol_buildpath('custom/digiquali/admin/sheet.php', 1) . $anchor . '">' . $linkMessage . '</a>';
+        return '<a href="' . dol_buildpath('/digiquali/admin/sheet.php', 1) . $anchor . '">' . $linkMessage . '</a>';
     }
 
     return $askAdminMessage;

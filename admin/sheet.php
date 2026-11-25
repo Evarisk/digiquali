@@ -74,7 +74,7 @@ $error = 0; // Error counter.
 $hookmanager->initHooks([$object->element . 'admin', 'globalcard']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user.
-$permissiontoread  = $user->rights->digiquali->adminpage->read;
+$permissiontoread  = $user->hasRight('digiquali', 'adminpage', 'read');
 $permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
@@ -83,7 +83,7 @@ saturne_check_access($permissiontoread);
  */
 
 // Actions set_mod, update_mask
-require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/actions/admin_conf_actions.tpl.php');
 
 // Extrafields actions.
 if ($permissiontowrite) {
@@ -131,6 +131,10 @@ if (in_array($action, ['toggle_link', 'toggle_all_links', 'clean_unused_links'])
         $deletedCount = count($report['deleted']);
 
         setEventMessage($langs->trans('LinkedObjectSyncDone', $report['tabs'], $report['hooks'], $addedCount, $deletedCount));
+
+        if (!empty($report['kept'])) {
+            setEventMessages($langs->trans('LinkedObjectExtraFieldsKeptForExport'), $report['kept'], 'warnings');
+        }
     }
 
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -248,9 +252,9 @@ $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
 
 // Warns a user allowed to read the settings but not to change them
-require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/admin_write_access_notice.tpl.php');
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 $constArray[$moduleNameLowerCase] = [
 	'UniqueLinkedElement' => [
@@ -265,7 +269,7 @@ $constArray[$moduleNameLowerCase] = [
 	],
 ];
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 // Linkable elements, driven by the DIGIQUALI_SHEET_LINK_* constants.
 $linkableObjects            = digiquali_get_linkable_objects();
@@ -273,7 +277,7 @@ $enabledObjectTypes         = digiquali_get_enabled_linked_object_types();
 $linkedObjectExtraFieldName = 'qc_frequency';
 $linkedObjectUsage          = digiquali_get_linked_object_usage();
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/linked_object_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/linked_object_view.tpl.php');
 
 // Generate categories.
 print load_fiche_titre($langs->trans('SheetCategories'), '', '', 0, 'sheetCategories');

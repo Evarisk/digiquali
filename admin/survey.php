@@ -64,7 +64,7 @@ $hookmanager->initHooks(['surveyadmin', 'globalcard']); // Note that conf->hooks
 $elementtype = $moduleNameLowerCase . '_' . $object->element; // Must be the $table_element of the class that manage extrafield
 
 // Security check - Protection if external user
-$permissiontoread  = $user->rights->$moduleNameLowerCase->adminpage->read;
+$permissiontoread  = $user->hasRight($moduleNameLowerCase, 'adminpage', 'read');
 $permissiontowrite = saturne_check_admin_write_access();
 saturne_check_access($permissiontoread);
 
@@ -73,7 +73,7 @@ saturne_check_access($permissiontoread);
  */
 
 // Actions set_mod, update_mask and the switches of the module constants
-require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/actions/admin_conf_actions.tpl.php');
 
 // Extrafields actions
 if ($permissiontowrite) {
@@ -98,16 +98,16 @@ $head = digiquali_admin_prepare_head();
 print dol_get_fiche_head($head, $object->element, $title, -1, 'digiquali_color@digiquali');
 
 // Warns a user allowed to read the settings but not to change them
-require_once __DIR__ . '/../../saturne/core/tpl/admin/admin_write_access_notice.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/admin_write_access_notice.tpl.php');
 
 /*
  * Numbering module
  */
 
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 $constArray = $constArray ?? [];
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 /*
  * Numbering module line
@@ -115,7 +115,7 @@ require __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.ph
 
 $object = new SurveyLine($db);
 
-require __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 // Extrafields survey management
 print load_fiche_titre($langs->trans('ExtrafieldsSurveyManagement'), '', '');

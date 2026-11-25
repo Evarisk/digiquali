@@ -91,6 +91,9 @@ if (empty($resHook)) {
         $sheetExportArray['element_linked']      = $object->element_linked;
         $sheetExportArray['success_rate']        = $object->success_rate;
         $sheetExportArray['mandatory_questions'] = $object->mandatory_questions;
+        $sheetExportArray['qc_frequency']        = $object->qc_frequency;
+        $sheetExportArray['qc_frequency_unit']   = $object->qc_frequency_unit;
+        $sheetExportArray['default_control_mandatory'] = (int) $object->default_control_mandatory;
 
         $digiqualiExportArray['sheets'][$object->id] = $sheetExportArray;
 
@@ -260,7 +263,7 @@ print '</td></tr>';
 print '</table>';
 print '</form>';
 
-print $langs->trans('ToImportDataGoToImportPage') . ' <a href="' . dol_buildpath('custom/digiquali/view/digiqualitools.php', 1) . '">' . $langs->trans('ClickHere') . '</a>';
+print $langs->trans('ToImportDataGoToImportPage') . ' <a href="' . dol_buildpath('/digiquali/view/digiqualitools.php', 1) . '">' . $langs->trans('ClickHere') . '</a>';
 
 print '</div>';
 // End of page

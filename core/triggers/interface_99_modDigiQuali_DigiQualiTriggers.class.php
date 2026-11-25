@@ -49,8 +49,8 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'DigiQuali triggers.';
-        $this->version     = '23.1.1';
-        $this->picto       = 'digiquali@digiquali';
+        $this->version     = '23.4.3';
+        $this->picto       = 'digiquali_color@digiquali';
     }
 
     /**
@@ -72,6 +72,13 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
             return 0; // If module is not enabled, we do nothing
         }
 
+        // Every event of the instance comes through here, also those another module sends with an object that is not
+        // a CommonObject (ExternalAccess passes its Context on externalAccessInitController): none of them concerns
+        // DigiQuali, and the event prepared below reads an id, element, module and ref that such an object may lack
+        if (!($object instanceof CommonObject)) {
+            return 0;
+        }
+
         // Data and type of action are stored into $object and $action
         dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . '. id=' . $object->id);
 
@@ -79,7 +86,8 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
 
         $actionComm = new ActionComm($this->db);
 
-        $triggerType = dol_ucfirst(dol_strtolower(explode('_', $action)[1]));
+        // An action code without "_" (externalAccessInitController, for instance) carries no trigger type
+        $triggerType = dol_ucfirst(dol_strtolower(explode('_', $action)[1] ?? ''));
 
         $actionComm->code         = 'AC_' . $action;
         $actionComm->type_code    = 'AC_OTH_AUTO';
@@ -149,6 +157,14 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
                 $actionComm->create($user);
                 break;
 
+            case 'SHEET_REMOVEQUESTION' :
+            case 'SHEET_REMOVEQUESTIONGROUP' :
+            case 'QUESTIONGROUP_REMOVEQUESTION' :
+                // Name the removed question or group, the event is attached to its parent
+                $actionComm->label = $langs->transnoentities('Object' . $triggerType . 'Trigger', $object->context['removed_ref'] ?? '');
+                $actionComm->create($user);
+                break;
+
             case 'CONTROL_CREATE' :
                 if (isModEnabled('projet') && !empty($object->projectid)) {
                     require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
@@ -173,6 +189,14 @@ class InterfaceDigiQualiTriggers extends DolibarrTriggers
                     }
                 }
                 break;
+        }
+
+        // A deleted object leaves no short URL leading to its public control history: it would lead to a 404 and
+        // clutter the list of redirections. Only when Saturne provides short URLs (s/ entry point)
+        if (substr($action, -7) === '_DELETE' && is_file(dol_buildpath('/saturne/s/index.php'))) {
+            require_once __DIR__ . '/../../lib/digiquali_control.lib.php';
+
+            digiquali_delete_public_control_short_urls($object);
         }
 
         return 0;
