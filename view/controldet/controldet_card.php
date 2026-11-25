@@ -108,7 +108,7 @@ $permissiontodelete = $user->hasRight('digiquali', 'control', 'delete') || ($per
 $permissionnote = $user->hasRight('digiquali', 'control', 'write'); // Used by the include of actions_setnotes.inc.php
 $permissiondellink = $user->hasRight('digiquali', 'control', 'write'); // Used by the include of actions_dellink.inc.php
 
-$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : 1].'/test';
+$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : $conf->entity].'/test';
 
 // Security check (enable the most restrictive one)
 //if ($user->socid > 0) accessforbidden();
