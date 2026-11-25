@@ -95,7 +95,7 @@ saturne_load_langs(['projects']);
 
 // Get parameters
 $trackID   = GETPOST('track_id', 'alpha');
-$entity    = GETPOST('entity');
+$entity    = GETPOSTINT('entity');
 $action    = GETPOST('action');
 $subaction = GETPOST('subaction');
 
@@ -124,7 +124,8 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
 
 $hookmanager->initHooks(['publicanswer', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
 
-if (!isModEnabled('multicompany')) {
+// The entity of the link is a number: without one, the page keeps the setup of the current entity
+if (!isModEnabled('multicompany') || $entity <= 0) {
     $entity = $conf->entity;
 }
 
