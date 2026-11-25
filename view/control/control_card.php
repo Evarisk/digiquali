@@ -447,7 +447,7 @@ if ($action == 'create') {
         print '<div class="sheet-grid-images sheet-elements">';
         print '<input type="hidden" name="fk_sheet" value="' . GETPOST('fk_sheet') . '">';
         if (GETPOSTISSET('sheetCategoryID') || (GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined')) {
-            $sheets = saturne_fetch_all_object_type('Sheet', '', '', 0, 0, ['customsql' => 'cp.fk_categorie = ' . ((GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined') ? GETPOST('sheetSubCategoryID') : GETPOST('sheetCategoryID'))], 'AND', false, true, true);
+            $sheets = saturne_fetch_all_object_type('Sheet', '', '', 0, 0, ['customsql' => 'cp.fk_categorie = ' . ((GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined') ? GETPOSTINT('sheetSubCategoryID') : GETPOSTINT('sheetCategoryID'))], 'AND', false, true, true);
             if (is_array($sheets) && !empty($sheets)) {
                 foreach ($sheets as $sheetSingle) {
                     print saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/sheet/' . $sheetSingle->ref . '/photos/', 'small', '', 0, 0, 0, 50, 50, 1, 1, 0, 'sheet/' . $sheetSingle->ref . '/photos/', $sheetSingle, '', 0, 0, 0, 0, 'photo-sheet');
@@ -458,7 +458,7 @@ if ($action == 'create') {
     } else {
         //FK SHEET
         $filter          = 's.type = ' . '"' . $object->element . '" AND s.status = ' . Sheet::STATUS_LOCKED;
-        $filter         .= !empty(GETPOST('fromtype')) ? ' AND s.element_linked LIKE "%' . GETPOST('fromtype') . '%"' : '';
+        $filter         .= !empty(GETPOST('fromtype', 'aZ09')) ? " AND s.element_linked LIKE '%" . $db->escape($db->escapeforlike(GETPOST('fromtype', 'aZ09'))) . "%'" : '';
         print '<tr><td class="fieldrequired">' . ($source != 'pwa' ? $langs->trans('Sheet') : img_picto('', $sheet->picto . '_2em', 'class="pictofixedwidth"')) . '</td><td>';
         print ($source != 'pwa' ? img_picto('', $sheet->picto, 'class="pictofixedwidth"') : '') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', $filter, 1);
         if ($source != 'pwa') {
@@ -529,8 +529,8 @@ if ($action == 'create') {
                 $objectPost     = GETPOST($objectPostName) ?: (GETPOST('fromtype') == $objectMetadata['link_name'] ? GETPOST('fromid') : '');
 
                 $objectFilter = [];
-                if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOST($objectMetadata['parent_post']) > 0)) {
-                    $objectFilter = ['customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOST($objectMetadata['parent_post'])];
+                if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOSTINT($objectMetadata['parent_post']) > 0)) {
+                    $objectFilter = ['customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOSTINT($objectMetadata['parent_post'])];
                 } elseif (!empty($objectMetadata['filter'])) {
                     $objectFilter = ['customsql' => $objectMetadata['filter']];
                 }
