@@ -303,6 +303,7 @@ CreateNewQuestionGroup         = Create a new question group
 # Notice
 MissingConfigElementTypeTitle   = Missing configuration for the linked elements
 MissingConfigElementTypeMessage = Please click the link to configure the linked elements
+MissingConfigElementTypeAskAdmin = No element can be linked yet: ask an administrator to enable them in the DigiQuali module configuration.
 LineMovedOutsideParentError     = An element cannot be moved outside its parent
 
 
@@ -573,6 +574,7 @@ BeCarefullVerdictKO                            = Warning: if the status of your 
 ShowQcFrequencyPublicInterface                 = Show the validity period (in days) on the public control interface
 ShowQcFrequencyPublicInterfaceDescription      = Option to show the validity period (in days) on the public control interface
 GenerateSheetTags                              = You have not generated the main categories, please click here to go to the setup page
+GenerateSheetTagsAskAdmin                      = The main categories have not been generated yet: ask an administrator to create them in the DigiQuali module configuration.
 ObjectReadyToValidate                          = The %s is ready to be validated
 QuestionAnswered                               = Answer/Question
 LastStatusDate                                 = Last status dates

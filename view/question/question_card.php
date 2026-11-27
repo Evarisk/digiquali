@@ -216,11 +216,8 @@ if (empty($reshook)) {
 			}
 
 			if ( ! $error) {
+				// No thumbs here: the block below creates them on the final file, once moved to the question directory
 				dol_add_file_process($upload_dir, 0, 1, 'userfile', '', null, '', 0);
-				$imgThumbMini   = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_MINI, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_MINI, '_mini');
-				$imgThumbSmall  = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_SMALL, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_SMALL, '_small');
-				$imgThumbMedium = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-				$imgThumbLarge  = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_LARGE, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_LARGE, '_large');
 			}
 			$error = 0;
 		}
@@ -244,11 +241,8 @@ if (empty($reshook)) {
 			}
 
 			if ( ! $error) {
+				// No thumbs here: the block below creates them on the final file, once moved to the question directory
 				dol_add_file_process($upload_dir, 0, 1, 'userfile2', '', null, '', 0);
-				$imgThumbMini   = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_MINI, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_MINI, '_mini');
-				$imgThumbSmall  = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_SMALL, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_SMALL, '_small');
-				$imgThumbMedium = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-				$imgThumbLarge  = vignette($upload_dir, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_LARGE, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_LARGE, '_large');
 			}
 			$error = 0;
 		}
@@ -280,8 +274,10 @@ if (empty($reshook)) {
 
 						$imgThumbMini   = vignette($destfull, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_MINI, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_MINI, '_mini');
 						$imgThumbSmall  = vignette($destfull, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_SMALL, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_SMALL, '_small');
-						$imgThumbMedium = vignette($destfull, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-						$imgThumbLarge  = vignette($destfull, $conf->global->DIGIQUALI_MEDIA_MAX_WIDTH_LARGE, $conf->global->DIGIQUALI_MEDIA_MAX_HEIGHT_LARGE, '_large');
+						// The core vignette() only accepts '_small' and '_mini': with '_medium' or '_large' it wrote the image to a file
+						// named 'Bad parameter extName' next to this page, saturne_vignette() accepts them
+						$imgThumbMedium = saturne_vignette($destfull, getDolGlobalInt('DIGIQUALI_MEDIA_MAX_WIDTH_MEDIUM'), getDolGlobalInt('DIGIQUALI_MEDIA_MAX_HEIGHT_MEDIUM'), '_medium');
+						$imgThumbLarge  = saturne_vignette($destfull, getDolGlobalInt('DIGIQUALI_MEDIA_MAX_WIDTH_LARGE'), getDolGlobalInt('DIGIQUALI_MEDIA_MAX_HEIGHT_LARGE'), '_large');
 						unlink($photo['fullname']);
 					}
 				}
