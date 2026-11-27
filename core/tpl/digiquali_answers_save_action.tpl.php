@@ -80,12 +80,14 @@ if ($action == 'save') {
                 $line->status = 1;
             }
             
+            // The auto-save reads a JSON body, which GETPOST() does not : its values get the filters of a full submit
+            // below, the answer of a multiple photos question is rebuilt further down
             if ($isAutoSave) {
-                if (isset($data['answer'])) {
-                    $line->answer = $data['answer'];
+                if (isset($data['answer']) && is_scalar($data['answer'])) {
+                    $line->answer = $question->type == Question::TYPE_PHOTO_MULTIPLE ? (string) $data['answer'] : sanitizeVal((string) $data['answer'], 'alphanohtml');
                 }
-                if (isset($data['comment'])) {
-                    $line->comment = $data['comment'];
+                if (isset($data['comment']) && is_scalar($data['comment'])) {
+                    $line->comment = sanitizeVal((string) $data['comment'], 'alphanohtml');
                 }
             } else {
                 if (isset($_POST['answer' . $question->id])) {
