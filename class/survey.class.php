@@ -409,6 +409,12 @@ class Survey extends SaturneObject
         if (property_exists($object, 'track_id')) {
             $object->track_id = generate_random_id();
         }
+        // A clone is a survey of its own : neither a collect session (its planned closing would close the copy at once if
+        // past, its mode would be chosen for the new one) nor the response of a respondent
+        $object->date_end         = null;
+        $object->nominative       = 0;
+        $object->respondent_name  = null;
+        $object->respondent_email = null;
 
         $object->context['createfromclone']  = 'createfromclone';
 

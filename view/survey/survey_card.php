@@ -185,15 +185,24 @@ if (empty($resHook)) {
         }
     }
 
-    // The answer of a collect session closed (or due to close) is no longer sent, as its answers are no longer saved
-    if ($action == 'confirm_validate' && $confirm == 'yes' && $object->id > 0 && digiquali_survey_response_session_closed($object)) {
-        setEventMessages($langs->trans('SurveySessionClosedNotSaved'), [], 'errors');
+    // The answer of a collect session closed (or due to close) is no longer sent, as its answers are no longer saved. Nor is
+    // it set back to draft : it could be sent no more, and would leave the summary until the collect is reopened
+    if (in_array($action, ['confirm_validate', 'confirm_setdraft'], true) && $confirm == 'yes' && $object->id > 0 && digiquali_survey_response_session_closed($object)) {
+        setEventMessages($langs->trans($action == 'confirm_validate' ? 'SurveySessionClosedNotSaved' : 'SurveySessionClosedNoSetDraft'), [], 'errors');
         $action = '';
     }
 
-    // A session is closed by its own button, the validation of a survey would ask for the answers it never gets
-    if (in_array($action, ['confirm_validate', 'confirm_setdraft'], true) && $isSession) {
+    // A session is closed by its own button, the validation of a survey would ask for the answers it never gets. Nor is it
+    // locked or archived : a locked session could not be reopened
+    if (in_array($action, ['confirm_validate', 'confirm_setdraft', 'confirm_lock', 'confirm_archive'], true) && $isSession) {
         setEventMessages($langs->trans('SurveySessionTemplateNoWorkflow'), [], 'errors');
+        $action = '';
+    }
+
+    // The buttons of a session are links : their token is checked here whatever the CSRF level of the instance (main.inc.php
+    // checks a link only for some action names), so that a link sent by someone else never opens, closes nor reopens one
+    if (in_array($action, ['open_session', 'close_session', 'reopen_session'], true) && (currentToken() === '' || !hash_equals(currentToken(), (string) GETPOST('token', 'alpha')))) {
+        setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), [], 'warnings');
         $action = '';
     }
 
@@ -210,6 +219,8 @@ if (empty($resHook)) {
             setEventMessages($langs->trans('SurveySessionOpened'), []);
         } elseif ($result == -2) {
             setEventMessages($langs->trans('SurveySessionOpenHasAnswers'), [], 'errors');
+        } elseif ($result == -3) {
+            setEventMessages($langs->trans('SurveySessionOpenIsResponse'), [], 'errors');
         } else {
             setEventMessages($langs->trans('ObjectMustBeDraft', ucfirst($langs->transnoentities('The' . ucfirst($object->element)))), [], 'errors');
         }
@@ -219,7 +230,6 @@ if (empty($resHook)) {
 
     // Closing a session validates it : the mandatory questions are those of the responses, not of the session
     if ($action == 'close_session' && $permissiontoadd && $object->id > 0 && digiquali_survey_is_session($object)) {
-        // validate() gives the session its definitive reference, a closed session kept its (PROV) one
         if ($object->status == Survey::STATUS_DRAFT && $object->validate($user) > 0) {
             setEventMessages($langs->trans('SurveySessionClosed'), []);
         }
@@ -812,9 +822,11 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
                 }
             }
 
-            // Lock
+            // Lock, never a session : closed, it is reopened by its own button, which a locked one would no longer have
             $displayButton = $onPhone ? '<i class="fas fa-lock-open fa-2x"></i>' : '<i class="fas fa-lock-open"></i>' . ' ' . $langs->trans('Lock');
-            if ($object->status == Survey::STATUS_VALIDATED && $signatory->checkSignatoriesSignatures($object->id, $object->element)) {
+            if ($isSession) {
+                print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionTemplateNoWorkflow')) . '">' . $displayButton . '</span>';
+            } elseif ($object->status == Survey::STATUS_VALIDATED && $signatory->checkSignatoriesSignatures($object->id, $object->element)) {
                 print '<span class="butAction" id="actionButtonLock">' . $displayButton . '</span>';
             } else {
                 print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('AllSignatoriesMustHaveSigned', $langs->transnoentities('The' . ucfirst($object->element)))) . '">' . $displayButton . '</span>';
@@ -850,10 +862,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             // Collect session : one link, one survey per respondent
             if ($permissiontoadd) {
                 $isSession = digiquali_survey_is_session($object);
-                if (!$isSession && $object->status == Survey::STATUS_DRAFT) {
+                // A response of a session is never a session itself (see digiquali_survey_open_session())
+                if (!$isSession && $object->status == Survey::STATUS_DRAFT && digiquali_survey_get_response_session($object) === null) {
                     $displayButton = $onPhone ? '<i class="fas fa-users fa-2x"></i>' : '<i class="fas fa-users"></i>' . ' ' . $langs->trans('SurveySessionOpen');
-                    // The session is the template of its responses: a survey already answered cannot become one
-                    if ($answerCounter > 0) {
+                    // The session is the template of its responses: a survey already answered cannot become one. The check
+                    // of the action itself, not $answerCounter : the 0 a choice question posts by default is no answer
+                    if (digiquali_survey_has_answers($object)) {
                         print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionOpenHasAnswers')) . '">' . $displayButton . '</span>';
                     } else {
                         print '<a class="butAction classfortooltip" title="' . dol_escape_htmltag($langs->trans('SurveySessionOpenHelp')) . '" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=open_session&token=' . newToken() . '">' . $displayButton . '</a>';
@@ -980,7 +994,7 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
         // Scrolls by itself on a phone instead of widening the page
         print '<div class="div-table-responsive-no-min">';
         print '<table class="noborder centpercent">';
-        print '<tr class="liste_titre"><td>' . $langs->trans('Ref') . '</td>' . ($showRespondent ? '<td>' . $langs->trans('SurveyRespondent') . '</td>' : '') . '<td>' . $langs->trans('DateCreation') . '</td><td>' . $langs->trans('Status') . '</td>' . ($surveyIsScored ? '<td class="right">' . $langs->trans('SuccessScore') . '</td>' : '') . '</tr>';
+        print '<tr class="liste_titre"><td>' . $langs->trans('Ref') . '</td>' . ($showRespondent ? '<td>' . $langs->trans('SurveyRespondent') . '</td>' : '') . '<td>' . $langs->trans('DateCreation') . '</td><td>' . $langs->trans('Status') . '</td>' . ($surveyIsScored ? '<td class="right">' . $langs->trans('ObtainedScore') . '</td>' : '') . '</tr>';
         if (empty($sessionResponses)) {
             print '<tr><td colspan="' . (3 + ($showRespondent ? 1 : 0) + ($surveyIsScored ? 1 : 0)) . '"><span class="opacitymedium">' . $langs->trans('SurveySessionNoResponse') . '</span></td></tr>';
         }
@@ -993,9 +1007,15 @@ if ($object->id > 0 && (empty($action) || ($action != 'edit' && $action != 'crea
             }
             print '<td>' . dol_print_date($sessionResponse->date_creation, 'dayhour', 'tzuserrel') . '</td>';
             print '<td>' . $sessionResponse->getLibStatut(5) . '</td>';
-            // The success rate of the responses only for a scored survey : they all share the sheet of the session
+            // The score of each response sent, only for a scored survey : they all share the sheet of the session. Its
+            // success rate is the threshold of the sheet, the same for all
             if ($surveyIsScored) {
-                print '<td class="right">' . ($sessionResponse->success_rate !== null && $sessionResponse->success_rate !== '' ? price2num($sessionResponse->success_rate, 2) . ' %' : '') . '</td>';
+                $responseScore = '';
+                if ((int) $sessionResponse->status >= Survey::STATUS_VALIDATED) {
+                    $sessionResponse->fetchLines();
+                    $responseScore = $sessionResponse->getFormattedResults();
+                }
+                print '<td class="right nowraponall">' . $responseScore . '</td>';
             }
             print '</tr>';
         }

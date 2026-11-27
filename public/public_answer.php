@@ -151,6 +151,14 @@ if (empty($trackID) || $object->fetch(0, '', " AND track_id = '" . $db->escape($
 $responseSessionClosed = false;
 if ($object->element == 'survey' && $object->id > 0) {
     if (digiquali_survey_is_session($object)) {
+        // An auto-save posted by a page opened before the survey became a session is told it is refused : redirected, the
+        // request would read the page of the session, and the page that posted it would say saved
+        if ($action == 'save' && (strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false || GETPOST('autoSave', 'alpha') === 'true')) {
+            top_httphead('application/json');
+            http_response_code(409);
+            print json_encode(['success' => false, 'code' => 'session_template', 'message' => $langs->transnoentities('SurveySessionTemplateNotAnswered')]);
+            exit;
+        }
         header('Location: ' . digiquali_survey_session_url($object));
         exit;
     }

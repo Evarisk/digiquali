@@ -34,6 +34,7 @@ if (file_exists('../digiquali.main.inc.php')) {
 // Load DigiQuali libraries
 require_once __DIR__ . '/../../class/survey.class.php';
 require_once __DIR__ . '/../../class/sheet.class.php';
+require_once __DIR__ . '/../../class/question.class.php';
 require_once __DIR__ . '/../../lib/digiquali_answer.lib.php';
 require_once __DIR__ . '/../../lib/digiquali_survey.lib.php';
 
@@ -44,14 +45,15 @@ saturne_load_langs();
 // Get parameters
 $sessionId = GETPOSTINT('session_id');
 
-if (!$user->hasRight('digiquali', 'survey', 'read')) {
-    accessforbidden();
-}
-
 // Responses to export, oldest first
 $sheet   = new Sheet($db);
 $session = new Survey($db);
-if ($sessionId <= 0 || $session->fetch($sessionId) <= 0 || !digiquali_survey_is_session($session) || $sheet->fetch((int) $session->fk_sheet) <= 0) {
+if ($sessionId > 0) {
+    $session->fetch($sessionId);
+}
+// External users refused, and a session of another entity too
+saturne_check_access($user->hasRight('digiquali', 'survey', 'read'), $session);
+if ($sessionId <= 0 || $session->id <= 0 || !digiquali_survey_is_session($session) || $sheet->fetch((int) $session->fk_sheet) <= 0) {
     accessforbidden($langs->trans('ErrorRecordNotFound'), 0);
 }
 $surveys = array_reverse(digiquali_survey_session_get_responses($session), true);
@@ -69,18 +71,22 @@ if (!empty($surveys)) {
 }
 
 /**
- * Get the text of an answer: the labels of the chosen options for a choice question, the value otherwise
+ * Get the text of an answer: the labels of the chosen options for a choice question, the number of photos of a multiple
+ * photos one, a number rounded as the summary shows it (a slider stores 99.999999999999), the value otherwise
  *
  * @param  Question    $question Question
  * @param  string|null $answer   Stored answer
  * @return string                Text of the answer, empty when not answered
  */
-$answerText = function (Question $question, ?string $answer): string {
+$answerText = function (Question $question, ?string $answer) use ($langs): string {
     if (digiquali_answer_is_empty($question->type, $answer)) {
         return '';
     }
+    if ($question->type == Question::TYPE_PHOTO_MULTIPLE) {
+        return $langs->transnoentities('PhotoMultipleSummary', count(digiquali_photo_multiple_decode($answer)));
+    }
     if (!digiquali_question_type_is_choice($question->type)) {
-        return (string) $answer;
+        return is_numeric($answer) ? (string) round((float) $answer, 2) : (string) $answer;
     }
 
     $options = digiquali_get_question_answers_by_position($question);
@@ -119,9 +125,12 @@ $csvCell = function ($value): string {
 top_httphead('text/csv');
 header('Content-Disposition: attachment; filename="' . dol_sanitizeFileName($name) . '.csv"');
 
+// No escape character, as RFC 4180 and the spreadsheets read a CSV : with the default one (\), a value holding \" closed
+// its cell for them, and what followed opened a cell of its own, past the neutralization above. Also required from PHP 8.4
 $out = fopen('php://output', 'w');
-fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM, for the spreadsheets
-fputcsv($out, array_map($csvCell, $header), ';');
+// UTF-8 BOM, for the spreadsheets
+fwrite($out, "\xEF\xBB\xBF");
+fputcsv($out, array_map($csvCell, $header), ';', '"', '');
 foreach ($surveys as $survey) {
     $row = [$survey->ref, dol_print_date($survey->date_creation, 'dayhour', 'tzuserrel'), html_entity_decode(strip_tags($survey->getLibStatut(1)), ENT_QUOTES, 'UTF-8')];
     if ($withRespondent) {
@@ -132,7 +141,7 @@ foreach ($surveys as $survey) {
         $row[] = $answerText($question, $line->answer ?? null);
         $row[] = (string) ($line->comment ?? '');
     }
-    fputcsv($out, array_map($csvCell, $row), ';');
+    fputcsv($out, array_map($csvCell, $row), ';', '"', '');
 }
 fclose($out);
 

@@ -91,9 +91,10 @@ $session = new Survey($db);
 $sheet   = new Sheet($db);
 
 // Only the key of the session opens it, or the personal token of one of its invitees: the track id of the session itself
-// stays secret. A token is looked for in this session only: the token of another session opens nothing here
+// stays secret. A token is looked for in this session only: the token of another session opens nothing here. The
+// session belongs to the entity of the link, whose settings and directories the page uses
 $invitee = null;
-$allowed = getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE') && $id > 0 && $session->fetch($id) > 0 && digiquali_survey_is_session($session);
+$allowed = getDolGlobalInt('SATURNE_ENABLE_PUBLIC_INTERFACE') && $id > 0 && $session->fetch($id) > 0 && (int) $session->entity === (int) $conf->entity && digiquali_survey_is_session($session);
 if ($allowed && $invite !== '') {
     $invitee = !empty($session->nominative) ? digiquali_survey_session_find_invitee($session, $invite) : null;
     $allowed = $invitee !== null;

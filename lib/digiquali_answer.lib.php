@@ -778,8 +778,8 @@ function digiquali_answer_is_empty(string $questionType, $answer): bool
 /**
  * Get the valid answers of a choice question, keyed by their position
  *
- * @param  Question $question Question
- * @return array              Validated Answer objects keyed by their position
+ * @param  Question           $question Question
+ * @return array<int, Answer>           Validated Answer objects keyed by their position
  */
 function digiquali_get_question_answers_by_position(Question $question): array
 {

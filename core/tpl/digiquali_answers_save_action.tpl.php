@@ -82,6 +82,7 @@ if ($action == 'save') {
             return;
         }
     }
+
     $sheet->fetch($object->fk_sheet);
     $questions = $sheet->fetchAllQuestions();
 

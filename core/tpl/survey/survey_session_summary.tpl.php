@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/survey/survey_session_summary.tpl.php
  * \ingroup digiquali
- * \brief   Summary of a collect session, laid out for the screen and for print (css/scss/page/_pwa-survey.scss).
+ * \brief   Summary of a collect session, laid out for the screen and for print (css/scss/page/_survey-session.scss).
  *
  * Expected variables (set by view/survey/survey_session_summary.php):
  * - Survey   $session           Session
@@ -26,6 +26,7 @@
  * - Survey[] $responses         Responses of the session
  * - array    $summary           Summary, see digiquali_survey_session_get_summary()
  * - array    $linkedObjectNames Names of the objects the session is about, by object type label
+ * - array    $inviteeCounts     Invitees by where they stand, see digiquali_survey_session_count_invitees()
  */
 
 global $langs, $mysoc;

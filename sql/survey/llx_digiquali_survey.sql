@@ -27,7 +27,7 @@ CREATE TABLE llx_digiquali_survey(
   nominative    smallint DEFAULT 0 NOT NULL,
   respondent_name  varchar(255),
   respondent_email varchar(255),
-  invitees      text,
+  invitees      mediumtext,
   note_public   text,
   note_private  text,
   type          varchar(128),

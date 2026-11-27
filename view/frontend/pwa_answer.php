@@ -86,6 +86,18 @@ if ($object->id <= 0) {
     accessforbidden($langs->trans('ErrorRecordNotFound'));
 }
 
+// A collect session is the template of its responses and is never answered, nor is a response once its session is
+// closed (see lib/digiquali_survey.lib.php) : both are shown read only, and nothing posted here changes them
+$sessionNotice = [];
+if ($objectType == 'survey') {
+    require_once __DIR__ . '/../../lib/digiquali_survey.lib.php';
+    if (digiquali_survey_is_session($object)) {
+        $sessionNotice = ['SurveySessionTemplateTitle', 'SurveySessionTemplateNotAnswered', 'info'];
+    } elseif ((int) $object->status === Survey::STATUS_DRAFT && digiquali_survey_response_session_closed($object)) {
+        $sessionNotice = ['SurveySessionClosedPublic', 'SurveySessionClosedNotSent', 'warning'];
+    }
+}
+
 /*
  * Actions
  */
@@ -97,8 +109,9 @@ if ($action == 'save' && !empty($permissionToWrite)) {
 
     // $isAutoSave is set by the template above. A real submit means the user is done: without
     // this the page would simply redraw itself, which looks like the button did nothing since
-    // the answers were already saved as they were given.
-    if (empty($isAutoSave)) {
+    // the answers were already saved as they were given. A submit the template refused (a session,
+    // or a response of a closed one) leaves no action : the page shows why, nothing is validated
+    if (empty($isAutoSave) && $action == 'save') {
         // Locking the answers is irreversible for the user, so it only happens through the
         // explicit confirmation sheet, never as a side effect of saving
         if (GETPOSTINT('validate_object') && $object->status == $object::STATUS_DRAFT) {
@@ -115,10 +128,15 @@ if ($action == 'save' && !empty($permissionToWrite)) {
     }
 }
 
-if (!empty($permissionToWrite)) {
+if (!empty($permissionToWrite) && empty($sessionNotice)) {
     // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block.
     // It replays the HTML of the response to refresh itself, so this must not redirect.
     require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+}
+
+// Read only from here, as the public answer page shows a closed response : no field, no button to finish
+if (!empty($sessionNotice)) {
+    $object->status = $object::STATUS_LOCKED;
 }
 
 /*
@@ -151,6 +169,10 @@ print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="save">';
 
 print '<div class="question-answer-container question-answer-container-pwa">';
+
+if (!empty($sessionNotice)) {
+    print saturne_show_notice($langs->transnoentities($sessionNotice[0]), $langs->transnoentities($sessionNotice[1]), $sessionNotice[2], 'pwa-answer-session', true, false);
+}
 
 // Intro screen: what is being answered
 ob_start();

@@ -199,6 +199,9 @@ function digiquali_survey_get_response_session(Survey $response): ?Survey
 /**
  * Tell whether a survey holds at least one answer
  *
+ * The 0 that the hidden field of a choice question posts by default is no answer (see digiquali_answer_is_empty()) : a
+ * survey saved once without being answered can still become a session.
+ *
  * @param  Survey $survey Survey
  * @return bool           True when one of its questions is answered
  */
@@ -206,12 +209,19 @@ function digiquali_survey_has_answers(Survey $survey): bool
 {
     global $db;
 
-    $sql   = 'SELECT COUNT(rowid) as nb FROM ' . $db->prefix() . 'digiquali_surveydet WHERE fk_survey = ' . ((int) $survey->id);
-    $sql  .= " AND status > 0 AND answer IS NOT NULL AND answer <> ''";
-    $resql = $db->query($sql);
-    $obj   = $resql ? $db->fetch_object($resql) : null;
+    require_once __DIR__ . '/digiquali_answer.lib.php';
 
-    return !empty($obj) && (int) $obj->nb > 0;
+    $sql   = 'SELECT t.answer, q.type FROM ' . $db->prefix() . 'digiquali_surveydet as t';
+    $sql  .= ' INNER JOIN ' . $db->prefix() . 'digiquali_question as q ON q.rowid = t.fk_question';
+    $sql  .= ' WHERE t.fk_survey = ' . ((int) $survey->id) . " AND t.status > 0 AND t.answer IS NOT NULL AND t.answer <> ''";
+    $resql = $db->query($sql);
+
+    $hasAnswers = false;
+    while (!$hasAnswers && $resql && ($obj = $db->fetch_object($resql))) {
+        $hasAnswers = !digiquali_answer_is_empty((string) $obj->type, $obj->answer);
+    }
+
+    return $hasAnswers;
 }
 
 /**
@@ -220,8 +230,12 @@ function digiquali_survey_has_answers(Survey $survey): bool
  * The session is the template of its responses and is never answered itself: a survey already answered would show
  * answers that none of its respondents gave, it is refused
  *
+ * A response of a session cannot become one either : it would be the response of a session and a session at once, and
+ * its respondent would be sent to the page of the new session.
+ *
  * @param  Survey $survey Survey, a draft without answers
- * @return int            > 0 when done, -1 when the survey is no draft or on error, -2 when it is already answered
+ * @return int            > 0 when done, -1 when the survey is no draft or on error, -2 when it is already answered, -3
+ *                        when it is the response of a session
  */
 function digiquali_survey_open_session(Survey $survey): int
 {
@@ -232,6 +246,9 @@ function digiquali_survey_open_session(Survey $survey): int
     }
     if (digiquali_survey_is_session($survey)) {
         return 1;
+    }
+    if (digiquali_survey_get_response_session($survey) !== null) {
+        return -3;
     }
     if (digiquali_survey_has_answers($survey)) {
         return -2;
@@ -317,11 +334,28 @@ function digiquali_survey_session_check_start_token(Survey $session, string $tok
  * Get the largest number of responses one connection starts in a session through its common link, within
  * digiquali_survey_session_start_window() seconds: a whole room behind one router fits in, a burst does not
  *
+ * The Wi-Fi of a venue puts everyone behind one address : 100 by default, DIGIQUALI_SURVEY_SESSION_START_MAX for a larger
+ * audience, or for a server behind a proxy that does not hand the address of the visitor over.
+ *
  * @return int Number of responses
  */
 function digiquali_survey_session_start_max(): int
 {
-    return 40;
+    return max(1, getDolGlobalInt('DIGIQUALI_SURVEY_SESSION_START_MAX', 100));
+}
+
+/**
+ * Get the connection a start is counted for: the address that reached the server, never one the visitor tells (an
+ * X-Forwarded-For header is his to write), and for IPv6 its /64 network, which one machine gets whole
+ *
+ * @return string Connection, as an address or a network
+ */
+function digiquali_survey_session_start_connection(): string
+{
+    $address = getUserRemoteIP(1);
+    $packed  = strpos($address, ':') !== false ? @inet_pton($address) : false;
+
+    return ($packed !== false && strlen($packed) === 16) ? bin2hex(substr($packed, 0, 8)) . '::/64' : $address;
 }
 
 /**
@@ -350,8 +384,9 @@ function digiquali_survey_session_start_allowed(Survey $session): bool
     global $conf;
 
     $dir = !empty($conf->digiquali->dir_temp) ? $conf->digiquali->dir_temp : DOL_DATA_ROOT . '/digiquali/temp';
+    // Nowhere to count: the page goes on, the token of the page still stops the bare requests
     if (!is_dir($dir) && dol_mkdir($dir) < 0) {
-        return true; // Nowhere to count: the page goes on, the token of the page still stops the bare requests
+        return true;
     }
 
     $handle = @fopen($dir . '/survey_session_starts_' . ((int) $session->id) . '.json', 'c+');
@@ -360,7 +395,7 @@ function digiquali_survey_session_start_allowed(Survey $session): bool
     }
 
     $now        = dol_now();
-    $connection = substr(hash('sha256', getUserRemoteIP() . '|' . digiquali_survey_session_key($session)), 0, 16);
+    $connection = substr(hash('sha256', digiquali_survey_session_start_connection() . '|' . digiquali_survey_session_key($session)), 0, 16);
     $allowed    = true;
     if (flock($handle, LOCK_EX)) {
         $starts = json_decode((string) stream_get_contents($handle), true);
@@ -494,7 +529,7 @@ function digiquali_survey_session_close_if_due(Survey $session): bool
         return false;
     }
 
-    // validate() gives the session its definitive reference, a closed session kept its (PROV) one
+    // A closed session is a validated one, as the button of its card leaves it
     return $session->validate(digiquali_survey_session_owner($session)) > 0;
 }
 
@@ -625,11 +660,15 @@ function digiquali_survey_session_get_summary(Sheet $sheet, array $responses): a
                 $questionSummary['options'][$position] = ['label' => $option->value, 'count' => 0];
             }
         }
+        $bounds = ['min' => null, 'max' => null];
         if ($kind == 'score') {
             $bounds = $question->type == 'Percentage' ? ['min' => 0, 'max' => 100] : digiquali_get_question_range_bounds($question);
             $questionSummary['min'] = $bounds['min'];
             $questionSummary['max'] = $bounds['max'];
         }
+        // A single choice question keeps one position, the first : a response posted by hand with several would count
+        // several times
+        $singleChoice = $kind == 'choice' && $question->type != 'MultipleChoices';
 
         foreach ($sentResponses as $response) {
             $line   = $lines[(int) $response->id][(int) $question->id] ?? null;
@@ -643,22 +682,34 @@ function digiquali_survey_session_get_summary(Sheet $sheet, array $responses): a
                 continue;
             }
 
-            $questionSummary['answered']++;
-
+            // The answers come from anonymous respondents and the summary is kept as a proof : a position that is no
+            // option of the question, or a value out of its bounds, is no answer
             if ($kind == 'choice') {
-                foreach (array_unique(array_map('intval', explode(',', (string) $answer))) as $position) {
-                    if ($position <= 0) {
-                        continue;
-                    }
-                    if (!isset($questionSummary['options'][$position])) {
-                        $questionSummary['options'][$position] = ['label' => (string) $position, 'count' => 0];
-                    }
+                $positions = array_values(array_filter(array_unique(array_map('intval', explode(',', (string) $answer))), function (int $position) use ($questionSummary): bool {
+                    return isset($questionSummary['options'][$position]);
+                }));
+                if ($singleChoice) {
+                    $positions = array_slice($positions, 0, 1);
+                }
+                if (empty($positions)) {
+                    continue;
+                }
+                $questionSummary['answered']++;
+                foreach ($positions as $position) {
                     $questionSummary['options'][$position]['count']++;
                 }
             } elseif (in_array($kind, ['score', 'duration'], true) && is_numeric($answer)) {
-                $questionSummary['values'][] = (float) $answer;
+                $value = (float) $answer;
+                if (($bounds['min'] !== null && $value < $bounds['min']) || ($bounds['max'] !== null && $value > $bounds['max']) || ($kind == 'duration' && $value < 0)) {
+                    continue;
+                }
+                $questionSummary['answered']++;
+                $questionSummary['values'][] = $value;
             } elseif ($kind == 'text') {
+                $questionSummary['answered']++;
                 $questionSummary['texts'][] = ['text' => trim((string) $answer), 'name' => $name];
+            } else {
+                $questionSummary['answered']++;
             }
         }
 
@@ -705,7 +756,7 @@ function digiquali_survey_session_invitees_max(): int
  *
  * @param  Survey $session   Session
  * @param  bool   $forUpdate True to lock the row of the session until the end of the transaction
- * @return array<int, array{id: int, token: string, name: string, email: string, response_id: int, response_common: int, date_invited: int, date_reminded: int, reminders: int}> Invitees, in the order they were added
+ * @return array<int, array{id: int, token: string, name: string, email: string, response_id: int, response_common: int, date_invited: int, date_reminded: int, reminders: int, date_claimed: int}> Invitees, in the order they were added
  */
 function digiquali_survey_session_get_invitees(Survey $session, bool $forUpdate = false): array
 {
@@ -734,6 +785,7 @@ function digiquali_survey_session_get_invitees(Survey $session, bool $forUpdate 
             'date_invited'    => (int) ($invitee['date_invited'] ?? 0),
             'date_reminded'   => (int) ($invitee['date_reminded'] ?? 0),
             'reminders'       => (int) ($invitee['reminders'] ?? 0),
+            'date_claimed'    => (int) ($invitee['date_claimed'] ?? 0),
         ];
     }
 
@@ -760,8 +812,8 @@ function digiquali_survey_session_change_invitees(Survey $session, callable $cha
     $invitees = digiquali_survey_session_get_invitees($session, true);
     $result   = $change($invitees);
 
-    // Without flags : the names are escaped (\u00e9) in the column, which json_decode() reads back the same
-    $json = empty($invitees) ? '' : json_encode(array_values($invitees));
+    // Unescaped : an accent written \u00e9 takes six bytes, and the column holds the 200 invitees of a session
+    $json = empty($invitees) ? '' : json_encode(array_values($invitees), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         $db->rollback();
         return false;
@@ -815,7 +867,7 @@ function digiquali_survey_session_parse_invitees(string $text): array
  * Add invitees to a session, each with a personal token: an e-mail already invited is not invited twice
  *
  * @param  Survey $session Session
- * @param  array  $people  People to invite, see digiquali_survey_session_parse_invitees()
+ * @param  array<int, array{name: string, email: string}> $people People to invite, see digiquali_survey_session_parse_invitees()
  * @return array{added: int, duplicates: string[], overflow: int}|false What was done, false on error
  */
 function digiquali_survey_session_add_invitees(Survey $session, array $people)
@@ -862,7 +914,7 @@ function digiquali_survey_session_add_invitees(Survey $session, array $people)
  *
  * @param  Survey     $session   Session
  * @param  int        $inviteeId Id of the invitee in the session
- * @return array|null            Invitee removed, null when there is none with this id
+ * @return array<string, int|string>|null Invitee removed, null when there is none with this id
  */
 function digiquali_survey_session_remove_invitee(Survey $session, int $inviteeId): ?array
 {
@@ -884,7 +936,7 @@ function digiquali_survey_session_remove_invitee(Survey $session, int $inviteeId
  *
  * @param  Survey     $session Session
  * @param  string     $token   Token of the personal link
- * @return array|null          Invitee, null when the token is none of this session
+ * @return array<string, int|string>|null Invitee, null when the token is none of this session
  */
 function digiquali_survey_session_find_invitee(Survey $session, string $token): ?array
 {
@@ -905,8 +957,8 @@ function digiquali_survey_session_find_invitee(Survey $session, string $token): 
  * Get the personal link of an invitee: it opens the session in his name
  *
  * @param  Survey $session Session
- * @param  array  $invitee Invitee
- * @return string          Absolute URL
+ * @param  array<string, int|string> $invitee Invitee
+ * @return string                    Absolute URL
  */
 function digiquali_survey_session_invitee_url(Survey $session, array $invitee): string
 {
@@ -1007,7 +1059,7 @@ function digiquali_survey_session_attach_common_response(Survey $session, Survey
 /**
  * Tell where an invitee stands
  *
- * @param  array    $invitee   Invitee
+ * @param  array<string, int|string> $invitee   Invitee
  * @param  Survey[] $responses Responses of the session, by id (see digiquali_survey_session_get_responses())
  * @return string              'answered' (response sent), 'started' (response begun, not sent), 'invited' (link sent,
  *                             no response), 'new' (link not sent yet)
@@ -1035,7 +1087,7 @@ function digiquali_survey_session_reminder_delay(): int
 /**
  * Tell whether an invitee was reminded less than digiquali_survey_session_reminder_delay() ago
  *
- * @param  array    $invitee Invitee
+ * @param  array<string, int|string> $invitee Invitee
  * @param  int|null $now     Current time, dol_now() when null
  * @return bool              True when he is not to be reminded yet
  */
@@ -1049,7 +1101,7 @@ function digiquali_survey_session_invitee_reminded_recently(array $invitee, ?int
 /**
  * Count the invitees of a session by where they stand
  *
- * @param  array    $invitees  Invitees
+ * @param  array<int, array<string, int|string>> $invitees  Invitees
  * @param  Survey[] $responses Responses of the session, by id
  * @return array{total: int, new: int, invited: int, started: int, answered: int, to_remind: int, reminded_recently: int, remindable: int, next_reminder: int}
  *         to_remind counts those who have not sent their response, remindable those of them who may be reminded now (the
@@ -1093,7 +1145,7 @@ function digiquali_survey_mail_address(string $name, string $email): string
  *
  * @param  Survey $session  Session
  * @param  string $title    Title of the session
- * @param  array  $invitee  Invitee
+ * @param  array<string, int|string> $invitee  Invitee
  * @param  User   $sender   User who sends it and signs it
  * @param  bool   $reminder True for the reminder, false for the invitation
  * @return string           Text of the e-mail
@@ -1116,15 +1168,26 @@ function digiquali_survey_session_invitation_text(Survey $session, string $title
 }
 
 /**
+ * Get the time a person taken for an e-mail stays taken: another click does not write to him meanwhile, and a sending
+ * stopped before his e-mail (time limit of the request, closed tab) frees him once it is past
+ *
+ * @return int Seconds
+ */
+function digiquali_survey_session_sending_lease(): int
+{
+    return 900;
+}
+
+/**
  * Send their personal link by e-mail to the invitees of a session: the invitation to those who have not had it yet, or
  * the reminder to those who had it and have not sent their response
+ *
+ * A person reminded less than digiquali_survey_session_reminder_delay() ago is not reminded again: he is counted in
+ * skipped, and next_reminder tells when the first of them may be reminded.
  *
  * @param  Survey $session  Session, open and nominative
  * @param  Sheet  $sheet    Sheet of the session
  * @param  User   $sender   User who sends, signs the e-mails and gets the replies
- * A person reminded less than digiquali_survey_session_reminder_delay() ago is not reminded again: he is counted in
- * skipped, and next_reminder tells when the first of them may be reminded.
- *
  * @param  bool   $reminder True for the reminder, false for the invitation
  * @return array{sent: int, errors: string[], skipped: int, next_reminder: int} Number of e-mails sent, the errors (not
  *         escaped), the number of people left out as reminded recently, and when the first of them may be reminded again
@@ -1143,67 +1206,59 @@ function digiquali_survey_session_send_invitations(Survey $session, Sheet $sheet
     $subject   = $langs->transnoentitiesnoconv($reminder ? 'SurveySessionMailReminderSubject' : 'SurveySessionMailInvitationSubject', $title);
     $now       = dol_now();
 
-    $recipients = [];
-    if ($reminder) {
-        // The people to remind are taken under the lock of the session, their reminder dated at once : two clicks at the
-        // same time, or one after the other, never remind the same person twice. A person reminded less than a day ago is
-        // left alone, whoever clicks
-        $claimed = digiquali_survey_session_change_invitees($session, function (array &$invitees) use ($responses, $now, &$result): array {
-            $claimed = [];
-            foreach ($invitees as &$invitee) {
-                if (!in_array(digiquali_survey_session_invitee_state($invitee, $responses), ['invited', 'started'], true)) {
-                    continue;
-                }
-                if (digiquali_survey_session_invitee_reminded_recently($invitee, $now)) {
-                    $result['skipped']++;
-                    $nextReminder            = (int) $invitee['date_reminded'] + digiquali_survey_session_reminder_delay();
-                    $result['next_reminder'] = empty($result['next_reminder']) ? $nextReminder : min($result['next_reminder'], $nextReminder);
-                    continue;
-                }
-                $claimed[]                = $invitee + ['previous_date_reminded' => $invitee['date_reminded']];
-                $invitee['date_reminded'] = $now;
-                $invitee['reminders']++;
+    // The people to write to are taken under the lock of the session : two clicks at the same time never write twice to
+    // the same person, the second one leaves those the first one took. A person reminded less than a day ago is left
+    // alone, whoever clicks
+    $claimed = digiquali_survey_session_change_invitees($session, function (array &$invitees) use ($responses, $now, $reminder, &$result): array {
+        $claimed = [];
+        foreach ($invitees as &$invitee) {
+            $state = digiquali_survey_session_invitee_state($invitee, $responses);
+            if ($reminder ? !in_array($state, ['invited', 'started'], true) : $state != 'new') {
+                continue;
             }
-            return $claimed;
-        });
-        $recipients = is_array($claimed) ? $claimed : [];
-    } else {
-        foreach (digiquali_survey_session_get_invitees($session) as $invitee) {
-            if (digiquali_survey_session_invitee_state($invitee, $responses) == 'new') {
-                $recipients[] = $invitee;
+            if (!empty($invitee['date_claimed']) && $invitee['date_claimed'] > $now - digiquali_survey_session_sending_lease()) {
+                continue;
             }
+            if ($reminder && digiquali_survey_session_invitee_reminded_recently($invitee, $now)) {
+                $result['skipped']++;
+                $nextReminder            = (int) $invitee['date_reminded'] + digiquali_survey_session_reminder_delay();
+                $result['next_reminder'] = empty($result['next_reminder']) ? $nextReminder : min($result['next_reminder'], $nextReminder);
+                continue;
+            }
+            $claimed[]               = $invitee;
+            $invitee['date_claimed'] = $now;
         }
-    }
+        return $claimed;
+    });
 
-    $sentIds   = [];
-    $failedIds = [];
-    foreach ($recipients as $invitee) {
+    // Each e-mail is dated as soon as it has left : a sending stopped halfway (time limit of the request) writes again
+    // only to those who got nothing, and a person who got nothing is not counted as invited or reminded
+    foreach (is_array($claimed) ? $claimed : [] as $invitee) {
         $text = digiquali_survey_session_invitation_text($session, $title, $invitee, $sender, $reminder);
         $mail = new CMailFile($subject, digiquali_survey_mail_address($invitee['name'], $invitee['email']), $from, $text, [], [], [], '', '', 0, 0, '', '', 'survey' . $session->id, '', 'standard', $replyTo);
-        if (empty($mail->error) && $mail->sendfile()) {
-            $sentIds[] = $invitee['id'];
+        $sent = empty($mail->error) && $mail->sendfile();
+        if ($sent) {
+            $result['sent']++;
         } else {
-            $failedIds[$invitee['id']] = (int) ($invitee['previous_date_reminded'] ?? 0);
-            $result['errors'][]        = $langs->transnoentities('SurveySessionMailFailed', $invitee['email'], dol_string_nohtmltag($mail->error ?: implode(', ', (array) $mail->errors), 1));
+            $result['errors'][] = $langs->transnoentities('SurveySessionMailFailed', $invitee['email'], dol_string_nohtmltag($mail->error ?: implode(', ', (array) $mail->errors), 1));
         }
-    }
 
-    // The invitations are dated once the e-mails have left (the session is not locked while they are being sent), a
-    // reminder that could not leave gets its former date back
-    if ((!$reminder && !empty($sentIds)) || ($reminder && !empty($failedIds))) {
-        $now = dol_now();
-        digiquali_survey_session_change_invitees($session, function (array &$invitees) use ($sentIds, $failedIds, $reminder, $now): void {
-            foreach ($invitees as &$invitee) {
-                if ($reminder && array_key_exists($invitee['id'], $failedIds)) {
-                    $invitee['date_reminded'] = $failedIds[$invitee['id']];
-                    $invitee['reminders']     = max(0, $invitee['reminders'] - 1);
-                } elseif (!$reminder && in_array($invitee['id'], $sentIds, true)) {
-                    $invitee['date_invited'] = $now;
+        $sentAt = dol_now();
+        digiquali_survey_session_change_invitees($session, function (array &$invitees) use ($invitee, $sent, $reminder, $sentAt): void {
+            foreach ($invitees as &$current) {
+                if ($current['id'] != $invitee['id']) {
+                    continue;
+                }
+                $current['date_claimed'] = 0;
+                if ($sent && $reminder) {
+                    $current['date_reminded'] = $sentAt;
+                    $current['reminders']++;
+                } elseif ($sent) {
+                    $current['date_invited'] = $sentAt;
                 }
             }
         });
     }
-    $result['sent'] = count($sentIds);
 
     return $result;
 }

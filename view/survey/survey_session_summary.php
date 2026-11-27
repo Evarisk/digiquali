@@ -52,10 +52,12 @@ $id = GETPOSTINT('id');
 $session = new Survey($db);
 $sheet   = new Sheet($db);
 
-if (!$user->hasRight('digiquali', 'survey', 'read')) {
-    accessforbidden();
+if ($id > 0) {
+    $session->fetch($id);
 }
-if ($id <= 0 || $session->fetch($id) <= 0 || $session->status < Survey::STATUS_DRAFT || !digiquali_survey_is_session($session)) {
+// External users refused, and a session of another entity too
+saturne_check_access($user->hasRight('digiquali', 'survey', 'read'), $session);
+if ($id <= 0 || $session->id <= 0 || $session->status < Survey::STATUS_DRAFT || !digiquali_survey_is_session($session)) {
     accessforbidden($langs->trans('ErrorRecordNotFound'), 0);
 }
 $sheet->fetch($session->fk_sheet);
@@ -71,10 +73,16 @@ $inviteeCounts = digiquali_survey_session_count_invitees(digiquali_survey_sessio
 
 // What the session is about: a project, a contract, a third party...
 $linkedObjectNames = [];
-$session->fetchObjectLinked(null, '', $session->id, 'digiquali_survey', 'OR', 1, 'sourcetype', 0);
+// The objects themselves, not only their ids : their ref and label are printed
+$session->fetchObjectLinked(null, '', $session->id, 'digiquali_survey', 'OR', 1, 'sourcetype', 1);
+// The metadata are those of the modules enabled, they carry no 'conf' key. A type kept under a second key for backward
+// compatibility (alias_of: contrat for contract) shares the link name of the first one : it is read once
 foreach (saturne_get_objects_metadata() as $objectMetadata) {
-    if (empty($objectMetadata['conf']) || empty($session->linkedObjects[$objectMetadata['link_name']])) {
+    if (!empty($objectMetadata['alias_of']) || empty($session->linkedObjects[$objectMetadata['link_name']])) {
         continue;
+    }
+    if (!empty($objectMetadata['langfile'])) {
+        $langs->load($objectMetadata['langfile']);
     }
     foreach ($session->linkedObjects[$objectMetadata['link_name']] as $linkedObject) {
         $linkedObjectName = $linkedObject->ref ?? '';
