@@ -588,8 +588,9 @@ function show_answer_from_question(Question $question, CommonObject $object, str
     switch ($question->type) {
         case 'Text':
             $out .= '<div>';
-            // Opens on a few lines, then grows with its text (see window.digiquali.object.fitTextAnswer)
-            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" rows="4" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . $questionAnswer . '</textarea>';
+            // Opens on a few lines, then grows with its text (see window.digiquali.object.fitTextAnswer). The answer comes
+            // from whoever holds the link : escaped, its line feeds kept
+            $out .= '<textarea class="question-textarea question-answer" name="answer' . $question->id . '" rows="4" placeholder="' . $langs->transnoentities('WriteAnswer') . '"' . $disabled . '>' . dol_escape_htmltag($questionAnswer, 0, 1) . '</textarea>';
             $out .= '</div>';
             break;
         case 'Percentage':
@@ -607,7 +608,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
             $out .= '<div class="percentage-cell' . ($answerCssClass ?? '') . '">';
             $out .= img_picto('', 'fontawesome_fa-frown_fas_#D53C3D_3em', 'class="range-image"');
             $defaultValue = $questionConfig[$question->type]['answer-default-value'] ?? 100;
-            $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . ($questionAnswer != '' ? $questionAnswer : $defaultValue) . '"' . $disabled . '>';
+            $out .= '<input type="range" class="search_component_input range question-answer" name="answer' . $question->id . '" min="0" max="100" step="' . 100/($step - 1) . '" value="' . dol_escape_htmltag($questionAnswer != '' ? $questionAnswer : (string) $defaultValue) . '"' . $disabled . '>';
             $out .= img_picto('', 'fontawesome_fa-grin_fas_#57AD39_3em', 'class="range-image"');
             $out .= '</div>';
             break;
@@ -618,7 +619,7 @@ function show_answer_from_question(Question $question, CommonObject $object, str
 			}
 
             $out .= '<div class="question-number' . ($answerCssClass ?? '') . '">';
-            $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '" placeholder="0" value="' . $questionAnswer . '"' . $disabled . '>';
+            $out .= '<input type="number" step="any" class="question-answer" name="answer' . $question->id . '" placeholder="0" value="' . dol_escape_htmltag($questionAnswer) . '"' . $disabled . '>';
             $out .= '</div>';
             break;
         case 'Duration':
