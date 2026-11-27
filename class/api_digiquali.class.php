@@ -446,6 +446,8 @@ class Digiquali extends SaturneApi
      */
     public function updateSurvey($id, $request_data = null)
     {
+        $this->_checkSurveySessionUpdate($id, $request_data);
+
         return $this->_put('surveys', $id, $request_data);
     }
 
@@ -474,6 +476,8 @@ class Digiquali extends SaturneApi
      */
     public function validateSurvey($id)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_setStatus('surveys', $id, 'validate');
     }
 
@@ -488,6 +492,8 @@ class Digiquali extends SaturneApi
      */
     public function setDraftSurvey($id)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_setStatus('surveys', $id, 'setDraft');
     }
 
@@ -502,6 +508,8 @@ class Digiquali extends SaturneApi
      */
     public function setLockedSurvey($id)
     {
+        $this->_checkNotSurveySession($id, false);
+
         return $this->_setStatus('surveys', $id, 'setLocked');
     }
 
@@ -516,6 +524,8 @@ class Digiquali extends SaturneApi
      */
     public function setArchivedSurvey($id)
     {
+        $this->_checkNotSurveySession($id, false);
+
         return $this->_setStatus('surveys', $id, 'setArchived');
     }
 
@@ -546,6 +556,8 @@ class Digiquali extends SaturneApi
      */
     public function createSurveyLine($id, $request_data = null)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_postLine('surveys', $id, $request_data);
     }
 
@@ -563,6 +575,8 @@ class Digiquali extends SaturneApi
      */
     public function updateSurveyLine($id, $lineid, $request_data = null)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_putLine('surveys', $id, $lineid, $request_data);
     }
 
@@ -578,7 +592,63 @@ class Digiquali extends SaturneApi
      */
     public function deleteSurveyLine($id, $lineid)
     {
+        $this->_checkNotSurveySession($id);
+
         return $this->_deleteLine('surveys', $id, $lineid);
+    }
+
+    /**
+     * Refuse to answer a collect session, or to validate, lock or archive it as a survey: it is the template of its
+     * responses, each respondent answers a survey of his own. It is closed and reopened from its card. Refuse as well to
+     * change the answers or the status of a response once its session is closed, as its card and the public page do
+     *
+     * @param int  $id                 Survey id
+     * @param bool $closedResponsesToo True to refuse a response of a closed session too
+     *
+     * @return void
+     *
+     * @throws RestException 409 for a collect session, or for a response of a closed one
+     */
+    private function _checkNotSurveySession($id, bool $closedResponsesToo = true)
+    {
+        dol_include_once('/digiquali/lib/digiquali_survey.lib.php');
+
+        $survey = new Survey($this->db);
+        if ($survey->fetch((int) $id) <= 0) {
+            return;
+        }
+        if (digiquali_survey_is_session($survey)) {
+            throw new RestException(409, 'Survey ' . ((int) $id) . ' is a collect session: only its responses are answered');
+        }
+        if ($closedResponsesToo && digiquali_survey_response_session_closed($survey)) {
+            throw new RestException(409, 'Survey ' . ((int) $id) . ' is a response of a closed collect session: it no longer changes');
+        }
+    }
+
+    /**
+     * Refuse to change through the API what the card of a collect session sets : its status (closed and reopened by its
+     * buttons), its mode, fixed once a respondent started, its planned closing date and its track id, which makes its link
+     *
+     * @param int                       $id           Survey id
+     * @param array<string, mixed>|null $request_data Fields to update
+     *
+     * @return void
+     *
+     * @throws RestException 409 for such a change of a collect session
+     */
+    private function _checkSurveySessionUpdate($id, $request_data)
+    {
+        dol_include_once('/digiquali/lib/digiquali_survey.lib.php');
+
+        $sessionFields = ['status', 'nominative', 'date_end', 'track_id', 'respondent_name', 'respondent_email'];
+        if (!is_array($request_data) || empty(array_intersect(array_keys($request_data), $sessionFields))) {
+            return;
+        }
+
+        $survey = new Survey($this->db);
+        if ($survey->fetch((int) $id) > 0 && digiquali_survey_is_session($survey)) {
+            throw new RestException(409, 'Survey ' . ((int) $id) . ' is a collect session: ' . implode(', ', $sessionFields) . ' are set from its card');
+        }
     }
 
     // =================================================================

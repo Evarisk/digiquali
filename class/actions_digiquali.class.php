@@ -710,9 +710,11 @@ class ActionsDigiquali
         }
 
         // The join serves the search on the columns per element type. A list with the single linked object
-        // column filters through EXISTS instead, and the join would return an object once per linked element
+        // column filters through EXISTS instead, and the join would return an object once per linked element.
+        // The link of a response to its collect session is no linked object to filter on : joined, it listed the
+        // response once more (see lib/digiquali_survey.lib.php)
         if (preg_match('/surveylist|controllist/', $parameters['context']) && !isset($object->fields['linked_object'])) {
-            $sql = ' LEFT JOIN ' . $this->db->prefix() . 'element_element AS ee ON (t.rowid = ee.fk_target AND ee.targettype = "' . $object->module . '_' . $object->element . '")';
+            $sql = ' LEFT JOIN ' . $this->db->prefix() . 'element_element AS ee ON (t.rowid = ee.fk_target AND ee.targettype = "' . $object->module . '_' . $object->element . '" AND ee.sourcetype <> "digiquali_surveysession")';
             $this->resprints = $sql;
         }
 

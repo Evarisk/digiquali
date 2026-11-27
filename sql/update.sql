@@ -191,3 +191,18 @@ ALTER TABLE llx_digiquali_sheet ADD COLUMN qc_frequency INTEGER AFTER default_co
 ALTER TABLE llx_digiquali_sheet ADD COLUMN qc_frequency_unit VARCHAR(8) DEFAULT 'd' AFTER qc_frequency;
 ALTER TABLE llx_digiquali_sheet ADD COLUMN default_control_mandatory SMALLINT DEFAULT 0 AFTER qc_frequency_unit;
 ALTER TABLE llx_digiquali_control ADD COLUMN mandatory SMALLINT DEFAULT 0 AFTER verdict;
+
+-- 23.5.0
+-- A label for every survey ; the planned closing date and the nominative mode of a collect session, the name and e-mail
+-- a respondent gives to a nominative session
+ALTER TABLE llx_digiquali_survey ADD label varchar(255) NULL AFTER ref_ext;
+ALTER TABLE llx_digiquali_survey ADD date_end datetime NULL AFTER date_creation;
+ALTER TABLE llx_digiquali_survey ADD nominative smallint DEFAULT 0 NOT NULL AFTER status;
+ALTER TABLE llx_digiquali_survey ADD respondent_name varchar(255) NULL AFTER nominative;
+ALTER TABLE llx_digiquali_survey ADD respondent_email varchar(255) NULL AFTER respondent_name;
+
+-- The invitees of a nominative collect session (name, e-mail, personal token, response, dates of the invitation and of
+-- the reminders), as JSON: read and written by lib/digiquali_survey.lib.php only, never a field of the class. Mediumtext :
+-- the 200 invitees of a session with long names would not fit in the 64 KB of a text
+ALTER TABLE llx_digiquali_survey ADD invitees mediumtext NULL AFTER respondent_email;
+ALTER TABLE llx_digiquali_survey MODIFY invitees mediumtext NULL;
