@@ -1801,19 +1801,19 @@ parameters:
 			path: view/question/question_card.php
 
 		-
-			message: '#^Cannot unset offset ''answer\-default\-value'' on array\{step\?\: int\<min, \-1\>\|int\<1, max\>, answer\-min\-value\?\: 0\|float, answer\-max\-value\?\: 100\|float\}\|null\.$#'
+			message: '#^Cannot unset offset ''answer\-default\-value'' on array\{step\?\: int\<2, max\>, answer\-min\-value\?\: 0\|float, answer\-max\-value\?\: 100\|float\}\|null\.$#'
 			identifier: unset.offset
 			count: 1
 			path: view/question/question_card.php
 
 		-
-			message: '#^Cannot unset offset ''answer\-max\-value'' on non\-empty\-array\{step\?\: int\<min, \-1\>\|int\<1, max\>, answer\-min\-value\?\: 0\|float\}\|null\.$#'
+			message: '#^Cannot unset offset ''answer\-max\-value'' on non\-empty\-array\{step\?\: int\<2, max\>, answer\-min\-value\?\: 0\|float\}\|null\.$#'
 			identifier: unset.offset
 			count: 1
 			path: view/question/question_card.php
 
 		-
-			message: '#^Cannot unset offset ''answer\-min\-value'' on array\{step\: int\<min, \-1\>\|int\<1, max\>\}\|null\.$#'
+			message: '#^Cannot unset offset ''answer\-min\-value'' on array\{step\: int\<2, max\>\}\|null\.$#'
 			identifier: unset.offset
 			count: 1
 			path: view/question/question_card.php

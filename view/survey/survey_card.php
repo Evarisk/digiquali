@@ -106,7 +106,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/actions_fetchobject.inc.php'; // Must be
 
 $objectsMetadata = saturne_get_objects_metadata();
 
-$upload_dir = $conf->digiquali->multidir_output[$object->entity ?? 1];
+$upload_dir = $conf->digiquali->multidir_output[$object->entity ?? $conf->entity];
 
 // Security check - Protection if external user
 $permissionToRead   = $user->rights->digiquali->survey->read;
@@ -430,9 +430,9 @@ if ($action == 'create') {
             $objectPost     = GETPOST($objectPostName) ?: (GETPOST('fromtype') == $objectMetadata['link_name'] ? GETPOST('fromid') : '');
 
             $objectFilter = [];
-            if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOST($objectMetadata['parent_post']) > 0)) {
+            if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOSTINT($objectMetadata['parent_post']) > 0)) {
                 $objectFilter = [
-                    'customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOST($objectMetadata['parent_post'])
+                    'customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOSTINT($objectMetadata['parent_post'])
                 ];
             } elseif (!empty($objectMetadata['filter'])) {
                 $objectFilter = ['customsql' => $objectMetadata['filter']];

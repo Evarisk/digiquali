@@ -147,7 +147,7 @@ $permissionToAddTask             = $canManageControlActions && ($user->hasRight(
 $permissionToDeleteTask          = $canManageControlActions && ($user->hasRight('project', 'supprimer') || $user->hasRight('project', 'all', 'supprimer'));
 $permissionToManageTaskTimeSpent = $canManageControlActions && $user->hasRight('project', 'time');
 
-$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : 1];
+$upload_dir = $conf->digiquali->multidir_output[isset($object->entity) ? $object->entity : $conf->entity];
 
 // Security check - Protection if external user
 saturne_check_access($permissiontoread, $object);
@@ -252,6 +252,11 @@ if (empty($resHook)) {
     // Actions cancel, add, update, update_extras, confirm_validate, confirm_delete, confirm_deleteline, confirm_clone, confirm_close, confirm_setdraft, confirm_reopen
     include DOL_DOCUMENT_ROOT . '/core/actions_addupdatedelete.inc.php';
 
+    // #2743: warn as soon as the typed dates disagree, the date is kept as typed
+    if ($action == 'view' && in_array(GETPOST('action', 'aZ09'), ['setcontrol_date', 'setnext_control_date']) && $object->isNextControlDateBeforeControlDate()) {
+        setEventMessages($langs->trans('NextControlDateBeforeControlDate', dol_print_date($object->getNextControlDate(), 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')), [], 'warnings');
+    }
+
     // Actions set_thirdparty, set_project
     require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
@@ -327,8 +332,11 @@ if (empty($resHook)) {
         }
     }
 
-    // Actions uploadPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block
-    require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    // Actions uploadPhoto, linkPhoto, uploadFile, deletePhoto, deleteFile posted by the Saturne media block,
+    // for a user allowed to change the control, as on the PWA answer screen
+    if ($permissiontoadd) {
+        require __DIR__ . '/../../core/tpl/actions/digiquali_media_block_actions.tpl.php';
+    }
 
     // Actions confirm_lock, confirm_archive
     require_once dol_buildpath('/saturne/core/tpl/actions/object_workflow_actions.tpl.php');
@@ -404,7 +412,7 @@ if ($action == 'create') {
         if (!getDolGlobalInt('DIGIQUALI_SHEET_MAIN_CATEGORIES_SET')) {
             print '<div class="wpeo-notice notice-warning notice-red">';
             print '<div class="notice-content">';
-            print '<a href="' . dol_buildpath('/digiquali/admin/sheet.php', 2) . '#sheetCategories">' . '<b><div class="notice-subtitle">' . $langs->trans('GenerateSheetTags') . ' : ' . $langs->trans('ConfigSheet') . '</div></b></a>';
+            print '<b><div class="notice-subtitle">' . digiquali_sheet_config_notice_message($langs->trans('GenerateSheetTags'), $langs->trans('GenerateSheetTagsAskAdmin'), '#sheetCategories') . '</div></b>';
             print '</div></div>';
             print '</table>';
             print dol_get_fiche_end();
@@ -439,7 +447,7 @@ if ($action == 'create') {
         print '<div class="sheet-grid-images sheet-elements">';
         print '<input type="hidden" name="fk_sheet" value="' . GETPOST('fk_sheet') . '">';
         if (GETPOSTISSET('sheetCategoryID') || (GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined')) {
-            $sheets = saturne_fetch_all_object_type('Sheet', '', '', 0, 0, ['customsql' => 'cp.fk_categorie = ' . ((GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined') ? GETPOST('sheetSubCategoryID') : GETPOST('sheetCategoryID'))], 'AND', false, true, true);
+            $sheets = saturne_fetch_all_object_type('Sheet', '', '', 0, 0, ['customsql' => 'cp.fk_categorie = ' . ((GETPOSTISSET('sheetSubCategoryID') && GETPOST('sheetSubCategoryID') != 'undefined') ? GETPOSTINT('sheetSubCategoryID') : GETPOSTINT('sheetCategoryID'))], 'AND', false, true, true);
             if (is_array($sheets) && !empty($sheets)) {
                 foreach ($sheets as $sheetSingle) {
                     print saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/sheet/' . $sheetSingle->ref . '/photos/', 'small', '', 0, 0, 0, 50, 50, 1, 1, 0, 'sheet/' . $sheetSingle->ref . '/photos/', $sheetSingle, '', 0, 0, 0, 0, 'photo-sheet');
@@ -450,7 +458,7 @@ if ($action == 'create') {
     } else {
         //FK SHEET
         $filter          = 's.type = ' . '"' . $object->element . '" AND s.status = ' . Sheet::STATUS_LOCKED;
-        $filter         .= !empty(GETPOST('fromtype')) ? ' AND s.element_linked LIKE "%' . GETPOST('fromtype') . '%"' : '';
+        $filter         .= !empty(GETPOST('fromtype', 'aZ09')) ? " AND s.element_linked LIKE '%" . $db->escape($db->escapeforlike(GETPOST('fromtype', 'aZ09'))) . "%'" : '';
         print '<tr><td class="fieldrequired">' . ($source != 'pwa' ? $langs->trans('Sheet') : img_picto('', $sheet->picto . '_2em', 'class="pictofixedwidth"')) . '</td><td>';
         print ($source != 'pwa' ? img_picto('', $sheet->picto, 'class="pictofixedwidth"') : '') . $sheet->selectSheetList(GETPOST('fk_sheet') ?: $sheet->id, 'fk_sheet', $filter, 1);
         if ($source != 'pwa') {
@@ -470,6 +478,11 @@ if ($action == 'create') {
 
     // Common attributes
     require_once DOL_DOCUMENT_ROOT . '/core/tpl/commonfields_add.tpl.php';
+
+    // Nature of the control : the default of the sheet, the form is rendered again when the sheet changes
+    print '<tr class="field_mandatory"><td>' . ($source != 'pwa' ? $langs->trans('ControlNature') . ' ' . img_picto($langs->trans('ControlNatureHelp'), 'help') : img_picto($langs->trans('ControlNature'), 'fontawesome_fa-balance-scale_fas_#000000_2em', 'class="pictofixedwidth"')) . '</td><td>';
+    print ($source != 'pwa' ? img_picto('', 'fontawesome_fa-balance-scale_fas', 'class="pictofixedwidth"') : '') . $form::selectarray('mandatory', [0 => $langs->trans('InformativeControl'), 1 => $langs->trans('MandatoryControl')], GETPOSTISSET('mandatory') ? GETPOSTINT('mandatory') : ($fkSheet > 0 ? (int) $sheet->default_control_mandatory : 0));
+    print '</td></tr>';
 
     // Hidden project input when project field is not visible but sheet has a default project
     if ($fkSheet > 0 && empty($sheetShowProject) && !empty($sheetDefaultProjectId)) {
@@ -508,10 +521,7 @@ if ($action == 'create') {
     if ($fkSheet > 0) {
         print '<hr>';
 
-        print '<table class="centpercent tableforfieldcreate object-table linked-objects">';
-
-        print '<tr><td>';
-        print '<div class="fields-content">';
+        print '<table class="border centpercent tableforfieldcreate object-table linked-objects">';
 
         foreach($objectsMetadata as $objectType => $objectMetadata) {
             if (!empty($objectMetadata['conf'] && (!empty(GETPOST('fromtype')) && GETPOST('fromtype') == $objectMetadata['link_name']) || (preg_match('/"'. $objectType .'":1/',$sheet->element_linked)))) {
@@ -519,8 +529,8 @@ if ($action == 'create') {
                 $objectPost     = GETPOST($objectPostName) ?: (GETPOST('fromtype') == $objectMetadata['link_name'] ? GETPOST('fromid') : '');
 
                 $objectFilter = [];
-                if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOST($objectMetadata['parent_post']) > 0)) {
-                    $objectFilter = ['customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOST($objectMetadata['parent_post'])];
+                if ((dol_strlen($objectMetadata['fk_parent']) > 0 && GETPOSTINT($objectMetadata['parent_post']) > 0)) {
+                    $objectFilter = ['customsql' => $objectMetadata['fk_parent'] . ' = ' . GETPOSTINT($objectMetadata['parent_post'])];
                 } elseif (!empty($objectMetadata['filter'])) {
                     $objectFilter = ['customsql' => $objectMetadata['filter']];
                 }
@@ -536,7 +546,6 @@ if ($action == 'create') {
             }
         }
 
-        print '</div>';
         print '</table>';
     }
 
@@ -621,15 +630,21 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     // Lock confirmation. The next control date is only written in database by the lock itself :
     // preview the date it will set, otherwise the confirmation always announces NA and 0 day.
-    $nextControlDate = $object->getNextControlDate();
-    $days            = $object->getNextControlDelay();
+    // #2811: the deadline is counted from today, a next control date already past is announced as overdue.
+    $nextControlDate     = $object->getNextControlDate();
+    $nextControlDeadline = digiquali_get_next_control_deadline_label($object->getNextControlDelay());
+    $nextControlDeadline = $nextControlDeadline ?: $langs->transnoentities('NA');
     if (($action == 'lock' && (empty($conf->use_javascript_ajax) || !empty($conf->dol_use_jmobile))) || (!empty($conf->use_javascript_ajax) && empty($conf->dol_use_jmobile))) {
         // A KO verdict has its own periodicity : the warning does not replace the announced dates
         $lockConfirmContent = $langs->trans('ConfirmLockObject', $langs->transnoentities('The' . ucfirst($object->element)));
         if ($object->verdict == 2) {
             $lockConfirmContent .= '<br>' . $langs->transnoentities('BeCarefullVerdictKO');
         }
-        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $days);
+        $lockConfirmContent .= '<br><br>' . $langs->transnoentities('LockControlDate', dol_print_date($object->control_date), $nextControlDate > 0 ? dol_print_date($nextControlDate) : $langs->transnoentities('NA'), $nextControlDeadline);
+        // #2743: last chance to correct a next control date typed before the control date
+        if ($object->isNextControlDateBeforeControlDate()) {
+            $lockConfirmContent .= '<br>' . img_warning('', '', 'paddingright') . '<span class="warning">' . $langs->transnoentities('NextControlDateBeforeControlDate', dol_print_date($nextControlDate, 'day'), dol_print_date($object->getControlDateTimestamp(), 'day')) . '</span>';
+        }
         $lockConfirmContent .= '<br><br>' . $langs->transnoentities('ControlLockConsequences');
 
         $formConfirm .= $form->formconfirm($_SERVER["PHP_SELF"] . '?id=' . $object->id, $langs->trans('LockObject', $langs->transnoentities('The' . ucfirst($object->element))), $lockConfirmContent, 'confirm_lock', '', 'yes', 'actionButtonLock', 350, 600);
@@ -723,13 +738,26 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
     print $form->editfieldkey('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
     print '</td><td class="valuefield fieldname_control_date">';
     print $form->editfieldval('ControlDate', 'control_date', $object->control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
-    print '</td>';
+    print '</td></tr>';
 
     print '<tr class="field_next_control_date"><td class="titlefield fieldname_next_control_date">';
     print $form->editfieldkey('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker');
     print '</td><td class="valuefield fieldname_next_control_date">';
     print $form->editfieldval('NextControlDate', 'next_control_date', $object->next_control_date, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, 'datepicker', '', null, null, "id=$object->id");
-    print '</td>';
+    // #2743: indicative only, a locked control keeps it too so the overdue status can be explained
+    if ($object->isNextControlDateBeforeControlDate()) {
+        $nextControlDateWarning = $langs->trans('NextControlDateBeforeControlDate', dol_print_date($object->getNextControlDate(), 'day'), dol_print_date($object->getControlDateTimestamp(), 'day'));
+        print ' <span class="warning classfortooltip" title="' . dol_escape_htmltag($nextControlDateWarning) . '">' . img_warning('', '', 'paddingright') . $langs->trans('NextControlDateBeforeControlDateShort') . '</span>';
+    }
+    print '</td></tr>';
+
+    // Nature : a mandatory control decides the status of the controlled object, changeable until the lock as the dates
+    $natureSelect = 'select;0:' . $langs->trans('InformativeControl') . ',1:' . $langs->trans('MandatoryControl');
+    print '<tr class="field_mandatory"><td class="titlefield fieldname_mandatory">';
+    print $form->editfieldkey('ControlNature', 'mandatory', (string) (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', 0, 0, 'id', $langs->trans('ControlNatureHelp'));
+    print '</td><td class="valuefield fieldname_mandatory">';
+    print $form->editfieldval('ControlNature', 'mandatory', (int) $object->mandatory, $object, $permissiontoadd && $object->status < Control::STATUS_LOCKED, $natureSelect, '', null, null, 'id=' . $object->id);
+    print '</td></tr>';
 
     print '<tr class="field_verdict"><td class="titlefield fieldname_verdict">';
     print $langs->trans('Verdict');
@@ -792,10 +820,12 @@ if ($object->id > 0 && (empty($action) || ($action != 'create'))) {
 
     print '<tr class="linked-medias photo question-table"><td class=""><label for="photos">' . $langs->trans("Photo") . '</label></td><td class="linked-medias-list">';
     print '<input type="hidden" class="favorite-photo" id="photo" name="photo" value="' . dol_escape_htmltag($object->photo) . '"/>';
+    // The picking buttons offer the device and the media library, as the answers of the control do
     print saturne_render_media_block('digiquali', 'control/' . $object->id . '/photos', '', '', [
-        'show_photo'  => true,
-        'show_audio'  => false,
-        'show_upload' => $object->status < Control::STATUS_LOCKED,
+        'show_photo'   => true,
+        'show_audio'   => false,
+        'show_upload'  => $object->status < Control::STATUS_LOCKED,
+        'show_library' => true,
     ]);
     print '</td></tr>';
 

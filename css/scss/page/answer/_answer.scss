@@ -403,13 +403,21 @@
           line-height: 40px;
           border-radius: 8px;
         }
+        // One line at rest, then the field grows with its text (window.digiquali.object.fitTextAnswer)
         .question-comment {
           height: 40px;
-          padding: 0;
+          padding: 8px 0;
           margin: 0;
           font-size: 16px;
+          line-height: 1.4;
           border: none !important;
           color: $color__public-primary;
+          resize: vertical;
+
+          // A single line is too narrow a space to type with the thumb : room for three lines from the start
+          @media (max-width: $media__small) {
+            min-height: calc(3 * 1.4em + 16px);
+          }
 
           &::placeholder {
             color: rgba($color__public-primary, 0.3);

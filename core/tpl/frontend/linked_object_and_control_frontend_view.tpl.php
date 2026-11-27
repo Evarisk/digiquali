@@ -37,21 +37,13 @@ $controlStatusDisplays = [
 ];
 $controlStatusDisplay = $controlStatusDisplays[$controlStatus['key']];
 
+// The control the status comes from : the mandatory one when the object has some, else the last one
 $lastControl     = $controlStatus['last_control'];
-$nextControlDays = $controlStatus['next_control_days'];
-if ($nextControlDays === null) {
-    $nextControlDeadline = '';
-} elseif ($nextControlDays < -1) {
-    $nextControlDeadline = $langs->transnoentities('NextControlOverdueSince', abs($nextControlDays));
-} elseif ($nextControlDays == -1) {
-    $nextControlDeadline = $langs->transnoentities('NextControlOverdueOneDay');
-} elseif ($nextControlDays == 0) {
-    $nextControlDeadline = $langs->transnoentities('NextControlToday');
-} elseif ($nextControlDays == 1) {
-    $nextControlDeadline = $langs->transnoentities('NextControlTomorrow');
-} else {
-    $nextControlDeadline = $langs->transnoentities('NextControlInDays', $nextControlDays);
-}
+$isMandatory     = !empty($lastControl['mandatory']);
+// The period of the sheet comes before the periodicity of the object, as when the next control date is computed
+$periodLabel     = !empty($lastControl['period']) ? 'ControlPeriod' : 'QcFrequency';
+$periodValue     = !empty($lastControl['period']) ? $lastControl['period'] : ($linkedObjectInfoArray['linkedObject']['qc_frequency'] ?? '');
+$nextControlDeadline = digiquali_get_next_control_deadline_label($controlStatus['next_control_days']);
 
 $hasObjectImage = !empty($linkedObjectInfoArray['images']) && strpos($linkedObjectInfoArray['images'], 'nophoto') === false; ?>
 
@@ -82,7 +74,7 @@ $hasObjectImage = !empty($linkedObjectInfoArray['images']) && strpos($linkedObje
         <div class="public-control-status__body">
             <div class="public-control-status__label"><?php echo $langs->transnoentities($controlStatusDisplay['label']); ?></div>
             <div class="public-control-status__detail">
-                <?php echo !empty($lastControl) ? $langs->transnoentities('LastControlOn', dol_print_date($lastControl['control_date'], 'day')) : $langs->transnoentities('NoControlYet'); ?>
+                <?php echo !empty($lastControl) ? $langs->transnoentities($isMandatory ? 'MandatoryControlOn' : 'LastControlOn', dol_print_date($lastControl['control_date'], 'day')) : $langs->transnoentities('NoControlYet'); ?>
             </div>
             <?php if ($controlStatus['key'] == 'overdue') : ?>
                 <div class="public-control-status__detail"><?php echo $langs->transnoentities('ControlStatusOverdueDetail'); ?></div>
@@ -109,14 +101,14 @@ $hasObjectImage = !empty($linkedObjectInfoArray['images']) && strpos($linkedObje
                         <span class="pwa-card-field-value public-control-panel__muted"><?php echo $langs->transnoentities('NoPeriodicityControl'); ?></span>
                     </div>
                 <?php endif;
-                if (!empty($linkedObjectInfoArray['linkedObject']['qc_frequency'])) : ?>
+                if (!empty($periodValue)) : ?>
                     <div class="pwa-card-field">
-                        <span class="pwa-card-field-label"><?php echo $langs->transnoentities('QcFrequency'); ?></span>
-                        <span class="pwa-card-field-value"><?php echo $linkedObjectInfoArray['linkedObject']['qc_frequency']; ?></span>
+                        <span class="pwa-card-field-label"><?php echo $langs->transnoentities($periodLabel); ?></span>
+                        <span class="pwa-card-field-value"><?php echo $periodValue; ?></span>
                     </div>
                 <?php endif; ?>
                 <div class="pwa-card-field">
-                    <span class="pwa-card-field-label"><?php echo $langs->transnoentities('LastControl'); ?></span>
+                    <span class="pwa-card-field-label"><?php echo $langs->transnoentities($isMandatory ? 'LastMandatoryControl' : 'LastControl'); ?></span>
                     <span class="pwa-card-field-value">
                         <?php if (!empty($lastControl['url'])) : ?>
                             <a href="<?php echo $lastControl['url']; ?>" target="_blank"><?php echo dol_escape_htmltag($lastControl['ref']); ?></a>

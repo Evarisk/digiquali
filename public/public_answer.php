@@ -96,7 +96,7 @@ saturne_load_langs(['projects']);
 
 // Get parameters
 $trackID   = GETPOST('track_id', 'alpha');
-$entity    = GETPOST('entity');
+$entity    = GETPOSTINT('entity');
 $action    = GETPOST('action');
 $subaction = GETPOST('subaction');
 
@@ -120,19 +120,31 @@ if (getDolGlobalInt('DIGIQUALI_ANSWER_PUBLIC_INTERFACE_USE_SIGNATORY')) {
     }
     $signatory = new SaturneSignature($db, $moduleNameLowerCase, $object->element);
 
-    $upload_dir = $conf->$moduleNameLowerCase->multidir_output[$object->entity ?? 1];
+    $upload_dir = $conf->$moduleNameLowerCase->multidir_output[$object->entity ?? $conf->entity];
 }
 
 $hookmanager->initHooks(['publicanswer', 'saturnepublicinterface']); // Note that conf->hooks_modules contains array
 
-if (!isModEnabled('multicompany')) {
+// The entity of the link is a number: without one, the page keeps the setup of the current entity
+if (!isModEnabled('multicompany') || $entity <= 0) {
     $entity = $conf->entity;
 }
 
 $conf->setEntityValues($db, $entity);
 
-// Load object
-$object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'");
+// Load object : a link that is empty or finds nothing gets the answer of an unknown record and stops before the
+// actions. They all work on the object loaded here, and the save action would otherwise load the object from the id
+// of the URL, which nothing checks on this page
+if (empty($trackID) || $object->fetch(0, '', " AND track_id = '" . $db->escape($trackID) . "'") <= 0) {
+    $conf->dol_hide_topmenu  = 1;
+    $conf->dol_hide_leftmenu = 1;
+
+    http_response_code(404);
+    saturne_header(0, '', $langs->trans('PublicAnswer'), '', '', 0, 0, [], [], '', 'page-public-card page-public-answer');
+    print saturne_show_notice($langs->transnoentities('ErrorRecordNotFound'), '', 'error', 'notice-infos', true);
+    llxFooter('', 'public');
+    exit;
+}
 
 // A collect session is never answered itself, every respondent gets a survey of their own : its direct public link
 // leads to the session page, before any action (an auto-save on the session would write into the template of all)

@@ -242,8 +242,9 @@ function get_linked_object_infos(CommonObject $linkedObject, array $linkableElem
 /**
  * Get control infos
  *
- * Returns data only, the public templates render it: the status of the linked object, drawn from its last locked
- * control, and the list of its locked controls.
+ * Returns data only, the public templates render it: the status of the linked object, drawn from its locked
+ * controls by digiquali_get_object_control_status(), and the list of its locked controls, only the mandatory ones
+ * once it has some.
  *
  * @param  CommonObject $linkedObject Linked object (product, productlot, project, etc.)
  * @return array        $out          ['status' => [...], 'control' => [id => [...]]]
@@ -279,13 +280,27 @@ function get_control_infos(CommonObject $linkedObject): array
         return $b->control_date - $a->control_date;
     });
 
+    // The next control starts from the last one, whatever its nature
+    $lastControl = reset($controls);
+
+    // The status comes from the mandatory controls when the object has some, else from its last control
+    $controlStatus = digiquali_get_object_control_status($controls);
+    $statusKeys    = $controlStatus['keys'];
+
+    // Once the object has mandatory controls, the public page shows only them: an informative control (a quarterly
+    // check) neither changes the status nor appears in the list
+    if ($controlStatus['mandatory']) {
+        $controls = array_filter($controls, function ($control) {
+            return !empty($control->mandatory);
+        });
+    }
+
     // The project names the customer or the site: only a user allowed to read projects sees it
     $permissionToReadProject = $user->hasRight('projet', 'lire');
 
-    $controllers = [];
-    foreach ($controls as $control) {
-        $sheet = new Sheet($db);
-        $sheet->fetch($control->fk_sheet);
+    $controllers    = [];
+    $getControlCard = function ($control) use ($conf, $db, $langs, $permissionToReadControl, $permissionToReadProject, $statusKeys, &$controllers): array {
+        $sheet = $control->getSheet() ?? new Sheet($db);
 
         // No link on the thumbnail: it would open the photo editor, and the whole card is already a link
         $image = saturne_show_medias_linked('digiquali', $conf->digiquali->multidir_output[$conf->entity] . '/' . $control->element . '/'. $control->ref . '/photos/', 'small', '', 0, 0, 0, 100, 100, 1, 0, 1, $control->element . '/'. $control->ref . '/photos/', $control, 'photo', 0, 0,0, 1);
@@ -303,37 +318,43 @@ function get_control_infos(CommonObject $linkedObject): array
             $project = $control->project->ref . ' - ' . $control->project->title;
         }
 
-        $out['control'][$control->id] = [
+        return [
             'ref'               => $control->ref,
             'url'               => $permissionToReadControl ? dol_buildpath('/digiquali/view/control/control_card.php', 1) . '?id=' . $control->id : '',
             'control_date'      => $control->control_date,
             'next_control_date' => $control->next_control_date ?: 0,
             'sheet'             => $sheet->label ?: $sheet->ref,
+            'mandatory'         => (int) $control->mandatory,
+            'period'            => $sheet->getControlPeriodLabel(),
             'controller'        => $controllers[$control->fk_user_controller] ?? '',
             'project'           => $project,
-            'note'              => dol_trunc(trim(dol_string_nohtmltag($control->note_public ?? '', 1)), 160),
+            'note'              => dol_trunc(trim(dol_string_nohtmltag((string) $control->note_public, 1)), 160),
             'verdict'           => $control->verdict == 1 ? 'ok' : 'ko',
+            // The last control of a sheet whose next control date is reached is no longer OK: a later one is due
+            'status'            => $statusKeys[$control->id] ?? ($control->verdict == 1 ? 'ok' : 'ko'),
             'image'             => strpos($image, 'nophoto') === false ? $image : ''
         ];
+    };
+
+    foreach ($controls as $control) {
+        $out['control'][$control->id] = $getControlCard($control);
 
         if (getDolGlobalInt('DIGIQUALI_SHOW_LAST_CONTROL_FIRST_ON_PUBLIC_HISTORY')) {
             break;
         }
     }
 
-    $lastControl = reset($controls);
-    if (!empty($lastControl)) {
-        $out['status']['key']          = $out['control'][$lastControl->id]['verdict'];
-        $out['status']['last_control'] = $out['control'][$lastControl->id];
-        if (!empty($lastControl->next_control_date)) {
-            $out['status']['next_control_date']  = $lastControl->next_control_date;
-            $out['status']['next_control_days']  = (int) round(($lastControl->next_control_date - dol_now('tzuser')) / (3600 * 24));
-            $out['status']['next_control_color'] = $lastControl->getNextControlDateColor();
+    $statusControl = $controlStatus['control'];
+    if ($statusControl !== null) {
+        $out['status']['key']          = $controlStatus['key'];
+        $out['status']['last_control'] = $out['control'][$statusControl->id] ?? $getControlCard($statusControl);
 
-            // An OK verdict no longer holds once the next control date is reached (same threshold as getNextControlDateColor)
-            if ($out['status']['key'] == 'ok' && $out['status']['next_control_days'] <= 0) {
-                $out['status']['key'] = 'overdue';
-            }
+        // The next date of a sheet no longer used is no longer a deadline
+        $statusSheet = $statusControl->getSheet();
+        if (!empty($statusControl->next_control_date) && ($statusSheet === null || $statusSheet->status != Sheet::STATUS_ARCHIVED)) {
+            $out['status']['next_control_date']  = $statusControl->next_control_date;
+            $out['status']['next_control_days']  = $statusControl->getNextControlDelay();
+            $out['status']['next_control_color'] = $statusControl->getNextControlDateColor();
         }
     }
 
@@ -360,6 +381,147 @@ function get_control_infos(CommonObject $linkedObject): array
 }
 
 /**
+ * Get the status of a controlled object, drawn from its controls.
+ *
+ * Only a locked control carries a verdict. A mandatory control is the one that decides : once the object has one,
+ * the status comes from the last mandatory control of each sheet, and the informative controls (a quarterly check) no
+ * longer change it. Without any, the last control decides : an informative control redone since is no longer due. A
+ * control of an archived sheet, no longer used, decides only when the object has no other control, and it is then
+ * never overdue.
+ *
+ * @param  CommonObject[] $controls Controls of the object, in any order and any status
+ * @return array                   ['key' => none, ok, ko or overdue, 'control' => the control the status comes from
+ *                                  or null, 'controls' => the controls deciding the status, the worst first,
+ *                                  'keys' => the status of each deciding control, by control id, 'mandatory' => whether
+ *                                  the status comes from mandatory controls]
+ * @throws Exception
+ */
+function digiquali_get_object_control_status(array $controls): array
+{
+    require_once __DIR__ . '/../class/control.class.php';
+    require_once __DIR__ . '/../class/sheet.class.php';
+
+    $out = ['key' => 'none', 'control' => null, 'controls' => [], 'keys' => [], 'mandatory' => false];
+
+    $controls = array_filter($controls, function ($control) {
+        return $control instanceof Control && $control->status == Control::STATUS_LOCKED;
+    });
+    if (empty($controls)) {
+        return $out;
+    }
+
+    // Most recent first
+    $getDate = function (Control $control): int {
+        return $control->getControlDateTimestamp() ?: (int) $control->date_creation;
+    };
+    usort($controls, function (Control $a, Control $b) use ($getDate): int {
+        return [$getDate($b), $b->id] <=> [$getDate($a), $a->id];
+    });
+
+    $currentControls   = [];
+    $archivedControls  = [];
+    $mandatoryControls = [];
+    foreach ($controls as $control) {
+        $sheet = $control->getSheet();
+        if ($sheet !== null && $sheet->status == Sheet::STATUS_ARCHIVED) {
+            $archivedControls[] = $control;
+            continue;
+        }
+
+        $currentControls[] = $control;
+        if (!empty($control->mandatory) && !isset($mandatoryControls[$control->fk_sheet])) {
+            $mandatoryControls[$control->fk_sheet] = $control;
+        }
+    }
+
+    if (!empty($mandatoryControls)) {
+        $decidingControls = array_values($mandatoryControls);
+    } elseif (!empty($currentControls)) {
+        $decidingControls = [reset($currentControls)];
+    } else {
+        $decidingControls = [reset($archivedControls)];
+    }
+
+    // The worst status first, then the nearest next control date : the deadline to meet first
+    $keys = [];
+    foreach ($decidingControls as $control) {
+        $keys[$control->id] = digiquali_get_control_status_key($control);
+    }
+    $ranks = ['ko' => 0, 'overdue' => 1, 'ok' => 2];
+    usort($decidingControls, function (Control $a, Control $b) use ($keys, $ranks): int {
+        $nextA = !empty($a->next_control_date) ? (int) $a->next_control_date : PHP_INT_MAX;
+        $nextB = !empty($b->next_control_date) ? (int) $b->next_control_date : PHP_INT_MAX;
+
+        return [$ranks[$keys[$a->id]], $nextA] <=> [$ranks[$keys[$b->id]], $nextB];
+    });
+
+    $out['controls']  = $decidingControls;
+    $out['control']   = reset($decidingControls);
+    $out['key']       = $keys[$out['control']->id];
+    $out['keys']      = $keys;
+    $out['mandatory'] = !empty($mandatoryControls);
+
+    return $out;
+}
+
+/**
+ * Get the status a locked control gives to the object it controls.
+ *
+ * An OK verdict no longer holds once the next control date is reached (same threshold as getNextControlDateColor()),
+ * unless the sheet is archived : the periodicity of a sheet no longer used no longer applies.
+ *
+ * @param  Control $control Locked control
+ * @return string           ok, ko or overdue
+ * @throws Exception
+ */
+function digiquali_get_control_status_key(Control $control): string
+{
+    if ($control->verdict != 1) {
+        return 'ko';
+    }
+
+    $sheet = $control->getSheet();
+    if (!empty($control->next_control_date) && ($sheet === null || $sheet->status != Sheet::STATUS_ARCHIVED)) {
+        $nextControlDays = $control->getNextControlDelay();
+        if ($nextControlDays !== null && $nextControlDays <= 0) {
+            return 'overdue';
+        }
+    }
+
+    return 'ok';
+}
+
+/**
+ * Get the deadline of a next control date, as the public page and the lock confirmation show it.
+ *
+ * @param  int|null $days Days left before the next control date, negative once past (Control::getNextControlDelay())
+ * @return string         Translated deadline, empty when there is no next control date
+ */
+function digiquali_get_next_control_deadline_label(?int $days): string
+{
+    global $langs;
+
+    if ($days === null) {
+        return '';
+    }
+
+    if ($days < -1) {
+        return $langs->transnoentities('NextControlOverdueSince', abs($days));
+    }
+    if ($days == -1) {
+        return $langs->transnoentities('NextControlOverdueOneDay');
+    }
+    if ($days == 0) {
+        return $langs->transnoentities('NextControlToday');
+    }
+    if ($days == 1) {
+        return $langs->transnoentities('NextControlTomorrow');
+    }
+
+    return $langs->transnoentities('NextControlInDays', $days);
+}
+
+/**
  * Get the objects of a type a control can be linked to, as the options of a select
  *
  * A lot is named after its product, and after its vehicle when DoliCar knows it, so that it can be found by any of them.
@@ -382,7 +544,7 @@ function digiquali_get_controllable_object_options(string $objectType, array $ob
 
     require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
     if ($objectType == 'productlot' && isModEnabled('dolicar')) {
-        require_once __DIR__ . '/../../dolicar/class/registrationcertificatefr.class.php';
+        require_once dol_buildpath('/dolicar/class/registrationcertificatefr.class.php');
     }
 
     $product = new Product($db);

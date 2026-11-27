@@ -91,6 +91,9 @@ if (empty($resHook)) {
         $sheetExportArray['element_linked']      = $object->element_linked;
         $sheetExportArray['success_rate']        = $object->success_rate;
         $sheetExportArray['mandatory_questions'] = $object->mandatory_questions;
+        $sheetExportArray['qc_frequency']        = $object->qc_frequency;
+        $sheetExportArray['qc_frequency_unit']   = $object->qc_frequency_unit;
+        $sheetExportArray['default_control_mandatory'] = (int) $object->default_control_mandatory;
 
         $digiqualiExportArray['sheets'][$object->id] = $sheetExportArray;
 

@@ -374,6 +374,25 @@ function digiquali_render_photo_multiple_answer(Question $question, CommonObject
     $out  = '<div class="question-photo-multiple" id="question-photo-multiple-' . $question->id . '" data-question-id="' . $question->id . '" data-sub-dir="' . dol_escape_htmltag(digiquali_get_answer_photo_sub_dir($object, $question)) . '" data-saved-answer="' . dol_escape_htmltag($questionAnswer) . '">';
     $out .= '<input type="hidden" class="question-answer" name="answer' . $question->id . '" value="' . dol_escape_htmltag(digiquali_photo_multiple_encode($answerRows)) . '">';
 
+    // The question has no OK/KO of its own : its summary, the one the lists and the documents show, stands for it.
+    // photo_multiple.js rewrites it as statuses are given, from the count label and the labels of the buttons
+    if (!empty($rows)) {
+        $out .= '<div class="question-photo-multiple__summary">';
+        $out .= '<i class="fas fa-images" aria-hidden="true"></i> ';
+        $out .= '<strong>' . $langs->trans('PhotoMultipleBalance') . ' :</strong> ';
+        $out .= '<span class="question-photo-multiple__summary-text" data-photo-count-label="' . dol_escape_htmltag($langs->transnoentities('PhotoMultipleSummary', '%s')) . '">' . dol_escape_htmltag(digiquali_photo_multiple_format_summary(array_column($rows, 'status'))) . '</span>';
+        $out .= '</div>';
+    }
+
+    // How the photo statuses and the question relate is not what an OK/KO question taught : say it while answering
+    if (!$readOnly) {
+        $out .= '<p class="question-photo-multiple__help opacitymedium">';
+        $out .= '<i class="fas fa-info-circle" aria-hidden="true"></i> ';
+        // Only a control has a verdict to mention
+        $out .= $langs->trans($object->element == 'control' ? 'PhotoMultipleHelpControl' : 'PhotoMultipleHelp');
+        $out .= '</p>';
+    }
+
     if (empty($rows)) {
         $out .= '<p class="question-photo-multiple__empty opacitymedium">' . $langs->trans('PhotoMultipleEmpty') . '</p>';
     } else {
@@ -576,7 +595,8 @@ function show_answer_from_question(Question $question, CommonObject $object, str
         case 'Percentage':
             $step = 100;
             if (!empty($questionConfig[$question->type]['step'])) {
-                $step = $questionConfig[$question->type]['step'];
+                // A slider needs at least two positions (0 and 100), and step - 1 is the divisor below
+                $step = max(2, (int) $questionConfig[$question->type]['step']);
             }
 
 			if ($showCorrection && $question->type == $question::TYPE_RANGE) {
@@ -800,4 +820,242 @@ function digiquali_get_question_range_bounds(Question $question): array
     }
 
     return $bounds;
+}
+
+/**
+ * Give an answered object (control or survey) its definitive ref while it still has its (PROVn) one
+ *
+ * The answer photos are stored under the ref of the object (see digiquali_get_answer_photo_sub_dir()). An object
+ * keeping (PROVn) until its validation leaves them under a directory nothing reads once it is validated :
+ * SaturneObject::validate() does not move the directory of a DigiQuali object. The status is not touched, the
+ * object stays a draft, and its directories, that of its generated documents included, follow the ref.
+ *
+ * @param  SaturneObject $object Control or survey, already created
+ * @param  User          $user   User giving the ref
+ * @return int<-1,1>             Return integer 0 < if KO, 0 if the ref is already the definitive one, > 0 if OK
+ */
+function digiquali_set_definitive_ref(SaturneObject $object, User $user): int
+{
+    if (!empty($object->ref) && !preg_match('/^\(?PROV/i', $object->ref)) {
+        return 0;
+    }
+
+    $oldRef = (string) $object->ref;
+    $newRef = $object->getNextNumRef();
+    if (empty($newRef) || $newRef === $oldRef) {
+        return -1;
+    }
+
+    // No trigger, as for the controls since #2442 : the object only gets the ref its validation would have given it
+    if ($object->setValueFrom('ref', $newRef, '', null, 'text', '', $user) <= 0) {
+        return -1;
+    }
+    $object->ref = $newRef;
+
+    if ($oldRef !== '') {
+        digiquali_move_prov_directory($object, $oldRef);
+    }
+
+    return 1;
+}
+
+/**
+ * Directories of an answered object that carry its ref, under the DigiQuali output directory
+ *
+ * The one of the object (answer photos, QR code...) and the one of its generated documents, apart under
+ * <element>document, where its card lists them.
+ *
+ * @param  SaturneObject $object Control or survey
+ * @return string[]              Directories, relative to the DigiQuali output directory, without the ref
+ */
+function digiquali_get_ref_directories(SaturneObject $object): array
+{
+    return [$object->element, $object->element . 'document'];
+}
+
+/**
+ * Move the files of an object left under its (PROVn) directories into the directories of its definitive ref
+ *
+ * Its answer photos and other files as well as the documents generated while it was a draft (see
+ * digiquali_get_ref_directories()). Nothing is overwritten : a file the definitive directory already has stays under
+ * (PROVn), which is kept as long as it holds something. The rows of llx_ecm_files of the files moved follow them.
+ *
+ * @param  SaturneObject $object Control or survey, with its definitive ref
+ * @param  string        $oldRef Ref the files were stored under, ex. (PROV12)
+ * @return int                   Number of files moved, -1 if KO
+ */
+function digiquali_move_prov_directory(SaturneObject $object, string $oldRef): int
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $newRef = (string) $object->ref;
+    if ($oldRef === '' || $newRef === '' || $oldRef === $newRef || preg_match('/^\(?PROV/i', $newRef)) {
+        return 0;
+    }
+
+    // Same root as the media blocks, the module may not be enabled yet when its init() runs this
+    $entity    = !empty($object->entity) ? (int) $object->entity : (int) $conf->entity;
+    $outputDir = $conf->digiquali->multidir_output[$entity] ?? DOL_DATA_ROOT . ($entity > 1 ? '/' . $entity : '') . '/digiquali';
+
+    // A directory that cannot move does not keep the others back
+    $nbMoved = 0;
+    $error   = false;
+    foreach (digiquali_get_ref_directories($object) as $refDirectory) {
+        $result = digiquali_move_directory_files($outputDir . '/' . $refDirectory . '/' . dol_sanitizeFileName($oldRef), $outputDir . '/' . $refDirectory . '/' . dol_sanitizeFileName($newRef), $entity);
+        if ($result < 0) {
+            $error = true;
+        } else {
+            $nbMoved += $result;
+        }
+    }
+
+    return $error ? -1 : $nbMoved;
+}
+
+/**
+ * Move the files of a directory into another one, the rows of llx_ecm_files of the files moved with them
+ *
+ * The directory moves at once when the destination does not exist yet, file by file otherwise : a file the
+ * destination already has is not overwritten and stays where it is, with its directory.
+ *
+ * @param  string $srcDir  Directory the files are in
+ * @param  string $destDir Directory the files go to
+ * @param  int    $entity  Entity of the rows of llx_ecm_files
+ * @return int             Number of files moved, -1 if KO
+ */
+function digiquali_move_directory_files(string $srcDir, string $destDir, int $entity): int
+{
+    global $db;
+
+    if (!dol_is_dir($srcDir)) {
+        return 0;
+    }
+
+    $files = dol_dir_list($srcDir, 'files', 1, '', null, 'name', SORT_ASC, 0, 1);
+    if (!dol_is_dir($destDir)) {
+        // Nothing to merge with : the directory moves at once
+        if (!dol_move_dir($srcDir, $destDir, 0, 0, 0)) {
+            dol_syslog(__FUNCTION__ . ' cannot move ' . $srcDir . ' to ' . $destDir, LOG_ERR);
+            return -1;
+        }
+        $nbMoved = count($files);
+    } else {
+        // The card of the object already made some of its directories (empty ones of the answer photos...) : file by file
+        $nbMoved = 0;
+        foreach ($files as $file) {
+            $destFile = $destDir . '/' . $file['relativename'];
+            if (dol_is_file($destFile)) {
+                dol_syslog(__FUNCTION__ . ' ' . $destFile . ' already exists, ' . $file['fullname'] . ' is kept', LOG_WARNING);
+                continue;
+            }
+            dol_mkdir(dirname($destFile));
+            if (@rename(dol_osencode($file['fullname']), dol_osencode($destFile))) {
+                $nbMoved++;
+            }
+        }
+
+        // Remove the directories the move emptied, deepest first : rmdir() leaves the ones still holding a file
+        $dirs = dol_dir_list($srcDir, 'directories', 1, '', null, 'name', SORT_ASC, 0, 1);
+        usort($dirs, function ($a, $b) {
+            return strlen($b['fullname']) <=> strlen($a['fullname']);
+        });
+        foreach ($dirs as $dir) {
+            @rmdir(dol_osencode($dir['fullname']));
+        }
+        @rmdir(dol_osencode($srcDir));
+    }
+
+    // Index of the ECM : only the rows of the files that did move, a file kept under (PROVn) keeps its row
+    $relativeSrcDir  = preg_replace('/^' . preg_quote(DOL_DATA_ROOT, '/') . '\//', '', $srcDir);
+    $relativeDestDir = preg_replace('/^' . preg_quote(DOL_DATA_ROOT, '/') . '\//', '', $destDir);
+
+    $sql  = 'SELECT rowid, filepath, filename FROM ' . MAIN_DB_PREFIX . 'ecm_files';
+    $sql .= ' WHERE entity = ' . $entity;
+    $sql .= " AND (filepath = '" . $db->escape($relativeSrcDir) . "' OR filepath LIKE '" . $db->escape($db->escapeforlike($relativeSrcDir)) . "/%')";
+
+    $ecmFiles = [];
+    $resql    = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $ecmFiles[] = $obj;
+        }
+        $db->free($resql);
+    }
+
+    foreach ($ecmFiles as $ecmFile) {
+        $newFilePath = $relativeDestDir . substr($ecmFile->filepath, strlen($relativeSrcDir));
+        if (dol_is_file(DOL_DATA_ROOT . '/' . $newFilePath . '/' . $ecmFile->filename) && !dol_is_file(DOL_DATA_ROOT . '/' . $ecmFile->filepath . '/' . $ecmFile->filename)) {
+            $db->query('UPDATE ' . MAIN_DB_PREFIX . "ecm_files SET filepath = '" . $db->escape($newFilePath) . "' WHERE rowid = " . ((int) $ecmFile->rowid));
+        }
+    }
+
+    dol_syslog(__FUNCTION__ . ' ' . $nbMoved . ' file(s) moved from ' . $srcDir . ' to ' . $destDir);
+
+    return $nbMoved;
+}
+
+/**
+ * Move back the files of the controls or surveys left under their (PROVn) directory once given their definitive ref
+ *
+ * Until #2442 for the controls and #2761 for the surveys, an object kept its (PROVn) ref until its validation, which
+ * did not move its directories : its answer photos, its other files and the documents generated while it was a draft
+ * stayed under (PROVn), where nothing reads them anymore. #2761 brought back the first ones only : the documents are
+ * searched too (#2773). Idempotent, run at each activation of the module : an object still in (PROVn), and a (PROVn)
+ * directory whose object no longer exists, are left as they are.
+ *
+ * @param  SaturneObject $object Control or survey, only gives the element and the table to read
+ * @return int                   Number of objects whose directories were handled, -1 if KO
+ */
+function digiquali_recover_prov_directories(SaturneObject $object): int
+{
+    global $conf, $db;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $outputDir = $conf->digiquali->multidir_output[$conf->entity] ?? DOL_DATA_ROOT . ($conf->entity > 1 ? '/' . $conf->entity : '') . '/digiquali';
+
+    // Ids of the objects with at least one (PROVn) directory left, by id to count each object once
+    $ids = [];
+    foreach (digiquali_get_ref_directories($object) as $refDirectory) {
+        $provDirs = dol_dir_list($outputDir . '/' . $refDirectory, 'directories', 0, '^\(PROV[0-9]+\)$', null, 'name', SORT_ASC, 0, 1);
+        foreach ($provDirs as $provDir) {
+            $id       = (int) substr($provDir['name'], 5, -1);
+            $ids[$id] = $id;
+        }
+    }
+    if (empty($ids)) {
+        return 0;
+    }
+
+    $sql  = 'SELECT rowid, ref, entity FROM ' . MAIN_DB_PREFIX . $object->table_element;
+    $sql .= ' WHERE rowid IN (' . implode(',', $ids) . ') AND entity = ' . ((int) $conf->entity);
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ' ' . $db->lasterror(), LOG_ERR);
+        return -1;
+    }
+
+    $objects = [];
+    while ($obj = $db->fetch_object($resql)) {
+        if (!empty($obj->ref) && !preg_match('/^\(?PROV/i', $obj->ref)) {
+            $objects[] = $obj;
+        }
+    }
+    $db->free($resql);
+
+    $nbHandled = 0;
+    foreach ($objects as $obj) {
+        $strandedObject         = clone $object;
+        $strandedObject->id     = (int) $obj->rowid;
+        $strandedObject->ref    = $obj->ref;
+        $strandedObject->entity = (int) $obj->entity;
+        if (digiquali_move_prov_directory($strandedObject, '(PROV' . $obj->rowid . ')') >= 0) {
+            $nbHandled++;
+        }
+    }
+
+    return $nbHandled;
 }

@@ -97,7 +97,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                             <?php endif; ?>
                             <?php // The frontend has nowhere to go and attach a project : an inert button would only puzzle the user
                             if (empty($object->project) && !empty($permissionToAddTask) && empty($isFrontend)) :
-                                print '<div class="wpeo-button button-square-50 wpeo-tooltip-event" aria-label="' . $langs->transnoentities('AddProject') . '" id="task-disable" style="background-color: #ececec; border-color: #ececec; color: rgba(0, 0, 0, 0.4) !important;">';
+                                print '<div class="wpeo-button button-square-50 wpeo-tooltip-event" aria-label="' . dol_escape_htmltag($langs->transnoentities('ProjectNeededForTasks')) . '" id="task-disable" style="background-color: #ececec; border-color: #ececec; color: rgba(0, 0, 0, 0.4) !important;">';
                                 print '    <input type="hidden" class="modal-options" data-modal-to-open="answer_task_add" data-from-id="' . $objectLine->id . '" data-from-type="' . $objectLine->element . '"/>';
                                 print '    <i class="fas fa-list"></i><i class="fas fa-plus-circle button-add"></i>';
                                 print '</div>';
@@ -116,7 +116,7 @@ if (!isset($user->conf->DIGIQUALI_SHOW_ONLY_QUESTIONS_WITH_NO_ANSWER) || empty($
                 <div class="question__footer">
                     <label class="question__footer-comment">
                         <i class="far fa-comment-dots question-comment-icon"></i>
-                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
+                        <textarea name="comment<?php echo $question->id ?>" class="question-textarea question-comment" rows="1" placeholder="<?php echo $langs->transnoentities('WriteComment'); ?>" <?php echo ($commentDisabled ? 'disabled' : ''); ?>><?php echo $comment; ?></textarea>
                     </label>
                     <?php if (!$commentDisabled && !empty($commentLibrary)) : ?>
                         <div class="question__comment-library">

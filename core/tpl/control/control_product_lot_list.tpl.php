@@ -27,7 +27,7 @@
  * The following vars must be defined :
  * Globals    : $conf, $db, $hookmanager, $langs, $user
  * Objects    : $extrafields, $form, $object
- * Variables  : $arrayfields, $excludeFields, $fromId, $fromType, $objectsMetadata, $search, and every
+ * Variables  : $arrayfields, $excludeFields, $fromId, $fromType, $search, and every
  *              other variable the saturne list templates read
  */
 
@@ -46,7 +46,8 @@ if (!empty($productLotStock)) {
 
     // The product filter belongs to the list above : a control carried out on a lot is not linked to the
     // product itself, so keeping it would leave this list empty
-    $search[$objectsMetadata['product']['post_name']] = '';
+    $productTabFilter = $conf->cache['digiqualiLinkedElementOrColumn'] ?? null;
+    unset($conf->cache['digiqualiLinkedElementOrColumn']);
 
     // A control has no warehouse of its own : the column is filled by the loop hook from the lot the
     // control concerns. It has no column in the control table either, hence its exclusion from the SELECT
@@ -85,6 +86,9 @@ if (!empty($productLotStock)) {
 
     print '</div>';
 
-    // The cache drives a hook shared by every control list : leave nothing behind
+    // The cache drives a hook shared by every control list : leave it as it was found
     unset($conf->cache['digiqualiProductLotStock']);
+    if ($productTabFilter !== null) {
+        $conf->cache['digiqualiLinkedElementOrColumn'] = $productTabFilter;
+    }
 }
