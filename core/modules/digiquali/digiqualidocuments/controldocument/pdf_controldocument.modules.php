@@ -1555,18 +1555,28 @@ class pdf_controldocument extends SaturneDocumentModel
 
         pdf_getInstance($this->format); // charge les constantes TCPDF et tcpdf.php
 
-        // Load FontAwesome Solid for picto rendering in circles
+        // Load FontAwesome Solid for picto rendering in circles. The font is generated once in the data directory:
+        // the TCPDF font folder of the core is code, may be read-only and is replaced on each core upgrade
         $faFontPath = DOL_DOCUMENT_ROOT . '/public/theme/common/fontawesome-5/webfonts/fa-solid-900.ttf';
-        if (file_exists($faFontPath) && class_exists('TCPDF_FONTS')) {
+        $faFontDir  = DOL_DATA_ROOT . '/digiquali/temp/fonts/';
+        if (file_exists($faFontPath) && class_exists('TCPDF_FONTS') && dol_mkdir($faFontDir) >= 0) {
             try {
-                $this->faFontName = @TCPDF_FONTS::addTTFfont($faFontPath, 'TrueTypeUnicode', '', 32);
+                $faFontName       = @TCPDF_FONTS::addTTFfont($faFontPath, 'TrueTypeUnicode', '', 32, $faFontDir);
+                $this->faFontName = (string) $faFontName;
             } catch (Exception $e) {
+                $this->faFontName = '';
+            }
+            // TCPDF::AddFont() destroys the PDF on a missing definition file: only a font really written is declared
+            if (!empty($this->faFontName) && !file_exists($faFontDir . $this->faFontName . '.php')) {
                 $this->faFontName = '';
             }
         }
 
         $pdfa = getDolGlobalInt('PDF_USE_A', 0);
         $pdf  = new TCPDF('P', 'mm', $this->format, true, 'UTF-8', false, $pdfa);
+        if (!empty($this->faFontName)) {
+            $pdf->AddFont($this->faFontName, '', $faFontDir . $this->faFontName . '.php');
+        }
 
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
