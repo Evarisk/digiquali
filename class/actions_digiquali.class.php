@@ -273,6 +273,11 @@ class ActionsDigiquali
     {
         global $conf, $extrafields, $langs;
 
+        // Public ticket page: the core passes an ActionsTicket, not a Dolibarr element, nothing to add
+        if (!is_object($object) || empty($object->element)) {
+            return 0;
+        }
+
         if (!isset($conf->cache['objectsMetadata']) || empty($conf->cache['objectsMetadata'])) {
             dol_include_once('/saturne/lib/object.lib.php');
             $objectsMetadata                = saturne_get_objects_metadata();
@@ -1637,9 +1642,16 @@ class ActionsDigiquali
                         require_once __DIR__ . '/../lib/digiquali_answer.lib.php';
                         $out[$parameters['key']] = dol_escape_htmltag(digiquali_photo_multiple_summary($object->answer));
                     } else {
-                        $answer = new Answer($db);
-                        $res = $answer->fetch(0, '', ' AND t.position ='.$object->answer.' AND t.fk_question = '.$object->fk_question);
-                        $out[$parameters['key']] = ($res != -1 && $answer->value ? $answer->value : '').($object->answer ? ' <span class="opacitymedium" title="value">('.$object->answer.')</span>' : '');
+                        // The stored answer comes from whoever answered : read as the positions of the answers picked (a
+                        // multiple choice holds several, separated by commas), shown escaped
+                        $labels = [];
+                        foreach (array_unique(array_filter(array_map('intval', explode(',', (string) $object->answer)))) as $position) {
+                            $answer = new Answer($db);
+                            if ($answer->fetch(0, '', ' AND t.position = ' . ((int) $position) . ' AND t.fk_question = ' . ((int) $object->fk_question)) > 0 && dol_strlen((string) $answer->value) > 0) {
+                                $labels[] = $answer->value;
+                            }
+                        }
+                        $out[$parameters['key']] = dol_escape_htmltag(implode(', ', $labels)) . ' <span class="opacitymedium" title="value">(' . dol_escape_htmltag((string) $object->answer) . ')</span>';
                     }
                 }
             }
