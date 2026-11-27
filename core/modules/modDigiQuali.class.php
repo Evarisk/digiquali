@@ -82,7 +82,7 @@ class modDigiQuali extends DolibarrModules
 		$this->editor_url = 'https://evarisk.com/';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '23.4.3';
+		$this->version = '23.5.0';
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -624,6 +624,12 @@ class modDigiQuali extends DolibarrModules
 		$this->rights[$r][1] = $langs->transnoentities('ChangeUserController');
 		$this->rights[$r][4] = 'adminpage';
 		$this->rights[$r][5] = 'changeusercontroller';
+		$r++;
+		// Declared last: a permission id is its position in this list, inserting it above would shift the granted ones
+		$this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+		$this->rights[$r][1] = $langs->transnoentities('WriteAdminPage', 'DigiQuali');
+		$this->rights[$r][4] = 'adminpage';
+		$this->rights[$r][5] = 'write';
 
 		// Main menu entries to add
 		$this->menu = [];
