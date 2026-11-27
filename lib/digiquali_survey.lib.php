@@ -812,8 +812,9 @@ function digiquali_survey_session_change_invitees(Survey $session, callable $cha
     $invitees = digiquali_survey_session_get_invitees($session, true);
     $result   = $change($invitees);
 
-    // Unescaped : an accent written \u00e9 takes six bytes, and the column holds the 200 invitees of a session
-    $json = empty($invitees) ? '' : json_encode(array_values($invitees), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // Without flags (Dolibarr declares a json_encode() of its own, with one parameter) : the names are escaped (\u00e9) in
+    // the column, which json_decode() reads back the same. The column is a mediumtext : 200 invitees fit in, accents too
+    $json = empty($invitees) ? '' : json_encode(array_values($invitees));
     if ($json === false) {
         $db->rollback();
         return false;

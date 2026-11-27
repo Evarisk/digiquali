@@ -110,8 +110,8 @@ if ($action == 'save' && !empty($permissionToWrite)) {
     // $isAutoSave is set by the template above. A real submit means the user is done: without
     // this the page would simply redraw itself, which looks like the button did nothing since
     // the answers were already saved as they were given. A submit the template refused (a session,
-    // or a response of a closed one) leaves no action : the page shows why, nothing is validated
-    if (empty($isAutoSave) && $action == 'save') {
+    // or a response of a closed one, see $sessionNotice) validates nothing : the page shows why
+    if (empty($isAutoSave) && empty($sessionNotice)) {
         // Locking the answers is irreversible for the user, so it only happens through the
         // explicit confirmation sheet, never as a side effect of saving
         if (GETPOSTINT('validate_object') && $object->status == $object::STATUS_DRAFT) {
